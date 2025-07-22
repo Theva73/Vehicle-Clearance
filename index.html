@@ -70,6 +70,11 @@
             getDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // --- App Configuration ---
+        // IMPORTANT: This is the secret code required to create a new admin account.
+        // Share this code only with people you trust to be administrators.
+        const ADMIN_INVITE_CODE = "ADMIN2025"; 
+
         // --- Firebase Configuration ---
         const firebaseConfig = {
           apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
@@ -166,6 +171,10 @@
                             <p class="text-gray-500" id="auth-subtitle">Sign in to manage clearances</p>
                         </div>
                         <form id="auth-form" class="space-y-6">
+                            <div id="invite-code-wrapper" class="hidden">
+                                <label class="text-sm font-medium text-gray-700">Admin Invite Code</label>
+                                <input type="text" id="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 border rounded-lg" placeholder="Enter the secret code" />
+                            </div>
                             <div>
                                 <label class="text-sm font-medium text-gray-700">Email</label>
                                 <input type="email" id="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 border rounded-lg" placeholder="admin@example.com" required />
@@ -177,8 +186,8 @@
                             <button type="submit" id="auth-button" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">Login</button>
                         </form>
                         <p class="text-center text-sm text-gray-500">
-                            <span id="auth-toggle-text">First time setup?</span>
-                            <button id="auth-toggle-button" class="font-medium text-blue-600 hover:text-blue-500 ml-1">Create Admin Account</button>
+                            <span id="auth-toggle-text">Need an admin account?</span>
+                            <button id="auth-toggle-button" class="font-medium text-blue-600 hover:text-blue-500 ml-1">Sign Up</button>
                         </p>
                     </div>
                 </div>
@@ -190,13 +199,15 @@
             const authSubtitle = document.getElementById('auth-subtitle');
             const authToggleText = document.getElementById('auth-toggle-text');
             const authToggleButton = document.getElementById('auth-toggle-button');
+            const inviteCodeWrapper = document.getElementById('invite-code-wrapper');
 
             authToggleButton.addEventListener('click', () => {
                 isLogin = !isLogin;
-                authSubtitle.textContent = isLogin ? 'Sign in to manage clearances' : 'Create the first Admin account';
+                authSubtitle.textContent = isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
                 authButton.textContent = isLogin ? 'Login' : 'Sign Up';
-                authToggleText.textContent = isLogin ? "First time setup?" : "Already have an account?";
-                authToggleButton.textContent = isLogin ? 'Create Admin Account' : 'Login';
+                authToggleText.textContent = isLogin ? "Need an admin account?" : "Already have an account?";
+                authToggleButton.textContent = isLogin ? 'Sign Up' : 'Login';
+                inviteCodeWrapper.classList.toggle('hidden', isLogin);
             });
 
             authForm.addEventListener('submit', async (e) => {
@@ -210,21 +221,17 @@
                     if (isLogin) {
                         await signInWithEmailAndPassword(auth, email, password);
                     } else {
-                        // Simplified Logic: Attempt to create user and admin doc.
-                        // The security rule will handle the "only one admin" check.
+                        const inviteCode = document.getElementById('inviteCode').value;
+                        if (inviteCode !== ADMIN_INVITE_CODE) {
+                            throw new Error("Invalid Admin Invite Code.");
+                        }
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                         await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
                         showNotification('Admin account created! Please log in.', 'success');
                         authToggleButton.click();
                     }
                 } catch (error) {
-                    if (error.code === 'auth/email-already-in-use') {
-                        showNotification('This email is already in use.', 'error');
-                    } else if (error.code === 'permission-denied') {
-                         showNotification('An admin account already exists.', 'error');
-                    } else {
-                        showNotification(error.message, 'error');
-                    }
+                    showNotification(error.message, 'error');
                 } finally {
                     authButton.disabled = false;
                     authButton.textContent = isLogin ? 'Login' : 'Sign Up';
@@ -454,4 +461,3 @@
     </script>
 </body>
 </html>
-
