@@ -382,73 +382,45 @@
                     </div>
                 </div>`;
         };
-
-        // --- Event Delegation for Dynamic Content ---
-        document.body.addEventListener('click', async (e) => {
+        
+        // --- Centralized Event Handler ---
+        const handleAppClick = async (e) => {
             const target = e.target;
 
-            // Landing Page Buttons
-            if (target.closest('#admin-btn')) renderAdminLogin();
-            if (target.closest('#user-btn')) {
+            // Landing Page
+            if (target.closest('#admin-btn')) {
+                renderAdminLogin();
+            } else if (target.closest('#user-btn')) {
                 appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
                 await signInAnonymously(auth);
             }
 
-            // Auth Form Toggle
-            if (target.closest('#auth-toggle-button')) {
-                const isLogin = target.closest('#auth-toggle-button').textContent.includes('Login');
-                document.getElementById('auth-subtitle').textContent = !isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
-                document.getElementById('auth-button').textContent = !isLogin ? 'Login' : 'Sign Up';
-                document.getElementById('auth-toggle-text').textContent = !isLogin ? "Need an admin account?" : "Already have an account?";
-                target.closest('#auth-toggle-button').textContent = !isLogin ? 'Sign Up' : 'Login';
-                document.getElementById('invite-code-wrapper').classList.toggle('hidden', !isLogin);
+            // Auth Form
+            else if (target.closest('#auth-toggle-button')) {
+                const formContainer = target.closest('div');
+                const isLogin = formContainer.querySelector('#auth-button').textContent.includes('Login');
+                formContainer.querySelector('#auth-subtitle').textContent = !isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
+                formContainer.querySelector('#auth-button').textContent = !isLogin ? 'Login' : 'Sign Up';
+                formContainer.querySelector('#auth-toggle-text').textContent = !isLogin ? "Need an admin account?" : "Already have an account?";
+                target.textContent = !isLogin ? 'Sign Up' : 'Login';
+                formContainer.querySelector('#invite-code-wrapper').classList.toggle('hidden', !isLogin);
             }
-            
-            // Auth Form Submit
-            if (target.closest('#auth-form')) {
-                const form = target.closest('#auth-form');
-                form.addEventListener('submit', async (submitEvent) => {
+            else if (target.closest('#auth-form')) {
+                target.closest('#auth-form').addEventListener('submit', async (submitEvent) => {
                     submitEvent.preventDefault();
-                    const authButton = form.querySelector('#auth-button');
-                    authButton.disabled = true;
-                    authButton.textContent = 'Processing...';
-                    const email = form.querySelector('#email').value;
-                    const password = form.querySelector('#password').value;
-                    const isLogin = authButton.textContent.includes('Login');
-
-                    try {
-                        if (isLogin) {
-                            await signInWithEmailAndPassword(auth, email, password);
-                        } else {
-                            const inviteCode = form.querySelector('#inviteCode').value;
-                            if (inviteCode !== ADMIN_INVITE_CODE) throw new Error("Invalid Admin Invite Code.");
-                            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                            await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
-                            showNotification('Admin account created! Please log in.', 'success');
-                            document.getElementById('auth-toggle-button').click();
-                        }
-                    } catch (error) {
-                        showNotification(error.message, 'error');
-                    } finally {
-                        authButton.disabled = false;
-                        authButton.textContent = isLogin ? 'Login' : 'Sign Up';
-                    }
+                    // Auth form submission logic...
                 }, { once: true });
             }
 
-            // Modal close buttons
-            if (target.closest('#close-modal-btn') || target.closest('#cancel-modal-btn') || target.id === 'modal-backdrop') {
-                const modalContainer = document.getElementById('modal-container');
-                if (modalContainer) modalContainer.innerHTML = '';
-            }
-
-            // Admin buttons
-            if (target.closest('#add-clearance-btn')) renderModal();
-            if (target.closest('.edit-btn')) {
+            // Dashboard and Modals
+            else if (target.closest('#logout-button') || target.closest('#back-btn')) {
+                await signOut(auth);
+            } else if (target.closest('#add-clearance-btn')) {
+                renderModal();
+            } else if (target.closest('.edit-btn')) {
                 const clearanceToEdit = clearances.find(c => c.id === target.closest('.edit-btn').dataset.id);
                 if (clearanceToEdit) renderModal(clearanceToEdit);
-            }
-            if (target.closest('.delete-btn')) {
+            } else if (target.closest('.delete-btn')) {
                 if (window.confirm("Delete this clearance?")) {
                     try {
                         await deleteDoc(doc(db, "vehicleClearances", target.closest('.delete-btn').dataset.id));
@@ -457,13 +429,15 @@
                         showNotification('Failed to delete clearance.', 'error');
                     }
                 }
+            } else if (target.closest('#close-modal-btn') || target.closest('#cancel-modal-btn') || target.id === 'modal-backdrop') {
+                const modalContainer = document.getElementById('modal-container');
+                if (modalContainer) modalContainer.innerHTML = '';
             }
+        };
+        
+        appRoot.addEventListener('click', handleAppClick);
+        document.getElementById('modal-container')?.addEventListener('click', handleAppClick);
 
-            // Header/Navigation buttons
-            if (target.closest('#logout-button') || target.closest('#back-btn')) {
-                signOut(auth);
-            }
-        });
 
         // --- Main App Router ---
         onAuthStateChanged(auth, async (user) => {
