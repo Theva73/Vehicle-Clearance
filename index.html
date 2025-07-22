@@ -1,477 +1,1134 @@
 <!DOCTYPE html>
+
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vehicle Clearance System</title>
-    
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <style>
-        /* Custom styles and animations */
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-        .dark .bg-gray-100 { background-color: #111827; }
-        .dark .bg-white { background-color: #1f2937; }
-        .dark .bg-gray-50 { background-color: #374151; }
-        .dark .text-gray-900 { color: #f9fafb; }
-        .dark .text-gray-800 { color: #f3f4f6; }
-        .dark .text-gray-700 { color: #d1d5db; }
-        .dark .text-gray-600 { color: #9ca3af; }
-        .dark .text-gray-500 { color: #a0aec0; } /* Lighter gray for dark mode */
-        .dark .border-gray-200 { border-color: #374151; }
-        .dark .border-gray-300 { border-color: #4b5563; }
-        .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -2px rgba(0,0,0,0.25); }
-    </style>
+```
+<!-- Tailwind CSS for styling -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    /* Custom styles and animations */
+    body {
+        font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+    .animate-slide-in {
+        animation: slideIn 0.4s ease-out forwards;
+    }
+    .animate-pulse-hover:hover {
+        animation: pulse 0.3s ease-in-out;
+    }
+    .dark .bg-gray-100 { background-color: #111827; }
+    .dark .bg-white { background-color: #1f2937; }
+    .dark .bg-gray-50 { background-color: #374151; }
+    .dark .text-gray-900 { color: #f9fafb; }
+    .dark .text-gray-800 { color: #f3f4f6; }
+    .dark .text-gray-700 { color: #d1d5db; }
+    .dark .text-gray-600 { color: #9ca3af; }
+    .dark .text-gray-500 { color: #a0aec0; }
+    .dark .border-gray-200 { border-color: #374151; }
+    .dark .border-gray-300 { border-color: #4b5563; }
+    .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -2px rgba(0,0,0,0.25); }
+    .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .status-pending { @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200; }
+    .status-approved { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200; }
+    .status-rejected { @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200; }
+</style>
+```
+
 </head>
 <body class="bg-gray-100">
 
-    <!-- Main container for the app -->
-    <div id="app-root"></div>
+```
+<!-- Main container for the app -->
+<div id="app-root"></div>
 
-    <!-- Firebase and App Logic -->
-    <script type="module">
-        // --- Firebase Imports ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword, 
-            signOut,
-            signInAnonymously
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
-            addDoc, 
-            setDoc, 
-            deleteDoc, 
-            onSnapshot, 
-            query, 
-            Timestamp,
-            getDoc,
-            where
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+<!-- Firebase and App Logic -->
+<script type="module">
+    // --- Firebase Imports ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { 
+        getAuth, 
+        onAuthStateChanged, 
+        signInWithEmailAndPassword, 
+        createUserWithEmailAndPassword, 
+        signOut,
+        signInAnonymously
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+        getFirestore, 
+        collection, 
+        doc, 
+        addDoc, 
+        setDoc, 
+        deleteDoc, 
+        onSnapshot, 
+        query, 
+        Timestamp,
+        getDoc,
+        where,
+        updateDoc,
+        orderBy
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- App Configuration ---
-        const ADMIN_INVITE_CODE = "ADMIN2025"; 
+    // --- App Configuration ---
+    const ADMIN_INVITE_CODE = "ADMIN2025"; 
 
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
-          authDomain: "vehicle-clearance.firebaseapp.com",
-          projectId: "vehicle-clearance",
-          storageBucket: "vehicle-clearance.appspot.com",
-          messagingSenderId: "187403368572",
-          appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
-        };
-       
-        // --- Initialize Firebase ---
-        const appRoot = document.getElementById('app-root');
-        let app, auth, db;
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
+      authDomain: "vehicle-clearance.firebaseapp.com",
+      projectId: "vehicle-clearance",
+      storageBucket: "vehicle-clearance.appspot.com",
+      messagingSenderId: "187403368572",
+      appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
+    };
+   
+    // --- Initialize Firebase ---
+    const appRoot = document.getElementById('app-root');
+    let app, auth, db;
 
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        } catch (error) {
-            console.error("Firebase initialization failed:", error);
-            appRoot.innerHTML = `<div class="p-8 text-center text-red-500 bg-red-100 rounded-lg"><strong>Error:</strong> Could not connect to the database. Please check the Firebase configuration.</div>`;
-        }
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+    } catch (error) {
+        console.error("Firebase initialization failed:", error);
+        appRoot.innerHTML = `<div class="p-8 text-center text-red-500 bg-red-100 rounded-lg"><strong>Error:</strong> Could not connect to the database. Please check the Firebase configuration.</div>`;
+    }
 
-        // --- App State ---
-        let clearances = [];
-        let clearanceRequests = [];
-        let myRequests = [];
-        let unsubscribeFirestore = null;
-        let unsubscribeRequests = null;
-        let unsubscribeMyRequests = null;
+    // --- App State ---
+    let clearances = [];
+    let clearanceRequests = [];
+    let myRequests = [];
+    let unsubscribeFirestore = null;
+    let unsubscribeRequests = null;
+    let unsubscribeMyRequests = null;
+    let currentUser = null;
 
-        // --- Helper Functions ---
-        const formatDate = (date) => {
-            if (!date) return '';
-            const d = date instanceof Date ? date : date.toDate();
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = String(d.getFullYear()).slice(-2);
-            return `${day}/${month}/${year}`;
-        };
+    // --- Helper Functions ---
+    const formatDate = (date) => {
+        if (!date) return '';
+        const d = date instanceof Date ? date : date.toDate();
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = String(d.getFullYear()).slice(-2);
+        return `${day}/${month}/${year}`;
+    };
 
-        // --- SVG Icons ---
-        const icons = {
-            car: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-1.5"/><path d="M20 10h-5.41l-1.42-2.84a1 1 0 0 0-.84-.55H10a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"/><path d="M14 16.5L18 12l-2-4H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><circle cx="7" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>`,
-            logout: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
-            plus: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
-            edit: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
-            trash: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
-            check: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
-            x: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
-            shield: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-            users: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-            sun: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
-            back: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>`,
-            request: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`
-        };
+    const formatDateTime = (date) => {
+        if (!date) return '';
+        const d = date instanceof Date ? date : date.toDate();
+        return d.toLocaleString();
+    };
 
-        // --- UI Rendering Functions ---
+    const isValidToday = (clearance) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const entryDate = clearance.entryDate.toDate();
+        entryDate.setHours(0, 0, 0, 0);
+        const expiryDate = clearance.expiryDate.toDate();
+        expiryDate.setHours(23, 59, 59, 999);
+        return today >= entryDate && today <= expiryDate;
+    };
 
-        const showNotification = (message, type = 'success') => {
-            const notification = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-            notification.className = `fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white flex items-center animate-fade-in ${bgColor}`;
-            notification.innerHTML = `<span class="mr-3">${type === 'success' ? icons.check : icons.x}</span><span>${message}</span>`;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 5000);
-        };
-        
-        const renderLandingPage = () => {
-            appRoot.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-                    <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
-                        <div>
-                            <div class="w-16 h-16 mx-auto text-blue-500">${icons.car}</div>
-                            <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance</h1>
-                            <p class="text-gray-500 dark:text-gray-400 mt-2">Please select an option to continue.</p>
-                        </div>
-                        <div class="grid grid-cols-1 gap-6">
-                             <button id="request-btn" class="flex items-center justify-center p-6 bg-yellow-50 dark:bg-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                                <div class="w-12 h-12">${icons.request}</div>
-                                <span class="ml-4 font-semibold text-lg">Request Clearance</span>
+    // --- SVG Icons ---
+    const icons = {
+        car: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-1.5"/><path d="M20 10h-5.41l-1.42-2.84a1 1 0 0 0-.84-.55H10a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"/><path d="M14 16.5L18 12l-2-4H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><circle cx="7" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>`,
+        logout: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+        plus: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+        edit: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
+        trash: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+        check: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+        x: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+        shield: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        users: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        sun: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+        back: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>`,
+        request: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`,
+        dashboard: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+        clock: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>`,
+        bell: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`
+    };
+
+    // --- UI Rendering Functions ---
+
+    const showNotification = (message, type = 'success') => {
+        const notification = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500';
+        notification.className = `fixed top-5 right-5 p-4 rounded-lg shadow-lg text-white flex items-center animate-fade-in z-50 ${bgColor}`;
+        notification.innerHTML = `<span class="mr-3">${type === 'success' ? icons.check : type === 'warning' ? icons.bell : icons.x}</span><span>${message}</span>`;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 5000);
+    };
+    
+    const renderLandingPage = () => {
+        appRoot.innerHTML = `
+            <div class="min-h-screen gradient-bg flex items-center justify-center p-4">
+                <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
+                    <div>
+                        <div class="w-20 h-20 mx-auto text-blue-500 animate-pulse-hover">${icons.car}</div>
+                        <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance System</h1>
+                        <p class="text-gray-500 dark:text-gray-400 mt-2">Secure vehicle access management platform</p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-6">
+                         <button id="request-btn" class="flex items-center justify-center p-6 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white rounded-xl transition-all duration-300 transform hover:scale-105 animate-pulse-hover shadow-lg">
+                            <div class="w-12 h-12">${icons.request}</div>
+                            <span class="ml-4 font-semibold text-lg">Request Vehicle Clearance</span>
+                        </button>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl transition-all duration-300 transform hover:scale-105 animate-pulse-hover shadow-lg">
+                                <div class="w-12 h-12">${icons.shield}</div>
+                                <span class="mt-3 font-semibold text-lg">Admin Portal</span>
                             </button>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                                    <div class="w-12 h-12">${icons.shield}</div>
-                                    <span class="mt-3 font-semibold text-lg">Admin Login</span>
-                                </button>
-                                <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 text-green-800 dark:text-green-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                                    <div class="w-12 h-12">${icons.users}</div>
-                                    <span class="mt-3 font-semibold text-lg">User Login</span>
-                                </button>
-                            </div>
+                            <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white rounded-xl transition-all duration-300 transform hover:scale-105 animate-pulse-hover shadow-lg">
+                                <div class="w-12 h-12">${icons.users}</div>
+                                <span class="mt-3 font-semibold text-lg">User Dashboard</span>
+                            </button>
                         </div>
                     </div>
                 </div>
-            `;
-        }
+            </div>
+        `;
+    }
 
-        const renderAdminLogin = () => {
-            appRoot.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-                    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
-                        <div class="text-center">
-                            <div class="w-12 h-12 mx-auto text-blue-500">${icons.shield}</div>
-                            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Admin Access</h1>
-                            <p class="text-gray-500 dark:text-gray-400" id="auth-subtitle">Sign in to manage clearances</p>
+    const renderRequestForm = () => {
+        appRoot.innerHTML = `
+            <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
+                <div class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+                    <div class="text-center">
+                        <div class="w-16 h-16 mx-auto text-yellow-500 animate-pulse-hover">${icons.request}</div>
+                        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Request Vehicle Clearance</h1>
+                        <p class="text-gray-500 dark:text-gray-400 mt-2">Submit your vehicle clearance request</p>
+                    </div>
+                    <form id="request-form" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Owner/Driver Name *</label>
+                                <input type="text" name="ownerName" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="John Doe" required />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vehicle Number *</label>
+                                <input type="text" name="vehicleNumber" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="ABC 1234" required />
+                            </div>
                         </div>
-                        <form id="auth-form" class="space-y-6">
-                            <div id="invite-code-wrapper" class="hidden">
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Invite Code</label>
-                                <input type="text" id="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white dark:placeholder-gray-400" placeholder="Enter the secret code" />
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contact Number *</label>
+                                <input type="tel" name="contactNumber" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="+60123456789" required />
                             </div>
                             <div>
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                                <input type="email" id="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white dark:placeholder-gray-400" placeholder="admin@example.com" required />
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vehicle Type *</label>
+                                <select name="vehicleType" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                                    <option value="">Select Vehicle Type</option>
+                                    <option value="car">Car</option>
+                                    <option value="motorcycle">Motorcycle</option>
+                                    <option value="van">Van</option>
+                                    <option value="truck">Truck</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Requested Entry Date *</label>
+                                <input type="date" name="requestedEntryDate" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
                             </div>
                             <div>
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                                <input type="password" id="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white dark:placeholder-gray-400" placeholder="••••••••" required />
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Requested Expiry Date *</label>
+                                <input type="date" name="requestedExpiryDate" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
                             </div>
-                            <button type="submit" id="auth-button" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">Login</button>
-                        </form>
-                        <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination/Location *</label>
+                            <input type="text" name="location" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Building A, Level 2" required />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Purpose of Visit</label>
+                            <textarea name="purpose" rows="3" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Delivery, meeting, maintenance, etc."></textarea>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                            <label for="escortRequired" class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
+                        </div>
+                        <div class="flex justify-between space-x-4 pt-6">
+                            <button type="button" id="back-to-landing" class="flex items-center gap-2 px-6 py-3 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+                                <span class="w-4 h-4">${icons.back}</span> Back
+                            </button>
+                            <button type="submit" class="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105">
+                                <span class="w-4 h-4">${icons.request}</span> Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        
+        // Set default dates
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        
+        document.querySelector('input[name="requestedEntryDate"]').value = tomorrow.toISOString().split('T')[0];
+        document.querySelector('input[name="requestedExpiryDate"]').value = nextWeek.toISOString().split('T')[0];
+    };
+
+    const renderUserLogin = () => {
+        appRoot.innerHTML = `
+            <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
+                <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+                    <div class="text-center">
+                        <div class="w-12 h-12 mx-auto text-green-500">${icons.users}</div>
+                        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">User Dashboard</h1>
+                        <p class="text-gray-500 dark:text-gray-400" id="auth-subtitle">Access your clearances and requests</p>
+                    </div>
+                    <form id="user-auth-form" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                            <input type="email" id="user-email" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="user@example.com" required />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                            <input type="password" id="user-password" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="••••••••" required />
+                        </div>
+                        <button type="submit" id="user-auth-button" class="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 transition-all duration-300 transform hover:scale-105">Login</button>
+                    </form>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            <span id="user-auth-toggle-text">Need an account?</span>
+                            <button id="user-auth-toggle-button" class="font-medium text-green-600 dark:text-green-400 hover:text-green-500 ml-1">Sign Up</button>
+                        </p>
+                        <button id="back-to-landing-user" class="flex items-center gap-2 mx-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                            <span class="w-4 h-4">${icons.back}</span> Back to Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    const renderAdminLogin = () => {
+        appRoot.innerHTML = `
+            <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
+                <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+                    <div class="text-center">
+                        <div class="w-12 h-12 mx-auto text-blue-500">${icons.shield}</div>
+                        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Admin Access</h1>
+                        <p class="text-gray-500 dark:text-gray-400" id="auth-subtitle">Sign in to manage clearances</p>
+                    </div>
+                    <form id="auth-form" class="space-y-6">
+                        <div id="invite-code-wrapper" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Admin Invite Code</label>
+                            <input type="text" id="inviteCode" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter the secret code" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                            <input type="email" id="email" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="admin@example.com" required />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                            <input type="password" id="password" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required />
+                        </div>
+                        <button type="submit" id="auth-button" class="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105">Login</button>
+                    </form>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
                             <span id="auth-toggle-text">Need an admin account?</span>
                             <button id="auth-toggle-button" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 ml-1">Sign Up</button>
                         </p>
+                        <button id="back-to-landing-admin" class="flex items-center gap-2 mx-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                            <span class="w-4 h-4">${icons.back}</span> Back to Home
+                        </button>
                     </div>
                 </div>
-            `;
-        };
+            </div>
+        `;
+    };
 
-        const renderAdminDashboard = (adminUser) => {
-            appRoot.innerHTML = `
-                <header class="bg-white shadow-md sticky top-0 z-40">
-                    <nav class="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <span class="text-blue-500">${icons.shield}</span>
-                            <span class="text-xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</span>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">${adminUser.email}</span>
-                            <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
-                                <span class="w-4 h-4">${icons.logout}</span> Logout
-                            </button>
-                        </div>
-                    </nav>
-                </header>
-                <main id="main-content" class="container mx-auto"></main>
-                <div id="modal-container"></div>
-            `;
-            renderAdminPanel();
-        };
-        
-        const renderAdminPanel = () => {
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `
+    const renderUserDashboard = (user) => {
+        appRoot.innerHTML = `
+            <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40">
+                <nav class="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="text-green-500">${icons.users}</span>
+                        <span class="text-xl font-bold text-gray-800 dark:text-gray-100">User Dashboard</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">${user.email}</span>
+                        <button id="new-request-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg hover:from-yellow-600 hover:to-orange-700 transition-all duration-300">
+                            <span class="w-4 h-4">${icons.plus}</span> New Request
+                        </button>
+                        <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
+                            <span class="w-4 h-4">${icons.logout}</span> Logout
+                        </button>
+                    </div>
+                </nav>
+            </header>
+            <main id="user-dashboard" class="container mx-auto">
                 <div class="p-4 md:p-8 space-y-8">
-                    <div id="request-management-section"></div>
+                    <div id="today-clearances-section"></div>
+                    <div id="my-requests-section"></div>
+                </div>
+            </main>
+            <div id="modal-container"></div>
+        `;
+        renderUserClearanceList();
+        renderMyRequests();
+    };
+
+    const renderUserClearanceList = () => {
+        const section = document.getElementById('today-clearances-section');
+        if (!section) return;
+
+        const todayClearances = clearances.filter(isValidToday);
+
+        section.innerHTML = `
+            <div>
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
                     <div>
-                        <div class="flex justify-between items-center mb-6">
-                            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Manage Clearances</h1>
-                            <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                <span class="w-5 h-5">${icons.plus}</span> Add Clearance
-                            </button>
-                        </div>
-                        <div id="clearance-list" class="space-y-4 md:hidden"></div>
-                        <div class="hidden md:block bg-white rounded-2xl shadow-lg overflow-hidden">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left">
-                                    <thead class="bg-gray-50 dark:bg-gray-700/50">
-                                        <tr>
-                                            <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Owner / Vehicle</th>
-                                            <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Location</th>
-                                            <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Validity</th>
-                                            <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Escort</th>
-                                            <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Notes</th>
-                                            <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="clearances-table-body" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Today's Clearances</h2>
+                        <p class="text-gray-500 dark:text-gray-400">Valid clearances for ${formatDate(new Date())}</p>
                     </div>
                 </div>
-            `;
-            renderRequestManagement();
-            renderClearancesList();
-        };
-
-        const renderClearancesList = () => {
-            const mobileList = document.getElementById('clearance-list');
-            const desktopTableBody = document.getElementById('clearances-table-body');
-            if (!mobileList || !desktopTableBody) return;
-            
-            const sortedClearances = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
-
-            if (sortedClearances.length === 0) {
-                const emptyMessage = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No clearances found. Add one to get started!</div>`;
-                mobileList.innerHTML = emptyMessage;
-                desktopTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-gray-500 dark:text-gray-400">No clearances found.</td></tr>`;
-            } else {
-                mobileList.innerHTML = sortedClearances.map(c => `
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-bold text-lg text-gray-800 dark:text-gray-100">${c.ownerName}</p>
-                                <p class="font-mono text-xl font-bold text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${todayClearances.length > 0 ? todayClearances.map(c => `
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 space-y-4 animate-slide-in hover:shadow-xl transition-shadow duration-300">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Owner/Company</p>
+                                    <p class="font-bold text-lg text-gray-800 dark:text-gray-100">${c.ownerName}</p>
+                                </div>
+                                <div class="w-8 h-8 text-green-500">${icons.check}</div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
-                                <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle Number</p>
+                                <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 pt-4 border-t dark:border-gray-700">
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Location</p>
+                                    <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Escort</p>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${c.escortRequired ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
+                                        ${c.escortRequired ? 'Required' : 'Not Required'}
+                                    </span>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Valid Until</p>
+                                    <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
+                                </div>
+                                ${c.notes ? `<div class="col-span-2"><p class="text-sm text-gray-500 dark:text-gray-400">Notes</p><p class="text-sm text-gray-800 dark:text-gray-200">${c.notes}</p></div>` : ''}
                             </div>
                         </div>
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                            <p><strong class="font-medium text-gray-800 dark:text-gray-200">Location:</strong> ${c.location}</p>
-                            <p><strong class="font-medium text-gray-800 dark:text-gray-200">Validity:</strong> ${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
-                            <p><strong class="font-medium text-gray-800 dark:text-gray-200">Escort:</strong> <span class="${c.escortRequired ? 'text-green-500' : 'text-red-500'}">${c.escortRequired ? 'Required' : 'Not Required'}</span></p>
-                            ${c.notes ? `<p><strong class="font-medium text-gray-800 dark:text-gray-200">Notes:</strong> ${c.notes}</p>` : ''}
+                    `).join('') : `
+                        <div class="col-span-full text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+                            <div class="w-16 h-16 mx-auto text-gray-400 mb-4">${icons.car}</div>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">No Active Clearances</h3>
+                            <p class="text-gray-500 dark:text-gray-400">There are no vehicles with clearance for today.</p>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    };
+
+    const renderMyRequests = () => {
+        const section = document.getElementById('my-requests-section');
+        if (!section) return;
+
+        const sortedRequests = [...myRequests].sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+
+        section.innerHTML = `
+            <div>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <span class="text-blue-500 w-8 h-8">${icons.request}</span>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">My Requests</h2>
+                            <p class="text-gray-500 dark:text-gray-400">Track your clearance requests</p>
                         </div>
                     </div>
-                `).join('');
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        ${myRequests.length} Total
+                    </span>
+                </div>
+                <div class="space-y-4">
+                    ${sortedRequests.length > 0 ? sortedRequests.map(request => `
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 animate-slide-in">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">${request.ownerName}</h3>
+                                    <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${request.vehicleNumber}</p>
+                                </div>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium status-${request.status}">
+                                    ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Contact</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${request.contactNumber}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Vehicle Type</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${request.vehicleType}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Location</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${request.location}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Requested Period</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${formatDate(request.requestedEntryDate)} - ${formatDate(request.requestedExpiryDate)}</p>
+                                </div>
+                            </div>
+                            ${request.purpose ? `
+                                <div class="mt-4 pt-4 border-t dark:border-gray-700">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Purpose</p>
+                                    <p class="text-sm text-gray-800 dark:text-gray-200">${request.purpose}</p>
+                                </div>
+                            ` : ''}
+                            <div class="mt-4 pt-4 border-t dark:border-gray-700 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                                <span>Submitted: ${formatDateTime(request.createdAt)}</span>
+                                ${request.escortRequired ? `<span class="text-green-600 dark:text-green-400">Escort Required</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('') : `
+                        <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+                            <div class="w-16 h-16 mx-auto text-gray-400 mb-4">${icons.request}</div>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">No Requests Yet</h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-4">You haven't submitted any clearance requests.</p>
+                            <button id="new-request-inline" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300">
+                                <span class="w-4 h-4">${icons.plus}</span> Create First Request
+                            </button>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    };
 
-                desktopTableBody.innerHTML = sortedClearances.map(c => `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td class="p-4">
-                            <p class="font-bold text-gray-900 dark:text-gray-100">${c.ownerName}</p>
-                            <p class="font-mono text-lg font-bold text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
-                        </td>
-                        <td class="p-4 text-gray-700 dark:text-gray-300">${c.location}</td>
-                        <td class="p-4 text-gray-700 dark:text-gray-300">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</td>
-                        <td class="p-4">${c.escortRequired ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Required</span>` : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Not Required</span>`}</td>
-                        <td class="p-4 text-gray-700 dark:text-gray-300 text-sm">${c.notes || ''}</td>
-                        <td class="p-4 flex gap-2">
-                            <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
-                            <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
-                        </td>
-                    </tr>
-                `).join('');
+    const renderAdminDashboard = (adminUser) => {
+        appRoot.innerHTML = `
+            <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40">
+                <nav class="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="text-blue-500">${icons.shield}</span>
+                        <span class="text-xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">${adminUser.email}</span>
+                        <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
+                            <span class="w-4 h-4">${icons.logout}</span> Logout
+                        </button>
+                    </div>
+                </nav>
+            </header>
+            <main id="main-content" class="container mx-auto">
+                <div class="p-4 md:p-8 space-y-8">
+                    <div id="stats-section"></div>
+                    <div id="request-management-section"></div>
+                    <div id="clearance-management-section"></div>
+                </div>
+            </main>
+            <div id="modal-container"></div>
+        `;
+        renderAdminStats();
+        renderRequestManagement();
+        renderClearanceManagement();
+    };
+
+    const renderAdminStats = () => {
+        const section = document.getElementById('stats-section');
+        if (!section) return;
+
+        const totalClearances = clearances.length;
+        const activeClearances = clearances.filter(isValidToday).length;
+        const pendingRequests = clearanceRequests.length;
+        const totalRequests = clearanceRequests.length + myRequests.filter(r => r.status !== 'pending').length;
+
+        section.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white animate-slide-in">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100">Total Clearances</p>
+                            <p class="text-3xl font-bold">${totalClearances}</p>
+                        </div>
+                        <div class="w-12 h-12 opacity-80">${icons.car}</div>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white animate-slide-in">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-green-100">Active Today</p>
+                            <p class="text-3xl font-bold">${activeClearances}</p>
+                        </div>
+                        <div class="w-12 h-12 opacity-80">${icons.check}</div>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl p-6 text-white animate-slide-in">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-yellow-100">Pending Requests</p>
+                            <p class="text-3xl font-bold">${pendingRequests}</p>
+                        </div>
+                        <div class="w-12 h-12 opacity-80">${icons.clock}</div>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white animate-slide-in">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-purple-100">Total Requests</p>
+                            <p class="text-3xl font-bold">${totalRequests}</p>
+                        </div>
+                        <div class="w-12 h-12 opacity-80">${icons.request}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    const renderRequestManagement = () => {
+        const section = document.getElementById('request-management-section');
+        if (!section) return;
+
+        const sortedRequests = [...clearanceRequests].sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+
+        section.innerHTML = `
+            <div>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <span class="text-yellow-500 w-8 h-8">${icons.bell}</span>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Pending Requests</h2>
+                            <p class="text-gray-500 dark:text-gray-400">Review and approve clearance requests</p>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                        ${clearanceRequests.length} Pending
+                    </span>
+                </div>
+                <div class="space-y-4">
+                    ${sortedRequests.length > 0 ? sortedRequests.map(request => `
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 animate-slide-in">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">${request.ownerName}</h3>
+                                    <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${request.vehicleNumber}</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="approve-request-btn px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2" data-id="${request.id}">
+                                        <span class="w-4 h-4">${icons.check}</span> Approve
+                                    </button>
+                                    <button class="reject-request-btn px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2" data-id="${request.id}">
+                                        <span class="w-4 h-4">${icons.x}</span> Reject
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Contact</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${request.contactNumber}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Vehicle Type</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${request.vehicleType}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Location</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${request.location}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Requested Period</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${formatDate(request.requestedEntryDate)} - ${formatDate(request.requestedExpiryDate)}</p>
+                                </div>
+                            </div>
+                            ${request.purpose ? `
+                                <div class="mt-4 pt-4 border-t dark:border-gray-700">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Purpose</p>
+                                    <p class="text-sm text-gray-800 dark:text-gray-200">${request.purpose}</p>
+                                </div>
+                            ` : ''}
+                            <div class="mt-4 pt-4 border-t dark:border-gray-700 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                                <span>Submitted: ${formatDateTime(request.createdAt)}</span>
+                                ${request.escortRequired ? `<span class="text-green-600 dark:text-green-400">Escort Required</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('') : `
+                        <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                            <div class="w-16 h-16 mx-auto text-gray-400 mb-4">${icons.bell}</div>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">No Pending Requests</h3>
+                            <p class="text-gray-500 dark:text-gray-400">All requests have been processed.</p>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    };
+
+    const renderClearanceManagement = () => {
+        const section = document.getElementById('clearance-management-section');
+        if (!section) return;
+
+        const sortedClearances = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
+
+        section.innerHTML = `
+            <div>
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-4">
+                        <span class="text-blue-500 w-8 h-8">${icons.dashboard}</span>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Manage Clearances</h2>
+                            <p class="text-gray-500 dark:text-gray-400">View and manage all vehicle clearances</p>
+                        </div>
+                    </div>
+                    <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300">
+                        <span class="w-5 h-5">${icons.plus}</span> Add Clearance
+                    </button>
+                </div>
+                
+                <!-- Mobile View -->
+                <div class="md:hidden space-y-4">
+                    ${sortedClearances.length > 0 ? sortedClearances.map(c => `
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold text-lg text-gray-800 dark:text-gray-100">${c.ownerName}</p>
+                                    <p class="font-mono text-xl font-bold text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
+                                    <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                                <p><strong class="font-medium text-gray-800 dark:text-gray-200">Location:</strong> ${c.location}</p>
+                                <p><strong class="font-medium text-gray-800 dark:text-gray-200">Validity:</strong> ${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
+                                <p><strong class="font-medium text-gray-800 dark:text-gray-200">Escort:</strong> <span class="${c.escortRequired ? 'text-green-500' : 'text-red-500'}">${c.escortRequired ? 'Required' : 'Not Required'}</span></p>
+                                ${c.notes ? `<p><strong class="font-medium text-gray-800 dark:text-gray-200">Notes:</strong> ${c.notes}</p>` : ''}
+                            </div>
+                        </div>
+                    `).join('') : `
+                        <div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No clearances found. Add one to get started!</div>
+                    `}
+                </div>
+
+                <!-- Desktop View -->
+                <div class="hidden md:block bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                <tr>
+                                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Owner / Vehicle</th>
+                                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Location</th>
+                                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Validity</th>
+                                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Escort</th>
+                                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Notes</th>
+                                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                ${sortedClearances.length > 0 ? sortedClearances.map(c => `
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                        <td class="p-4">
+                                            <p class="font-bold text-gray-900 dark:text-gray-100">${c.ownerName}</p>
+                                            <p class="font-mono text-lg font-bold text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
+                                        </td>
+                                        <td class="p-4 text-gray-700 dark:text-gray-300">${c.location}</td>
+                                        <td class="p-4 text-gray-700 dark:text-gray-300">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</td>
+                                        <td class="p-4">${c.escortRequired ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Required</span>` : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Not Required</span>`}</td>
+                                        <td class="p-4 text-gray-700 dark:text-gray-300 text-sm max-w-xs truncate">${c.notes || '-'}</td>
+                                        <td class="p-4 flex gap-2">
+                                            <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
+                                            <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
+                                        </td>
+                                    </tr>
+                                `).join('') : `
+                                    <tr><td colspan="6" class="text-center p-8 text-gray-500 dark:text-gray-400">No clearances found.</td></tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    const renderModal = (clearanceToEdit = null) => {
+        const modalContainer = document.getElementById('modal-container');
+        const toISODate = (date) => date ? new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
+        modalContainer.innerHTML = `
+            <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
+                    <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">${icons.x}</button>
+                    <form id="clearance-form" class="space-y-4">
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${clearanceToEdit ? 'Edit' : 'Add'} Clearance</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Owner's Name</label><input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                            <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vehicle Number</label><input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Entry Date</label><input type="date" name="entryDate" value="${toISODate(clearanceToEdit?.entryDate?.toDate())}" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                            <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Expiry Date</label><input type="date" name="expiryDate" value="${toISODate(clearanceToEdit?.expiryDate?.toDate())}" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                        </div>
+                        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label><input name="location" value="${clearanceToEdit?.location || ''}" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label><textarea name="notes" rows="3" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${clearanceToEdit?.notes || ''}</textarea></div>
+                        <div class="flex items-center"><input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${clearanceToEdit?.escortRequired ? 'checked' : ''} /><label for="escortRequired" class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label></div>
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+                            <button type="submit" class="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700">${clearanceToEdit ? 'Update' : 'Save'}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>`;
+    };
+    
+    // --- Authentication Functions ---
+    const handleAdminAuth = async (email, password, isSignUp, inviteCode) => {
+        try {
+            if (isSignUp) {
+                if (inviteCode !== ADMIN_INVITE_CODE) {
+                    showNotification("Invalid admin invite code", "error");
+                    return;
+                }
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, "admins", userCredential.user.uid), {
+                    email: email,
+                    createdAt: Timestamp.now()
+                });
+                showNotification("Admin account created successfully!", "success");
+            } else {
+                await signInWithEmailAndPassword(auth, email, password);
+                showNotification("Welcome back, Admin!", "success");
             }
-        };
+        } catch (error) {
+            console.error("Admin auth error:", error);
+            showNotification(error.message, "error");
+        }
+    };
 
-        const renderUserPanel = () => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+    const handleUserAuth = async (email, password, isSignUp) => {
+        try {
+            if (isSignUp) {
+                await createUserWithEmailAndPassword(auth, email, password);
+                showNotification("Account created successfully!", "success");
+            } else {
+                await signInWithEmailAndPassword(auth, email, password);
+                showNotification("Welcome back!", "success");
+            }
+        } catch (error) {
+            console.error("User auth error:", error);
+            showNotification(error.message, "error");
+        }
+    };
 
-            const dailyClearances = clearances.filter(c => {
-                const entryDate = c.entryDate.toDate();
-                entryDate.setHours(0, 0, 0, 0);
-                const expiryDate = c.expiryDate.toDate();
-                expiryDate.setHours(23, 59, 59, 999);
-                return today >= entryDate && today <= expiryDate;
+    const handleRequestSubmission = async (formData) => {
+        try {
+            await addDoc(collection(db, "clearanceRequests"), {
+                ...formData,
+                requestedEntryDate: Timestamp.fromDate(new Date(formData.requestedEntryDate)),
+                requestedExpiryDate: Timestamp.fromDate(new Date(formData.requestedExpiryDate)),
+                status: "pending",
+                createdAt: Timestamp.now(),
+                requesterId: currentUser?.uid || null
+            });
+            showNotification("Request submitted successfully! An admin will review it shortly.", "success");
+            renderLandingPage();
+        } catch (error) {
+            console.error("Request submission error:", error);
+            showNotification("Failed to submit request. Please try again.", "error");
+        }
+    };
+
+    const handleRequestApproval = async (requestId) => {
+        try {
+            const request = clearanceRequests.find(r => r.id === requestId);
+            if (!request) return;
+
+            // Create clearance
+            await addDoc(collection(db, "vehicleClearances"), {
+                ownerName: request.ownerName,
+                vehicleNumber: request.vehicleNumber,
+                location: request.location,
+                entryDate: request.requestedEntryDate,
+                expiryDate: request.requestedExpiryDate,
+                escortRequired: request.escortRequired || false,
+                notes: request.purpose || "",
+                createdAt: Timestamp.now(),
+                approvedBy: currentUser.uid
             });
 
-            const clearanceListHTML = dailyClearances.length > 0 ? dailyClearances.map(c => `
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 space-y-4">
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Owner / Company</p>
-                        <p class="font-bold text-xl text-gray-800 dark:text-gray-100">${c.ownerName}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle No.</p>
-                        <p class="font-mono text-2xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 pt-4 border-t dark:border-gray-700">
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Location</p>
-                            <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Escort</p>
-                            <p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
-                        </div>
-                        <div class="col-span-2">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Valid Until</p>
-                            <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
-                        </div>
-                        ${c.notes ? `<div class="col-span-2"><p class="text-sm text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200">${c.notes}</p></div>` : ''}
-                    </div>
-                </div>`).join('') : `
-                <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md"><div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div><h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">No Clearances for Today</h3><p class="mt-1 text-gray-500 dark:text-gray-400">There are no vehicles with clearance for today.</p></div>`;
+            // Update request status
+            await updateDoc(doc(db, "clearanceRequests", requestId), {
+                status: "approved",
+                approvedAt: Timestamp.now(),
+                approvedBy: currentUser.uid
+            });
 
-            appRoot.innerHTML = `
-                <main class="container mx-auto">
-                    <div class="p-4 md:p-8">
-                        <div class="flex justify-between items-center mb-6">
-                            <div class="flex items-center gap-4">
-                                <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
-                                <div><h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Daily Vehicle Clearances</h1><p class="text-gray-500 dark:text-gray-400">Showing vehicles cleared for today: ${formatDate(today)}</p></div>
-                            </div>
-                            <button id="back-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-                                <span class="w-4 h-4">${icons.back}</span> Change Role
-                            </button>
-                        </div>
-                        <div class="space-y-4">${clearanceListHTML}</div>
-                    </div>
-                </main>`;
-        };
+            showNotification("Request approved and clearance created!", "success");
+        } catch (error) {
+            console.error("Approval error:", error);
+            showNotification("Failed to approve request", "error");
+        }
+    };
 
-        const renderModal = (clearanceToEdit = null) => {
-            const modalContainer = document.getElementById('modal-container');
-            const toISODate = (date) => date ? new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
-            modalContainer.innerHTML = `
-                <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
-                        <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">${icons.x}</button>
-                        <form id="clearance-form" class="space-y-4">
-                            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${clearanceToEdit ? 'Edit' : 'Add'} Clearance</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label><input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label><input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label><input type="date" name="entryDate" value="${toISODate(clearanceToEdit?.entryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label><input type="date" name="expiryDate" value="${toISODate(clearanceToEdit?.expiryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                            </div>
-                            <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label><input name="location" value="${clearanceToEdit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                            <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label><textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${clearanceToEdit?.notes || ''}</textarea></div>
-                            <div class="flex items-center"><input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5 rounded text-blue-600 focus:ring-blue-500" ${clearanceToEdit?.escortRequired ? 'checked' : ''} /><label for="escortRequired" class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label></div>
-                            <div class="flex justify-end space-x-3 pt-4">
-                                <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
-                                <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${clearanceToEdit ? 'Update' : 'Save'}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>`;
-        };
-        
-        // --- Main App Router ---
-        onAuthStateChanged(auth, async (user) => {
-            if (unsubscribeFirestore) unsubscribeFirestore();
-            if (unsubscribeRequests) unsubscribeRequests();
-            if (unsubscribeMyRequests) unsubscribeMyRequests();
-            appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
+    const handleRequestRejection = async (requestId) => {
+        try {
+            await updateDoc(doc(db, "clearanceRequests", requestId), {
+                status: "rejected",
+                rejectedAt: Timestamp.now(),
+                rejectedBy: currentUser.uid
+            });
+            showNotification("Request rejected", "warning");
+        } catch (error) {
+            console.error("Rejection error:", error);
+            showNotification("Failed to reject request", "error");
+        }
+    };
 
-            if (user) {
-                const adminDoc = await getDoc(doc(db, "admins", user.uid));
-                if (adminDoc.exists()) {
-                    // Admin User
-                    unsubscribeFirestore = onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
-                        clearances = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        if(document.getElementById('main-content')) renderClearancesList();
-                    });
-                    unsubscribeRequests = onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending")), (snap) => {
-                        clearanceRequests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        if(document.getElementById('main-content')) renderRequestManagement();
-                    });
-                    renderAdminDashboard(user);
-                } else {
-                    // Standard User
-                    unsubscribeFirestore = onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
-                        clearances = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        if(document.getElementById('user-dashboard')) renderUserClearanceList();
-                    });
-                    unsubscribeMyRequests = onSnapshot(query(collection(db, "clearanceRequests"), where("requesterId", "==", user.uid)), (snap) => {
-                        myRequests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        if(document.getElementById('user-dashboard')) renderMyRequests();
-                    });
-                    renderUserDashboard(user);
-                }
+    const handleClearanceSubmission = async (formData, editingId = null) => {
+        try {
+            const clearanceData = {
+                ownerName: formData.ownerName,
+                vehicleNumber: formData.vehicleNumber,
+                location: formData.location,
+                entryDate: Timestamp.fromDate(new Date(formData.entryDate)),
+                expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+                escortRequired: formData.escortRequired,
+                notes: formData.notes,
+                updatedAt: Timestamp.now()
+            };
+
+            if (editingId) {
+                await updateDoc(doc(db, "vehicleClearances", editingId), clearanceData);
+                showNotification("Clearance updated successfully!", "success");
             } else {
-                renderLandingPage();
+                clearanceData.createdAt = Timestamp.now();
+                clearanceData.createdBy = currentUser.uid;
+                await addDoc(collection(db, "vehicleClearances"), clearanceData);
+                showNotification("Clearance added successfully!", "success");
             }
-        });
+
+            document.getElementById('modal-container').innerHTML = '';
+        } catch (error) {
+            console.error("Clearance submission error:", error);
+            showNotification("Failed to save clearance", "error");
+        }
+    };
+
+    const handleClearanceDeletion = async (clearanceId) => {
+        if (confirm("Are you sure you want to delete this clearance?")) {
+            try {
+                await deleteDoc(doc(db, "vehicleClearances", clearanceId));
+                showNotification("Clearance deleted successfully!", "success");
+            } catch (error) {
+                console.error("Deletion error:", error);
+                showNotification("Failed to delete clearance", "error");
+            }
+        }
+    };
+
+    // --- Main App Router ---
+    onAuthStateChanged(auth, async (user) => {
+        currentUser = user;
         
-        // --- Event Listeners ---
-        document.body.addEventListener('click', async (e) => {
-            const target = e.target.closest('button');
-            if (!target) return;
+        if (unsubscribeFirestore) unsubscribeFirestore();
+        if (unsubscribeRequests) unsubscribeRequests();
+        if (unsubscribeMyRequests) unsubscribeMyRequests();
+        
+        appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
 
-            switch(target.id) {
-                case 'admin-btn': renderAdminLogin(); break;
-                case 'user-btn': renderUserLogin(); break;
-                case 'request-btn': renderRequestForm(); break;
-                case 'logout-button':
-                case 'back-btn':
-                    signOut(auth);
-                    break;
-                case 'add-clearance-btn': renderModal(); break;
-                case 'close-modal-btn':
-                case 'cancel-modal-btn':
-                    const modal = document.getElementById('modal-container');
-                    if (modal) modal.innerHTML = '';
-                    break;
+        if (user) {
+            const adminDoc = await getDoc(doc(db, "admins", user.uid));
+            if (adminDoc.exists()) {
+                // Admin User
+                unsubscribeFirestore = onSnapshot(query(collection(db, "vehicleClearances"), orderBy("entryDate", "desc")), (snap) => {
+                    clearances = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if(document.getElementById('main-content')) {
+                        renderAdminStats();
+                        renderClearanceManagement();
+                    }
+                });
+                unsubscribeRequests = onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending"), orderBy("createdAt", "desc")), (snap) => {
+                    clearanceRequests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if(document.getElementById('main-content')) {
+                        renderAdminStats();
+                        renderRequestManagement();
+                    }
+                });
+                renderAdminDashboard(user);
+            } else {
+                // Standard User
+                unsubscribeFirestore = onSnapshot(query(collection(db, "vehicleClearances"), orderBy("entryDate", "desc")), (snap) => {
+                    clearances = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if(document.getElementById('user-dashboard')) renderUserClearanceList();
+                });
+                unsubscribeMyRequests = onSnapshot(query(collection(db, "clearanceRequests"), where("requesterId", "==", user.uid), orderBy("createdAt", "desc")), (snap) => {
+                    myRequests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if(document.getElementById('user-dashboard')) renderMyRequests();
+                });
+                renderUserDashboard(user);
             }
-        });
+        } else {
+            renderLandingPage();
+        }
+    });
+    
+    // --- Event Listeners ---
+    document.body.addEventListener('click', async (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
 
-        document.body.addEventListener('submit', async (e) => {
-            if (e.target.id === 'auth-form') {
-                e.preventDefault();
-                // Auth form submission logic...
-            }
-            if (e.target.id === 'clearance-form') {
-                 e.preventDefault();
-                // Clearance form submission logic...
-            }
-        });
-    </script>
+        switch(target.id) {
+            case 'admin-btn': renderAdminLogin(); break;
+            case 'user-btn': renderUserLogin(); break;
+            case 'request-btn': renderRequestForm(); break;
+            case 'back-to-landing':
+            case 'back-to-landing-admin':
+            case 'back-to-landing-user':
+                renderLandingPage(); 
+                break;
+            case 'logout-button':
+                await signOut(auth);
+                showNotification("Logged out successfully!", "success");
+                break;
+            case 'add-clearance-btn': 
+                renderModal(); 
+                break;
+            case 'new-request-btn':
+            case 'new-request-inline':
+                renderRequestForm();
+                break;
+            case 'close-modal-btn':
+            case 'cancel-modal-btn':
+                document.getElementById('modal-container').innerHTML = '';
+                break;
+            case 'auth-toggle-button':
+                const isSignUp = target.textContent.includes('Sign Up');
+                document.getElementById('auth-subtitle').textContent = isSignUp ? 'Create a new admin account' : 'Sign in to manage clearances';
+                document.getElementById('auth-button').textContent = isSignUp ? 'Sign Up' : 'Login';
+                document.getElementById('auth-toggle-text').textContent = isSignUp ? 'Already have an account?' : 'Need an admin account?';
+                target.textContent = isSignUp ? 'Login' : 'Sign Up';
+                document.getElementById('invite-code-wrapper').classList.toggle('hidden', !isSignUp);
+                break;
+            case 'user-auth-toggle-button':
+                const isUserSignUp = target.textContent.includes('Sign Up');
+                document.getElementById('auth-subtitle').textContent = isUserSignUp ? 'Create a new account' : 'Access your clearances and requests';
+                document.getElementById('user-auth-button').textContent = isUserSignUp ? 'Sign Up' : 'Login';
+                document.getElementById('user-auth-toggle-text').textContent = isUserSignUp ? 'Already have an account?' : 'Need an account?';
+                target.textContent = isUserSignUp ? 'Login' : 'Sign Up';
+                break;
+        }
+
+        if (target.classList.contains('approve-request-btn')) {
+            await handleRequestApproval(target.dataset.id);
+        }
+        if (target.classList.contains('reject-request-btn')) {
+            await handleRequestRejection(target.dataset.id);
+        }
+        if (target.classList.contains('edit-btn')) {
+            const clearance = clearances.find(c => c.id === target.dataset.id);
+            renderModal(clearance);
+        }
+        if (target.classList.contains('delete-btn')) {
+            await handleClearanceDeletion(target.dataset.id);
+        }
+    });
+
+    document.body.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (e.target.id === 'auth-form') {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const inviteCode = document.getElementById('inviteCode').value;
+            const isSignUp = document.getElementById('auth-button').textContent === 'Sign Up';
+            await handleAdminAuth(email, password, isSignUp, inviteCode);
+        }
+        
+        if (e.target.id === 'user-auth-form') {
+            const email = document.getElementById('user-email').value;
+            const password = document.getElementById('user-password').value;
+            const isSignUp = document.getElementById('user-auth-button').textContent === 'Sign Up';
+            await handleUserAuth(email, password, isSignUp);
+        }
+        
+        if (e.target.id === 'request-form') {
+            const formData = new FormData(e.target);
+            const requestData = {
+                ownerName: formData.get('ownerName'),
+                vehicleNumber: formData.get('vehicleNumber'),
+                contactNumber: formData.get('contactNumber'),
+                vehicleType: formData.get('vehicleType'),
+                requestedEntryDate: formData.get('requestedEntryDate'),
+                requestedExpiryDate: formData.get('requestedExpiryDate'),
+                location: formData.get('location'),
+                purpose: formData.get('purpose'),
+                escortRequired: formData.has('escortRequired')
+            };
+            await handleRequestSubmission(requestData);
+        }
+        
+        if (e.target.id === 'clearance-form') {
+            const formData = new FormData(e.target);
+            const clearanceData = {
+                ownerName: formData.get('ownerName'),
+                vehicleNumber: formData.get('vehicleNumber'),
+                entryDate: formData.get('entryDate'),
+                expiryDate: formData.get('expiryDate'),
+                location: formData.get('location'),
+                notes: formData.get('notes'),
+                escortRequired: formData.has('escortRequired')
+            };
+            
+            // Check if we're editing (look for existing clearance in modal)
+            const editingId = document.querySelector('#clearance-form').dataset.editingId;
+            await handleClearanceSubmission(clearanceData, editingId);
+        }
+    });
+
+    // Modal backdrop click to close
+    document.body.addEventListener('click', (e) => {
+        if (e.target.id === 'modal-backdrop') {
+            document.getElementById('modal-container').innerHTML = '';
+        }
+    });
+
+</script>
+```
+
 </body>
 </html>
-
