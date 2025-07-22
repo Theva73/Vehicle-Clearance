@@ -67,8 +67,7 @@
             onSnapshot, 
             query, 
             Timestamp,
-            getDoc,
-            getDocs
+            getDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
@@ -211,18 +210,21 @@
                     if (isLogin) {
                         await signInWithEmailAndPassword(auth, email, password);
                     } else {
-                        const adminsRef = collection(db, "admins");
-                        const adminSnapshot = await getDocs(adminsRef);
-                        if (!adminSnapshot.empty) {
-                           throw new Error("An admin account already exists.");
-                        }
+                        // Simplified Logic: Attempt to create user and admin doc.
+                        // The security rule will handle the "only one admin" check.
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                         await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
                         showNotification('Admin account created! Please log in.', 'success');
                         authToggleButton.click();
                     }
                 } catch (error) {
-                    showNotification(error.message, 'error');
+                    if (error.code === 'auth/email-already-in-use') {
+                        showNotification('This email is already in use.', 'error');
+                    } else if (error.code === 'permission-denied') {
+                         showNotification('An admin account already exists.', 'error');
+                    } else {
+                        showNotification(error.message, 'error');
+                    }
                 } finally {
                     authButton.disabled = false;
                     authButton.textContent = isLogin ? 'Login' : 'Sign Up';
