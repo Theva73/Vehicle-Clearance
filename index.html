@@ -1,491 +1,504 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { initializeApp } from 'firebase/app';
-import { 
-    getAuth, 
-    onAuthStateChanged, 
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword, 
-    signOut 
-} from 'firebase/auth';
-import { 
-    getFirestore, 
-    collection, 
-    doc, 
-    addDoc, 
-    setDoc, 
-    deleteDoc, 
-    onSnapshot, 
-    query, 
-    where, 
-    Timestamp,
-    getDoc
-} from 'firebase/firestore';
-import { CheckCircle, XCircle, PlusCircle, LogIn, LogOut, ShieldCheck, User, Car, Calendar, MapPin, Shield, Edit, Trash2, Sun } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Clearance System</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-// --- Firebase Configuration ---
-// IMPORTANT: Replace with your actual Firebase project configuration.
-const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-const firebaseConfig = JSON.parse(firebaseConfigString);
-
-// --- Initialize Firebase ---
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// --- Helper Components ---
-
-const Modal = ({ children, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in-up">
-            <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-                <XCircle size={24} />
-            </button>
-            {children}
-        </div>
-    </div>
-);
-
-const LoadingSpinner = () => (
-    <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-    </div>
-);
-
-const Notification = ({ message, type, onDismiss }) => {
-    if (!message) return null;
-    const baseClasses = "fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white flex items-center animate-fade-in-up";
-    const typeClasses = {
-        success: "bg-green-500",
-        error: "bg-red-500",
-    };
-    const Icon = type === 'success' ? CheckCircle : XCircle;
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            onDismiss();
-        }, 5000);
-        return () => clearTimeout(timer);
-    }, [onDismiss]);
-
-    return (
-        <div className={`${baseClasses} ${typeClasses[type]}`}>
-            <Icon className="mr-3" size={24} />
-            <span>{message}</span>
-        </div>
-    );
-};
-
-
-// --- Main App Components ---
-
-const AuthScreen = ({ setNotification }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLogin, setIsLogin] = useState(true);
-    const [loading, setLoading] = useState(false);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            if (isLogin) {
-                await signInWithEmailAndPassword(auth, email, password);
-                setNotification({ type: 'success', message: 'Logged in successfully!' });
-            } else {
-                await createUserWithEmailAndPassword(auth, email, password);
-                setNotification({ type: 'success', message: 'Account created! Please log in.' });
-                setIsLogin(true); // Switch to login view after sign up
-            }
-        } catch (error) {
-            console.error("Authentication error:", error);
-            setNotification({ type: 'error', message: error.message });
-        } finally {
-            setLoading(false);
+    <style>
+        /* Custom styles and animations */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-    };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6">
-                <div className="text-center">
-                    <Car size={48} className="mx-auto text-blue-500" />
-                    <h1 className="text-3xl font-bold text-gray-800 dark:text-white mt-4">Vehicle Clearance</h1>
-                    <p className="text-gray-500 dark:text-gray-400">{isLogin ? 'Sign in to your account' : 'Create a new account'}</p>
-                </div>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="you@example.com"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="••••••••"
-                            required
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
-                    >
-                        {loading ? 'Processing...' : (isLogin ? 'Login' : 'Sign Up')}
-                    </button>
-                </form>
-                <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                    {isLogin ? "Don't have an account?" : "Already have an account?"}
-                    <button onClick={() => setIsLogin(!isLogin)} className="font-medium text-blue-600 hover:text-blue-500 ml-1">
-                        {isLogin ? 'Sign Up' : 'Login'}
-                    </button>
-                </p>
-            </div>
-        </div>
-    );
-};
-
-const ClearanceForm = ({ onSave, onCancel, clearance, setNotification }) => {
-    const [formData, setFormData] = useState({
-        ownerName: '',
-        vehicleNumber: '',
-        entryDate: '',
-        expiryDate: '',
-        location: '',
-        escortRequired: false,
-        notes: ''
-    });
-
-    useEffect(() => {
-        if (clearance) {
-            setFormData({
-                ownerName: clearance.ownerName,
-                vehicleNumber: clearance.vehicleNumber,
-                entryDate: clearance.entryDate.toDate().toISOString().split('T')[0],
-                expiryDate: clearance.expiryDate.toDate().toISOString().split('T')[0],
-                location: clearance.location,
-                escortRequired: clearance.escortRequired,
-                notes: clearance.notes,
-            });
+        /* Simple fade-in animation for modals and notifications */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-    }, [clearance]);
-
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (new Date(formData.expiryDate) < new Date(formData.entryDate)) {
-            setNotification({ type: 'error', message: 'Expiry date cannot be before entry date.' });
-            return;
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
         }
-        
-        const dataToSave = {
-            ...formData,
-            entryDate: Timestamp.fromDate(new Date(formData.entryDate)),
-            expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+
+        /* Basic dark mode setup */
+        .dark .bg-gray-100 { background-color: #111827; }
+        .dark .bg-white { background-color: #1f2937; }
+        .dark .bg-gray-50 { background-color: #374151; }
+        .dark .text-gray-900 { color: #f9fafb; }
+        .dark .text-gray-800 { color: #f3f4f6; }
+        .dark .text-gray-700 { color: #d1d5db; }
+        .dark .text-gray-600 { color: #9ca3af; }
+        .dark .text-gray-500 { color: #6b7280; }
+        .dark .border-gray-200 { border-color: #374151; }
+        .dark .border-gray-300 { border-color: #4b5563; }
+        .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -2px rgba(0,0,0,0.25); }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Main container for the app -->
+    <div id="app-root"></div>
+
+    <!-- Firebase and App Logic -->
+    <script type="module">
+        // --- Firebase Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            addDoc, 
+            setDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            query, 
+            Timestamp,
+            getDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Configuration ---
+        // This will be automatically populated in the execution environment.
+        // When deploying manually, replace {} with your actual Firebase config object.
+        const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        const firebaseConfig = JSON.parse(firebaseConfigString);
+
+        // --- Initialize Firebase ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- App State ---
+        let currentUser = null;
+        let isAdmin = false;
+        let clearances = [];
+        let unsubscribeFirestore = null;
+
+        // --- DOM Elements ---
+        const appRoot = document.getElementById('app-root');
+
+        // --- SVG Icons ---
+        const icons = {
+            car: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-1.5"/><path d="M20 10h-5.41l-1.42-2.84a1 1 0 0 0-.84-.55H10a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"/><path d="M14 16.5L18 12l-2-4H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><circle cx="7" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>`,
+            logout: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+            plus: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+            edit: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
+            trash: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+            check: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+            x: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+            shield: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+            user: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+            sun: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
         };
 
-        onSave(dataToSave);
-    };
+        // --- UI Rendering Functions ---
 
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{clearance ? 'Edit' : 'Add'} Vehicle Clearance</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input name="ownerName" value={formData.ownerName} onChange={handleChange} placeholder="Owner's Name / Company" className="p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" required />
-                <input name="vehicleNumber" value={formData.vehicleNumber} onChange={handleChange} placeholder="Vehicle Number" className="p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" required />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label className="text-sm text-gray-500 dark:text-gray-400">Entry Date</label>
-                    <input type="date" name="entryDate" value={formData.entryDate} onChange={handleChange} className="w-full p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" required />
+        const showNotification = (message, type = 'success') => {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            notification.className = `fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white flex items-center animate-fade-in ${bgColor}`;
+            notification.innerHTML = `
+                <span class="mr-3">${type === 'success' ? icons.check : icons.x}</span>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        };
+
+        const renderAuthScreen = () => {
+            appRoot.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+                    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+                        <div class="text-center">
+                            <div class="w-12 h-12 mx-auto text-blue-500">${icons.car}</div>
+                            <h1 class="text-3xl font-bold text-gray-800 mt-4">Vehicle Clearance</h1>
+                            <p class="text-gray-500" id="auth-subtitle">Sign in to your account</p>
+                        </div>
+                        <form id="auth-form" class="space-y-6">
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Email</label>
+                                <input type="email" id="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="you@example.com" required />
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Password</label>
+                                <input type="password" id="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="••••••••" required />
+                            </div>
+                            <button type="submit" id="auth-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300">
+                                Login
+                            </button>
+                        </form>
+                        <p class="text-center text-sm text-gray-500">
+                            <span id="auth-toggle-text">Don't have an account?</span>
+                            <button id="auth-toggle-button" class="font-medium text-blue-600 hover:text-blue-500 ml-1">Sign Up</button>
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <label className="text-sm text-gray-500 dark:text-gray-400">Expiry Date</label>
-                    <input type="date" name="expiryDate" value={formData.expiryDate} onChange={handleChange} className="w-full p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" required />
-                </div>
-            </div>
+            `;
 
-            <input name="location" value={formData.location} onChange={handleChange} placeholder="Location" className="w-full p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" required />
-            
-            <textarea name="notes" value={formData.notes} onChange={handleChange} placeholder="Notes" rows="3" className="w-full p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"></textarea>
-            
-            <div className="flex items-center">
-                <input type="checkbox" id="escortRequired" name="escortRequired" checked={formData.escortRequired} onChange={handleChange} className="h-5 w-5 text-blue-600 rounded" />
-                <label htmlFor="escortRequired" className="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
-            </div>
+            let isLogin = true;
+            const authForm = document.getElementById('auth-form');
+            const authButton = document.getElementById('auth-button');
+            const authSubtitle = document.getElementById('auth-subtitle');
+            const authToggleText = document.getElementById('auth-toggle-text');
+            const authToggleButton = document.getElementById('auth-toggle-button');
 
-            <div className="flex justify-end space-x-3 pt-4">
-                <button type="button" onClick={onCancel} className="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300">Cancel</button>
-                <button type="submit" className="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">{clearance ? 'Update' : 'Save'}</button>
-            </div>
-        </form>
-    );
-};
+            authToggleButton.addEventListener('click', () => {
+                isLogin = !isLogin;
+                authSubtitle.textContent = isLogin ? 'Sign in to your account' : 'Create a new account';
+                authButton.textContent = isLogin ? 'Login' : 'Sign Up';
+                authToggleText.textContent = isLogin ? "Don't have an account?" : "Already have an account?";
+                authToggleButton.textContent = isLogin ? 'Sign Up' : 'Login';
+            });
 
-const AdminPanel = ({ clearances, setNotification }) => {
-    const [showModal, setShowModal] = useState(false);
-    const [editingClearance, setEditingClearance] = useState(null);
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                authButton.disabled = true;
+                authButton.textContent = 'Processing...';
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
 
-    const handleSave = async (data) => {
-        try {
-            if (editingClearance) {
-                await setDoc(doc(db, "vehicleClearances", editingClearance.id), data);
-                setNotification({ type: 'success', message: 'Clearance updated successfully!' });
+                try {
+                    if (isLogin) {
+                        await signInWithEmailAndPassword(auth, email, password);
+                        showNotification('Logged in successfully!');
+                    } else {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                        showNotification('Account created! Please log in.');
+                        // Switch to login view
+                        authToggleButton.click(); 
+                    }
+                } catch (error) {
+                    console.error("Authentication error:", error);
+                    showNotification(error.message, 'error');
+                } finally {
+                    authButton.disabled = false;
+                    authButton.textContent = isLogin ? 'Login' : 'Sign Up';
+                }
+            });
+        };
+
+        const renderAppShell = () => {
+            appRoot.innerHTML = `
+                <header class="bg-white shadow-md sticky top-0 z-40">
+                    <nav class="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span class="text-blue-500">${icons.car}</span>
+                            <span class="text-xl font-bold">Vehicle Clearance</span>
+                            <span id="role-badge" class="flex items-center gap-1.5 text-sm font-semibold px-2 py-1 rounded-full"></span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm text-gray-600 hidden md:block">${currentUser.email}</span>
+                            <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
+                                <span class="w-4 h-4">${icons.logout}</span> Logout
+                            </button>
+                        </div>
+                    </nav>
+                </header>
+                <main id="main-content" class="container mx-auto"></main>
+                <div id="modal-container"></div>
+            `;
+
+            const roleBadge = document.getElementById('role-badge');
+            if (isAdmin) {
+                roleBadge.innerHTML = `<span class="w-4 h-4">${icons.shield}</span> Admin`;
+                roleBadge.className += ' bg-green-100 text-green-800';
             } else {
-                await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
-                setNotification({ type: 'success', message: 'Clearance added successfully!' });
+                roleBadge.innerHTML = `<span class="w-4 h-4">${icons.user}</span> User`;
+                roleBadge.className += ' bg-blue-100 text-blue-800';
             }
-            closeModal();
-        } catch (error) {
-            console.error("Error saving clearance:", error);
-            setNotification({ type: 'error', message: 'Failed to save clearance.' });
-        }
-    };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this clearance?")) {
-            try {
-                await deleteDoc(doc(db, "vehicleClearances", id));
-                setNotification({ type: 'success', message: 'Clearance deleted.' });
-            } catch (error) {
-                console.error("Error deleting clearance:", error);
-                setNotification({ type: 'error', message: 'Failed to delete clearance.' });
+            document.getElementById('logout-button').addEventListener('click', async () => {
+                await signOut(auth);
+                showNotification('Logged out successfully.');
+            });
+
+            if (isAdmin) {
+                renderAdminPanel();
+            } else {
+                renderUserPanel();
             }
-        }
-    };
+        };
 
-    const openModal = (clearance = null) => {
-        setEditingClearance(clearance);
-        setShowModal(true);
-    };
-
-    const closeModal = () => {
-        setEditingClearance(null);
-        setShowModal(false);
-    };
-
-    return (
-        <div className="p-4 md:p-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Admin Dashboard</h1>
-                <button onClick={() => openModal()} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <PlusCircle size={20} />
-                    Add Clearance
-                </button>
-            </div>
-            
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">Owner</th>
-                                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">Vehicle No.</th>
-                                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">Entry</th>
-                                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">Expiry</th>
-                                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">Location</th>
-                                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">Escort</th>
-                                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {clearances.map(c => (
-                                <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <td className="p-4 text-gray-800 dark:text-gray-200">{c.ownerName}</td>
-                                    <td className="p-4 text-gray-800 dark:text-gray-200 font-mono">{c.vehicleNumber}</td>
-                                    <td className="p-4 text-gray-600 dark:text-gray-400">{c.entryDate.toDate().toLocaleDateString()}</td>
-                                    <td className="p-4 text-gray-600 dark:text-gray-400">{c.expiryDate.toDate().toLocaleDateString()}</td>
-                                    <td className="p-4 text-gray-800 dark:text-gray-200">{c.location}</td>
-                                    <td className="p-4">{c.escortRequired ? <CheckCircle className="text-green-500" /> : <XCircle className="text-red-500" />}</td>
-                                    <td className="p-4 flex gap-2">
-                                        <button onClick={() => openModal(c)} className="p-2 text-blue-500 hover:text-blue-700"><Edit size={18} /></button>
-                                        <button onClick={() => handleDelete(c.id)} className="p-2 text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                 {clearances.length === 0 && <p className="p-8 text-center text-gray-500">No vehicle clearances found. Add one to get started!</p>}
-            </div>
-
-            {showModal && (
-                <Modal onClose={closeModal}>
-                    <ClearanceForm onSave={handleSave} onCancel={closeModal} clearance={editingClearance} setNotification={setNotification} />
-                </Modal>
-            )}
-        </div>
-    );
-};
-
-const UserPanel = ({ clearances }) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dailyClearances = useMemo(() => clearances.filter(c => {
-        const entryDate = c.entryDate.toDate();
-        entryDate.setHours(0, 0, 0, 0);
-        return entryDate.getTime() === today.getTime();
-    }), [clearances]);
-
-    return (
-        <div className="p-4 md:p-8">
-            <div className="flex items-center gap-4 mb-6">
-                 <Sun size={32} className="text-yellow-500"/>
-                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Daily Vehicle Clearances</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Showing vehicles cleared for today: {today.toLocaleDateString()}</p>
-                 </div>
-            </div>
-
-            <div className="space-y-4">
-                {dailyClearances.length > 0 ? dailyClearances.map(c => (
-                    <div key={c.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-                        <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Owner</p>
-                            <p className="font-bold text-gray-800 dark:text-white">{c.ownerName}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Vehicle No.</p>
-                            <p className="font-mono font-bold text-blue-500 dark:text-blue-400">{c.vehicleNumber}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Location</p>
-                            <p className="font-semibold text-gray-800 dark:text-white">{c.location}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Escort</p>
-                            {c.escortRequired ? 
-                                <span className="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold"><CheckCircle size={18}/> Required</span> : 
-                                <span className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold"><XCircle size={18}/> Not Required</span>
-                            }
+        const renderAdminPanel = () => {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="p-4 md:p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+                        <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <span class="w-5 h-5">${icons.plus}</span> Add Clearance
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="p-4 font-semibold text-gray-600">Owner</th>
+                                        <th class="p-4 font-semibold text-gray-600">Vehicle No.</th>
+                                        <th class="p-4 font-semibold text-gray-600">Entry</th>
+                                        <th class="p-4 font-semibold text-gray-600">Expiry</th>
+                                        <th class="p-4 font-semibold text-gray-600">Location</th>
+                                        <th class="p-4 font-semibold text-gray-600">Escort</th>
+                                        <th class="p-4 font-semibold text-gray-600">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clearances-table-body" class="divide-y divide-gray-200">
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                )) : (
-                    <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
-                        <Car size={48} className="mx-auto text-gray-400" />
-                        <h3 className="mt-4 text-xl font-semibold text-gray-800 dark:text-white">No Clearances for Today</h3>
-                        <p className="mt-1 text-gray-500 dark:text-gray-400">There are no vehicles scheduled for clearance today.</p>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
+                </div>
+            `;
+            renderClearancesTable();
 
-// --- Main App Component ---
-export default function App() {
-    const [user, setUser] = useState(null);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [clearances, setClearances] = useState([]);
-    const [notification, setNotification] = useState({ message: '', type: 'success' }); // {message, type}
+            document.getElementById('add-clearance-btn').addEventListener('click', () => {
+                renderModal();
+            });
+        };
 
-    useEffect(() => {
-        const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-            setLoading(true);
-            if (currentUser) {
-                setUser(currentUser);
-                // Check for admin role
-                const adminDocRef = doc(db, "admins", currentUser.uid);
-                const adminDoc = await getDoc(adminDocRef);
-                setIsAdmin(adminDoc.exists());
-            } else {
-                setUser(null);
-                setIsAdmin(false);
-            }
-            setLoading(false);
-        });
-
-        return () => unsubscribeAuth();
-    }, []);
-
-    useEffect(() => {
-        if (!user) {
-            setClearances([]);
-            return;
-        }
-
-        const q = query(collection(db, "vehicleClearances"));
-        const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-            const clearanceData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // Sort by entry date descending for admin view
-            clearanceData.sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
-            setClearances(clearanceData);
-        }, (error) => {
-            console.error("Firestore snapshot error:", error);
-            setNotification({ type: 'error', message: 'Could not fetch data.' });
-        });
-
-        return () => unsubscribeFirestore();
-    }, [user]);
-
-    const handleLogout = async () => {
-        await signOut(auth);
-        setNotification({ type: 'success', message: 'Logged out successfully.' });
-    };
-
-    const clearNotification = () => setNotification({ message: '', type: 'success' });
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-                <LoadingSpinner />
-            </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
-            <Notification message={notification.message} type={notification.type} onDismiss={clearNotification} />
+        const renderClearancesTable = () => {
+            const tableBody = document.getElementById('clearances-table-body');
+            if (!tableBody) return;
             
-            {!user ? (
-                <AuthScreen setNotification={setNotification} />
-            ) : (
-                <>
-                    <header className="bg-white dark:bg-gray-800 shadow-md">
-                        <nav className="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <Car className="text-blue-500" size={28}/>
-                                <span className="text-xl font-bold">Vehicle Clearance</span>
-                                {isAdmin ? 
-                                    <span className="flex items-center gap-1.5 text-sm font-semibold bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full"><ShieldCheck size={14}/> Admin</span> :
-                                    <span className="flex items-center gap-1.5 text-sm font-semibold bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full"><User size={14}/> User</span>
-                                }
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">{user.email}</span>
-                                <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
-                                    <LogOut size={16} />
-                                    Logout
-                                </button>
-                            </div>
-                        </nav>
-                    </header>
-                    <main className="container mx-auto">
-                        {isAdmin ? 
-                            <AdminPanel clearances={clearances} setNotification={setNotification} /> : 
-                            <UserPanel clearances={clearances} />
+            const sortedClearances = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
+
+            if (sortedClearances.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center p-8 text-gray-500">No vehicle clearances found. Add one to get started!</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = sortedClearances.map(c => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4 text-gray-800">${c.ownerName}</td>
+                    <td class="p-4 text-gray-800 font-mono">${c.vehicleNumber}</td>
+                    <td class="p-4 text-gray-600">${c.entryDate.toDate().toLocaleDateString()}</td>
+                    <td class="p-4 text-gray-600">${c.expiryDate.toDate().toLocaleDateString()}</td>
+                    <td class="p-4 text-gray-800">${c.location}</td>
+                    <td class="p-4">${c.escortRequired ? `<span class="text-green-500">${icons.check}</span>` : `<span class="text-red-500">${icons.x}</span>`}</td>
+                    <td class="p-4 flex gap-2">
+                        <button class="edit-btn p-2 text-blue-500 hover:text-blue-700" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
+                        <button class="delete-btn p-2 text-red-500 hover:text-red-700" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        const renderUserPanel = () => {
+            const mainContent = document.getElementById('main-content');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const dailyClearances = clearances.filter(c => {
+                const entryDate = c.entryDate.toDate();
+                entryDate.setHours(0, 0, 0, 0);
+                return entryDate.getTime() === today.getTime();
+            });
+
+            const clearanceListHTML = dailyClearances.length > 0 ? dailyClearances.map(c => `
+                <div class="bg-white rounded-2xl shadow-md p-5 grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                    <div>
+                        <p class="text-sm text-gray-500">Owner</p>
+                        <p class="font-bold text-gray-800">${c.ownerName}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Vehicle No.</p>
+                        <p class="font-mono font-bold text-blue-500">${c.vehicleNumber}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Location</p>
+                        <p class="font-semibold text-gray-800">${c.location}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Escort</p>
+                        ${c.escortRequired ? 
+                            `<span class="flex items-center gap-2 text-green-600 font-semibold"><span class="w-5 h-5">${icons.check}</span> Required</span>` : 
+                            `<span class="flex items-center gap-2 text-red-600 font-semibold"><span class="w-5 h-5">${icons.x}</span> Not Required</span>`
                         }
-                    </main>
-                </>
-            )}
-        </div>
-    );
-}
+                    </div>
+                </div>
+            `).join('') : `
+                <div class="text-center py-16 bg-white rounded-2xl shadow-md">
+                    <div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div>
+                    <h3 class="mt-4 text-xl font-semibold text-gray-800">No Clearances for Today</h3>
+                    <p class="mt-1 text-gray-500">There are no vehicles scheduled for clearance today.</p>
+                </div>
+            `;
 
+            mainContent.innerHTML = `
+                <div class="p-4 md:p-8">
+                    <div class="flex items-center gap-4 mb-6">
+                         <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
+                         <div>
+                            <h1 class="text-3xl font-bold text-gray-800">Daily Vehicle Clearances</h1>
+                            <p class="text-gray-500">Showing vehicles cleared for today: ${today.toLocaleDateString()}</p>
+                         </div>
+                    </div>
+                    <div class="space-y-4">${clearanceListHTML}</div>
+                </div>
+            `;
+        };
+
+        const renderModal = (clearanceToEdit = null) => {
+            const modalContainer = document.getElementById('modal-container');
+            const toISODate = (date) => date ? new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
+            
+            modalContainer.innerHTML = `
+                <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
+                        <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                            <span class="w-6 h-6">${icons.x}</span>
+                        </button>
+                        <form id="clearance-form" class="space-y-4">
+                            <h2 class="text-2xl font-bold text-gray-800">${clearanceToEdit ? 'Edit' : 'Add'} Vehicle Clearance</h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" placeholder="Owner's Name / Company" class="p-3 bg-gray-50 border rounded-lg" required />
+                                <input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" placeholder="Vehicle Number" class="p-3 bg-gray-50 border rounded-lg" required />
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-gray-500">Entry Date</label>
+                                    <input type="date" name="entryDate" value="${clearanceToEdit ? toISODate(clearanceToEdit.entryDate.toDate()) : ''}" class="w-full p-3 bg-gray-50 border rounded-lg" required />
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-500">Expiry Date</label>
+                                    <input type="date" name="expiryDate" value="${clearanceToEdit ? toISODate(clearanceToEdit.expiryDate.toDate()) : ''}" class="w-full p-3 bg-gray-50 border rounded-lg" required />
+                                </div>
+                            </div>
+
+                            <input name="location" value="${clearanceToEdit?.location || ''}" placeholder="Location" class="w-full p-3 bg-gray-50 border rounded-lg" required />
+                            
+                            <textarea name="notes" placeholder="Notes" rows="3" class="w-full p-3 bg-gray-50 border rounded-lg">${clearanceToEdit?.notes || ''}</textarea>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5 text-blue-600 rounded" ${clearanceToEdit?.escortRequired ? 'checked' : ''} />
+                                <label for="escortRequired" class="ml-2 text-gray-700">Escort Required</label>
+                            </div>
+
+                            <div class="flex justify-end space-x-3 pt-4">
+                                <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300">Cancel</button>
+                                <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${clearanceToEdit ? 'Update' : 'Save'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            const closeModal = () => modalContainer.innerHTML = '';
+            document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+            document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
+            document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+                if (e.target.id === 'modal-backdrop') closeModal();
+            });
+
+            document.getElementById('clearance-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = {
+                    ownerName: formData.get('ownerName'),
+                    vehicleNumber: formData.get('vehicleNumber'),
+                    location: formData.get('location'),
+                    notes: formData.get('notes'),
+                    escortRequired: formData.get('escortRequired') === 'on',
+                    entryDate: Timestamp.fromDate(new Date(formData.get('entryDate'))),
+                    expiryDate: Timestamp.fromDate(new Date(formData.get('expiryDate'))),
+                };
+
+                if (data.expiryDate.toDate() < data.entryDate.toDate()) {
+                    showNotification('Expiry date cannot be before entry date.', 'error');
+                    return;
+                }
+
+                try {
+                    if (clearanceToEdit) {
+                        await setDoc(doc(db, "vehicleClearances", clearanceToEdit.id), data);
+                        showNotification('Clearance updated successfully!');
+                    } else {
+                        await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
+                        showNotification('Clearance added successfully!');
+                    }
+                    closeModal();
+                } catch (error) {
+                    console.error("Error saving clearance:", error);
+                    showNotification('Failed to save clearance.', 'error');
+                }
+            });
+        };
+
+        // --- Event Delegation for Dynamic Content ---
+        appRoot.addEventListener('click', async (e) => {
+            const editBtn = e.target.closest('.edit-btn');
+            if (editBtn) {
+                const clearanceId = editBtn.dataset.id;
+                const clearanceToEdit = clearances.find(c => c.id === clearanceId);
+                if (clearanceToEdit) {
+                    renderModal(clearanceToEdit);
+                }
+            }
+
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (deleteBtn) {
+                const clearanceId = deleteBtn.dataset.id;
+                if (window.confirm("Are you sure you want to delete this clearance?")) {
+                    try {
+                        await deleteDoc(doc(db, "vehicleClearances", clearanceId));
+                        showNotification('Clearance deleted.');
+                    } catch (error) {
+                        console.error("Error deleting clearance:", error);
+                        showNotification('Failed to delete clearance.', 'error');
+                    }
+                }
+            }
+        });
+
+        // --- Main App Logic ---
+        onAuthStateChanged(auth, async (user) => {
+            // Unsubscribe from previous listener if it exists
+            if (unsubscribeFirestore) {
+                unsubscribeFirestore();
+                unsubscribeFirestore = null;
+            }
+
+            if (user) {
+                currentUser = user;
+                const adminDoc = await getDoc(doc(db, "admins", user.uid));
+                isAdmin = adminDoc.exists();
+
+                // Subscribe to data
+                const q = query(collection(db, "vehicleClearances"));
+                unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+                    clearances = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderAppShell(); // Re-render the entire app content on data change
+                }, (error) => {
+                    console.error("Firestore error:", error);
+                    showNotification('Could not fetch data.', 'error');
+                });
+            } else {
+                currentUser = null;
+                isAdmin = false;
+                clearances = [];
+                renderAuthScreen();
+            }
+        });
+
+    </script>
+</body>
+</html>
