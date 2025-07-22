@@ -158,6 +158,11 @@
                     </div>
                 </div>
             `;
+            document.getElementById('admin-btn').addEventListener('click', renderAdminLogin);
+            document.getElementById('user-btn').addEventListener('click', async () => {
+                appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
+                await signInAnonymously(auth);
+            });
         }
 
         const renderAdminLogin = () => {
@@ -191,6 +196,49 @@
                     </div>
                 </div>
             `;
+            
+            let isLogin = true;
+            const authForm = document.getElementById('auth-form');
+            const authToggleButton = document.getElementById('auth-toggle-button');
+
+            authToggleButton.addEventListener('click', () => {
+                isLogin = !isLogin;
+                document.getElementById('auth-subtitle').textContent = isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
+                document.getElementById('auth-button').textContent = isLogin ? 'Login' : 'Sign Up';
+                document.getElementById('auth-toggle-text').textContent = isLogin ? "Need an admin account?" : "Already have an account?";
+                authToggleButton.textContent = isLogin ? 'Sign Up' : 'Login';
+                document.getElementById('invite-code-wrapper').classList.toggle('hidden', isLogin);
+            });
+
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const authButton = document.getElementById('auth-button');
+                authButton.disabled = true;
+                authButton.textContent = 'Processing...';
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    if (isLogin) {
+                        await signInWithEmailAndPassword(auth, email, password);
+                    } else {
+                        const inviteCode = document.getElementById('inviteCode').value;
+                        if (inviteCode !== ADMIN_INVITE_CODE) {
+                            throw new Error("Invalid Admin Invite Code.");
+                        }
+                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
+                        showNotification('Admin account created! Please log in.', 'success');
+                        authToggleButton.click(); // Switch to login view
+                    }
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                } finally {
+                    authButton.disabled = false;
+                    // Reset text based on the current mode (isLogin)
+                    authButton.textContent = isLogin ? 'Login' : 'Sign Up';
+                }
+            });
         };
 
         const renderAdminDashboard = (adminUser) => {
@@ -212,6 +260,7 @@
                 <main id="main-content" class="container mx-auto"></main>
                 <div id="modal-container"></div>
             `;
+            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             renderAdminPanel();
         };
         
@@ -244,6 +293,7 @@
                     </div>
                 </div>
             `;
+            document.getElementById('add-clearance-btn').addEventListener('click', () => renderModal());
             renderClearancesList();
         };
 
@@ -295,6 +345,21 @@
                     </tr>
                 `).join('');
             }
+            
+            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const clearanceToEdit = clearances.find(c => c.id === e.currentTarget.dataset.id);
+                if (clearanceToEdit) renderModal(clearanceToEdit);
+            }));
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+                 if (window.confirm("Delete this clearance?")) {
+                    try {
+                        await deleteDoc(doc(db, "vehicleClearances", e.currentTarget.dataset.id));
+                        showNotification('Clearance deleted.');
+                    } catch (error) {
+                        showNotification('Failed to delete clearance.', 'error');
+                    }
+                }
+            }));
         };
 
         const renderUserPanel = () => {
@@ -347,6 +412,7 @@
                         <div class="space-y-4">${clearanceListHTML}</div>
                     </div>
                 </main>`;
+            document.getElementById('back-btn').addEventListener('click', () => signOut(auth));
         };
 
         const renderModal = (clearanceToEdit = null) => {
@@ -376,81 +442,38 @@
                         </form>
                     </div>
                 </div>`;
-        };
-        
-        // --- Centralized Event Handler ---
-        const attachEventListeners = () => {
-            appRoot.addEventListener('click', async (e) => {
-                const target = e.target;
-                
-                // Landing Page
-                if (target.closest('#admin-btn')) renderAdminLogin();
-                if (target.closest('#user-btn')) {
-                    appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
-                    await signInAnonymously(auth);
-                }
+            
+            const closeModal = () => modalContainer.innerHTML = '';
+            document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+            document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
+            document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+                if(e.target.id === 'modal-backdrop') closeModal();
+            });
 
-                // Auth Form
-                if (target.closest('#auth-toggle-button')) {
-                    const formContainer = target.closest('.w-full');
-                    const isLogin = formContainer.querySelector('#auth-button').textContent === 'Login';
-                    formContainer.querySelector('#auth-subtitle').textContent = isLogin ? 'Create a new Admin account' : 'Sign in to manage clearances';
-                    formContainer.querySelector('#auth-button').textContent = isLogin ? 'Sign Up' : 'Login';
-                    formContainer.querySelector('#auth-toggle-text').textContent = isLogin ? "Already have an account?" : "Need an admin account?";
-                    target.textContent = isLogin ? 'Login' : 'Sign Up';
-                    formContainer.querySelector('#invite-code-wrapper').classList.toggle('hidden', !isLogin);
+            document.getElementById('clearance-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = {
+                    ownerName: formData.get('ownerName'), vehicleNumber: formData.get('vehicleNumber'),
+                    location: formData.get('location'), notes: formData.get('notes'),
+                    escortRequired: formData.get('escortRequired') === 'on',
+                    entryDate: Timestamp.fromDate(new Date(formData.get('entryDate'))),
+                    expiryDate: Timestamp.fromDate(new Date(formData.get('expiryDate'))),
+                };
+                if (data.expiryDate.toDate() < data.entryDate.toDate()) {
+                    showNotification('Expiry date cannot be before entry date.', 'error'); return;
                 }
-                if (target.closest('#auth-form')) {
-                    target.closest('#auth-form').addEventListener('submit', async (submitEvent) => {
-                        submitEvent.preventDefault();
-                        const form = submitEvent.currentTarget;
-                        const authButton = form.querySelector('#auth-button');
-                        const isLogin = authButton.textContent === 'Login';
-                        authButton.disabled = true;
-                        authButton.textContent = 'Processing...';
-
-                        try {
-                            const email = form.querySelector('#email').value;
-                            const password = form.querySelector('#password').value;
-                            if (isLogin) {
-                                await signInWithEmailAndPassword(auth, email, password);
-                            } else {
-                                const inviteCode = form.querySelector('#inviteCode').value;
-                                if (inviteCode !== ADMIN_INVITE_CODE) throw new Error("Invalid Admin Invite Code.");
-                                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                                await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
-                                showNotification('Admin account created! Please log in.', 'success');
-                                document.getElementById('auth-toggle-button').click();
-                            }
-                        } catch (error) {
-                            showNotification(error.message, 'error');
-                        } finally {
-                            authButton.disabled = false;
-                            authButton.textContent = isLogin ? 'Login' : 'Sign Up';
-                        }
-                    }, { once: true });
-                }
-
-                // Dashboard and Modals
-                if (target.closest('#logout-button') || target.closest('#back-btn')) signOut(auth);
-                if (target.closest('#add-clearance-btn')) renderModal();
-                if (target.closest('.edit-btn')) {
-                    const clearanceToEdit = clearances.find(c => c.id === target.closest('.edit-btn').dataset.id);
-                    if (clearanceToEdit) renderModal(clearanceToEdit);
-                }
-                if (target.closest('.delete-btn')) {
-                    if (window.confirm("Delete this clearance?")) {
-                        try {
-                            await deleteDoc(doc(db, "vehicleClearances", target.closest('.delete-btn').dataset.id));
-                            showNotification('Clearance deleted.');
-                        } catch (error) {
-                            showNotification('Failed to delete clearance.', 'error');
-                        }
+                try {
+                    if (clearanceToEdit) {
+                        await setDoc(doc(db, "vehicleClearances", clearanceToEdit.id), data);
+                        showNotification('Clearance updated!');
+                    } else {
+                        await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
+                        showNotification('Clearance added!');
                     }
-                }
-                if (target.closest('#close-modal-btn') || target.closest('#cancel-modal-btn') || target.id === 'modal-backdrop') {
-                    const modalContainer = document.getElementById('modal-container');
-                    if (modalContainer) modalContainer.innerHTML = '';
+                    closeModal();
+                } catch (error) {
+                    showNotification('Failed to save clearance.', 'error');
                 }
             });
         };
@@ -458,6 +481,7 @@
         // --- Main App Router ---
         onAuthStateChanged(auth, async (user) => {
             if (unsubscribeFirestore) unsubscribeFirestore();
+            appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
 
             if (user) {
                 if(user.isAnonymous) {
@@ -481,8 +505,6 @@
                 renderLandingPage();
             }
         });
-        
-        attachEventListeners();
     </script>
 </body>
 </html>
