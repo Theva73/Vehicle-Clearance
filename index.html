@@ -20,8 +20,6 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-
-        /* Simple fade-in animation for modals and notifications */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -29,8 +27,6 @@
         .animate-fade-in {
             animation: fadeIn 0.3s ease-out forwards;
         }
-
-        /* Basic dark mode setup */
         .dark .bg-gray-100 { background-color: #111827; }
         .dark .bg-white { background-color: #1f2937; }
         .dark .bg-gray-50 { background-color: #374151; }
@@ -47,7 +43,11 @@
 <body class="bg-gray-100">
 
     <!-- Main container for the app -->
-    <div id="app-root"></div>
+    <div id="app-root">
+        <div class="min-h-screen flex items-center justify-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+        </div>
+    </div>
 
     <!-- Firebase and App Logic -->
     <script type="module">
@@ -58,7 +58,8 @@
             onAuthStateChanged, 
             signInWithEmailAndPassword, 
             createUserWithEmailAndPassword, 
-            signOut 
+            signOut,
+            signInAnonymously
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
@@ -70,11 +71,11 @@
             onSnapshot, 
             query, 
             Timestamp,
-            getDoc
+            getDoc,
+            getDocs
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
-        // This configuration has been injected from your provided file.
         const firebaseConfig = {
           apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
           authDomain: "vehicle-clearance.firebaseapp.com",
@@ -85,36 +86,21 @@
         };
        
         // --- Initialize Firebase ---
-        let app;
-        let auth;
-        let db;
+        const appRoot = document.getElementById('app-root');
+        let app, auth, db;
 
         try {
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
         } catch (error) {
-            document.getElementById('app-root').innerHTML = `
-                <div class="min-h-screen flex items-center justify-center p-4">
-                    <div class="w-full max-w-lg bg-red-100 border-l-4 border-red-500 text-red-700 p-6 rounded-lg shadow-lg">
-                        <h2 class="font-bold text-xl mb-2">Configuration Error</h2>
-                        <p>${error.message}</p>
-                    </div>
-                </div>
-            `;
-            // Stop execution if Firebase fails to initialize
-            throw new Error("Stopping script due to Firebase config error.");
+            console.error("Firebase initialization failed:", error);
+            appRoot.innerHTML = `<div class="p-8 text-center text-red-500 bg-red-100 rounded-lg"><strong>Error:</strong> Could not connect to the database. Please check the Firebase configuration.</div>`;
         }
 
-
         // --- App State ---
-        let currentUser = null;
-        let isAdmin = false;
         let clearances = [];
         let unsubscribeFirestore = null;
-
-        // --- DOM Elements ---
-        const appRoot = document.getElementById('app-root');
 
         // --- SVG Icons ---
         const icons = {
@@ -126,7 +112,6 @@
             check: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
             x: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
             shield: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-            user: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
             sun: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
         };
 
@@ -136,39 +121,34 @@
             const notification = document.createElement('div');
             const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
             notification.className = `fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white flex items-center animate-fade-in ${bgColor}`;
-            notification.innerHTML = `
-                <span class="mr-3">${type === 'success' ? icons.check : icons.x}</span>
-                <span>${message}</span>
-            `;
+            notification.innerHTML = `<span class="mr-3">${type === 'success' ? icons.check : icons.x}</span><span>${message}</span>`;
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 5000);
         };
 
-        const renderAuthScreen = () => {
+        const renderAdminLogin = () => {
             appRoot.innerHTML = `
                 <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
                     <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
                         <div class="text-center">
-                            <div class="w-12 h-12 mx-auto text-blue-500">${icons.car}</div>
-                            <h1 class="text-3xl font-bold text-gray-800 mt-4">Vehicle Clearance</h1>
-                            <p class="text-gray-500" id="auth-subtitle">Sign in to your account</p>
+                            <div class="w-12 h-12 mx-auto text-blue-500">${icons.shield}</div>
+                            <h1 class="text-3xl font-bold text-gray-800 mt-4">Admin Access</h1>
+                            <p class="text-gray-500" id="auth-subtitle">Sign in to manage clearances</p>
                         </div>
                         <form id="auth-form" class="space-y-6">
                             <div>
                                 <label class="text-sm font-medium text-gray-700">Email</label>
-                                <input type="email" id="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="you@example.com" required />
+                                <input type="email" id="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 border rounded-lg" placeholder="admin@example.com" required />
                             </div>
                             <div>
                                 <label class="text-sm font-medium text-gray-700">Password</label>
-                                <input type="password" id="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="••••••••" required />
+                                <input type="password" id="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 border rounded-lg" placeholder="••••••••" required />
                             </div>
-                            <button type="submit" id="auth-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300">
-                                Login
-                            </button>
+                            <button type="submit" id="auth-button" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">Login</button>
                         </form>
                         <p class="text-center text-sm text-gray-500">
-                            <span id="auth-toggle-text">Don't have an account?</span>
-                            <button id="auth-toggle-button" class="font-medium text-blue-600 hover:text-blue-500 ml-1">Sign Up</button>
+                            <span id="auth-toggle-text">First time setup?</span>
+                            <button id="auth-toggle-button" class="font-medium text-blue-600 hover:text-blue-500 ml-1">Create Admin Account</button>
                         </p>
                     </div>
                 </div>
@@ -183,10 +163,10 @@
 
             authToggleButton.addEventListener('click', () => {
                 isLogin = !isLogin;
-                authSubtitle.textContent = isLogin ? 'Sign in to your account' : 'Create a new account';
+                authSubtitle.textContent = isLogin ? 'Sign in to manage clearances' : 'Create the first Admin account';
                 authButton.textContent = isLogin ? 'Login' : 'Sign Up';
-                authToggleText.textContent = isLogin ? "Don't have an account?" : "Already have an account?";
-                authToggleButton.textContent = isLogin ? 'Sign Up' : 'Login';
+                authToggleText.textContent = isLogin ? "First time setup?" : "Already have an account?";
+                authToggleButton.textContent = isLogin ? 'Create Admin Account' : 'Login';
             });
 
             authForm.addEventListener('submit', async (e) => {
@@ -199,15 +179,18 @@
                 try {
                     if (isLogin) {
                         await signInWithEmailAndPassword(auth, email, password);
-                        showNotification('Logged in successfully!');
                     } else {
-                        await createUserWithEmailAndPassword(auth, email, password);
-                        showNotification('Account created! Please log in.');
-                        // Switch to login view
-                        authToggleButton.click(); 
+                        const adminsRef = collection(db, "admins");
+                        const adminSnapshot = await getDocs(adminsRef);
+                        if (!adminSnapshot.empty) {
+                           throw new Error("An admin account already exists.");
+                        }
+                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
+                        showNotification('Admin account created! Please log in.', 'success');
+                        authToggleButton.click();
                     }
                 } catch (error) {
-                    console.error("Authentication error:", error);
                     showNotification(error.message, 'error');
                 } finally {
                     authButton.disabled = false;
@@ -216,17 +199,16 @@
             });
         };
 
-        const renderAppShell = () => {
+        const renderAdminDashboard = (adminUser) => {
             appRoot.innerHTML = `
                 <header class="bg-white shadow-md sticky top-0 z-40">
                     <nav class="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
                         <div class="flex items-center gap-3">
-                            <span class="text-blue-500">${icons.car}</span>
-                            <span class="text-xl font-bold">Vehicle Clearance</span>
-                            <span id="role-badge" class="flex items-center gap-1.5 text-sm font-semibold px-2 py-1 rounded-full"></span>
+                            <span class="text-blue-500">${icons.shield}</span>
+                            <span class="text-xl font-bold">Admin Dashboard</span>
                         </div>
                         <div class="flex items-center gap-4">
-                            <span class="text-sm text-gray-600 hidden md:block">${currentUser.email}</span>
+                            <span class="text-sm text-gray-600 hidden md:block">${adminUser.email}</span>
                             <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
                                 <span class="w-4 h-4">${icons.logout}</span> Logout
                             </button>
@@ -236,35 +218,17 @@
                 <main id="main-content" class="container mx-auto"></main>
                 <div id="modal-container"></div>
             `;
-
-            const roleBadge = document.getElementById('role-badge');
-            if (isAdmin) {
-                roleBadge.innerHTML = `<span class="w-4 h-4">${icons.shield}</span> Admin`;
-                roleBadge.className += ' bg-green-100 text-green-800';
-            } else {
-                roleBadge.innerHTML = `<span class="w-4 h-4">${icons.user}</span> User`;
-                roleBadge.className += ' bg-blue-100 text-blue-800';
-            }
-
-            document.getElementById('logout-button').addEventListener('click', async () => {
-                await signOut(auth);
-                showNotification('Logged out successfully.');
-            });
-
-            if (isAdmin) {
-                renderAdminPanel();
-            } else {
-                renderUserPanel();
-            }
+            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
+            renderAdminPanel();
         };
-
+        
         const renderAdminPanel = () => {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = `
                 <div class="p-4 md:p-8">
                     <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-                        <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <h1 class="text-3xl font-bold text-gray-800">Manage Clearances</h1>
+                        <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                             <span class="w-5 h-5">${icons.plus}</span> Add Clearance
                         </button>
                     </div>
@@ -273,48 +237,31 @@
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="p-4 font-semibold text-gray-600">Owner</th>
-                                        <th class="p-4 font-semibold text-gray-600">Vehicle No.</th>
-                                        <th class="p-4 font-semibold text-gray-600">Entry</th>
-                                        <th class="p-4 font-semibold text-gray-600">Expiry</th>
-                                        <th class="p-4 font-semibold text-gray-600">Location</th>
-                                        <th class="p-4 font-semibold text-gray-600">Escort</th>
+                                        <th class="p-4 font-semibold text-gray-600">Owner</th><th class="p-4 font-semibold text-gray-600">Vehicle No.</th>
+                                        <th class="p-4 font-semibold text-gray-600">Entry</th><th class="p-4 font-semibold text-gray-600">Expiry</th>
+                                        <th class="p-4 font-semibold text-gray-600">Location</th><th class="p-4 font-semibold text-gray-600">Escort</th>
                                         <th class="p-4 font-semibold text-gray-600">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="clearances-table-body" class="divide-y divide-gray-200">
-                                </tbody>
+                                <tbody id="clearances-table-body" class="divide-y divide-gray-200"></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             `;
             renderClearancesTable();
-
-            document.getElementById('add-clearance-btn').addEventListener('click', () => {
-                renderModal();
-            });
+            document.getElementById('add-clearance-btn').addEventListener('click', () => renderModal());
         };
 
         const renderClearancesTable = () => {
             const tableBody = document.getElementById('clearances-table-body');
             if (!tableBody) return;
-            
             const sortedClearances = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
-
-            if (sortedClearances.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center p-8 text-gray-500">No vehicle clearances found. Add one to get started!</td></tr>`;
-                return;
-            }
-
-            tableBody.innerHTML = sortedClearances.map(c => `
+            tableBody.innerHTML = sortedClearances.length === 0 ? `<tr><td colspan="7" class="text-center p-8 text-gray-500">No clearances found.</td></tr>` : sortedClearances.map(c => `
                 <tr class="hover:bg-gray-50">
-                    <td class="p-4 text-gray-800">${c.ownerName}</td>
-                    <td class="p-4 text-gray-800 font-mono">${c.vehicleNumber}</td>
-                    <td class="p-4 text-gray-600">${c.entryDate.toDate().toLocaleDateString()}</td>
-                    <td class="p-4 text-gray-600">${c.expiryDate.toDate().toLocaleDateString()}</td>
-                    <td class="p-4 text-gray-800">${c.location}</td>
-                    <td class="p-4">${c.escortRequired ? `<span class="text-green-500">${icons.check}</span>` : `<span class="text-red-500">${icons.x}</span>`}</td>
+                    <td class="p-4 text-gray-800">${c.ownerName}</td><td class="p-4 font-mono">${c.vehicleNumber}</td>
+                    <td class="p-4">${c.entryDate.toDate().toLocaleDateString()}</td><td class="p-4">${c.expiryDate.toDate().toLocaleDateString()}</td>
+                    <td class="p-4">${c.location}</td><td class="p-4">${c.escortRequired ? `<span class="text-green-500">${icons.check}</span>` : `<span class="text-red-500">${icons.x}</span>`}</td>
                     <td class="p-4 flex gap-2">
                         <button class="edit-btn p-2 text-blue-500 hover:text-blue-700" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
                         <button class="delete-btn p-2 text-red-500 hover:text-red-700" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
@@ -325,142 +272,97 @@
 
         const renderUserPanel = () => {
             const mainContent = document.getElementById('main-content');
+            if (!mainContent) {
+                appRoot.innerHTML = `<main id="main-content" class="container mx-auto"></main>`;
+            }
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
             const dailyClearances = clearances.filter(c => {
                 const entryDate = c.entryDate.toDate();
                 entryDate.setHours(0, 0, 0, 0);
-                return entryDate.getTime() === today.getTime();
+                const expiryDate = c.expiryDate.toDate();
+                expiryDate.setHours(23, 59, 59, 999);
+                return today >= entryDate && today <= expiryDate;
             });
 
             const clearanceListHTML = dailyClearances.length > 0 ? dailyClearances.map(c => `
                 <div class="bg-white rounded-2xl shadow-md p-5 grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-                    <div>
-                        <p class="text-sm text-gray-500">Owner</p>
-                        <p class="font-bold text-gray-800">${c.ownerName}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Vehicle No.</p>
-                        <p class="font-mono font-bold text-blue-500">${c.vehicleNumber}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Location</p>
-                        <p class="font-semibold text-gray-800">${c.location}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Escort</p>
-                        ${c.escortRequired ? 
-                            `<span class="flex items-center gap-2 text-green-600 font-semibold"><span class="w-5 h-5">${icons.check}</span> Required</span>` : 
-                            `<span class="flex items-center gap-2 text-red-600 font-semibold"><span class="w-5 h-5">${icons.x}</span> Not Required</span>`
-                        }
-                    </div>
-                </div>
-            `).join('') : `
-                <div class="text-center py-16 bg-white rounded-2xl shadow-md">
-                    <div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div>
-                    <h3 class="mt-4 text-xl font-semibold text-gray-800">No Clearances for Today</h3>
-                    <p class="mt-1 text-gray-500">There are no vehicles scheduled for clearance today.</p>
-                </div>
-            `;
+                    <div><p class="text-sm text-gray-500">Owner</p><p class="font-bold text-gray-800">${c.ownerName}</p></div>
+                    <div><p class="text-sm text-gray-500">Vehicle No.</p><p class="font-mono font-bold text-blue-500">${c.vehicleNumber}</p></div>
+                    <div><p class="text-sm text-gray-500">Location</p><p class="font-semibold text-gray-800">${c.location}</p></div>
+                    <div><p class="text-sm text-gray-500">Escort</p>${c.escortRequired ? `<span class="flex items-center gap-2 text-green-600 font-semibold"><span class="w-5 h-5">${icons.check}</span> Required</span>` : `<span class="flex items-center gap-2 text-red-600 font-semibold"><span class="w-5 h-5">${icons.x}</span> Not Required</span>`}</div>
+                </div>`).join('') : `
+                <div class="text-center py-16 bg-white rounded-2xl shadow-md"><div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div><h3 class="mt-4 text-xl font-semibold">No Clearances for Today</h3><p class="mt-1 text-gray-500">There are no vehicles with clearance for today.</p></div>`;
 
-            mainContent.innerHTML = `
-                <div class="p-4 md:p-8">
-                    <div class="flex items-center gap-4 mb-6">
-                         <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
-                         <div>
-                            <h1 class="text-3xl font-bold text-gray-800">Daily Vehicle Clearances</h1>
-                            <p class="text-gray-500">Showing vehicles cleared for today: ${today.toLocaleDateString()}</p>
-                         </div>
+            document.getElementById('app-root').innerHTML = `
+                <main class="container mx-auto">
+                    <div class="p-4 md:p-8">
+                        <div class="flex items-center gap-4 mb-6">
+                            <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
+                            <div><h1 class="text-3xl font-bold text-gray-800">Daily Vehicle Clearances</h1><p class="text-gray-500">Showing vehicles cleared for today: ${today.toLocaleDateString()}</p></div>
+                        </div>
+                        <div class="space-y-4">${clearanceListHTML}</div>
                     </div>
-                    <div class="space-y-4">${clearanceListHTML}</div>
-                </div>
-            `;
+                </main>`;
         };
 
         const renderModal = (clearanceToEdit = null) => {
             const modalContainer = document.getElementById('modal-container');
             const toISODate = (date) => date ? new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
-            
             modalContainer.innerHTML = `
                 <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
                     <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
-                        <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-                            <span class="w-6 h-6">${icons.x}</span>
-                        </button>
+                        <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">${icons.x}</button>
                         <form id="clearance-form" class="space-y-4">
-                            <h2 class="text-2xl font-bold text-gray-800">${clearanceToEdit ? 'Edit' : 'Add'} Vehicle Clearance</h2>
-                            
+                            <h2 class="text-2xl font-bold">${clearanceToEdit ? 'Edit' : 'Add'} Clearance</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" placeholder="Owner's Name / Company" class="p-3 bg-gray-50 border rounded-lg" required />
+                                <input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" placeholder="Owner's Name" class="p-3 bg-gray-50 border rounded-lg" required />
                                 <input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" placeholder="Vehicle Number" class="p-3 bg-gray-50 border rounded-lg" required />
                             </div>
-                            
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-sm text-gray-500">Entry Date</label>
-                                    <input type="date" name="entryDate" value="${clearanceToEdit ? toISODate(clearanceToEdit.entryDate.toDate()) : ''}" class="w-full p-3 bg-gray-50 border rounded-lg" required />
-                                </div>
-                                <div>
-                                    <label class="text-sm text-gray-500">Expiry Date</label>
-                                    <input type="date" name="expiryDate" value="${clearanceToEdit ? toISODate(clearanceToEdit.expiryDate.toDate()) : ''}" class="w-full p-3 bg-gray-50 border rounded-lg" required />
-                                </div>
+                                <div><label class="text-sm">Entry Date</label><input type="date" name="entryDate" value="${toISODate(clearanceToEdit?.entryDate?.toDate())}" class="w-full p-3 bg-gray-50 border rounded-lg" required /></div>
+                                <div><label class="text-sm">Expiry Date</label><input type="date" name="expiryDate" value="${toISODate(clearanceToEdit?.expiryDate?.toDate())}" class="w-full p-3 bg-gray-50 border rounded-lg" required /></div>
                             </div>
-
                             <input name="location" value="${clearanceToEdit?.location || ''}" placeholder="Location" class="w-full p-3 bg-gray-50 border rounded-lg" required />
-                            
                             <textarea name="notes" placeholder="Notes" rows="3" class="w-full p-3 bg-gray-50 border rounded-lg">${clearanceToEdit?.notes || ''}</textarea>
-                            
-                            <div class="flex items-center">
-                                <input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5 text-blue-600 rounded" ${clearanceToEdit?.escortRequired ? 'checked' : ''} />
-                                <label for="escortRequired" class="ml-2 text-gray-700">Escort Required</label>
-                            </div>
-
+                            <div class="flex items-center"><input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5" ${clearanceToEdit?.escortRequired ? 'checked' : ''} /><label for="escortRequired" class="ml-2">Escort Required</label></div>
                             <div class="flex justify-end space-x-3 pt-4">
-                                <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300">Cancel</button>
-                                <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${clearanceToEdit ? 'Update' : 'Save'}</button>
+                                <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200">Cancel</button>
+                                <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white">${clearanceToEdit ? 'Update' : 'Save'}</button>
                             </div>
                         </form>
                     </div>
-                </div>
-            `;
+                </div>`;
             
             const closeModal = () => modalContainer.innerHTML = '';
             document.getElementById('close-modal-btn').addEventListener('click', closeModal);
             document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
-            document.getElementById('modal-backdrop').addEventListener('click', (e) => {
-                if (e.target.id === 'modal-backdrop') closeModal();
-            });
+            document.getElementById('modal-backdrop').addEventListener('click', (e) => e.target.id === 'modal-backdrop' && closeModal());
 
             document.getElementById('clearance-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = {
-                    ownerName: formData.get('ownerName'),
-                    vehicleNumber: formData.get('vehicleNumber'),
-                    location: formData.get('location'),
-                    notes: formData.get('notes'),
+                    ownerName: formData.get('ownerName'), vehicleNumber: formData.get('vehicleNumber'),
+                    location: formData.get('location'), notes: formData.get('notes'),
                     escortRequired: formData.get('escortRequired') === 'on',
                     entryDate: Timestamp.fromDate(new Date(formData.get('entryDate'))),
                     expiryDate: Timestamp.fromDate(new Date(formData.get('expiryDate'))),
                 };
-
                 if (data.expiryDate.toDate() < data.entryDate.toDate()) {
-                    showNotification('Expiry date cannot be before entry date.', 'error');
-                    return;
+                    showNotification('Expiry date cannot be before entry date.', 'error'); return;
                 }
-
                 try {
                     if (clearanceToEdit) {
                         await setDoc(doc(db, "vehicleClearances", clearanceToEdit.id), data);
-                        showNotification('Clearance updated successfully!');
+                        showNotification('Clearance updated!');
                     } else {
                         await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
-                        showNotification('Clearance added successfully!');
+                        showNotification('Clearance added!');
                     }
                     closeModal();
                 } catch (error) {
-                    console.error("Error saving clearance:", error);
                     showNotification('Failed to save clearance.', 'error');
                 }
             });
@@ -470,55 +372,55 @@
         appRoot.addEventListener('click', async (e) => {
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) {
-                const clearanceId = editBtn.dataset.id;
-                const clearanceToEdit = clearances.find(c => c.id === clearanceId);
-                if (clearanceToEdit) {
-                    renderModal(clearanceToEdit);
-                }
+                const clearanceToEdit = clearances.find(c => c.id === editBtn.dataset.id);
+                if (clearanceToEdit) renderModal(clearanceToEdit);
             }
-
             const deleteBtn = e.target.closest('.delete-btn');
-            if (deleteBtn) {
-                const clearanceId = deleteBtn.dataset.id;
-                if (window.confirm("Are you sure you want to delete this clearance?")) {
-                    try {
-                        await deleteDoc(doc(db, "vehicleClearances", clearanceId));
-                        showNotification('Clearance deleted.');
-                    } catch (error) {
-                        console.error("Error deleting clearance:", error);
-                        showNotification('Failed to delete clearance.', 'error');
-                    }
+            if (deleteBtn && window.confirm("Delete this clearance?")) {
+                try {
+                    await deleteDoc(doc(db, "vehicleClearances", deleteBtn.dataset.id));
+                    showNotification('Clearance deleted.');
+                } catch (error) {
+                    showNotification('Failed to delete clearance.', 'error');
                 }
             }
         });
 
-        // --- Main App Logic ---
+        // --- Main App Router ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdminRoute = urlParams.get('admin') === 'true';
+
         onAuthStateChanged(auth, async (user) => {
-            // Unsubscribe from previous listener if it exists
-            if (unsubscribeFirestore) {
-                unsubscribeFirestore();
-                unsubscribeFirestore = null;
-            }
+            if (unsubscribeFirestore) unsubscribeFirestore();
 
-            if (user) {
-                currentUser = user;
-                const adminDoc = await getDoc(doc(db, "admins", user.uid));
-                isAdmin = adminDoc.exists();
-
-                // Subscribe to data
-                const q = query(collection(db, "vehicleClearances"));
-                unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-                    clearances = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    renderAppShell(); // Re-render the entire app content on data change
-                }, (error) => {
-                    console.error("Firestore error:", error);
-                    showNotification('Could not fetch data.', 'error');
-                });
-            } else {
-                currentUser = null;
-                isAdmin = false;
-                clearances = [];
-                renderAuthScreen();
+            if (isAdminRoute) {
+                if (user && !user.isAnonymous) {
+                    const adminDoc = await getDoc(doc(db, "admins", user.uid));
+                    if (adminDoc.exists()) {
+                        unsubscribeFirestore = onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
+                            clearances = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            renderAdminDashboard(user);
+                        });
+                    } else {
+                        await signOut(auth);
+                        // onAuthStateChanged will re-trigger, showing the login page.
+                    }
+                } else {
+                    renderAdminLogin();
+                }
+            } else { // Public User Route
+                if (!auth.currentUser) {
+                    await signInAnonymously(auth).catch(err => console.error("Anonymous sign in failed", err));
+                    // onAuthStateChanged will re-trigger with the new anonymous user.
+                } else {
+                    unsubscribeFirestore = onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
+                        clearances = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        renderUserPanel();
+                    }, err => {
+                        console.error("Firestore read failed:", err);
+                        appRoot.innerHTML = `<div class="p-8 text-center text-red-500">Could not load clearance data.</div>`;
+                    });
+                }
             }
         });
 
