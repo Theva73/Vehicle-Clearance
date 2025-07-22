@@ -191,51 +191,6 @@
                     </div>
                 </div>
             `;
-
-            let isLogin = true;
-            const authForm = document.getElementById('auth-form');
-            const authButton = document.getElementById('auth-button');
-            const authSubtitle = document.getElementById('auth-subtitle');
-            const authToggleText = document.getElementById('auth-toggle-text');
-            const authToggleButton = document.getElementById('auth-toggle-button');
-            const inviteCodeWrapper = document.getElementById('invite-code-wrapper');
-
-            authToggleButton.addEventListener('click', () => {
-                isLogin = !isLogin;
-                authSubtitle.textContent = isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
-                authButton.textContent = isLogin ? 'Login' : 'Sign Up';
-                authToggleText.textContent = isLogin ? "Need an admin account?" : "Already have an account?";
-                authToggleButton.textContent = isLogin ? 'Sign Up' : 'Login';
-                inviteCodeWrapper.classList.toggle('hidden', isLogin);
-            });
-
-            authForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                authButton.disabled = true;
-                authButton.textContent = 'Processing...';
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-
-                try {
-                    if (isLogin) {
-                        await signInWithEmailAndPassword(auth, email, password);
-                    } else {
-                        const inviteCode = document.getElementById('inviteCode').value;
-                        if (inviteCode !== ADMIN_INVITE_CODE) {
-                            throw new Error("Invalid Admin Invite Code.");
-                        }
-                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                        await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
-                        showNotification('Admin account created! Please log in.', 'success');
-                        authToggleButton.click();
-                    }
-                } catch (error) {
-                    showNotification(error.message, 'error');
-                } finally {
-                    authButton.disabled = false;
-                    authButton.textContent = isLogin ? 'Login' : 'Sign Up';
-                }
-            });
         };
 
         const renderAdminDashboard = (adminUser) => {
@@ -322,9 +277,9 @@
                         </div>
                     </div>
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                        <p><strong>Location:</strong> ${c.location}</p>
-                        <p><strong>Validity:</strong> ${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
-                        <p><strong>Escort:</strong> <span class="${c.escortRequired ? 'text-green-500' : 'text-red-500'}">${c.escortRequired ? 'Required' : 'Not Required'}</span></p>
+                        <p><strong class="font-medium text-gray-800 dark:text-gray-200">Location:</strong> ${c.location}</p>
+                        <p><strong class="font-medium text-gray-800 dark:text-gray-200">Validity:</strong> ${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
+                        <p><strong class="font-medium text-gray-800 dark:text-gray-200">Escort:</strong> <span class="${c.escortRequired ? 'text-green-500' : 'text-red-500'}">${c.escortRequired ? 'Required' : 'Not Required'}</span></p>
                     </div>
                 </div>
             `).join('');
@@ -429,35 +384,84 @@
         };
 
         // --- Event Delegation for Dynamic Content ---
-        appRoot.addEventListener('click', async (e) => {
-            const addBtn = e.target.closest('#add-clearance-btn');
-            if (addBtn) {
-                renderModal();
-                return;
+        document.body.addEventListener('click', async (e) => {
+            const target = e.target;
+
+            // Landing Page Buttons
+            if (target.closest('#admin-btn')) renderAdminLogin();
+            if (target.closest('#user-btn')) {
+                appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
+                await signInAnonymously(auth);
+            }
+
+            // Auth Form Toggle
+            if (target.closest('#auth-toggle-button')) {
+                const isLogin = target.closest('#auth-toggle-button').textContent.includes('Login');
+                document.getElementById('auth-subtitle').textContent = !isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
+                document.getElementById('auth-button').textContent = !isLogin ? 'Login' : 'Sign Up';
+                document.getElementById('auth-toggle-text').textContent = !isLogin ? "Need an admin account?" : "Already have an account?";
+                target.closest('#auth-toggle-button').textContent = !isLogin ? 'Sign Up' : 'Login';
+                document.getElementById('invite-code-wrapper').classList.toggle('hidden', !isLogin);
             }
             
-            const editBtn = e.target.closest('.edit-btn');
-            if (editBtn) {
-                const clearanceToEdit = clearances.find(c => c.id === editBtn.dataset.id);
+            // Auth Form Submit
+            if (target.closest('#auth-form')) {
+                const form = target.closest('#auth-form');
+                form.addEventListener('submit', async (submitEvent) => {
+                    submitEvent.preventDefault();
+                    const authButton = form.querySelector('#auth-button');
+                    authButton.disabled = true;
+                    authButton.textContent = 'Processing...';
+                    const email = form.querySelector('#email').value;
+                    const password = form.querySelector('#password').value;
+                    const isLogin = authButton.textContent.includes('Login');
+
+                    try {
+                        if (isLogin) {
+                            await signInWithEmailAndPassword(auth, email, password);
+                        } else {
+                            const inviteCode = form.querySelector('#inviteCode').value;
+                            if (inviteCode !== ADMIN_INVITE_CODE) throw new Error("Invalid Admin Invite Code.");
+                            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                            await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
+                            showNotification('Admin account created! Please log in.', 'success');
+                            document.getElementById('auth-toggle-button').click();
+                        }
+                    } catch (error) {
+                        showNotification(error.message, 'error');
+                    } finally {
+                        authButton.disabled = false;
+                        authButton.textContent = isLogin ? 'Login' : 'Sign Up';
+                    }
+                }, { once: true });
+            }
+
+            // Modal close buttons
+            if (target.closest('#close-modal-btn') || target.closest('#cancel-modal-btn') || target.id === 'modal-backdrop') {
+                const modalContainer = document.getElementById('modal-container');
+                if (modalContainer) modalContainer.innerHTML = '';
+            }
+
+            // Admin buttons
+            if (target.closest('#add-clearance-btn')) renderModal();
+            if (target.closest('.edit-btn')) {
+                const clearanceToEdit = clearances.find(c => c.id === target.closest('.edit-btn').dataset.id);
                 if (clearanceToEdit) renderModal(clearanceToEdit);
-                return;
             }
-
-            const deleteBtn = e.target.closest('.delete-btn');
-            if (deleteBtn && window.confirm("Delete this clearance?")) {
-                try {
-                    await deleteDoc(doc(db, "vehicleClearances", deleteBtn.dataset.id));
-                    showNotification('Clearance deleted.');
-                } catch (error) {
-                    showNotification('Failed to delete clearance.', 'error');
+            if (target.closest('.delete-btn')) {
+                if (window.confirm("Delete this clearance?")) {
+                    try {
+                        await deleteDoc(doc(db, "vehicleClearances", target.closest('.delete-btn').dataset.id));
+                        showNotification('Clearance deleted.');
+                    } catch (error) {
+                        showNotification('Failed to delete clearance.', 'error');
+                    }
                 }
-                return;
             }
 
-            const backBtn = e.target.closest('#back-btn');
-            if (backBtn) {
+            // Header/Navigation buttons
+            if (target.closest('#logout-button') || target.closest('#back-btn')) {
                 signOut(auth);
-                return;
             }
         });
 
