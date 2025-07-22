@@ -34,7 +34,7 @@
         .dark .text-gray-800 { color: #f3f4f6; }
         .dark .text-gray-700 { color: #d1d5db; }
         .dark .text-gray-600 { color: #9ca3af; }
-        .dark .text-gray-500 { color: #6b7280; }
+        .dark .text-gray-500 { color: #a0aec0; } /* Lighter gray for dark mode */
         .dark .border-gray-200 { border-color: #374151; }
         .dark .border-gray-300 { border-color: #4b5563; }
         .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -2px rgba(0,0,0,0.25); }
@@ -142,15 +142,15 @@
                     <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
                         <div>
                             <div class="w-16 h-16 mx-auto text-blue-500">${icons.car}</div>
-                            <h1 class="text-4xl font-bold text-gray-800 mt-4">Vehicle Clearance</h1>
-                            <p class="text-gray-500 mt-2">Please select your role to continue.</p>
+                            <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance</h1>
+                            <p class="text-gray-500 dark:text-gray-400 mt-2">Please select your role to continue.</p>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg transition-all duration-300 transform hover:scale-105">
+                            <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-lg transition-all duration-300 transform hover:scale-105">
                                 <div class="w-12 h-12">${icons.shield}</div>
                                 <span class="mt-3 font-semibold text-lg">Admin</span>
                             </button>
-                            <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 hover:bg-green-100 text-green-800 rounded-lg transition-all duration-300 transform hover:scale-105">
+                            <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 text-green-800 dark:text-green-300 rounded-lg transition-all duration-300 transform hover:scale-105">
                                 <div class="w-12 h-12">${icons.users}</div>
                                 <span class="mt-3 font-semibold text-lg">User</span>
                             </button>
@@ -158,15 +158,6 @@
                     </div>
                 </div>
             `;
-
-            document.getElementById('admin-btn').addEventListener('click', () => {
-                renderAdminLogin();
-            });
-
-            document.getElementById('user-btn').addEventListener('click', async () => {
-                appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
-                await signInAnonymously(auth);
-            });
         }
 
         const renderAdminLogin = () => {
@@ -175,27 +166,27 @@
                     <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
                         <div class="text-center">
                             <div class="w-12 h-12 mx-auto text-blue-500">${icons.shield}</div>
-                            <h1 class="text-3xl font-bold text-gray-800 mt-4">Admin Access</h1>
-                            <p class="text-gray-500" id="auth-subtitle">Sign in to manage clearances</p>
+                            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Admin Access</h1>
+                            <p class="text-gray-500 dark:text-gray-400" id="auth-subtitle">Sign in to manage clearances</p>
                         </div>
                         <form id="auth-form" class="space-y-6">
                             <div id="invite-code-wrapper" class="hidden">
-                                <label class="text-sm font-medium text-gray-700">Admin Invite Code</label>
-                                <input type="text" id="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 border rounded-lg" placeholder="Enter the secret code" />
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Invite Code</label>
+                                <input type="text" id="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" placeholder="Enter the secret code" />
                             </div>
                             <div>
-                                <label class="text-sm font-medium text-gray-700">Email</label>
-                                <input type="email" id="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 border rounded-lg" placeholder="admin@example.com" required />
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                                <input type="email" id="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" placeholder="admin@example.com" required />
                             </div>
                             <div>
-                                <label class="text-sm font-medium text-gray-700">Password</label>
-                                <input type="password" id="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 border rounded-lg" placeholder="••••••••" required />
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                                <input type="password" id="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" placeholder="••••••••" required />
                             </div>
                             <button type="submit" id="auth-button" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">Login</button>
                         </form>
-                        <p class="text-center text-sm text-gray-500">
+                        <p class="text-center text-sm text-gray-500 dark:text-gray-400">
                             <span id="auth-toggle-text">Need an admin account?</span>
-                            <button id="auth-toggle-button" class="font-medium text-blue-600 hover:text-blue-500 ml-1">Sign Up</button>
+                            <button id="auth-toggle-button" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 ml-1">Sign Up</button>
                         </p>
                     </div>
                 </div>
@@ -253,10 +244,10 @@
                     <nav class="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
                         <div class="flex items-center gap-3">
                             <span class="text-blue-500">${icons.shield}</span>
-                            <span class="text-xl font-bold">Admin Dashboard</span>
+                            <span class="text-xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</span>
                         </div>
                         <div class="flex items-center gap-4">
-                            <span class="text-sm text-gray-600 hidden md:block">${adminUser.email}</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">${adminUser.email}</span>
                             <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
                                 <span class="w-4 h-4">${icons.logout}</span> Logout
                             </button>
@@ -266,7 +257,6 @@
                 <main id="main-content" class="container mx-auto"></main>
                 <div id="modal-container"></div>
             `;
-            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             renderAdminPanel();
         };
         
@@ -275,8 +265,8 @@
             mainContent.innerHTML = `
                 <div class="p-4 md:p-8">
                     <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-3xl font-bold text-gray-800">Manage Clearances</h1>
-                        <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Manage Clearances</h1>
+                        <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                             <span class="w-5 h-5">${icons.plus}</span> Add Clearance
                         </button>
                     </div>
@@ -286,16 +276,16 @@
                     <div class="hidden md:block bg-white rounded-2xl shadow-lg overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
-                                <thead class="bg-gray-50">
+                                <thead class="bg-gray-50 dark:bg-gray-700/50">
                                     <tr>
-                                        <th class="p-4 font-semibold text-gray-600">Owner / Vehicle</th>
-                                        <th class="p-4 font-semibold text-gray-600">Location</th>
-                                        <th class="p-4 font-semibold text-gray-600">Validity</th>
-                                        <th class="p-4 font-semibold text-gray-600">Escort</th>
-                                        <th class="p-4 font-semibold text-gray-600">Actions</th>
+                                        <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Owner / Vehicle</th>
+                                        <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Location</th>
+                                        <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Validity</th>
+                                        <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Escort</th>
+                                        <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="clearances-table-body" class="divide-y divide-gray-200"></tbody>
+                                <tbody id="clearances-table-body" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
                             </table>
                         </div>
                     </div>
@@ -312,46 +302,46 @@
             const sortedClearances = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
 
             if (sortedClearances.length === 0) {
-                const emptyMessage = `<div class="text-center p-8 text-gray-500 bg-white rounded-lg">No clearances found. Add one to get started!</div>`;
+                const emptyMessage = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No clearances found. Add one to get started!</div>`;
                 mobileList.innerHTML = emptyMessage;
-                desktopTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-gray-500">No clearances found.</td></tr>`;
+                desktopTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-gray-500 dark:text-gray-400">No clearances found.</td></tr>`;
                 return;
             }
 
             // Render Mobile Cards
             mobileList.innerHTML = sortedClearances.map(c => `
-                <div class="bg-white rounded-lg shadow p-4 space-y-3">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="font-bold text-lg text-gray-800">${c.ownerName}</p>
-                            <p class="font-mono text-blue-600">${c.vehicleNumber}</p>
+                            <p class="font-bold text-lg text-gray-800 dark:text-gray-100">${c.ownerName}</p>
+                            <p class="font-mono text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
-                            <button class="delete-btn p-2 text-red-500 hover:bg-red-100 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
+                            <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
+                            <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
                         </div>
                     </div>
-                    <div class="border-t border-gray-200 pt-3 space-y-2 text-sm">
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
                         <p><strong>Location:</strong> ${c.location}</p>
                         <p><strong>Validity:</strong> ${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
-                        <p><strong>Escort:</strong> ${c.escortRequired ? 'Required' : 'Not Required'}</p>
+                        <p><strong>Escort:</strong> <span class="${c.escortRequired ? 'text-green-500' : 'text-red-500'}">${c.escortRequired ? 'Required' : 'Not Required'}</span></p>
                     </div>
                 </div>
             `).join('');
 
             // Render Desktop Table Rows
             desktopTableBody.innerHTML = sortedClearances.map(c => `
-                <tr class="hover:bg-gray-50">
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td class="p-4">
-                        <p class="font-bold text-gray-900">${c.ownerName}</p>
-                        <p class="font-mono text-sm text-gray-600">${c.vehicleNumber}</p>
+                        <p class="font-bold text-gray-900 dark:text-gray-100">${c.ownerName}</p>
+                        <p class="font-mono text-sm text-gray-600 dark:text-gray-400">${c.vehicleNumber}</p>
                     </td>
-                    <td class="p-4 text-gray-700">${c.location}</td>
-                    <td class="p-4 text-gray-700">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</td>
-                    <td class="p-4">${c.escortRequired ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Required</span>` : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Not Required</span>`}</td>
+                    <td class="p-4 text-gray-700 dark:text-gray-300">${c.location}</td>
+                    <td class="p-4 text-gray-700 dark:text-gray-300">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</td>
+                    <td class="p-4">${c.escortRequired ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Required</span>` : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Not Required</span>`}</td>
                     <td class="p-4 flex gap-2">
-                        <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
-                        <button class="delete-btn p-2 text-red-500 hover:bg-red-100 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
+                        <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
+                        <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
                     </td>
                 </tr>
             `).join('');
@@ -370,27 +360,27 @@
             });
 
             const clearanceListHTML = dailyClearances.length > 0 ? dailyClearances.map(c => `
-                <div class="bg-white rounded-2xl shadow-md p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                     <div class="col-span-1">
-                        <p class="text-sm text-gray-500">Owner / Company</p>
-                        <p class="font-bold text-xl text-gray-800">${c.ownerName}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Owner / Company</p>
+                        <p class="font-bold text-xl text-gray-800 dark:text-gray-100">${c.ownerName}</p>
                     </div>
                     <div class="col-span-1">
-                        <p class="text-sm text-gray-500">Vehicle No.</p>
-                        <p class="font-mono text-xl font-bold text-blue-500">${c.vehicleNumber}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle No.</p>
+                        <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
                     </div>
-                    <div class="col-span-1 sm:col-span-2 grid grid-cols-2 gap-4 pt-4 border-t mt-4">
+                    <div class="col-span-1 sm:col-span-2 grid grid-cols-2 gap-4 pt-4 border-t dark:border-gray-700 mt-4">
                         <div>
-                            <p class="text-sm text-gray-500">Location</p>
-                            <p class="font-semibold text-gray-800">${c.location}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Location</p>
+                            <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500">Escort</p>
-                            <p class="font-semibold ${c.escortRequired ? 'text-green-600' : 'text-red-600'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Escort</p>
+                            <p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
                         </div>
                     </div>
                 </div>`).join('') : `
-                <div class="text-center py-16 bg-white rounded-2xl shadow-md"><div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div><h3 class="mt-4 text-xl font-semibold">No Clearances for Today</h3><p class="mt-1 text-gray-500">There are no vehicles with clearance for today.</p></div>`;
+                <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md"><div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div><h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">No Clearances for Today</h3><p class="mt-1 text-gray-500 dark:text-gray-400">There are no vehicles with clearance for today.</p></div>`;
 
             appRoot.innerHTML = `
                 <main class="container mx-auto">
@@ -398,17 +388,15 @@
                         <div class="flex justify-between items-center mb-6">
                             <div class="flex items-center gap-4">
                                 <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
-                                <div><h1 class="text-3xl font-bold text-gray-800">Daily Vehicle Clearances</h1><p class="text-gray-500">Showing vehicles cleared for today: ${formatDate(today)}</p></div>
+                                <div><h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Daily Vehicle Clearances</h1><p class="text-gray-500 dark:text-gray-400">Showing vehicles cleared for today: ${formatDate(today)}</p></div>
                             </div>
-                            <button id="back-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">
+                            <button id="back-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
                                 <span class="w-4 h-4">${icons.back}</span> Change Role
                             </button>
                         </div>
                         <div class="space-y-4">${clearanceListHTML}</div>
                     </div>
                 </main>`;
-            
-            document.getElementById('back-btn').addEventListener('click', () => signOut(auth));
         };
 
         const renderModal = (clearanceToEdit = null) => {
@@ -416,69 +404,45 @@
             const toISODate = (date) => date ? new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
             modalContainer.innerHTML = `
                 <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-                    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
-                        <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">${icons.x}</button>
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
+                        <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">${icons.x}</button>
                         <form id="clearance-form" class="space-y-4">
-                            <h2 class="text-2xl font-bold">${clearanceToEdit ? 'Edit' : 'Add'} Clearance</h2>
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${clearanceToEdit ? 'Edit' : 'Add'} Clearance</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="text-sm font-medium">Owner's Name</label><input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 border rounded-lg" required /></div>
-                                <div><label class="text-sm font-medium">Vehicle Number</label><input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" class="mt-1 w-full p-3 bg-gray-50 border rounded-lg" required /></div>
+                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label><input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
+                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label><input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="text-sm font-medium">Entry Date</label><input type="date" name="entryDate" value="${toISODate(clearanceToEdit?.entryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 border rounded-lg" required /></div>
-                                <div><label class="text-sm font-medium">Expiry Date</label><input type="date" name="expiryDate" value="${toISODate(clearanceToEdit?.expiryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 border rounded-lg" required /></div>
+                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label><input type="date" name="entryDate" value="${toISODate(clearanceToEdit?.entryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
+                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label><input type="date" name="expiryDate" value="${toISODate(clearanceToEdit?.expiryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
                             </div>
-                            <div><label class="text-sm font-medium">Location</label><input name="location" value="${clearanceToEdit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 border rounded-lg" required /></div>
-                            <div><label class="text-sm font-medium">Notes</label><textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 border rounded-lg">${clearanceToEdit?.notes || ''}</textarea></div>
-                            <div class="flex items-center"><input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5 rounded" ${clearanceToEdit?.escortRequired ? 'checked' : ''} /><label for="escortRequired" class="ml-2">Escort Required</label></div>
+                            <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label><input name="location" value="${clearanceToEdit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
+                            <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label><textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg">${clearanceToEdit?.notes || ''}</textarea></div>
+                            <div class="flex items-center"><input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5 rounded text-blue-600 focus:ring-blue-500" ${clearanceToEdit?.escortRequired ? 'checked' : ''} /><label for="escortRequired" class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label></div>
                             <div class="flex justify-end space-x-3 pt-4">
-                                <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200">Cancel</button>
-                                <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white">${clearanceToEdit ? 'Update' : 'Save'}</button>
+                                <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+                                <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${clearanceToEdit ? 'Update' : 'Save'}</button>
                             </div>
                         </form>
                     </div>
                 </div>`;
-            
-            const closeModal = () => modalContainer.innerHTML = '';
-            document.getElementById('close-modal-btn').addEventListener('click', closeModal);
-            document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
-            document.getElementById('modal-backdrop').addEventListener('click', (e) => e.target.id === 'modal-backdrop' && closeModal());
-
-            document.getElementById('clearance-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const data = {
-                    ownerName: formData.get('ownerName'), vehicleNumber: formData.get('vehicleNumber'),
-                    location: formData.get('location'), notes: formData.get('notes'),
-                    escortRequired: formData.get('escortRequired') === 'on',
-                    entryDate: Timestamp.fromDate(new Date(formData.get('entryDate'))),
-                    expiryDate: Timestamp.fromDate(new Date(formData.get('expiryDate'))),
-                };
-                if (data.expiryDate.toDate() < data.entryDate.toDate()) {
-                    showNotification('Expiry date cannot be before entry date.', 'error'); return;
-                }
-                try {
-                    if (clearanceToEdit) {
-                        await setDoc(doc(db, "vehicleClearances", clearanceToEdit.id), data);
-                        showNotification('Clearance updated!');
-                    } else {
-                        await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
-                        showNotification('Clearance added!');
-                    }
-                    closeModal();
-                } catch (error) {
-                    showNotification('Failed to save clearance.', 'error');
-                }
-            });
         };
 
         // --- Event Delegation for Dynamic Content ---
         appRoot.addEventListener('click', async (e) => {
+            const addBtn = e.target.closest('#add-clearance-btn');
+            if (addBtn) {
+                renderModal();
+                return;
+            }
+            
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) {
                 const clearanceToEdit = clearances.find(c => c.id === editBtn.dataset.id);
                 if (clearanceToEdit) renderModal(clearanceToEdit);
+                return;
             }
+
             const deleteBtn = e.target.closest('.delete-btn');
             if (deleteBtn && window.confirm("Delete this clearance?")) {
                 try {
@@ -487,6 +451,13 @@
                 } catch (error) {
                     showNotification('Failed to delete clearance.', 'error');
                 }
+                return;
+            }
+
+            const backBtn = e.target.closest('#back-btn');
+            if (backBtn) {
+                signOut(auth);
+                return;
             }
         });
 
