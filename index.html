@@ -440,7 +440,7 @@
         });
         
         // --- Event Listeners ---
-        document.body.addEventListener('click', (e) => {
+        document.body.addEventListener('click', async (e) => {
             const target = e.target.closest('button');
             if (!target) return;
 
@@ -458,6 +458,17 @@
                     const modal = document.getElementById('modal-container');
                     if (modal) modal.innerHTML = '';
                     break;
+            }
+        });
+
+        document.body.addEventListener('submit', async (e) => {
+            if (e.target.id === 'auth-form') {
+                e.preventDefault();
+                // Auth form submission logic...
+            }
+            if (e.target.id === 'clearance-form') {
+                 e.preventDefault();
+                // Clearance form submission logic...
             }
         });
     </script>
