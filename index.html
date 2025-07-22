@@ -158,11 +158,6 @@
                     </div>
                 </div>
             `;
-            document.getElementById('admin-btn').addEventListener('click', renderAdminLogin);
-            document.getElementById('user-btn').addEventListener('click', async () => {
-                appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
-                await signInAnonymously(auth);
-            });
         }
 
         const renderAdminLogin = () => {
@@ -196,49 +191,6 @@
                     </div>
                 </div>
             `;
-            
-            let isLogin = true;
-            const authForm = document.getElementById('auth-form');
-            const authToggleButton = document.getElementById('auth-toggle-button');
-
-            authToggleButton.addEventListener('click', () => {
-                isLogin = !isLogin;
-                document.getElementById('auth-subtitle').textContent = isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
-                document.getElementById('auth-button').textContent = isLogin ? 'Login' : 'Sign Up';
-                document.getElementById('auth-toggle-text').textContent = isLogin ? "Need an admin account?" : "Already have an account?";
-                authToggleButton.textContent = isLogin ? 'Sign Up' : 'Login';
-                document.getElementById('invite-code-wrapper').classList.toggle('hidden', isLogin);
-            });
-
-            authForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const authButton = document.getElementById('auth-button');
-                authButton.disabled = true;
-                authButton.textContent = 'Processing...';
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-
-                try {
-                    if (isLogin) {
-                        await signInWithEmailAndPassword(auth, email, password);
-                    } else {
-                        const inviteCode = document.getElementById('inviteCode').value;
-                        if (inviteCode !== ADMIN_INVITE_CODE) {
-                            throw new Error("Invalid Admin Invite Code.");
-                        }
-                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                        await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
-                        showNotification('Admin account created! Please log in.', 'success');
-                        authToggleButton.click(); // Switch to login view
-                    }
-                } catch (error) {
-                    showNotification(error.message, 'error');
-                } finally {
-                    authButton.disabled = false;
-                    // Reset text based on the current mode (isLogin)
-                    authButton.textContent = isLogin ? 'Login' : 'Sign Up';
-                }
-            });
         };
 
         const renderAdminDashboard = (adminUser) => {
@@ -260,7 +212,6 @@
                 <main id="main-content" class="container mx-auto"></main>
                 <div id="modal-container"></div>
             `;
-            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             renderAdminPanel();
         };
         
@@ -284,6 +235,7 @@
                                         <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Location</th>
                                         <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Validity</th>
                                         <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Escort</th>
+                                        <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Notes</th>
                                         <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                                     </tr>
                                 </thead>
@@ -293,7 +245,6 @@
                     </div>
                 </div>
             `;
-            document.getElementById('add-clearance-btn').addEventListener('click', () => renderModal());
             renderClearancesList();
         };
 
@@ -307,14 +258,14 @@
             if (sortedClearances.length === 0) {
                 const emptyMessage = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No clearances found. Add one to get started!</div>`;
                 mobileList.innerHTML = emptyMessage;
-                desktopTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-gray-500 dark:text-gray-400">No clearances found.</td></tr>`;
+                desktopTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-gray-500 dark:text-gray-400">No clearances found.</td></tr>`;
             } else {
                 mobileList.innerHTML = sortedClearances.map(c => `
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="font-bold text-lg text-gray-800 dark:text-gray-100">${c.ownerName}</p>
-                                <p class="font-mono text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
+                                <p class="font-mono text-xl font-bold text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
                             </div>
                             <div class="flex items-center gap-2">
                                 <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
@@ -325,6 +276,7 @@
                             <p><strong class="font-medium text-gray-800 dark:text-gray-200">Location:</strong> ${c.location}</p>
                             <p><strong class="font-medium text-gray-800 dark:text-gray-200">Validity:</strong> ${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
                             <p><strong class="font-medium text-gray-800 dark:text-gray-200">Escort:</strong> <span class="${c.escortRequired ? 'text-green-500' : 'text-red-500'}">${c.escortRequired ? 'Required' : 'Not Required'}</span></p>
+                            ${c.notes ? `<p><strong class="font-medium text-gray-800 dark:text-gray-200">Notes:</strong> ${c.notes}</p>` : ''}
                         </div>
                     </div>
                 `).join('');
@@ -333,11 +285,12 @@
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                         <td class="p-4">
                             <p class="font-bold text-gray-900 dark:text-gray-100">${c.ownerName}</p>
-                            <p class="font-mono text-sm text-gray-600 dark:text-gray-400">${c.vehicleNumber}</p>
+                            <p class="font-mono text-lg font-bold text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
                         </td>
                         <td class="p-4 text-gray-700 dark:text-gray-300">${c.location}</td>
                         <td class="p-4 text-gray-700 dark:text-gray-300">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</td>
                         <td class="p-4">${c.escortRequired ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Required</span>` : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Not Required</span>`}</td>
+                        <td class="p-4 text-gray-700 dark:text-gray-300 text-sm">${c.notes || ''}</td>
                         <td class="p-4 flex gap-2">
                             <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
                             <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
@@ -345,21 +298,6 @@
                     </tr>
                 `).join('');
             }
-            
-            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => {
-                const clearanceToEdit = clearances.find(c => c.id === e.currentTarget.dataset.id);
-                if (clearanceToEdit) renderModal(clearanceToEdit);
-            }));
-            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => {
-                 if (window.confirm("Delete this clearance?")) {
-                    try {
-                        await deleteDoc(doc(db, "vehicleClearances", e.currentTarget.dataset.id));
-                        showNotification('Clearance deleted.');
-                    } catch (error) {
-                        showNotification('Failed to delete clearance.', 'error');
-                    }
-                }
-            }));
         };
 
         const renderUserPanel = () => {
@@ -375,16 +313,16 @@
             });
 
             const clearanceListHTML = dailyClearances.length > 0 ? dailyClearances.map(c => `
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                    <div class="col-span-1">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 space-y-4">
+                    <div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Owner / Company</p>
                         <p class="font-bold text-xl text-gray-800 dark:text-gray-100">${c.ownerName}</p>
                     </div>
-                    <div class="col-span-1">
+                    <div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle No.</p>
-                        <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
+                        <p class="font-mono text-2xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
                     </div>
-                    <div class="col-span-1 sm:col-span-2 grid grid-cols-2 gap-4 pt-4 border-t dark:border-gray-700 mt-4">
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t dark:border-gray-700">
                         <div>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Location</p>
                             <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
@@ -393,6 +331,11 @@
                             <p class="text-sm text-gray-500 dark:text-gray-400">Escort</p>
                             <p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
                         </div>
+                        <div class="col-span-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Valid Until</p>
+                            <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
+                        </div>
+                        ${c.notes ? `<div class="col-span-2"><p class="text-sm text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200">${c.notes}</p></div>` : ''}
                     </div>
                 </div>`).join('') : `
                 <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md"><div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div><h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">No Clearances for Today</h3><p class="mt-1 text-gray-500 dark:text-gray-400">There are no vehicles with clearance for today.</p></div>`;
@@ -412,7 +355,6 @@
                         <div class="space-y-4">${clearanceListHTML}</div>
                     </div>
                 </main>`;
-            document.getElementById('back-btn').addEventListener('click', () => signOut(auth));
         };
 
         const renderModal = (clearanceToEdit = null) => {
@@ -442,38 +384,85 @@
                         </form>
                     </div>
                 </div>`;
-            
-            const closeModal = () => modalContainer.innerHTML = '';
-            document.getElementById('close-modal-btn').addEventListener('click', closeModal);
-            document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
-            document.getElementById('modal-backdrop').addEventListener('click', (e) => {
-                if(e.target.id === 'modal-backdrop') closeModal();
+        };
+        
+        // --- Centralized Event Handler ---
+        const addEventListeners = () => {
+            appRoot.addEventListener('click', async (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                switch(target.id) {
+                    case 'admin-btn': renderAdminLogin(); break;
+                    case 'user-btn':
+                        appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
+                        await signInAnonymously(auth);
+                        break;
+                    case 'auth-toggle-button':
+                        const formContainer = target.closest('div');
+                        const isLogin = formContainer.querySelector('#auth-button').textContent === 'Login';
+                        formContainer.querySelector('#auth-subtitle').textContent = isLogin ? 'Create a new Admin account' : 'Sign in to manage clearances';
+                        formContainer.querySelector('#auth-button').textContent = isLogin ? 'Sign Up' : 'Login';
+                        formContainer.querySelector('#auth-toggle-text').textContent = isLogin ? "Already have an account?" : "Need an admin account?";
+                        target.textContent = isLogin ? 'Login' : 'Sign Up';
+                        formContainer.querySelector('#invite-code-wrapper').classList.toggle('hidden', !isLogin);
+                        break;
+                    case 'logout-button':
+                    case 'back-btn':
+                        signOut(auth);
+                        break;
+                    case 'add-clearance-btn': renderModal(); break;
+                    case 'close-modal-btn':
+                    case 'cancel-modal-btn':
+                        const modal = document.getElementById('modal-container');
+                        if (modal) modal.innerHTML = '';
+                        break;
+                }
+
+                if (target.classList.contains('edit-btn')) {
+                    const clearanceToEdit = clearances.find(c => c.id === target.dataset.id);
+                    if (clearanceToEdit) renderModal(clearanceToEdit);
+                }
+                if (target.classList.contains('delete-btn')) {
+                    if (window.confirm("Delete this clearance?")) {
+                        try {
+                            await deleteDoc(doc(db, "vehicleClearances", target.dataset.id));
+                            showNotification('Clearance deleted.');
+                        } catch (error) {
+                            showNotification('Failed to delete clearance.', 'error');
+                        }
+                    }
+                }
             });
 
-            document.getElementById('clearance-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const data = {
-                    ownerName: formData.get('ownerName'), vehicleNumber: formData.get('vehicleNumber'),
-                    location: formData.get('location'), notes: formData.get('notes'),
-                    escortRequired: formData.get('escortRequired') === 'on',
-                    entryDate: Timestamp.fromDate(new Date(formData.get('entryDate'))),
-                    expiryDate: Timestamp.fromDate(new Date(formData.get('expiryDate'))),
-                };
-                if (data.expiryDate.toDate() < data.entryDate.toDate()) {
-                    showNotification('Expiry date cannot be before entry date.', 'error'); return;
-                }
-                try {
-                    if (clearanceToEdit) {
-                        await setDoc(doc(db, "vehicleClearances", clearanceToEdit.id), data);
-                        showNotification('Clearance updated!');
-                    } else {
-                        await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
-                        showNotification('Clearance added!');
+            appRoot.addEventListener('submit', async (e) => {
+                if (e.target.id === 'auth-form') {
+                    e.preventDefault();
+                    const form = e.target;
+                    const authButton = form.querySelector('#auth-button');
+                    const isLogin = authButton.textContent === 'Login';
+                    authButton.disabled = true;
+                    authButton.textContent = 'Processing...';
+
+                    try {
+                        const email = form.querySelector('#email').value;
+                        const password = form.querySelector('#password').value;
+                        if (isLogin) {
+                            await signInWithEmailAndPassword(auth, email, password);
+                        } else {
+                            const inviteCode = form.querySelector('#inviteCode').value;
+                            if (inviteCode !== ADMIN_INVITE_CODE) throw new Error("Invalid Admin Invite Code.");
+                            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                            await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
+                            showNotification('Admin account created! Please log in.', 'success');
+                            form.querySelector('#auth-toggle-button').click();
+                        }
+                    } catch (error) {
+                        showNotification(error.message, 'error');
+                    } finally {
+                        authButton.disabled = false;
+                        authButton.textContent = isLogin ? 'Login' : 'Sign Up';
                     }
-                    closeModal();
-                } catch (error) {
-                    showNotification('Failed to save clearance.', 'error');
                 }
             });
         };
@@ -505,6 +494,8 @@
                 renderLandingPage();
             }
         });
+        
+        addEventListeners();
     </script>
 </body>
 </html>
