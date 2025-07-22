@@ -158,6 +158,11 @@
                     </div>
                 </div>
             `;
+            document.getElementById('admin-btn').addEventListener('click', renderAdminLogin);
+            document.getElementById('user-btn').addEventListener('click', async () => {
+                appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
+                await signInAnonymously(auth);
+            });
         }
 
         const renderAdminLogin = () => {
@@ -191,6 +196,48 @@
                     </div>
                 </div>
             `;
+
+            let isLogin = true;
+            const authForm = document.getElementById('auth-form');
+            const authToggleButton = document.getElementById('auth-toggle-button');
+
+            authToggleButton.addEventListener('click', () => {
+                isLogin = !isLogin;
+                document.getElementById('auth-subtitle').textContent = isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
+                document.getElementById('auth-button').textContent = isLogin ? 'Login' : 'Sign Up';
+                document.getElementById('auth-toggle-text').textContent = isLogin ? "Need an admin account?" : "Already have an account?";
+                authToggleButton.textContent = isLogin ? 'Sign Up' : 'Login';
+                document.getElementById('invite-code-wrapper').classList.toggle('hidden', isLogin);
+            });
+
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const authButton = document.getElementById('auth-button');
+                authButton.disabled = true;
+                authButton.textContent = 'Processing...';
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    if (isLogin) {
+                        await signInWithEmailAndPassword(auth, email, password);
+                    } else {
+                        const inviteCode = document.getElementById('inviteCode').value;
+                        if (inviteCode !== ADMIN_INVITE_CODE) {
+                            throw new Error("Invalid Admin Invite Code.");
+                        }
+                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
+                        showNotification('Admin account created! Please log in.', 'success');
+                        authToggleButton.click(); // Switch to login view
+                    }
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                } finally {
+                    authButton.disabled = false;
+                    authButton.textContent = isLogin ? 'Login' : 'Sign Up';
+                }
+            });
         };
 
         const renderAdminDashboard = (adminUser) => {
@@ -212,6 +259,7 @@
                 <main id="main-content" class="container mx-auto"></main>
                 <div id="modal-container"></div>
             `;
+            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             renderAdminPanel();
         };
         
@@ -225,9 +273,7 @@
                             <span class="w-5 h-5">${icons.plus}</span> Add Clearance
                         </button>
                     </div>
-                    <div id="clearance-list" class="space-y-4 md:hidden">
-                        <!-- Mobile card view is rendered here -->
-                    </div>
+                    <div id="clearance-list" class="space-y-4 md:hidden"></div>
                     <div class="hidden md:block bg-white rounded-2xl shadow-lg overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
@@ -246,6 +292,7 @@
                     </div>
                 </div>
             `;
+            document.getElementById('add-clearance-btn').addEventListener('click', () => renderModal());
             renderClearancesList();
         };
 
@@ -260,46 +307,58 @@
                 const emptyMessage = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No clearances found. Add one to get started!</div>`;
                 mobileList.innerHTML = emptyMessage;
                 desktopTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-gray-500 dark:text-gray-400">No clearances found.</td></tr>`;
-                return;
-            }
-
-            // Render Mobile Cards
-            mobileList.innerHTML = sortedClearances.map(c => `
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="font-bold text-lg text-gray-800 dark:text-gray-100">${c.ownerName}</p>
-                            <p class="font-mono text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
+            } else {
+                mobileList.innerHTML = sortedClearances.map(c => `
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold text-lg text-gray-800 dark:text-gray-100">${c.ownerName}</p>
+                                <p class="font-mono text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
+                                <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                            <p><strong class="font-medium text-gray-800 dark:text-gray-200">Location:</strong> ${c.location}</p>
+                            <p><strong class="font-medium text-gray-800 dark:text-gray-200">Validity:</strong> ${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
+                            <p><strong class="font-medium text-gray-800 dark:text-gray-200">Escort:</strong> <span class="${c.escortRequired ? 'text-green-500' : 'text-red-500'}">${c.escortRequired ? 'Required' : 'Not Required'}</span></p>
+                        </div>
+                    </div>
+                `).join('');
+
+                desktopTableBody.innerHTML = sortedClearances.map(c => `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td class="p-4">
+                            <p class="font-bold text-gray-900 dark:text-gray-100">${c.ownerName}</p>
+                            <p class="font-mono text-sm text-gray-600 dark:text-gray-400">${c.vehicleNumber}</p>
+                        </td>
+                        <td class="p-4 text-gray-700 dark:text-gray-300">${c.location}</td>
+                        <td class="p-4 text-gray-700 dark:text-gray-300">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</td>
+                        <td class="p-4">${c.escortRequired ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Required</span>` : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Not Required</span>`}</td>
+                        <td class="p-4 flex gap-2">
                             <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
                             <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
-                        </div>
-                    </div>
-                    <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                        <p><strong class="font-medium text-gray-800 dark:text-gray-200">Location:</strong> ${c.location}</p>
-                        <p><strong class="font-medium text-gray-800 dark:text-gray-200">Validity:</strong> ${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
-                        <p><strong class="font-medium text-gray-800 dark:text-gray-200">Escort:</strong> <span class="${c.escortRequired ? 'text-green-500' : 'text-red-500'}">${c.escortRequired ? 'Required' : 'Not Required'}</span></p>
-                    </div>
-                </div>
-            `).join('');
-
-            // Render Desktop Table Rows
-            desktopTableBody.innerHTML = sortedClearances.map(c => `
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <td class="p-4">
-                        <p class="font-bold text-gray-900 dark:text-gray-100">${c.ownerName}</p>
-                        <p class="font-mono text-sm text-gray-600 dark:text-gray-400">${c.vehicleNumber}</p>
-                    </td>
-                    <td class="p-4 text-gray-700 dark:text-gray-300">${c.location}</td>
-                    <td class="p-4 text-gray-700 dark:text-gray-300">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</td>
-                    <td class="p-4">${c.escortRequired ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Required</span>` : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Not Required</span>`}</td>
-                    <td class="p-4 flex gap-2">
-                        <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.edit}</span></button>
-                        <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}"><span class="w-5 h-5 block">${icons.trash}</span></button>
-                    </td>
-                </tr>
-            `).join('');
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const clearanceToEdit = clearances.find(c => c.id === e.currentTarget.dataset.id);
+                if (clearanceToEdit) renderModal(clearanceToEdit);
+            }));
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+                 if (window.confirm("Delete this clearance?")) {
+                    try {
+                        await deleteDoc(doc(db, "vehicleClearances", e.currentTarget.dataset.id));
+                        showNotification('Clearance deleted.');
+                    } catch (error) {
+                        showNotification('Failed to delete clearance.', 'error');
+                    }
+                }
+            }));
         };
 
         const renderUserPanel = () => {
@@ -352,6 +411,7 @@
                         <div class="space-y-4">${clearanceListHTML}</div>
                     </div>
                 </main>`;
+            document.getElementById('back-btn').addEventListener('click', () => signOut(auth));
         };
 
         const renderModal = (clearanceToEdit = null) => {
@@ -381,63 +441,41 @@
                         </form>
                     </div>
                 </div>`;
-        };
-        
-        // --- Centralized Event Handler ---
-        const handleAppClick = async (e) => {
-            const target = e.target;
+            
+            const closeModal = () => modalContainer.innerHTML = '';
+            document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+            document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
+            document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+                if(e.target.id === 'modal-backdrop') closeModal();
+            });
 
-            // Landing Page
-            if (target.closest('#admin-btn')) {
-                renderAdminLogin();
-            } else if (target.closest('#user-btn')) {
-                appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
-                await signInAnonymously(auth);
-            }
-
-            // Auth Form
-            else if (target.closest('#auth-toggle-button')) {
-                const formContainer = target.closest('div');
-                const isLogin = formContainer.querySelector('#auth-button').textContent.includes('Login');
-                formContainer.querySelector('#auth-subtitle').textContent = !isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
-                formContainer.querySelector('#auth-button').textContent = !isLogin ? 'Login' : 'Sign Up';
-                formContainer.querySelector('#auth-toggle-text').textContent = !isLogin ? "Need an admin account?" : "Already have an account?";
-                target.textContent = !isLogin ? 'Sign Up' : 'Login';
-                formContainer.querySelector('#invite-code-wrapper').classList.toggle('hidden', !isLogin);
-            }
-            else if (target.closest('#auth-form')) {
-                target.closest('#auth-form').addEventListener('submit', async (submitEvent) => {
-                    submitEvent.preventDefault();
-                    // Auth form submission logic...
-                }, { once: true });
-            }
-
-            // Dashboard and Modals
-            else if (target.closest('#logout-button') || target.closest('#back-btn')) {
-                await signOut(auth);
-            } else if (target.closest('#add-clearance-btn')) {
-                renderModal();
-            } else if (target.closest('.edit-btn')) {
-                const clearanceToEdit = clearances.find(c => c.id === target.closest('.edit-btn').dataset.id);
-                if (clearanceToEdit) renderModal(clearanceToEdit);
-            } else if (target.closest('.delete-btn')) {
-                if (window.confirm("Delete this clearance?")) {
-                    try {
-                        await deleteDoc(doc(db, "vehicleClearances", target.closest('.delete-btn').dataset.id));
-                        showNotification('Clearance deleted.');
-                    } catch (error) {
-                        showNotification('Failed to delete clearance.', 'error');
-                    }
+            document.getElementById('clearance-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = {
+                    ownerName: formData.get('ownerName'), vehicleNumber: formData.get('vehicleNumber'),
+                    location: formData.get('location'), notes: formData.get('notes'),
+                    escortRequired: formData.get('escortRequired') === 'on',
+                    entryDate: Timestamp.fromDate(new Date(formData.get('entryDate'))),
+                    expiryDate: Timestamp.fromDate(new Date(formData.get('expiryDate'))),
+                };
+                if (data.expiryDate.toDate() < data.entryDate.toDate()) {
+                    showNotification('Expiry date cannot be before entry date.', 'error'); return;
                 }
-            } else if (target.closest('#close-modal-btn') || target.closest('#cancel-modal-btn') || target.id === 'modal-backdrop') {
-                const modalContainer = document.getElementById('modal-container');
-                if (modalContainer) modalContainer.innerHTML = '';
-            }
+                try {
+                    if (clearanceToEdit) {
+                        await setDoc(doc(db, "vehicleClearances", clearanceToEdit.id), data);
+                        showNotification('Clearance updated!');
+                    } else {
+                        await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
+                        showNotification('Clearance added!');
+                    }
+                    closeModal();
+                } catch (error) {
+                    showNotification('Failed to save clearance.', 'error');
+                }
+            });
         };
-        
-        appRoot.addEventListener('click', handleAppClick);
-        document.getElementById('modal-container')?.addEventListener('click', handleAppClick);
-
 
         // --- Main App Router ---
         onAuthStateChanged(auth, async (user) => {
