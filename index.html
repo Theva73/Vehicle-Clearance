@@ -440,7 +440,7 @@
         });
         
         // --- Event Listeners ---
-        document.body.addEventListener('click', async (e) => {
+        document.body.addEventListener('click', (e) => {
             const target = e.target.closest('button');
             if (!target) return;
 
