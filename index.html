@@ -158,11 +158,6 @@
                     </div>
                 </div>
             `;
-            document.getElementById('admin-btn').addEventListener('click', renderAdminLogin);
-            document.getElementById('user-btn').addEventListener('click', async () => {
-                appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
-                await signInAnonymously(auth);
-            });
         }
 
         const renderAdminLogin = () => {
@@ -177,15 +172,15 @@
                         <form id="auth-form" class="space-y-6">
                             <div id="invite-code-wrapper" class="hidden">
                                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Invite Code</label>
-                                <input type="text" id="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" placeholder="Enter the secret code" />
+                                <input type="text" id="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white dark:placeholder-gray-400" placeholder="Enter the secret code" />
                             </div>
                             <div>
                                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                                <input type="email" id="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" placeholder="admin@example.com" required />
+                                <input type="email" id="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white dark:placeholder-gray-400" placeholder="admin@example.com" required />
                             </div>
                             <div>
                                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                                <input type="password" id="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" placeholder="••••••••" required />
+                                <input type="password" id="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white dark:placeholder-gray-400" placeholder="••••••••" required />
                             </div>
                             <button type="submit" id="auth-button" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">Login</button>
                         </form>
@@ -196,48 +191,6 @@
                     </div>
                 </div>
             `;
-
-            let isLogin = true;
-            const authForm = document.getElementById('auth-form');
-            const authToggleButton = document.getElementById('auth-toggle-button');
-
-            authToggleButton.addEventListener('click', () => {
-                isLogin = !isLogin;
-                document.getElementById('auth-subtitle').textContent = isLogin ? 'Sign in to manage clearances' : 'Create a new Admin account';
-                document.getElementById('auth-button').textContent = isLogin ? 'Login' : 'Sign Up';
-                document.getElementById('auth-toggle-text').textContent = isLogin ? "Need an admin account?" : "Already have an account?";
-                authToggleButton.textContent = isLogin ? 'Sign Up' : 'Login';
-                document.getElementById('invite-code-wrapper').classList.toggle('hidden', isLogin);
-            });
-
-            authForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const authButton = document.getElementById('auth-button');
-                authButton.disabled = true;
-                authButton.textContent = 'Processing...';
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-
-                try {
-                    if (isLogin) {
-                        await signInWithEmailAndPassword(auth, email, password);
-                    } else {
-                        const inviteCode = document.getElementById('inviteCode').value;
-                        if (inviteCode !== ADMIN_INVITE_CODE) {
-                            throw new Error("Invalid Admin Invite Code.");
-                        }
-                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                        await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
-                        showNotification('Admin account created! Please log in.', 'success');
-                        authToggleButton.click(); // Switch to login view
-                    }
-                } catch (error) {
-                    showNotification(error.message, 'error');
-                } finally {
-                    authButton.disabled = false;
-                    authButton.textContent = isLogin ? 'Login' : 'Sign Up';
-                }
-            });
         };
 
         const renderAdminDashboard = (adminUser) => {
@@ -259,7 +212,6 @@
                 <main id="main-content" class="container mx-auto"></main>
                 <div id="modal-container"></div>
             `;
-            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             renderAdminPanel();
         };
         
@@ -292,7 +244,6 @@
                     </div>
                 </div>
             `;
-            document.getElementById('add-clearance-btn').addEventListener('click', () => renderModal());
             renderClearancesList();
         };
 
@@ -344,21 +295,6 @@
                     </tr>
                 `).join('');
             }
-            
-            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => {
-                const clearanceToEdit = clearances.find(c => c.id === e.currentTarget.dataset.id);
-                if (clearanceToEdit) renderModal(clearanceToEdit);
-            }));
-            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => {
-                 if (window.confirm("Delete this clearance?")) {
-                    try {
-                        await deleteDoc(doc(db, "vehicleClearances", e.currentTarget.dataset.id));
-                        showNotification('Clearance deleted.');
-                    } catch (error) {
-                        showNotification('Failed to delete clearance.', 'error');
-                    }
-                }
-            }));
         };
 
         const renderUserPanel = () => {
@@ -411,7 +347,6 @@
                         <div class="space-y-4">${clearanceListHTML}</div>
                     </div>
                 </main>`;
-            document.getElementById('back-btn').addEventListener('click', () => signOut(auth));
         };
 
         const renderModal = (clearanceToEdit = null) => {
@@ -424,15 +359,15 @@
                         <form id="clearance-form" class="space-y-4">
                             <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${clearanceToEdit ? 'Edit' : 'Add'} Clearance</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label><input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
-                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label><input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
+                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label><input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label><input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label><input type="date" name="entryDate" value="${toISODate(clearanceToEdit?.entryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
-                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label><input type="date" name="expiryDate" value="${toISODate(clearanceToEdit?.expiryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
+                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label><input type="date" name="entryDate" value="${toISODate(clearanceToEdit?.entryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label><input type="date" name="expiryDate" value="${toISODate(clearanceToEdit?.expiryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
                             </div>
-                            <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label><input name="location" value="${clearanceToEdit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg" required /></div>
-                            <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label><textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg">${clearanceToEdit?.notes || ''}</textarea></div>
+                            <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label><input name="location" value="${clearanceToEdit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                            <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label><textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${clearanceToEdit?.notes || ''}</textarea></div>
                             <div class="flex items-center"><input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5 rounded text-blue-600 focus:ring-blue-500" ${clearanceToEdit?.escortRequired ? 'checked' : ''} /><label for="escortRequired" class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label></div>
                             <div class="flex justify-end space-x-3 pt-4">
                                 <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
@@ -441,38 +376,81 @@
                         </form>
                     </div>
                 </div>`;
-            
-            const closeModal = () => modalContainer.innerHTML = '';
-            document.getElementById('close-modal-btn').addEventListener('click', closeModal);
-            document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
-            document.getElementById('modal-backdrop').addEventListener('click', (e) => {
-                if(e.target.id === 'modal-backdrop') closeModal();
-            });
-
-            document.getElementById('clearance-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const data = {
-                    ownerName: formData.get('ownerName'), vehicleNumber: formData.get('vehicleNumber'),
-                    location: formData.get('location'), notes: formData.get('notes'),
-                    escortRequired: formData.get('escortRequired') === 'on',
-                    entryDate: Timestamp.fromDate(new Date(formData.get('entryDate'))),
-                    expiryDate: Timestamp.fromDate(new Date(formData.get('expiryDate'))),
-                };
-                if (data.expiryDate.toDate() < data.entryDate.toDate()) {
-                    showNotification('Expiry date cannot be before entry date.', 'error'); return;
+        };
+        
+        // --- Centralized Event Handler ---
+        const attachEventListeners = () => {
+            appRoot.addEventListener('click', async (e) => {
+                const target = e.target;
+                
+                // Landing Page
+                if (target.closest('#admin-btn')) renderAdminLogin();
+                if (target.closest('#user-btn')) {
+                    appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
+                    await signInAnonymously(auth);
                 }
-                try {
-                    if (clearanceToEdit) {
-                        await setDoc(doc(db, "vehicleClearances", clearanceToEdit.id), data);
-                        showNotification('Clearance updated!');
-                    } else {
-                        await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
-                        showNotification('Clearance added!');
+
+                // Auth Form
+                if (target.closest('#auth-toggle-button')) {
+                    const formContainer = target.closest('.w-full');
+                    const isLogin = formContainer.querySelector('#auth-button').textContent === 'Login';
+                    formContainer.querySelector('#auth-subtitle').textContent = isLogin ? 'Create a new Admin account' : 'Sign in to manage clearances';
+                    formContainer.querySelector('#auth-button').textContent = isLogin ? 'Sign Up' : 'Login';
+                    formContainer.querySelector('#auth-toggle-text').textContent = isLogin ? "Already have an account?" : "Need an admin account?";
+                    target.textContent = isLogin ? 'Login' : 'Sign Up';
+                    formContainer.querySelector('#invite-code-wrapper').classList.toggle('hidden', !isLogin);
+                }
+                if (target.closest('#auth-form')) {
+                    target.closest('#auth-form').addEventListener('submit', async (submitEvent) => {
+                        submitEvent.preventDefault();
+                        const form = submitEvent.currentTarget;
+                        const authButton = form.querySelector('#auth-button');
+                        const isLogin = authButton.textContent === 'Login';
+                        authButton.disabled = true;
+                        authButton.textContent = 'Processing...';
+
+                        try {
+                            const email = form.querySelector('#email').value;
+                            const password = form.querySelector('#password').value;
+                            if (isLogin) {
+                                await signInWithEmailAndPassword(auth, email, password);
+                            } else {
+                                const inviteCode = form.querySelector('#inviteCode').value;
+                                if (inviteCode !== ADMIN_INVITE_CODE) throw new Error("Invalid Admin Invite Code.");
+                                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                                await setDoc(doc(db, "admins", userCredential.user.uid), { role: 'admin', createdAt: Timestamp.now() });
+                                showNotification('Admin account created! Please log in.', 'success');
+                                document.getElementById('auth-toggle-button').click();
+                            }
+                        } catch (error) {
+                            showNotification(error.message, 'error');
+                        } finally {
+                            authButton.disabled = false;
+                            authButton.textContent = isLogin ? 'Login' : 'Sign Up';
+                        }
+                    }, { once: true });
+                }
+
+                // Dashboard and Modals
+                if (target.closest('#logout-button') || target.closest('#back-btn')) signOut(auth);
+                if (target.closest('#add-clearance-btn')) renderModal();
+                if (target.closest('.edit-btn')) {
+                    const clearanceToEdit = clearances.find(c => c.id === target.closest('.edit-btn').dataset.id);
+                    if (clearanceToEdit) renderModal(clearanceToEdit);
+                }
+                if (target.closest('.delete-btn')) {
+                    if (window.confirm("Delete this clearance?")) {
+                        try {
+                            await deleteDoc(doc(db, "vehicleClearances", target.closest('.delete-btn').dataset.id));
+                            showNotification('Clearance deleted.');
+                        } catch (error) {
+                            showNotification('Failed to delete clearance.', 'error');
+                        }
                     }
-                    closeModal();
-                } catch (error) {
-                    showNotification('Failed to save clearance.', 'error');
+                }
+                if (target.closest('#close-modal-btn') || target.closest('#cancel-modal-btn') || target.id === 'modal-backdrop') {
+                    const modalContainer = document.getElementById('modal-container');
+                    if (modalContainer) modalContainer.innerHTML = '';
                 }
             });
         };
@@ -486,9 +464,6 @@
                     unsubscribeFirestore = onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
                         clearances = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         renderUserPanel();
-                    }, err => {
-                        console.error("Firestore read failed:", err);
-                        appRoot.innerHTML = `<div class="p-8 text-center text-red-500">Could not load clearance data.</div>`;
                     });
                 } else {
                     const adminDoc = await getDoc(doc(db, "admins", user.uid));
@@ -506,6 +481,8 @@
                 renderLandingPage();
             }
         });
+        
+        attachEventListeners();
     </script>
 </body>
 </html>
