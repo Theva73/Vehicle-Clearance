@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vehicle Clearance System</title>
 
-  <!-- Tailwind CDN (ok for now; switch to build for prod) -->
+  <!-- Tailwind (fine for now; switch to CLI for production) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Fonts -->
@@ -120,7 +120,8 @@
       back:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>`,
       request:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`
     };
-		    // ---------- Render Functions ----------
+
+    // ---------- Render Functions ----------
     const renderLandingPage = ()=>{
       appRoot.innerHTML = `
       <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
@@ -271,8 +272,8 @@
       </div>`;
       pushRoute(renderRequestForm);
     };
-		
-		    const statusCard = r=>{
+
+    const statusCard = r=>{
       const color = r.status==="approved"?"text-green-600":r.status==="rejected"?"text-red-600":"text-yellow-600";
       return `
       <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow space-y-2 text-left">
@@ -474,8 +475,8 @@
           </td>
         </tr>`).join("");
     };
-		
-		    const renderUserDashboard = (user)=>{
+
+    const renderUserDashboard = (user)=>{
       const today = new Date(); today.setHours(0,0,0,0);
       const daily = clearances.filter(c=>{
         const en = c.entryDate.toDate(); en.setHours(0,0,0,0);
@@ -646,8 +647,9 @@
       }else{
         renderLandingPage();
       }
-    };
-		    // ---------- Events ----------
+    });
+
+    // ---------- Events ----------
     document.body.addEventListener("click", async e=>{
       const btn = e.target.closest("button");
       if(!btn) return;
@@ -792,5 +794,3 @@
   </script>
 </body>
 </html>
-		
-		
