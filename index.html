@@ -84,6 +84,7 @@
     }
 
     // ---------- Application State ----------
+let searchFromLandingPage = false;
     let clearances = [];
     let clearanceRequests = [];
     let myRequests = [];
@@ -732,13 +733,13 @@
              // Regular/Anonymous user: subscribe to all clearances and their own requests
             unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
                 clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if(document.getElementById("user-dashboard")) renderUserDashboard(user);
+                if(document.getElementById("user-dashboard")) if (!searchFromLandingPage) renderUserDashboard(user);
             });
             unsubMyReq = onSnapshot(query(collection(db, "clearanceRequests"), where("requesterId", "==", user.uid)), snap => {
                 myRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if(document.getElementById("my-requests-list")) renderMyRequests();
             });
-            renderUserDashboard(user);
+            if (!searchFromLandingPage) renderUserDashboard(user);
         }
         else {
             // No user logged in, show the landing page
@@ -859,7 +860,7 @@
         if (e.target.id === "daily-clearance-search-form" && document.getElementById("user-dashboard")) {
     
             const { search } = getFormObj(e.target);
-            renderUserDashboard(auth.currentUser, search.toUpperCase());
+            if (!searchFromLandingPage) renderUserDashboard(auth.currentUser, search.toUpperCase());
         }
 
         // Admin Auth Form
@@ -916,6 +917,7 @@
                     const latestRequest = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
                     const content = statusCard(latestRequest) + `<button class="view-live-status-btn w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700" data-id="${latestRequest.id}">View Live Status Page</button>`;
                     renderSearchModal(content);
+      searchFromLandingPage = false;
                     resultDiv.innerHTML = "";
                     return;
                 }
@@ -941,6 +943,7 @@
                         <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>
                     </div>`;
                     renderSearchModal(clearanceStatusCard);
+      searchFromLandingPage = false;
                     resultDiv.innerHTML = "";
                     return;
                 }
@@ -1025,7 +1028,7 @@
     // Handle form reset for the user dashboard search
     document.body.addEventListener("reset", e => {
         if (e.target.id === "daily-clearance-search-form") {
-            renderUserDashboard(auth.currentUser, null);
+            if (!searchFromLandingPage) renderUserDashboard(auth.currentUser, null);
         }
     });
 
