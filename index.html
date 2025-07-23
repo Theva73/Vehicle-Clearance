@@ -66,7 +66,7 @@
       apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
       authDomain: "vehicle-clearance.firebaseapp.com",
       projectId: "vehicle-clearance",
-      storageBucket: "vehicle-clearance.appspot.com",
+      storageBucket: "vehicle-clearance.firebasestorage.app", // Updated as per your file
       messagingSenderId: "187403368572",
       appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
@@ -676,16 +676,6 @@
             const adminDoc = await getDoc(doc(db, "admins", user.uid));
             if (adminDoc.exists()) {
                 
-                // Admin user: subscribe to all clearances and pending requests
-                unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
-                    clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if(document.getElementById("main-content")) renderClearancesList();
-                });
-                unsubRequests = onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending")), snap => {
-                    clearanceRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                     if(document.getElementById("request-management-section")) renderRequestsTable();
-                });
-                
                 // The config must be in a public collection for anonymous users to read it.
                 const configRef = doc(db, "publicConfig", "userAccess");
                 unsubConfig = onSnapshot(configRef, async (snap) => {
@@ -697,6 +687,16 @@
                     }
                     // Only render the dashboard after the config is loaded to prevent race conditions.
                     renderAdminDashboard(user);
+
+                    // Admin user: subscribe to all clearances and pending requests
+                    unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
+                        clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        if(document.getElementById("main-content")) renderClearancesList();
+                    });
+                    unsubRequests = onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending")), snap => {
+                        clearanceRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        if(document.getElementById("request-management-section")) renderRequestsTable();
+                    });
                 });
 
             } else {
