@@ -98,7 +98,7 @@
         const ADMIN_INVITE_CODE = "ADMIN2025"; 
 
         // --- Firebase Configuration ---
-        // IMPORTANT: Replace with your actual Firebase configuration
+        // IMPORTANT: This is a placeholder configuration. Replace with your actual Firebase project config.
         const firebaseConfig = {
           apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
           authDomain: "vehicle-clearance.firebaseapp.com",
@@ -128,6 +128,7 @@
         let unsubscribeFirestore = null;
         let unsubscribeRequests = null;
         let unsubscribeMyRequests = null;
+        let unsubscribeRequestStatus = null; // Listener for single request status page
         let currentUser = null;
 
         // --- Helper Functions ---
@@ -297,6 +298,69 @@
             
             document.querySelector('input[name="requestedEntryDate"]').value = tomorrow.toISOString().split('T')[0];
             document.querySelector('input[name="requestedExpiryDate"]').value = nextWeek.toISOString().split('T')[0];
+        };
+
+        /**
+         * [NEW] Renders a page to show the live status of a submitted request.
+         * @param {object} requestData - The form data that was submitted.
+         * @param {string} requestId - The ID of the newly created document in Firestore.
+         */
+        const renderRequestStatusPage = (requestData, requestId) => {
+            const request = {
+                ...requestData,
+                requestedEntryDate: new Date(requestData.requestedEntryDate),
+                requestedExpiryDate: new Date(requestData.requestedExpiryDate),
+            };
+
+            appRoot.innerHTML = `
+                <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
+                    <div class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+                        <div class="text-center">
+                            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Request Submitted</h1>
+                            <p class="text-gray-500 dark:text-gray-400 mt-2">Your request is being processed. This page will update automatically.</p>
+                        </div>
+
+                        <div id="request-status-details" class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 space-y-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">${request.ownerName}</h3>
+                                    <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${request.vehicleNumber}</p>
+                                </div>
+                                <span id="status-badge" class="inline-flex items-center px-4 py-2 rounded-full text-lg font-semibold status-pending transition-all duration-300">
+                                    <span class="w-6 h-6 mr-2">${icons.clock}</span>
+                                    Pending
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-4 border-t dark:border-gray-600">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Requested Period</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${formatDate(request.requestedEntryDate)} - ${formatDate(request.requestedExpiryDate)}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Location</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200">${request.location}</p>
+                                </div>
+                                <div class="col-span-full">
+                                    <p class="text-gray-500 dark:text-gray-400">Purpose</p>
+                                    <p class="text-sm text-gray-800 dark:text-gray-200">${request.purpose || 'N/A'}</p>
+                                </div>
+                            </div>
+                             <div class="mt-4 pt-4 border-t dark:border-gray-700 text-center text-xs text-gray-400">
+                                <p>Request ID: ${requestId}</p>
+                                <p>Please keep this page open to see live status updates.</p>
+                            </div>
+                        </div>
+
+                        <div class="text-center pt-4">
+                             <button id="back-to-landing" class="flex items-center gap-2 mx-auto px-6 py-3 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+                                <span class="w-4 h-4">${icons.back}</span> Back to Home
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            listenToRequestStatus(requestId);
         };
 
         const renderUserLogin = () => {
@@ -813,7 +877,66 @@
                 </div>`;
         };
         
-        // --- Authentication Functions ---
+        // --- Authentication & Data Functions ---
+
+        /**
+         * [NEW] Listens for real-time updates to a specific request and updates the UI.
+         * @param {string} requestId - The ID of the request document to listen to.
+         */
+        let initialStatus = 'pending';
+        const listenToRequestStatus = (requestId) => {
+            if (unsubscribeRequestStatus) unsubscribeRequestStatus(); // Stop any previous listener
+            initialStatus = 'pending'; // Reset for new listener
+
+            unsubscribeRequestStatus = onSnapshot(doc(db, "clearanceRequests", requestId), (docSnap) => {
+                if (!docSnap.exists()) {
+                    showNotification("Error: This request could not be found.", "error");
+                    if (unsubscribeRequestStatus) unsubscribeRequestStatus();
+                    return;
+                }
+
+                const request = docSnap.data();
+                const statusBadge = document.getElementById('status-badge');
+
+                // Only show notification on status change from the initial state
+                if (request.status !== initialStatus) {
+                    if (request.status === 'approved') {
+                        showNotification("Your request has been approved!", "success");
+                    } else if (request.status === 'rejected') {
+                        showNotification("Your request has been rejected.", "warning");
+                    }
+                    initialStatus = request.status; // Update the status to prevent re-notifying
+                }
+
+                if (statusBadge) {
+                    let badgeClass = '';
+                    let badgeIcon = '';
+                    let badgeText = '';
+
+                    switch(request.status) {
+                        case 'approved':
+                            badgeClass = 'status-approved';
+                            badgeIcon = icons.check;
+                            badgeText = 'Approved';
+                            break;
+                        case 'rejected':
+                            badgeClass = 'status-rejected';
+                            badgeIcon = icons.x;
+                            badgeText = 'Rejected';
+                            break;
+                        default: // pending
+                            badgeClass = 'status-pending';
+                            badgeIcon = icons.clock;
+                            badgeText = 'Pending';
+                            break;
+                    }
+
+                    statusBadge.className = `inline-flex items-center px-4 py-2 rounded-full text-lg font-semibold ${badgeClass} transition-all duration-300`;
+                    statusBadge.innerHTML = `<span class="w-6 h-6 mr-2">${badgeIcon}</span> ${badgeText}`;
+                }
+            });
+        };
+
         const handleAdminAuth = async (email, password, isSignUp, inviteCode) => {
             try {
                 if (isSignUp) {
@@ -852,9 +975,14 @@
             }
         };
 
+        /**
+         * [MODIFIED] Handles submission of a new clearance request.
+         * Now renders the status page instead of the landing page.
+         * @param {object} formData - The data from the request form.
+         */
         const handleRequestSubmission = async (formData) => {
             try {
-                await addDoc(collection(db, "clearanceRequests"), {
+                const docRef = await addDoc(collection(db, "clearanceRequests"), {
                     ...formData,
                     requestedEntryDate: Timestamp.fromDate(new Date(formData.requestedEntryDate)),
                     requestedExpiryDate: Timestamp.fromDate(new Date(formData.requestedExpiryDate)),
@@ -862,8 +990,9 @@
                     createdAt: Timestamp.now(),
                     requesterId: currentUser?.uid || null // Will now have an anonymous ID
                 });
-                showNotification("Request submitted successfully! An admin will review it shortly.", "success");
-                renderLandingPage();
+                showNotification("Request submitted successfully! Waiting for review.", "success");
+                // Go to the new status page instead of the landing page
+                renderRequestStatusPage(formData, docRef.id);
             } catch (error) {
                 console.error("Request submission error:", error);
                 showNotification("Failed to submit request. Please try again.", "error");
@@ -910,8 +1039,7 @@
                     rejectedBy: currentUser.uid
                 });
                 showNotification("Request rejected", "warning");
-            } catch (error)
-{
+            } catch (error) {
                 console.error("Rejection error:", error);
                 showNotification("Failed to reject request", "error");
             }
@@ -948,7 +1076,6 @@
         };
 
         const handleClearanceDeletion = async (clearanceId) => {
-            // Using a custom modal for confirmation instead of window.confirm
             const modalContainer = document.getElementById('modal-container');
             modalContainer.innerHTML = `
                 <div id="confirm-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
@@ -993,12 +1120,11 @@
             if (unsubscribeFirestore) unsubscribeFirestore();
             if (unsubscribeRequests) unsubscribeRequests();
             if (unsubscribeMyRequests) unsubscribeMyRequests();
+            if (unsubscribeRequestStatus) unsubscribeRequestStatus(); // Also clear status listener
             
-            // Show a loading state while we figure out where to go
             appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
 
             if (user) {
-                // We have a user. Check if they are a registered admin or user.
                 const adminDoc = await getDoc(doc(db, "admins", user.uid));
                 
                 if (adminDoc.exists()) {
@@ -1031,14 +1157,10 @@
                     renderUserDashboard(user);
                 } else {
                     // --- ANONYMOUS USER ---
-                    // Anonymous users just see the landing page.
-                    // They don't have a dashboard or need data listeners.
                     renderLandingPage();
                 }
             } else {
                 // --- NO USER ---
-                // This case should ideally only happen on the very first load.
-                // We sign in anonymously, and this whole function will run again.
                 try {
                     await signInAnonymously(auth);
                 } catch (error) {
@@ -1052,6 +1174,14 @@
         document.body.addEventListener('click', async (e) => {
             const target = e.target.closest('button');
             if (!target) return;
+
+            // [MODIFIED] Detach single request listener when navigating away
+            if (['back-to-landing', 'admin-btn', 'user-btn', 'request-btn'].includes(target.id)) {
+                if (unsubscribeRequestStatus) {
+                    unsubscribeRequestStatus();
+                    unsubscribeRequestStatus = null;
+                }
+            }
 
             switch(target.id) {
                 case 'admin-btn': renderAdminLogin(); break;
