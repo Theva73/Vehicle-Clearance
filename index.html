@@ -44,7 +44,7 @@
   </style>
 </head>
 <body class="bg-gray-100">
-  <!-- React will mount here -->
+  <!-- App Root -->
   <div id="app-root"></div>
 
   <script type="module">
@@ -62,7 +62,6 @@
     // ---------- App Configuration ----------
     const ADMIN_INVITE_CODE = "ADMIN2025";
     const firebaseConfig = {
-      // It's recommended to use environment variables for Firebase config in production
       apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
       authDomain: "vehicle-clearance.firebaseapp.com",
       projectId: "vehicle-clearance",
@@ -89,28 +88,16 @@
     let myRequests = [];
     let unsubClearances = null, unsubRequests = null, unsubMyReq = null;
     let authMode = "login"; // "login" or "signup"
-    let currentRoute = "landing"; // Tracks the current view
-    let routeHistory = []; // History stack for back navigation
+    let routeHistory = []; // A stack of functions that will re-render a previous view.
 
     // ---------- Utility Functions ----------
-    const pushRoute = (routeName, renderFn) => {
-      routeHistory.push({ name: currentRoute, render: renderFn });
-      currentRoute = routeName;
-    };
-
     const goBack = () => {
-      if (routeHistory.length > 0) {
-        const previousRoute = routeHistory.pop();
-        currentRoute = previousRoute.name;
-        // Re-render the previous route's view
-        if (previousRoute.render) {
-          previousRoute.render();
+        if (routeHistory.length > 0) {
+            const renderPrevious = routeHistory.pop();
+            renderPrevious();
         } else {
-          renderLandingPage(); // Fallback to landing page
+            renderLandingPage(); // Fallback to the main page
         }
-      } else {
-        renderLandingPage();
-      }
     };
 
     const formatDate = (date) => {
@@ -151,7 +138,7 @@
     const renderLandingPage = () => {
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-            <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
+            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
                 <div>
                     <div class="w-16 h-16 mx-auto text-blue-500">${icons.car}</div>
                     <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance</h1>
@@ -185,14 +172,13 @@
                 </div>
             </div>
         </div>`;
-        currentRoute = "landing";
-        routeHistory = []; // Clear history when returning to landing
+        routeHistory = []; // Clear history when returning to landing page
     };
 
     const renderAdminLogin = () => {
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-            <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+            <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
                 <div class="text-center">
                     <div class="w-12 h-12 mx-auto text-blue-500">${icons.shield}</div>
                     <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Admin Access</h1>
@@ -220,13 +206,12 @@
                 <button id="back-btn" class="mt-2 text-gray-600 hover:text-gray-800 underline text-sm block mx-auto">Back</button>
             </div>
         </div>`;
-        pushRoute("admin-login", renderAdminLogin);
     };
 
     const renderUserLogin = () => {
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-            <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in text-center">
+            <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in text-center">
                 <div class="w-12 h-12 mx-auto text-green-500">${icons.users}</div>
                 <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">User Access</h1>
                 <p class="text-gray-500 dark:text-gray-400">Proceed anonymously to view today's clearances and track your requests.</p>
@@ -234,13 +219,12 @@
                 <button id="back-btn" class="mt-4 text-gray-600 hover:text-gray-800 underline text-sm">Back</button>
             </div>
         </div>`;
-        pushRoute("user-login", renderUserLogin);
     };
 
     const renderRequestForm = () => {
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-            <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
                 <div class="text-center">
                     <div class="w-12 h-12 mx-auto text-yellow-500">${icons.request}</div>
                     <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Request Vehicle Clearance</h1>
@@ -297,7 +281,6 @@
                 </form>
             </div>
         </div>`;
-        pushRoute("request-form", renderRequestForm);
     };
 
     const statusCard = r => {
@@ -319,7 +302,7 @@
     const renderStatusScreen = (reqId) => {
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-            <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
                 <div class="text-center">
                     <div class="w-12 h-12 mx-auto text-blue-500">${icons.car}</div>
                     <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Request Status</h1>
@@ -329,7 +312,6 @@
                 <button id="back-btn" class="w-full mt-6 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Back</button>
             </div>
         </div>`;
-        pushRoute("status-screen", () => renderStatusScreen(reqId));
 
         const ref = doc(db, "clearanceRequests", reqId);
         onSnapshot(ref, d => {
@@ -362,12 +344,12 @@
         </header>
         <main id="main-content" class="container mx-auto"></main>
         <div id="modal-container"></div>`;
-        pushRoute("admin-dashboard", () => renderAdminDashboard(adminUser));
         renderAdminPanel();
     };
 
     const renderAdminPanel = () => {
         const main = document.getElementById("main-content");
+        if (!main) return;
         main.innerHTML = `
         <div class="p-4 md:p-8 space-y-8">
             <div id="request-management-section"></div>
@@ -571,7 +553,6 @@
                 </section>
             </div>
         </main>`;
-        pushRoute("user-dashboard", () => renderUserDashboard(user));
         renderMyRequests();
     };
 
@@ -658,22 +639,22 @@
                 // Admin user: subscribe to all clearances and pending requests
                 unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
                     clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if (currentRoute === "admin-dashboard") renderClearancesList();
+                    renderClearancesList();
                 });
                 unsubRequests = onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending")), snap => {
                     clearanceRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if (currentRoute === "admin-dashboard") renderRequestsTable();
+                    renderRequestsTable();
                 });
                 renderAdminDashboard(user);
             } else {
                 // Regular/Anonymous user: subscribe to all clearances and their own requests
                 unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
                     clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if (currentRoute === "user-dashboard") renderUserDashboard(user);
+                    renderUserDashboard(user);
                 });
                 unsubMyReq = onSnapshot(query(collection(db, "clearanceRequests"), where("requesterId", "==", user.uid)), snap => {
                     myRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if (currentRoute === "user-dashboard") renderMyRequests();
+                    renderMyRequests();
                 });
                 renderUserDashboard(user);
             }
@@ -689,10 +670,22 @@
         if (!target) return;
 
         // Navigation buttons
-        if (target.id === "request-btn") renderRequestForm();
-        if (target.id === "admin-btn") renderAdminLogin();
-        if (target.id === "user-btn") renderUserLogin();
-        if (target.id === "anon-login-btn") await signInAnonymously(auth).catch(err => showNotification(err.message, "error"));
+        if (target.id === "request-btn") {
+            routeHistory.push(renderLandingPage);
+            renderRequestForm();
+        }
+        if (target.id === "admin-btn") {
+            routeHistory.push(renderLandingPage);
+            renderAdminLogin();
+        }
+        if (target.id === "user-btn") {
+            routeHistory.push(renderLandingPage);
+            renderUserLogin();
+        }
+        if (target.id === "anon-login-btn") {
+            routeHistory.push(renderUserLogin);
+            await signInAnonymously(auth).catch(err => showNotification(err.message, "error"));
+        }
         if (target.id === "back-btn") goBack();
         if (target.id === "logout-button") await signOut(auth);
         
@@ -748,6 +741,7 @@
 
         // Admin Auth Form
         if (e.target.id === "auth-form") {
+            routeHistory.push(renderAdminLogin);
             const { email, password, inviteCode } = getFormObj(e.target);
             try {
                 if (authMode === "login") {
@@ -755,6 +749,7 @@
                 } else {
                     if (inviteCode !== ADMIN_INVITE_CODE) {
                         showNotification("Invalid admin invite code.", "error");
+                        routeHistory.pop(); // Pop back if auth fails
                         return;
                     }
                     const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -763,6 +758,7 @@
                 }
             } catch (err) {
                 showNotification(err.message, "error");
+                routeHistory.pop(); // Pop back if auth fails
             }
         }
 
@@ -780,10 +776,11 @@
                 resultDiv.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded-lg">No request found for vehicle number ${vehicleNumber}.</div>`;
                 return;
             }
-            const requestDoc = snap.docs[0]; // Assuming one request per vehicle number for tracking
+            const requestDoc = snap.docs[0];
             const requestData = { id: requestDoc.id, ...requestDoc.data() };
             resultDiv.innerHTML = statusCard(requestData) + `<button id="open-live-status" data-id="${requestData.id}" class="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">View Live Status Page</button>`;
             document.getElementById("open-live-status").onclick = ev => {
+                routeHistory.push(renderLandingPage);
                 renderStatusScreen(ev.target.dataset.id);
             };
         }
@@ -835,11 +832,13 @@
                 createdAt: Timestamp.now()
             };
             try {
+                routeHistory.push(renderRequestForm);
                 const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
                 showNotification("Request submitted successfully!");
                 renderStatusScreen(docRef.id);
             } catch (err) {
                 showNotification(err.message, "error");
+                routeHistory.pop();
             }
         }
     });
