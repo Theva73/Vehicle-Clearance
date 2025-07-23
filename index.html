@@ -393,7 +393,6 @@
             </div>
         </div>`;
         renderRequestManagement();
-        renderSettings();
         renderClearancesList();
     };
 
@@ -675,6 +674,8 @@
             // Check if the user is an admin
             const adminDoc = await getDoc(doc(db, "admins", user.uid));
             if (adminDoc.exists()) {
+                renderAdminDashboard(user);
+
                 // Admin user: subscribe to all clearances and pending requests
                 unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
                     clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -689,15 +690,15 @@
                 unsubConfig = onSnapshot(configRef, async (snap) => {
                     if (!snap.exists()) {
                         await setDoc(configRef, { password: DEFAULT_USER_PASSWORD });
+                        userPasswordConfig = { password: DEFAULT_USER_PASSWORD };
                     } else {
                         userPasswordConfig = snap.data();
                     }
                     if (document.getElementById("settings-section")) renderSettings();
                 });
 
-                renderAdminDashboard(user);
             } else {
-                // This case should ideally not be reached if non-admins are anonymous
+                // This case should not be reached for non-admin full users.
                 await signOut(auth);
             }
         } else if (user && user.isAnonymous) {
@@ -808,18 +809,29 @@
         // User Login Form
         if (e.target.id === "user-login-form") {
             const { password } = getFormObj(e.target);
+            let tempAuth;
             try {
+                // Sign in anonymously to get read access for the password check
+                const userCredential = await signInAnonymously(auth);
+                tempAuth = userCredential.user;
+
                 const configRef = doc(db, "config", "userAccess");
                 const configSnap = await getDoc(configRef);
                 const correctPassword = configSnap.exists() ? configSnap.data().password : DEFAULT_USER_PASSWORD;
 
                 if (password === correctPassword) {
+                    // Password is correct, onAuthStateChanged will handle the redirect to the dashboard.
                     routeHistory.push(renderUserLogin);
-                    await signInAnonymously(auth);
                 } else {
+                    // Password incorrect, sign out the anonymous user and show error
+                    await signOut(auth); 
                     showNotification("Incorrect password.", "error");
                 }
             } catch (err) {
+                // If any part of the process fails, ensure we sign out the temp anonymous user
+                if (auth.currentUser && auth.currentUser.isAnonymous) {
+                    await signOut(auth);
+                }
                 showNotification("Could not verify password. Please try again.", "error");
                 console.error("User login error:", err);
             }
