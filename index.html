@@ -116,6 +116,10 @@
             return `${day}/${month}/${year}`;
         };
 
+        const sanitizeVehicleNumber = (num) => {
+            return num.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        }
+
         // --- SVG Icons ---
         const icons = {
             car: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-1.5"/><path d="M20 10h-5.41l-1.42-2.84a1 1 0 0 0-.84-.55H10a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"/><path d="M14 16.5L18 12l-2-4H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><circle cx="7" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>`,
@@ -170,12 +174,13 @@
                         </div>
                         <div class="pt-6 border-t dark:border-gray-700">
                              <form id="track-request-form" class="space-y-2">
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a Request ID? Track it here.</label>
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
                                 <div class="flex gap-2">
-                                    <input id="track-id-input" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Request ID"/>
+                                    <input id="track-id-input" oninput="this.value = this.value.toUpperCase()" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number"/>
                                     <button type="submit" class="px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700">Track</button>
                                 </div>
                              </form>
+                             <div id="tracking-result" class="mt-4"></div>
                         </div>
                     </div>
                 </div>
@@ -394,7 +399,7 @@
                             <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${clearanceToEdit ? 'Edit' : 'Add'} Clearance</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label><input name="ownerName" value="${clearanceToEdit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label><input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                                <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label><input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber || ''}" oninput="this.value = this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label><input type="date" name="entryDate" value="${toISODate(clearanceToEdit?.entryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
