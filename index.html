@@ -1,392 +1,743 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vehicle Clearance System</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vehicle Clearance System</title>
 
-<style>
-/* ─────────────── Base reset ─────────────── */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:Inter,Arial,sans-serif}
-html,body{height:100%;background:#111;color:#f5f5f5}
-body{display:flex;flex-direction:column}
-button{cursor:pointer;border:none;background:#2563eb;color:#fff;padding:.6rem 1rem;border-radius:.4rem;font-weight:600;transition:opacity .15s}
-button:disabled{opacity:.4;cursor:not-allowed}
-a{color:#93c5fd}
-input,select,textarea{background:#1f1f1f;color:#f5f5f5;border:1px solid #333;border-radius:.3rem;padding:.55rem .65rem;width:100%}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#2563eb}
-label{font-size:.85rem;margin-bottom:.25rem;display:block;color:#cbd5e1}
-h1,h2,h3{font-weight:700;line-height:1.2;margin-bottom:.6rem;color:#f5f5f5}
-h1{font-size:1.6rem}
-h2{font-size:1.25rem;margin-top:1.2rem}
-h3{font-size:1rem;margin-top:.8rem}
-.container{width:100%;max-width:1100px;margin:auto;padding:1.2rem}
-.hidden{display:none!important}
-.flex{display:flex}
-.flex-between{display:flex;justify-content:space-between;align-items:center}
-.mt-2{margin-top:.5rem}
-.mt-4{margin-top:1rem}
-.mt-6{margin-top:1.5rem}
-.mb-4{margin-bottom:1rem}
-.gap-2{gap:.5rem}
-.gap-4{gap:1rem}
-.grid{display:grid}
-.grid-2{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
-.table{width:100%;border-collapse:collapse;margin-top:1rem;font-size:.9rem}
-.table th,.table td{border:1px solid #333;padding:.55rem .6rem;text-align:left}
-.table th{background:#1e293b;color:#e2e8f0;font-weight:600}
-.badge{display:inline-block;padding:.15rem .45rem;border-radius:.25rem;font-size:.7rem;font-weight:600}
-.badge.green{background:#16a34a33;color:#4ade80;border:1px solid #16a34a66}
-.badge.red{background:#dc262633;color:#f87171;border:1px solid #dc262666}
-.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:#1e293b;color:#fff;padding:.9rem 1.1rem;border-radius:.4rem;box-shadow:0 0 12px #0008;opacity:0;transform:translateY(20px);transition:.25s}
-.toast.show{opacity:1;transform:translateY(0)}
-/* modal */
-.modal-backdrop{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:50}
-.modal{background:#1f2937;padding:1.2rem 1.4rem;border-radius:.5rem;max-width:500px;width:90%;box-shadow:0 0 22px #000b}
-.modal header{font-size:1.1rem;font-weight:600;margin-bottom:.8rem}
-.modal footer{margin-top:1rem;display:flex;justify-content:flex-end;gap:.6rem}
-textarea{min-height:80px;resize:vertical}
-.tag{background:#374151;padding:.2rem .5rem;border-radius:.3rem;font-size:.75rem;margin-right:.3rem;margin-bottom:.3rem;display:inline-block}
-hr{border:none;border-top:1px solid #333;margin:1rem 0}
-</style>
+  <!-- Tailwind CDN (no UI changes) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .animate-fade-in{animation:fadeIn .3s ease-out forwards}
+    .dark .bg-gray-100{background-color:#111827}
+    .dark .bg-white{background-color:#1f2937}
+    .dark .bg-gray-50{background-color:#374151}
+    .dark .text-gray-900{color:#f9fafb}
+    .dark .text-gray-800{color:#f3f4f6}
+    .dark .text-gray-700{color:#d1d5db}
+    .dark .text-gray-600{color:#9ca3af}
+    .dark .text-gray-500{color:#a0aec0}
+    .dark .border-gray-200{border-color:#374151}
+    .dark .border-gray-300{border-color:#4b5563}
+    .dark .shadow-lg{box-shadow:0 10px 15px -3px rgba(0,0,0,.3),0 4px 6px -2px rgba(0,0,0,.25)}
+    input[type="date"]::-webkit-inner-spin-button,
+    input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);}
+  </style>
 </head>
+<body class="bg-gray-100">
+  <div id="app-root"></div>
 
-<body>
-  <div class="container">
-    <header class="flex-between mb-4">
-      <h1>Vehicle Clearance System</h1>
-      <nav class="flex gap-2">
-        <button data-nav="home">Home</button>
-        <button data-nav="new">New Clearance</button>
-        <button data-nav="list">Records</button>
-        <button data-nav="about">About</button>
-      </nav>
-    </header>
+  <script type="module">
+    // ----------------- Firebase Imports -----------------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+      createUserWithEmailAndPassword, signOut, signInAnonymously
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, addDoc, setDoc, deleteDoc,
+      onSnapshot, query, Timestamp, getDoc, where, updateDoc
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <!-- ─────────────── VIEWS ─────────────── -->
-    <section id="view-home">
-      <h2>Front Page</h2>
-      <p class="mt-2">Welcome! Use the buttons above to navigate. If buttons didn’t work before, this build fixes the event handlers and load errors.</p>
-      <div class="mt-4 flex gap-4">
-        <button data-nav="new">Create New</button>
-        <button data-nav="list">View Records</button>
-      </div>
-    </section>
+    // ----------------- Config -----------------
+    const ADMIN_INVITE_CODE = "ADMIN2025"; // change if needed
+    const firebaseConfig = {
+      apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
+      authDomain: "vehicle-clearance.firebaseapp.com",
+      projectId: "vehicle-clearance",
+      storageBucket: "vehicle-clearance.appspot.com",
+      messagingSenderId: "187403368572",
+      appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
+    };
 
-    <section id="view-new" class="hidden">
-      <h2>Create Vehicle Clearance</h2>
-      <form id="clearance-form" class="mt-4 grid gap-4">
-        <div>
-          <label for="driverName">Driver Name</label>
-          <input id="driverName" required />
-        </div>
-        <div>
-          <label for="vehicleNo">Vehicle No / Plate</label>
-          <input id="vehicleNo" required />
-        </div>
-        <div>
-          <label for="purpose">Purpose</label>
-          <textarea id="purpose" required></textarea>
-        </div>
-        <div class="grid-2">
-          <div>
-            <label for="departDate">Depart Date/Time</label>
-            <input id="departDate" type="datetime-local" required />
-          </div>
-          <div>
-            <label for="returnDate">Expected Return</label>
-            <input id="returnDate" type="datetime-local" required />
-          </div>
-        </div>
-        <div>
-          <label for="remarks">Remarks (optional)</label>
-          <textarea id="remarks"></textarea>
-        </div>
-        <div class="flex gap-2 mt-2">
-          <button type="submit">Save</button>
-          <button type="button" id="btn-reset" style="background:#475569">Reset</button>
-          <button type="button" data-nav="home" style="background:#6b7280">Cancel</button>
-        </div>
-      </form>
-    </section>
+    // ----------------- Initialization -----------------
+    const appRoot = document.getElementById("app-root");
+    let app, auth, db;
 
-    <section id="view-list" class="hidden">
-      <h2>All Records</h2>
-      <div class="mt-2 flex-between">
-        <div class="flex gap-2">
-          <input id="searchBox" placeholder="Search driver / vehicle / purpose..." style="max-width:260px" />
-          <select id="statusFilter" style="max-width:170px">
-            <option value="">All Status</option>
-            <option value="OPEN">OPEN</option>
-            <option value="CLOSED">CLOSED</option>
-          </select>
-        </div>
-        <button id="btn-export">Export JSON</button>
-      </div>
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+    } catch (err) {
+      console.error(err);
+      appRoot.innerHTML = `<div class="p-8 text-center text-red-500 bg-red-100 rounded-lg"><strong>Error:</strong> Firebase init failed.</div>`;
+    }
 
-      <table class="table" id="recordsTable">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Driver</th>
-            <th>Vehicle</th>
-            <th>Purpose</th>
-            <th>Depart</th>
-            <th>Return</th>
-            <th>Status</th>
-            <th style="width:120px">Action</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+    // ----------------- State -----------------
+    let clearances = [];
+    let clearanceRequests = [];
+    let myRequests = [];
+    let unsubscribeClearances = null;
+    let unsubscribeRequests = null;
+    let unsubscribeMyRequests = null;
+    let authMode = "login"; // or "signup"
 
-    <section id="view-about" class="hidden">
-      <h2>About</h2>
-      <p class="mt-2">Single-file demo. Data is stored in <b>localStorage</b>. Replace storage layer with your backend if needed.</p>
-      <hr />
-      <h3>Quick Tips</h3>
-      <ul style="margin-left:1.2rem;list-style:disc">
-        <li>If the page “fails to load”, check console for syntax errors. This build avoids undefined refs and binds listeners after DOM is ready.</li>
-        <li>Buttons include a <code>data-nav</code> attribute; a single router function swaps views.</li>
-        <li>Everything is namespaced under <code>VCS</code> in localStorage.</li>
-      </ul>
-    </section>
-  </div>
-
-  <!-- Toast -->
-  <div id="toast" class="toast"></div>
-
-  <!-- Modal (edit) -->
-  <template id="modal-template">
-    <div class="modal-backdrop">
-      <div class="modal">
-        <header></header>
-        <section></section>
-        <footer></footer>
-      </div>
-    </div>
-  </template>
-
-<script>
-/* ──────────────────────────────────────────────────────────────
-   Vehicle Clearance SPA (no external JS deps)
-   - Simple hash-less router
-   - LocalStorage persistence
-   - Modal editor
-────────────────────────────────────────────────────────────── */
-
-const STORAGE_KEY = 'VCS_RECORDS';
-
-/* ------------- UTILITIES ------------- */
-const $ = sel => document.querySelector(sel);
-const $$ = sel => document.querySelectorAll(sel);
-
-function toast(msg, ms=2600){
-  const el = $('#toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), ms);
-}
-
-function uuid(){
-  return 'xxxx-4xxx-yxxx-xxxx'.replace(/[xy]/g,c=>{
-    const r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8);
-    return v.toString(16);
-  });
-}
-
-function saveRecords(records){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-}
-function loadRecords(){
-  try{
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  }catch(e){
-    return [];
-  }
-}
-
-function formatDT(dt){
-  if(!dt) return '';
-  const d = new Date(dt);
-  if(isNaN(d)) return dt;
-  return d.toLocaleString();
-}
-
-/* ------------- ROUTER ------------- */
-const views = {
-  home: $('#view-home'),
-  new: $('#view-new'),
-  list: $('#view-list'),
-  about: $('#view-about')
-};
-
-function showView(name){
-  Object.values(views).forEach(v=>v.classList.add('hidden'));
-  (views[name] || views.home).classList.remove('hidden');
-}
-
-function bindNav(){
-  $$('button[data-nav]').forEach(btn=>{
-    btn.addEventListener('click', e=>{
-      const v = e.currentTarget.dataset.nav;
-      showView(v);
-      if(v==='list'){ renderTable(); }
+    // ----------------- Utils -----------------
+    const formatDate = (date) => {
+      if (!date) return "";
+      const d = date instanceof Date ? date : date.toDate();
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yy = String(d.getFullYear()).slice(-2);
+      return `${dd}/${mm}/${yy}`;
+    };
+    const toISODate = (d) => d ? new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split("T")[0] : "";
+    const showNotification = (message, type="success") => {
+      const n = document.createElement("div");
+      n.className = `fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white flex items-center animate-fade-in ${type==="success"?"bg-green-500":"bg-red-500"}`;
+      n.innerHTML = `<span class="mr-3">${type==="success"?icons.check:icons.x}</span><span>${message}</span>`;
+      document.body.appendChild(n);
+      setTimeout(()=>n.remove(),4000);
+    };
+    const getFormObj = (formEl)=>Object.fromEntries(new FormData(formEl).entries());
+    const onSnapshotOnce = (q)=>new Promise(res=>{
+      const unsub = onSnapshot(q,(snap)=>{res(snap);unsub();});
     });
-  });
-}
 
-/* ------------- FORM HANDLING ------------- */
-const form = $('#clearance-form');
-$('#btn-reset').onclick = ()=> form.reset();
+    // ----------------- Icons -----------------
+    const icons = {
+      car:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-1.5"/><path d="M20 10h-5.41l-1.42-2.84a1 1 0 0 0-.84-.55H10a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"/><path d="M14 16.5L18 12l-2-4H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><circle cx="7" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>`,
+      logout:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+      plus:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+      edit:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
+      trash:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+      check:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+      x:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+      shield:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+      users:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+      sun:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+      back:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>`,
+      request:`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`
+    };
 
-form.addEventListener('submit', e=>{
-  e.preventDefault();
-  const rec = {
-    id: uuid(),
-    driverName: $('#driverName').value.trim(),
-    vehicleNo: $('#vehicleNo').value.trim(),
-    purpose: $('#purpose').value.trim(),
-    departDate: $('#departDate').value,
-    returnDate: $('#returnDate').value,
-    remarks: $('#remarks').value.trim(),
-    status: 'OPEN',
-    createdAt: new Date().toISOString()
-  };
-  const records = loadRecords();
-  records.push(rec);
-  saveRecords(records);
-  form.reset();
-  toast('Record saved');
-  showView('list');
-  renderTable();
-});
+    // ----------------- Renders -----------------
+    const renderLandingPage = ()=>{
+      appRoot.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+          <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
+            <div>
+              <div class="w-16 h-16 mx-auto text-blue-500">${icons.car}</div>
+              <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance</h1>
+              <p class="text-gray-500 dark:text-gray-400 mt-2">Please select an option to continue.</p>
+            </div>
+            <div class="grid grid-cols-1 gap-6">
+              <button id="request-btn" class="flex items-center justify-center p-6 bg-yellow-50 dark:bg-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-lg transition-all duration-300 transform hover:scale-105">
+                <div class="w-12 h-12">${icons.request}</div>
+                <span class="ml-4 font-semibold text-lg">Request Clearance</span>
+              </button>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-lg transition-all duration-300 transform hover:scale-105">
+                  <div class="w-12 h-12">${icons.shield}</div>
+                  <span class="mt-3 font-semibold text-lg">Admin Login</span>
+                </button>
+                <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 text-green-800 dark:text-green-300 rounded-lg transition-all duration-300 transform hover:scale-105">
+                  <div class="w-12 h-12">${icons.users}</div>
+                  <span class="mt-3 font-semibold text-lg">User Login</span>
+                </button>
+              </div>
+            </div>
+            <div class="pt-6 border-t dark:border-gray-700">
+              <form id="track-request-form" class="space-y-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
+                <div class="flex gap-2">
+                  <input id="track-id-input" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" />
+                  <button type="submit" class="px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700">Track</button>
+                </div>
+              </form>
+              <div id="tracking-result" class="mt-4"></div>
+            </div>
+          </div>
+        </div>`;
+    };
 
-/* ------------- TABLE RENDER ------------- */
-const tbody = $('#recordsTable tbody');
-const searchBox = $('#searchBox');
-const statusFilter = $('#statusFilter');
+    const renderAdminLogin = ()=>{
+      appRoot.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+          <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+            <div class="text-center">
+              <div class="w-12 h-12 mx-auto text-blue-500">${icons.shield}</div>
+              <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Admin Access</h1>
+              <p class="text-gray-500 dark:text-gray-400" id="auth-subtitle">${authMode==="login"?"Sign in to manage clearances":"Create an admin account"}</p>
+            </div>
+            <form id="auth-form" class="space-y-6">
+              <div id="invite-code-wrapper" class="${authMode==="signup"?"":"hidden"}">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Invite Code</label>
+                <input type="text" name="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter the secret code" />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input type="email" name="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="admin@example.com" required />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                <input type="password" name="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="••••••••" required />
+              </div>
+              <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">${authMode==="login"?"Login":"Sign Up"}</button>
+            </form>
+            <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+              <span id="auth-toggle-text">${authMode==="login"?"Need an admin account?":"Already have an account?"}</span>
+              <button id="auth-toggle-button" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 ml-1">${authMode==="login"?"Sign Up":"Login"}</button>
+            </p>
+          </div>
+        </div>`;
+    };
 
-searchBox.addEventListener('input', renderTable);
-statusFilter.addEventListener('change', renderTable);
+    const renderUserLogin = ()=>{
+      appRoot.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+          <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in text-center">
+            <div class="w-12 h-12 mx-auto text-green-500">${icons.users}</div>
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">User Access</h1>
+            <p class="text-gray-500 dark:text-gray-400">Proceed anonymously to view today's clearances and track your requests.</p>
+            <button id="anon-login-btn" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700 mt-6">Continue</button>
+            <button id="back-btn" class="mt-4 text-gray-600 hover:text-gray-800 underline text-sm">Back</button>
+          </div>
+        </div>`;
+    };
 
-function renderTable(){
-  const q = searchBox.value.toLowerCase();
-  const status = statusFilter.value;
-  const records = loadRecords();
+    const renderAdminDashboard = (adminUser)=>{
+      appRoot.innerHTML = `
+        <header class="bg-white shadow-md sticky top-0 z-40">
+          <nav class="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+              <span class="text-blue-500">${icons.shield}</span>
+              <span class="text-xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</span>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">${adminUser.email}</span>
+              <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
+                <span class="w-4 h-4">${icons.logout}</span> Logout
+              </button>
+            </div>
+          </nav>
+        </header>
+        <main id="main-content" class="container mx-auto"></main>
+        <div id="modal-container"></div>`;
+      renderAdminPanel();
+    };
 
-  const filtered = records.filter(r=>{
-    const hay = `${r.driverName} ${r.vehicleNo} ${r.purpose}`.toLowerCase();
-    const sOK = status ? r.status === status : true;
-    return hay.includes(q) && sOK;
-  });
+    const renderAdminPanel = ()=>{
+      const mainContent = document.getElementById("main-content");
+      mainContent.innerHTML = `
+        <div class="p-4 md:p-8 space-y-8">
+          <div id="request-management-section"></div>
+          <div>
+            <div class="flex justify-between items-center mb-6">
+              <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Manage Clearances</h1>
+              <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <span class="w-5 h-5">${icons.plus}</span> Add Clearance
+              </button>
+            </div>
+            <div id="clearance-list" class="space-y-4 md:hidden"></div>
+            <div class="hidden md:block bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                  <thead class="bg-gray-50 dark:bg-gray-700/50">
+                    <tr>
+                      <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Owner / Vehicle</th>
+                      <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Location</th>
+                      <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Validity</th>
+                      <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Escort</th>
+                      <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Notes</th>
+                      <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="clearances-table-body" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      renderRequestManagement();
+      renderClearancesList();
+    };
 
-  tbody.innerHTML = '';
-  filtered.forEach((r,i)=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${i+1}</td>
-      <td>${r.driverName}</td>
-      <td>${r.vehicleNo}</td>
-      <td>${r.purpose}</td>
-      <td>${formatDT(r.departDate)}</td>
-      <td>${formatDT(r.returnDate)}</td>
-      <td><span class="badge ${r.status==='OPEN'?'green':'red'}">${r.status}</span></td>
-      <td>
-        <button data-act="edit" data-id="${r.id}" style="background:#4b5563;font-size:.8rem;padding:.35rem .6rem">Edit</button>
-        <button data-act="del" data-id="${r.id}" style="background:#dc2626;font-size:.8rem;padding:.35rem .6rem">Del</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
+    const renderClearancesList = ()=>{
+      const mobileList = document.getElementById("clearance-list");
+      const desktopTableBody = document.getElementById("clearances-table-body");
+      if(!mobileList || !desktopTableBody) return;
 
-  // action buttons
-  $$('button[data-act="edit"]').forEach(b=>b.onclick = () => openEdit(b.dataset.id));
-  $$('button[data-act="del"]').forEach(b=>b.onclick = () => delRecord(b.dataset.id));
-}
+      const sorted = [...clearances].sort((a,b)=>b.entryDate.toDate()-a.entryDate.toDate());
 
-function delRecord(id){
-  if(!confirm('Delete this record?')) return;
-  let records = loadRecords().filter(r=>r.id!==id);
-  saveRecords(records);
-  toast('Deleted');
-  renderTable();
-}
+      if(sorted.length===0){
+        mobileList.innerHTML = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No clearances found. Add one to get started!</div>`;
+        desktopTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-gray-500 dark:text-gray-400">No clearances found.</td></tr>`;
+        return;
+      }
 
-/* ------------- EDIT MODAL ------------- */
-function openEdit(id){
-  const records = loadRecords();
-  const rec = records.find(r=>r.id===id);
-  if(!rec){ toast('Record missing'); return; }
+      mobileList.innerHTML = sorted.map(c=>`
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="font-bold text-lg text-gray-800 dark:text-gray-100">${c.ownerName}</p>
+              <p class="font-mono text-xl font-bold text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}">${icons.edit}</button>
+              <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}">${icons.trash}</button>
+            </div>
+          </div>
+          <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+            <p><strong class="font-medium">Location:</strong> ${c.location}</p>
+            <p><strong class="font-medium">Validity:</strong> ${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
+            <p><strong class="font-medium">Escort:</strong> <span class="${c.escortRequired?'text-green-500':'text-red-500'}">${c.escortRequired?'Required':'Not Required'}</span></p>
+            ${c.notes?`<p><strong class="font-medium">Notes:</strong> ${c.notes}</p>`:""}
+          </div>
+        </div>`).join("");
 
-  const tmpl = $('#modal-template').content.cloneNode(true);
-  const modal = tmpl.querySelector('.modal-backdrop');
-  const header = tmpl.querySelector('header');
-  const body   = tmpl.querySelector('section');
-  const footer = tmpl.querySelector('footer');
+      desktopTableBody.innerHTML = sorted.map(c=>`
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+          <td class="p-4">
+            <p class="font-bold text-gray-900 dark:text-gray-100">${c.ownerName}</p>
+            <p class="font-mono text-lg font-bold text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
+          </td>
+          <td class="p-4 text-gray-700 dark:text-gray-300">${c.location}</td>
+          <td class="p-4 text-gray-700 dark:text-gray-300">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</td>
+          <td class="p-4">${c.escortRequired?`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Required</span>`:`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Not Required</span>`}</td>
+          <td class="p-4 text-gray-700 dark:text-gray-300 text-sm">${c.notes||""}</td>
+          <td class="p-4 flex gap-2">
+            <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}">${icons.edit}</button>
+            <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}">${icons.trash}</button>
+          </td>
+        </tr>`).join("");
+    };
 
-  header.textContent = 'Edit Record';
+    const renderRequestManagement = ()=>{
+      const section = document.getElementById("request-management-section");
+      if(!section) return;
+      section.innerHTML = `
+        <div>
+          <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Pending Requests</h2>
+          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead class="bg-gray-50 dark:bg-gray-700/50">
+                  <tr>
+                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Requester</th>
+                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Vehicle</th>
+                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Location</th>
+                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Dates</th>
+                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Escort</th>
+                    <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="requests-table-body" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>`;
+      renderRequestsTable();
+    };
 
-  body.innerHTML = `
-    <label>Driver Name<input id="e_driverName" value="${rec.driverName}"></label>
-    <label class="mt-2">Vehicle No<input id="e_vehicleNo" value="${rec.vehicleNo}"></label>
-    <label class="mt-2">Purpose<textarea id="e_purpose">${rec.purpose}</textarea></label>
-    <label class="mt-2">Depart<input id="e_departDate" type="datetime-local" value="${rec.departDate}"></label>
-    <label class="mt-2">Return<input id="e_returnDate" type="datetime-local" value="${rec.returnDate}"></label>
-    <label class="mt-2">Remarks<textarea id="e_remarks">${rec.remarks||''}</textarea></label>
-    <label class="mt-2">Status
-      <select id="e_status">
-        <option value="OPEN" ${rec.status==='OPEN'?'selected':''}>OPEN</option>
-        <option value="CLOSED" ${rec.status==='CLOSED'?'selected':''}>CLOSED</option>
-      </select>
-    </label>
-  `;
+    const renderRequestsTable = ()=>{
+      const body = document.getElementById("requests-table-body");
+      if(!body) return;
+      if(clearanceRequests.length===0){
+        body.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-500 dark:text-gray-400">No pending requests.</td></tr>`;
+        return;
+      }
+      body.innerHTML = clearanceRequests.map(r=>`
+        <tr>
+          <td class="p-4 text-gray-700 dark:text-gray-300">${r.requesterName || "-"}</td>
+          <td class="p-4 text-gray-700 dark:text-gray-300 font-mono">${r.vehicleNumber}</td>
+          <td class="p-4 text-gray-700 dark:text-gray-300">${r.location}</td>
+          <td class="p-4 text-gray-700 dark:text-gray-300">${formatDate(r.entryDate)} - ${formatDate(r.expiryDate)}</td>
+          <td class="p-4 text-gray-700 dark:text-gray-300">${r.escortRequired?"Yes":"No"}</td>
+          <td class="p-4 flex gap-2">
+            <button class="approve-request-btn px-3 py-1 bg-green-600 text-white text-sm rounded" data-id="${r.id}">Approve</button>
+            <button class="reject-request-btn px-3 py-1 bg-red-600 text-white text-sm rounded" data-id="${r.id}">Reject</button>
+          </td>
+        </tr>`).join("");
+    };
 
-  const btnSave = document.createElement('button');
-  btnSave.textContent = 'Save';
-  const btnClose = document.createElement('button');
-  btnClose.textContent = 'Cancel';
-  btnClose.style.background = '#6b7280';
+    const renderUserDashboard = (user)=>{
+      const today = new Date(); today.setHours(0,0,0,0);
+      const daily = clearances.filter(c=>{
+        const en = c.entryDate.toDate(); en.setHours(0,0,0,0);
+        const ex = c.expiryDate.toDate(); ex.setHours(23,59,59,999);
+        return today>=en && today<=ex;
+      });
 
-  footer.append(btnClose, btnSave);
-  document.body.appendChild(modal);
+      const listHTML = daily.length? daily.map(c=>`
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 space-y-4">
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Owner / Company</p>
+            <p class="font-bold text-xl text-gray-800 dark:text-gray-100">${c.ownerName}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle No.</p>
+            <p class="font-mono text-2xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4 pt-4 border-t dark:border-gray-700">
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Location</p>
+              <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Escort</p>
+              <p class="font-semibold ${c.escortRequired?'text-green-600 dark:text-green-400':'text-red-600 dark:text-red-400'}">${c.escortRequired?'Required':'Not Required'}</p>
+            </div>
+            <div class="col-span-2">
+              <p class="text-sm text-gray-500 dark:text-gray-400">Valid Until</p>
+              <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
+            </div>
+            ${c.notes?`<div class="col-span-2"><p class="text-sm text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200">${c.notes}</p></div>`:""}
+          </div>
+        </div>`).join("") : `
+        <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
+          <div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div>
+          <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">No Clearances for Today</h3>
+          <p class="mt-1 text-gray-500 dark:text-gray-400">There are no vehicles with clearance for today.</p>
+        </div>`;
 
-  btnClose.onclick = ()=> modal.remove();
-  modal.addEventListener('click',e=>{ if(e.target===modal) modal.remove(); });
+      appRoot.innerHTML = `
+        <main id="user-dashboard" class="container mx-auto">
+          <div class="p-4 md:p-8">
+            <div class="flex justify-between items-center mb-6">
+              <div class="flex items-center gap-4">
+                <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
+                <div>
+                  <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Daily Vehicle Clearances</h1>
+                  <p class="text-gray-500 dark:text-gray-400">Showing vehicles cleared for today: ${formatDate(today)}</p>
+                </div>
+              </div>
+              <button id="back-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                <span class="w-4 h-4">${icons.back}</span> Change Role
+              </button>
+            </div>
+            <div class="space-y-4">${listHTML}</div>
 
-  btnSave.onclick = ()=>{
-    rec.driverName = $('#e_driverName').value.trim();
-    rec.vehicleNo  = $('#e_vehicleNo').value.trim();
-    rec.purpose    = $('#e_purpose').value.trim();
-    rec.departDate = $('#e_departDate').value;
-    rec.returnDate = $('#e_returnDate').value;
-    rec.remarks    = $('#e_remarks').value.trim();
-    rec.status     = $('#e_status').value;
+            <section class="mt-12">
+              <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">My Requests</h2>
+              <div id="my-requests-list" class="space-y-4"></div>
+            </section>
+          </div>
+        </main>`;
+      renderMyRequests();
+    };
 
-    saveRecords(records);
-    modal.remove();
-    toast('Updated');
-    renderTable();
-  };
-}
+    const renderMyRequests = ()=>{
+      const wrap = document.getElementById("my-requests-list");
+      if(!wrap) return;
+      if(myRequests.length===0){
+        wrap.innerHTML = `<div class="text-gray-500 dark:text-gray-400 text-center py-8 bg-white dark:bg-gray-800 rounded-2xl shadow">You have no requests.</div>`;
+        return;
+      }
+      wrap.innerHTML = myRequests.map(r=>`
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-5">
+          <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p>
+          <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${r.vehicleNumber}</p>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p>
+          <p class="font-semibold ${r.status==="approved"?"text-green-600":r.status==="rejected"?"text-red-600":"text-yellow-600"}">${r.status.toUpperCase()}</p>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Dates</p>
+          <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(r.entryDate)} - ${formatDate(r.expiryDate)}</p>
+        </div>`).join("");
+    };
 
-/* ------------- EXPORT ------------- */
-$('#btn-export').onclick = ()=>{
-  const data = JSON.stringify(loadRecords(), null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'vehicle_clearance_export.json';
-  a.click();
-  URL.revokeObjectURL(url);
-};
+    const renderRequestForm = ()=>{
+      appRoot.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+          <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+            <div class="text-center">
+              <div class="w-12 h-12 mx-auto text-yellow-500">${icons.request}</div>
+              <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Request Vehicle Clearance</h1>
+              <p class="text-gray-500 dark:text-gray-400">Fill in the details below</p>
+            </div>
+            <form id="request-form" class="space-y-4">
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Your Name</label>
+                <input name="requesterName" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
+                <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                <input name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
+                  <input type="date" name="entryDate" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
+                  <input type="date" name="expiryDate" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                </div>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600 focus:ring-blue-500" />
+                <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes (optional)</label>
+                <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"></textarea>
+              </div>
+              <div class="flex justify-between pt-4">
+                <button id="back-btn" type="button" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Back</button>
+                <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>`;
+    };
 
-/* ------------- INIT ------------- */
-document.addEventListener('DOMContentLoaded', ()=>{
-  bindNav();
-  renderTable();
-});
-</script>
+    const renderModal = (clearanceToEdit=null)=>{
+      const modalContainer = document.getElementById("modal-container");
+      modalContainer.innerHTML = `
+        <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">${icons.x}</button>
+            <form id="clearance-form" class="space-y-4">
+              <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${clearanceToEdit?'Edit':'Add'} Clearance</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label>
+                  <input name="ownerName" value="${clearanceToEdit?.ownerName||''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
+                  <input name="vehicleNumber" value="${clearanceToEdit?.vehicleNumber||''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
+                  <input type="date" name="entryDate" value="${toISODate(clearanceToEdit?.entryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
+                  <input type="date" name="expiryDate" value="${toISODate(clearanceToEdit?.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                </div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                <input name="location" value="${clearanceToEdit?.location||''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${clearanceToEdit?.notes||''}</textarea>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" id="escortRequired" name="escortRequired" class="h-5 w-5 rounded text-blue-600 focus:ring-blue-500" ${clearanceToEdit?.escortRequired?'checked':''}/>
+                <label for="escortRequired" class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
+              </div>
+              <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+                <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${clearanceToEdit?'Update':'Save'}</button>
+              </div>
+              <input type="hidden" name="id" value="${clearanceToEdit?.id||''}">
+            </form>
+          </div>
+        </div>`;
+    };
+
+    // ----------------- Auth State -----------------
+    onAuthStateChanged(auth, async (user)=>{
+      // clear previous listeners
+      if(unsubscribeClearances) unsubscribeClearances();
+      if(unsubscribeRequests) unsubscribeRequests();
+      if(unsubscribeMyRequests) unsubscribeMyRequests();
+
+      appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
+
+      if(user){
+        const adminDoc = await getDoc(doc(db, "admins", user.uid));
+        if(adminDoc.exists()){
+          // Admin
+          unsubscribeClearances = onSnapshot(query(collection(db,"vehicleClearances")), (snap)=>{
+            clearances = snap.docs.map(d=>({id:d.id,...d.data()}));
+            if(document.getElementById("main-content")) renderClearancesList();
+          });
+          unsubscribeRequests = onSnapshot(query(collection(db,"clearanceRequests"), where("status","==","pending")), (snap)=>{
+            clearanceRequests = snap.docs.map(d=>({id:d.id,...d.data()}));
+            if(document.getElementById("request-management-section")) renderRequestsTable();
+          });
+          renderAdminDashboard(user);
+        }else{
+          // User
+          unsubscribeClearances = onSnapshot(query(collection(db,"vehicleClearances")), (snap)=>{
+            clearances = snap.docs.map(d=>({id:d.id,...d.data()}));
+            if(document.getElementById("user-dashboard")) renderUserDashboard(user);
+          });
+          unsubscribeMyRequests = onSnapshot(query(collection(db,"clearanceRequests"), where("requesterId","==",user.uid)), (snap)=>{
+            myRequests = snap.docs.map(d=>({id:d.id,...d.data()}));
+            if(document.getElementById("user-dashboard")) renderMyRequests();
+          });
+          renderUserDashboard(user);
+        }
+      }else{
+        renderLandingPage();
+      }
+    });
+
+    // ----------------- Global Events -----------------
+    document.body.addEventListener("click", async (e)=>{
+      const btn = e.target.closest("button");
+      if(!btn) return;
+
+      switch(btn.id){
+        case "admin-btn": renderAdminLogin(); return;
+        case "user-btn": renderUserLogin(); return;
+        case "request-btn": renderRequestForm(); return;
+        case "logout-button":
+        case "back-btn":
+          await signOut(auth); return;
+        case "add-clearance-btn":
+          renderModal(); return;
+        case "close-modal-btn":
+        case "cancel-modal-btn":
+          document.getElementById("modal-container").innerHTML=""; return;
+        case "auth-toggle-button":
+          authMode = authMode==="login"?"signup":"login";
+          renderAdminLogin(); return;
+        case "anon-login-btn":
+          try{ await signInAnonymously(auth); }
+          catch(err){ showNotification(err.message,"error"); }
+          return;
+      }
+
+      if(btn.classList.contains("edit-btn")){
+        const id = btn.dataset.id;
+        const found = clearances.find(c=>c.id===id);
+        renderModal(found);
+        return;
+      }
+      if(btn.classList.contains("delete-btn")){
+        const id = btn.dataset.id;
+        if(confirm("Delete this clearance?")){
+          await deleteDoc(doc(db,"vehicleClearances",id));
+          showNotification("Deleted");
+        }
+        return;
+      }
+      if(btn.classList.contains("approve-request-btn")){
+        const id = btn.dataset.id;
+        const req = clearanceRequests.find(r=>r.id===id);
+        if(!req) return;
+        await addDoc(collection(db,"vehicleClearances"),{
+          ownerName:req.requesterName,
+          vehicleNumber:req.vehicleNumber,
+          location:req.location,
+          entryDate:req.entryDate,
+          expiryDate:req.expiryDate,
+          escortRequired:req.escortRequired,
+          notes:req.notes||"",
+          createdAt: Timestamp.now()
+        });
+        await updateDoc(doc(db,"clearanceRequests",id),{status:"approved"});
+        showNotification("Request approved");
+        return;
+      }
+      if(btn.classList.contains("reject-request-btn")){
+        const id = btn.dataset.id;
+        await updateDoc(doc(db,"clearanceRequests",id),{status:"rejected"});
+        showNotification("Request rejected","error");
+        return;
+      }
+    });
+
+    document.body.addEventListener("submit", async (e)=>{
+      if(e.target.id==="auth-form"){
+        e.preventDefault();
+        const {email,password,inviteCode} = getFormObj(e.target);
+        try{
+          if(authMode==="login"){
+            await signInWithEmailAndPassword(auth,email,password);
+          }else{
+            if(inviteCode!==ADMIN_INVITE_CODE){ showNotification("Invalid invite code","error"); return; }
+            const cred = await createUserWithEmailAndPassword(auth,email,password);
+            await setDoc(doc(db,"admins",cred.user.uid),{email});
+          }
+        }catch(err){ showNotification(err.message,"error"); }
+        return;
+      }
+
+      if(e.target.id==="track-request-form"){
+        e.preventDefault();
+        const val = document.getElementById("track-id-input").value.trim().toUpperCase();
+        const targetDiv = document.getElementById("tracking-result");
+        if(!val){targetDiv.innerHTML="";return;}
+        const qSnap = await onSnapshotOnce(query(collection(db,"clearanceRequests"), where("vehicleNumber","==",val)));
+        const list = qSnap.docs.map(d=>({id:d.id,...d.data()}));
+        if(list.length===0){
+          targetDiv.innerHTML = `<div class="text-red-500">No request found for ${val}</div>`;
+        }else{
+          const r = list[0];
+          targetDiv.innerHTML = `
+            <div class="p-4 bg-white dark:bg-gray-800 rounded shadow space-y-1 text-left">
+              <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p>
+              <p class="font-mono font-semibold">${r.vehicleNumber}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Status</p>
+              <p class="font-semibold ${r.status==="approved"?"text-green-600":r.status==="rejected"?"text-red-600":"text-yellow-600"}">${r.status.toUpperCase()}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Dates</p>
+              <p class="font-semibold">${formatDate(r.entryDate)} - ${formatDate(r.expiryDate)}</p>
+            </div>`;
+        }
+        return;
+      }
+
+      if(e.target.id==="clearance-form"){
+        e.preventDefault();
+        const data = getFormObj(e.target);
+        const payload = {
+          ownerName: data.ownerName,
+          vehicleNumber: data.vehicleNumber.toUpperCase(),
+          location: data.location,
+          entryDate: Timestamp.fromDate(new Date(data.entryDate)),
+          expiryDate: Timestamp.fromDate(new Date(data.expiryDate)),
+          escortRequired: !!data.escortRequired,
+          notes: data.notes || ""
+        };
+        try{
+          if(data.id){
+            await updateDoc(doc(db,"vehicleClearances",data.id), payload);
+            showNotification("Updated");
+          }else{
+            await addDoc(collection(db,"vehicleClearances"), payload);
+            showNotification("Saved");
+          }
+          document.getElementById("modal-container").innerHTML = "";
+        }catch(err){ showNotification(err.message,"error"); }
+        return;
+      }
+
+      if(e.target.id==="request-form"){
+        e.preventDefault();
+        const data = getFormObj(e.target);
+        const user = auth.currentUser;
+        if(!user){
+          await signInAnonymously(auth);
+        }
+        const payload = {
+          requesterName: data.requesterName,
+          requesterId: auth.currentUser.uid,
+          vehicleNumber: data.vehicleNumber.toUpperCase(),
+          location: data.location,
+          entryDate: Timestamp.fromDate(new Date(data.entryDate)),
+          expiryDate: Timestamp.fromDate(new Date(data.expiryDate)),
+          escortRequired: !!data.escortRequired,
+          notes: data.notes || "",
+          status: "pending",
+          createdAt: Timestamp.now()
+        };
+        try{
+          await addDoc(collection(db,"clearanceRequests"), payload);
+          showNotification("Request submitted");
+          renderLandingPage();
+        }catch(err){ showNotification(err.message,"error"); }
+        return;
+      }
+    });
+  </script>
 </body>
 </html>
