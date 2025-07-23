@@ -66,7 +66,7 @@
       apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
       authDomain: "vehicle-clearance.firebaseapp.com",
       projectId: "vehicle-clearance",
-      storageBucket: "vehicle-clearance.firebasestorage.app", // Updated as per your file
+      storageBucket: "vehicle-clearance.firebasestorage.app", // Corrected storage bucket
       messagingSenderId: "187403368572",
       appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
@@ -812,7 +812,6 @@
         if (e.target.id === "user-login-form") {
             const { password } = getFormObj(e.target);
             try {
-                // Now that we are signed in, we can read the public config document
                 const configRef = doc(db, "publicConfig", "userAccess");
                 const configSnap = await getDoc(configRef);
                 const correctPassword = configSnap.exists() ? configSnap.data().password : DEFAULT_USER_PASSWORD;
