@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,574 +6,715 @@
     <title>Vehicle Clearance System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-slide-in { animation: slideIn 0.5s ease-out forwards; }
+        .animate-zoom-in { animation: zoomIn 0.3s ease-out forwards; }
+        .animate-pulse-gentle { animation: pulse 2.5s infinite; }
+        
+        body {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .vehicle-number {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #60a5fa;
+            text-shadow: 0 0 10px rgba(96, 165, 250, 0.3);
+        }
+        
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+             box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+        }
+        
+        .input-field {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #f1f5f9;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+            outline: none;
+        }
+        
+        .input-field::placeholder {
+            color: #94a3b8;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-pending { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-approved { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .status-rejected { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        
+        .clearance-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .clearance-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(96, 165, 250, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .escort-required { color: #22c55e; font-weight: 600; }
+        .escort-not-required { color: #94a3b8; font-weight: 500; }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .notes-text {
+            background: rgba(0, 0, 0, 0.2);
+            border-left: 3px solid #60a5fa;
+            padding: 8px 12px;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #cbd5e1;
+        }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-slate-900">
     <div id="app-root"></div>
+    <div id="modal-container"></div>
+    <div id="notification-container" class="fixed top-5 right-5 z-50 space-y-3"></div>
 
-```
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, Timestamp, getDoc, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, Timestamp, getDoc, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const ADMIN_CODE = "ADMIN2025";
-    const config = {
-      apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
-      authDomain: "vehicle-clearance.firebaseapp.com",
-      projectId: "vehicle-clearance",
-      storageBucket: "vehicle-clearance.appspot.com",
-      messagingSenderId: "187403368572",
-      appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
-    };
-
-    const app = initializeApp(config);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const root = document.getElementById('app-root');
-    
-    let clearances = [], requests = [];
-    let unsubClearances, unsubRequests;
-
-    const fmt = (date) => {
-        if (!date) return '';
-        const d = date instanceof Date ? date : date.toDate();
-        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
-    };
-
-    const notify = (msg, type = 'success') => {
-        const div = document.createElement('div');
-        div.className = `fixed bottom-5 right-5 p-4 rounded text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-        div.textContent = msg;
-        document.body.appendChild(div);
-        setTimeout(() => div.remove(), 3000);
-    };
-
-    const home = () => {
-        root.innerHTML = `
-            <div class="min-h-screen flex items-center justify-center p-4">
-                <div class="w-full max-w-lg bg-white rounded-xl shadow-lg p-8 text-center space-y-6">
-                    <div>
-                        <div class="text-6xl mb-4">🚗</div>
-                        <h1 class="text-3xl font-bold text-gray-800">Vehicle Clearance</h1>
-                        <p class="text-gray-500">Select an option to continue</p>
-                    </div>
-                    <div class="space-y-4">
-                        <button onclick="requestForm()" class="w-full p-4 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-lg">
-                            📝 Request Clearance
-                        </button>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button onclick="adminLogin()" class="p-4 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg">
-                                🛡️ Admin
-                            </button>
-                            <button onclick="userLogin()" class="p-4 bg-green-100 hover:bg-green-200 text-green-800 rounded-lg">
-                                👥 User
-                            </button>
-                        </div>
-                    </div>
-                    <div class="pt-4 border-t">
-                        <form onsubmit="trackRequest(event)" class="space-y-2">
-                            <label class="text-sm text-gray-600">Track Request</label>
-                            <div class="flex gap-2">
-                                <input id="trackInput" class="flex-1 px-3 py-2 border rounded" placeholder="Vehicle Number"/>
-                                <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Track</button>
-                            </div>
-                        </form>
-                        <div id="trackResult" class="mt-4"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-    };
-
-    const requestForm = () => {
-        root.innerHTML = `
-            <div class="min-h-screen flex items-center justify-center p-4">
-                <div class="w-full max-w-2xl bg-white rounded-xl shadow-lg p-8">
-                    <div class="text-center mb-6">
-                        <div class="text-4xl mb-2">📝</div>
-                        <h1 class="text-2xl font-bold">Request Vehicle Clearance</h1>
-                    </div>
-                    <form onsubmit="submitRequest(event)" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <input name="ownerName" placeholder="Name/Company" class="px-3 py-2 border rounded" required />
-                            <input name="vehicleNumber" placeholder="Vehicle Number" class="px-3 py-2 border rounded" oninput="this.value=this.value.toUpperCase()" required />
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input name="contactNumber" placeholder="Contact Number" class="px-3 py-2 border rounded" required />
-                            <input name="email" type="email" placeholder="Email" class="px-3 py-2 border rounded" required />
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-sm text-gray-600">Entry Date</label>
-                                <input name="entryDate" type="date" class="w-full px-3 py-2 border rounded" required />
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-600">Expiry Date</label>
-                                <input name="expiryDate" type="date" class="w-full px-3 py-2 border rounded" required />
-                            </div>
-                        </div>
-                        <input name="location" placeholder="Location/Destination" class="w-full px-3 py-2 border rounded" required />
-                        <textarea name="purpose" placeholder="Purpose of visit" rows="3" class="w-full px-3 py-2 border rounded" required></textarea>
-                        <div class="flex items-center">
-                            <input type="checkbox" name="escortRequired" class="mr-2" />
-                            <label>Escort Required</label>
-                        </div>
-                        <div class="flex justify-between pt-4">
-                            <button type="button" onclick="home()" class="px-6 py-2 bg-gray-200 rounded hover:bg-gray-300">← Back</button>
-                            <button type="submit" class="px-6 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">Submit</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        `;
-    };
-
-    const adminLogin = () => {
-        root.innerHTML = `
-            <div class="min-h-screen flex items-center justify-center p-4">
-                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-                    <div class="text-center mb-6">
-                        <div class="text-4xl mb-2">🛡️</div>
-                        <h1 class="text-2xl font-bold">Admin Access</h1>
-                    </div>
-                    <form onsubmit="adminAuth(event)" class="space-y-4">
-                        <div id="codeField" class="hidden">
-                            <input id="adminCode" placeholder="Admin Code: ADMIN2025" class="w-full px-3 py-2 border rounded" />
-                        </div>
-                        <input id="adminEmail" type="email" placeholder="Email" class="w-full px-3 py-2 border rounded" required />
-                        <input id="adminPassword" type="password" placeholder="Password" class="w-full px-3 py-2 border rounded" required />
-                        <button type="submit" id="adminBtn" class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Login</button>
-                    </form>
-                    <p class="text-center text-sm text-gray-500 mt-4">
-                        <span id="toggleText">Need account?</span>
-                        <button onclick="toggleAdminMode()" id="toggleBtn" class="text-blue-600 ml-1">Sign Up</button>
-                    </p>
-                    <button onclick="home()" class="w-full mt-4 py-2 text-gray-600">← Back</button>
-                </div>
-            </div>
-        `;
-    };
-
-    const userLogin = () => {
-        root.innerHTML = `
-            <div class="min-h-screen flex items-center justify-center p-4">
-                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-                    <div class="text-center mb-6">
-                        <div class="text-4xl mb-2">👥</div>
-                        <h1 class="text-2xl font-bold">User Access</h1>
-                    </div>
-                    <form onsubmit="userAuth(event)" class="space-y-4">
-                        <input id="userEmail" type="email" placeholder="Email" class="w-full px-3 py-2 border rounded" required />
-                        <input id="userPassword" type="password" placeholder="Password" class="w-full px-3 py-2 border rounded" required />
-                        <button type="submit" id="userBtn" class="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700">Login</button>
-                    </form>
-                    <p class="text-center text-sm text-gray-500 mt-4">
-                        Need account?
-                        <button onclick="toggleUserMode()" id="userToggle" class="text-green-600 ml-1">Sign Up</button>
-                    </p>
-                    <button onclick="home()" class="w-full mt-4 py-2 text-gray-600">← Back</button>
-                </div>
-            </div>
-        `;
-    };
-
-    const adminDash = (user) => {
-        root.innerHTML = `
-            <header class="bg-white shadow sticky top-0">
-                <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="text-2xl">🛡️</span>
-                        <span class="font-bold">Admin Dashboard</span>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span class="text-sm text-gray-600">${user.email}</span>
-                        <button onclick="signOut(auth)" class="px-4 py-2 bg-red-500 text-white rounded">Logout</button>
-                    </div>
-                </div>
-            </header>
-            <main class="container mx-auto p-4 space-y-6">
-                <div>
-                    <h2 class="text-xl font-bold mb-4">Pending Requests</h2>
-                    <div id="requestsList"></div>
-                </div>
-                <div>
-                    <div class="flex justify-between items-center mb-4">
-                        <h1 class="text-2xl font-bold">Active Clearances</h1>
-                        <button onclick="showModal()" class="px-4 py-2 bg-blue-600 text-white rounded">+ Add</button>
-                    </div>
-                    <div id="clearancesList"></div>
-                </div>
-            </main>
-            <div id="modal"></div>
-        `;
-    };
-
-    const userDash = () => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayClearances = clearances.filter(c => {
-            const entry = c.entryDate.toDate();
-            const expiry = c.expiryDate.toDate();
-            entry.setHours(0, 0, 0, 0);
-            expiry.setHours(23, 59, 59, 999);
-            return today >= entry && today <= expiry;
-        });
-
-        root.innerHTML = `
-            <header class="bg-white shadow sticky top-0">
-                <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="text-2xl">🌞</span>
-                        <span class="font-bold">Today's Clearances</span>
-                    </div>
-                    <button onclick="signOut(auth)" class="px-4 py-2 bg-red-500 text-white rounded">Logout</button>
-                </div>
-            </header>
-            <main class="container mx-auto p-4">
-                <div class="space-y-4">
-                    ${todayClearances.length === 0 ? 
-                        `<div class="text-center py-16 bg-white rounded">
-                            <div class="text-4xl mb-4">🚗</div>
-                            <h3 class="text-xl font-bold">No Clearances Today</h3>
-                        </div>` :
-                        todayClearances.map(c => `
-                            <div class="bg-white rounded shadow p-4">
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <p class="text-sm text-gray-500">Owner</p>
-                                        <p class="font-bold">${c.ownerName}</p>
-                                        <p class="font-mono text-lg text-blue-600">${c.vehicleNumber}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm text-gray-500">Location</p>
-                                        <p>${c.location}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm text-gray-500">Escort</p>
-                                        <p class="${c.escortRequired ? 'text-green-600' : 'text-red-600'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')
-                    }
-                </div>
-            </main>
-        `;
-    };
-
-    // Global functions
-    window.home = home;
-    window.requestForm = requestForm;
-    window.adminLogin = adminLogin;
-    window.userLogin = userLogin;
-
-    window.submitRequest = async (e) => {
-        e.preventDefault();
-        const form = new FormData(e.target);
-        await addDoc(collection(db, "clearanceRequests"), {
-            ownerName: form.get('ownerName'),
-            vehicleNumber: form.get('vehicleNumber').toUpperCase(),
-            contactNumber: form.get('contactNumber'),
-            email: form.get('email'),
-            entryDate: Timestamp.fromDate(new Date(form.get('entryDate'))),
-            expiryDate: Timestamp.fromDate(new Date(form.get('expiryDate'))),
-            location: form.get('location'),
-            purpose: form.get('purpose'),
-            escortRequired: form.has('escortRequired'),
-            status: 'pending',
-            submittedAt: Timestamp.now()
-        });
-        notify('Request submitted successfully!');
-        home();
-    };
-
-    window.trackRequest = async (e) => {
-        e.preventDefault();
-        const vehicleNumber = document.getElementById('trackInput').value.toUpperCase();
-        const q = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
-        const snap = await getDocs(q);
-        const result = document.getElementById('trackResult');
-        
-        if (snap.empty) {
-            result.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded">No request found</div>`;
-        } else {
-            const req = snap.docs[0].data();
-            result.innerHTML = `
-                <div class="p-4 bg-blue-100 text-blue-800 rounded">
-                    <p><strong>Status:</strong> ${req.status.toUpperCase()}</p>
-                    <p><strong>Owner:</strong> ${req.ownerName}</p>
-                    <p><strong>Submitted:</strong> ${fmt(req.submittedAt)}</p>
-                </div>
-            `;
-        }
-    };
-
-    window.toggleAdminMode = () => {
-        const btn = document.getElementById('adminBtn');
-        const toggle = document.getElementById('toggleBtn');
-        const text = document.getElementById('toggleText');
-        const field = document.getElementById('codeField');
-        
-        if (btn.textContent === 'Login') {
-            btn.textContent = 'Sign Up';
-            toggle.textContent = 'Login';
-            text.textContent = 'Have account?';
-            field.classList.remove('hidden');
-        } else {
-            btn.textContent = 'Login';
-            toggle.textContent = 'Sign Up';
-            text.textContent = 'Need account?';
-            field.classList.add('hidden');
-        }
-    };
-
-    window.toggleUserMode = () => {
-        const btn = document.getElementById('userBtn');
-        const toggle = document.getElementById('userToggle');
-        
-        if (btn.textContent === 'Login') {
-            btn.textContent = 'Sign Up';
-            toggle.textContent = 'Login';
-        } else {
-            btn.textContent = 'Login';
-            toggle.textContent = 'Sign Up';
-        }
-    };
-
-    window.adminAuth = async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('adminEmail').value;
-        const password = document.getElementById('adminPassword').value;
-        const isSignUp = document.getElementById('adminBtn').textContent === 'Sign Up';
-        
-        try {
-            if (isSignUp) {
-                const code = document.getElementById('adminCode').value;
-                if (code !== ADMIN_CODE) {
-                    notify('Invalid admin code!', 'error');
-                    return;
-                }
-                const cred = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, "admins", cred.user.uid), { email, createdAt: Timestamp.now() });
-                notify('Admin account created!');
-            } else {
-                await signInWithEmailAndPassword(auth, email, password);
-                notify('Logged in successfully!');
-            }
-        } catch (error) {
-            notify(error.message, 'error');
-        }
-    };
-
-    window.userAuth = async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('userEmail').value;
-        const password = document.getElementById('userPassword').value;
-        const isSignUp = document.getElementById('userBtn').textContent === 'Sign Up';
-        
-        try {
-            if (isSignUp) {
-                await createUserWithEmailAndPassword(auth, email, password);
-                notify('Account created!');
-            } else {
-                await signInWithEmailAndPassword(auth, email, password);
-                notify('Logged in!');
-            }
-        } catch (error) {
-            notify(error.message, 'error');
-        }
-    };
-
-    window.showModal = (clearance = null) => {
-        const modal = document.getElementById('modal');
-        const toISODate = (date) => date ? new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
-        
-        modal.innerHTML = `
-            <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded p-6 w-full max-w-md">
-                    <h2 class="text-xl font-bold mb-4">${clearance ? 'Edit' : 'Add'} Clearance</h2>
-                    <form onsubmit="saveClearance(event)" class="space-y-4">
-                        <input name="ownerName" value="${clearance?.ownerName || ''}" placeholder="Owner Name" class="w-full px-3 py-2 border rounded" required />
-                        <input name="vehicleNumber" value="${clearance?.vehicleNumber || ''}" placeholder="Vehicle Number" class="w-full px-3 py-2 border rounded" oninput="this.value=this.value.toUpperCase()" required />
-                        <div class="grid grid-cols-2 gap-4">
-                            <input name="entryDate" type="date" value="${toISODate(clearance?.entryDate?.toDate())}" class="px-3 py-2 border rounded" required />
-                            <input name="expiryDate" type="date" value="${toISODate(clearance?.expiryDate?.toDate())}" class="px-3 py-2 border rounded" required />
-                        </div>
-                        <input name="location" value="${clearance?.location || ''}" placeholder="Location" class="w-full px-3 py-2 border rounded" required />
-                        <textarea name="notes" placeholder="Notes" rows="3" class="w-full px-3 py-2 border rounded">${clearance?.notes || ''}</textarea>
-                        <div class="flex items-center">
-                            <input type="checkbox" name="escortRequired" class="mr-2" ${clearance?.escortRequired ? 'checked' : ''} />
-                            <label>Escort Required</label>
-                        </div>
-                        <div class="flex justify-end gap-2">
-                            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">${clearance ? 'Update' : 'Save'}</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        `;
-        
-        if (clearance) {
-            modal.querySelector('form').dataset.editId = clearance.id;
-        }
-    };
-
-    window.closeModal = () => {
-        document.getElementById('modal').innerHTML = '';
-    };
-
-    window.saveClearance = async (e) => {
-        e.preventDefault();
-        const form = new FormData(e.target);
-        const data = {
-            ownerName: form.get('ownerName'),
-            vehicleNumber: form.get('vehicleNumber').toUpperCase(),
-            entryDate: Timestamp.fromDate(new Date(form.get('entryDate'))),
-            expiryDate: Timestamp.fromDate(new Date(form.get('expiryDate'))),
-            location: form.get('location'),
-            notes: form.get('notes') || '',
-            escortRequired: form.has('escortRequired'),
-            updatedAt: Timestamp.now()
+        // --- CONFIG & INITIALIZATION ---
+        const ADMIN_CODE = "ADMIN2025";
+        const firebaseConfig = {
+            apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
+            authDomain: "vehicle-clearance.firebaseapp.com",
+            projectId: "vehicle-clearance",
+            storageBucket: "vehicle-clearance.appspot.com",
+            messagingSenderId: "187403368572",
+            appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
         };
         
-        const editId = e.target.dataset.editId;
-        if (editId) {
-            await updateDoc(doc(db, "vehicleClearances", editId), data);
-            notify('Clearance updated!');
-        } else {
-            await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
-            notify('Clearance added!');
-        }
-        closeModal();
-    };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        const root = document.getElementById('app-root');
+        const modalContainer = document.getElementById('modal-container');
+        const notificationContainer = document.getElementById('notification-container');
+        
+        let clearances = [], requests = [];
 
-    window.deleteClearance = async (id) => {
-        if (confirm('Delete this clearance?')) {
-            await deleteDoc(doc(db, "vehicleClearances", id));
-            notify('Clearance deleted!');
-        }
-    };
+        // --- HELPERS ---
+        const fmt = (date) => {
+            if (!date) return '';
+            const d = date instanceof Date ? date : date.toDate();
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
+        };
 
-    window.approveRequest = async (id) => {
-        const req = requests.find(r => r.id === id);
-        if (req) {
-            await addDoc(collection(db, "vehicleClearances"), {
-                ownerName: req.ownerName,
-                vehicleNumber: req.vehicleNumber,
-                location: req.location,
-                entryDate: req.entryDate,
-                expiryDate: req.expiryDate,
-                escortRequired: req.escortRequired,
-                notes: req.notes || '',
-                createdAt: Timestamp.now()
+        const notify = (msg, type = 'success') => {
+            const div = document.createElement('div');
+            div.className = `p-4 rounded-lg text-white z-50 animate-fade-in ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } shadow-xl border border-white border-opacity-20`;
+            div.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">${type === 'success' ? '✅' : '❌'}</span>
+                    <span class="font-medium">${msg}</span>
+                </div>
+            `;
+            notificationContainer.appendChild(div);
+            setTimeout(() => {
+                div.style.opacity = '0';
+                div.style.transform = 'translateX(20px)';
+                setTimeout(() => div.remove(), 300);
+            }, 3500);
+        };
+
+        // --- MODALS & DIALOGS ---
+        const showModal = (clearanceId = null) => {
+            const clearance = clearanceId ? clearances.find(c => c.id === clearanceId) : null;
+            const toISODate = (date) => date ? new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
+            
+            modalContainer.innerHTML = `
+                <div class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div class="glass-effect rounded-2xl p-8 w-full max-w-2xl animate-zoom-in shadow-2xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                                <span class="text-3xl">${clearance ? '✏️' : '➕'}</span>
+                                ${clearance ? 'Edit Clearance' : 'Add New Clearance'}
+                            </h2>
+                            <button onclick="closeModal()" class="text-slate-400 hover:text-white text-2xl transition-colors">✕</button>
+                        </div>
+                        <form onsubmit="saveClearance(event)" class="space-y-6">
+                            ${clearance ? `<input type="hidden" name="editId" value="${clearance.id}">` : ''}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input name="ownerName" value="${clearance?.ownerName || ''}" placeholder="Owner Name/Company" class="input-field px-4 py-3 rounded-lg" required />
+                                <input name="vehicleNumber" value="${clearance?.vehicleNumber || ''}" placeholder="Vehicle Number" class="input-field px-4 py-3 rounded-lg" oninput="this.value=this.value.toUpperCase()" required />
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-slate-300 font-medium mb-2 block">Entry Date</label>
+                                    <input name="entryDate" type="date" value="${toISODate(clearance?.entryDate?.toDate())}" class="w-full input-field px-4 py-3 rounded-lg" required />
+                                </div>
+                                <div>
+                                    <label class="text-sm text-slate-300 font-medium mb-2 block">Expiry Date</label>
+                                    <input name="expiryDate" type="date" value="${toISODate(clearance?.expiryDate?.toDate())}" class="w-full input-field px-4 py-3 rounded-lg" required />
+                                </div>
+                            </div>
+                            <input name="location" value="${clearance?.location || ''}" placeholder="Location/Destination" class="w-full input-field px-4 py-3 rounded-lg" required />
+                            <textarea name="notes" placeholder="Additional notes..." rows="3" class="w-full input-field px-4 py-3 rounded-lg">${clearance?.notes || ''}</textarea>
+                            <div class="flex items-center p-4 glass-effect rounded-lg">
+                                <input type="checkbox" id="escortRequired" name="escortRequired" class="mr-3 w-4 h-4 accent-blue-500" ${clearance?.escortRequired ? 'checked' : ''} />
+                                <label for="escortRequired" class="text-slate-200 font-medium">Escort Required</label>
+                            </div>
+                            <div class="flex justify-end gap-4 pt-4">
+                                <button type="button" onclick="closeModal()" class="px-6 py-3 btn glass-effect text-slate-300 rounded-lg hover:bg-white hover:bg-opacity-10">Cancel</button>
+                                <button type="submit" class="px-6 py-3 btn btn-primary text-white rounded-lg font-medium">${clearance ? 'Update Clearance' : 'Add Clearance'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        };
+
+        const confirmDelete = (id) => {
+            modalContainer.innerHTML = `
+                <div class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div class="glass-effect rounded-2xl p-8 w-full max-w-md animate-zoom-in shadow-2xl text-center">
+                         <div class="text-5xl mb-4">🗑️</div>
+                         <h2 class="text-2xl font-bold text-white mb-2">Are you sure?</h2>
+                         <p class="text-slate-300 mb-8">This action cannot be undone. The clearance will be permanently deleted.</p>
+                         <div class="flex justify-center gap-4">
+                            <button onclick="closeModal()" class="px-8 py-3 btn glass-effect text-slate-300 rounded-lg hover:bg-white hover:bg-opacity-10">Cancel</button>
+                            <button onclick="deleteClearance('${id}')" class="px-8 py-3 btn btn-danger text-white rounded-lg font-medium">Yes, Delete</button>
+                         </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const closeModal = () => {
+            const modal = modalContainer.firstChild;
+            if (modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    modalContainer.innerHTML = '';
+                }, 300);
+            }
+        };
+
+        // --- CORE LOGIC & HANDLERS ---
+        const handleLogout = async () => {
+            try {
+                await signOut(auth);
+                notify('Logged out successfully!');
+                home();
+            } catch (error) {
+                notify('Logout failed: ' + error.message, 'error');
+            }
+        };
+
+        const submitRequest = async (e) => {
+            e.preventDefault();
+            const form = new FormData(e.target);
+            try {
+                await addDoc(collection(db, "clearanceRequests"), {
+                    ownerName: form.get('ownerName'),
+                    vehicleNumber: form.get('vehicleNumber').toUpperCase(),
+                    contactNumber: form.get('contactNumber'),
+                    email: form.get('email'),
+                    entryDate: Timestamp.fromDate(new Date(form.get('entryDate'))),
+                    expiryDate: Timestamp.fromDate(new Date(form.get('expiryDate'))),
+                    location: form.get('location'),
+                    purpose: form.get('purpose'),
+                    notes: form.get('notes') || '',
+                    escortRequired: form.has('escortRequired'),
+                    status: 'pending',
+                    submittedAt: Timestamp.now()
+                });
+                notify('Request submitted successfully!');
+                home();
+            } catch (error) {
+                notify('Submission failed: ' + error.message, 'error');
+            }
+        };
+
+        const trackRequest = async (e) => {
+            e.preventDefault();
+            const vehicleNumber = document.getElementById('trackInput').value.toUpperCase();
+            if (!vehicleNumber) {
+                notify('Please enter a vehicle number', 'error');
+                return;
+            }
+            
+            try {
+                const q = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
+                const snap = await getDocs(q);
+                const result = document.getElementById('trackResult');
+                
+                if (snap.empty) {
+                    result.innerHTML = `<div class="p-4 glass-effect rounded-lg border border-red-500 border-opacity-30"><div class="flex items-center gap-2 text-red-400"><span class="text-xl">❌</span><span class="font-medium">No request found for vehicle: ${vehicleNumber}</span></div></div>`;
+                } else {
+                    const req = snap.docs[0].data();
+                    result.innerHTML = `<div class="p-4 glass-effect rounded-lg border border-blue-500 border-opacity-30 animate-fade-in"><div class="flex items-center gap-2 text-blue-400 mb-3"><span class="text-xl">📋</span><span class="font-bold">Request Status</span></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm"><div><span class="text-slate-400">Status:</span> <span class="status-badge status-${req.status} ml-2">${req.status}</span></div><div><span class="text-slate-400">Owner:</span> <span class="text-white">${req.ownerName}</span></div><div><span class="text-slate-400">Submitted:</span> <span class="text-white">${fmt(req.submittedAt)}</span></div><div><span class="text-slate-400">Vehicle:</span> <span class="vehicle-number">${req.vehicleNumber}</span></div></div></div>`;
+                }
+            } catch (error) {
+                notify('Tracking failed: ' + error.message, 'error');
+            }
+        };
+
+        const toggleAdminMode = () => {
+            const btn = document.getElementById('adminBtn');
+            const toggle = document.getElementById('toggleBtn');
+            const text = document.getElementById('toggleText');
+            const field = document.getElementById('codeField');
+            
+            if (btn.textContent.trim() === 'Login') {
+                btn.textContent = 'Sign Up';
+                toggle.textContent = 'Login';
+                text.textContent = 'Have an account?';
+                field.classList.remove('hidden');
+            } else {
+                btn.textContent = 'Login';
+                toggle.textContent = 'Sign Up';
+                text.textContent = 'Need an account?';
+                field.classList.add('hidden');
+            }
+        };
+
+        const toggleUserMode = () => {
+            const btn = document.getElementById('userBtn');
+            const toggle = document.getElementById('userToggle');
+            
+            if (btn.textContent.trim() === 'Login') {
+                btn.textContent = 'Sign Up';
+                toggle.textContent = 'Login';
+            } else {
+                btn.textContent = 'Login';
+                toggle.textContent = 'Sign Up';
+            }
+        };
+
+        const adminAuth = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const isSignUp = document.getElementById('adminBtn').textContent.trim() === 'Sign Up';
+            
+            try {
+                if (isSignUp) {
+                    const code = document.getElementById('adminCode').value;
+                    if (code !== ADMIN_CODE) {
+                        notify('Invalid admin code!', 'error');
+                        return;
+                    }
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    await setDoc(doc(db, "admins", cred.user.uid), { email, createdAt: Timestamp.now() });
+                    notify('Admin account created successfully!');
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    notify('Welcome back, Admin!');
+                }
+            } catch (error) {
+                notify(error.message, 'error');
+            }
+        };
+
+        const userAuth = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            const isSignUp = document.getElementById('userBtn').textContent.trim() === 'Sign Up';
+            
+            try {
+                if (isSignUp) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    notify('User account created successfully!');
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    notify('Welcome back!');
+                }
+            } catch (error) {
+                notify(error.message, 'error');
+            }
+        };
+
+        const saveClearance = async (e) => {
+            e.preventDefault();
+            const form = new FormData(e.target);
+            const data = {
+                ownerName: form.get('ownerName'),
+                vehicleNumber: form.get('vehicleNumber').toUpperCase(),
+                entryDate: Timestamp.fromDate(new Date(form.get('entryDate'))),
+                expiryDate: Timestamp.fromDate(new Date(form.get('expiryDate'))),
+                location: form.get('location'),
+                notes: form.get('notes') || '',
+                escortRequired: form.has('escortRequired'),
+                updatedAt: Timestamp.now()
+            };
+            
+            try {
+                const editId = form.get('editId');
+                if (editId) {
+                    await updateDoc(doc(db, "vehicleClearances", editId), data);
+                    notify('Clearance updated successfully!');
+                } else {
+                    await addDoc(collection(db, "vehicleClearances"), { ...data, createdAt: Timestamp.now() });
+                    notify('Clearance added successfully!');
+                }
+                closeModal();
+            } catch (error) {
+                notify('Save failed: ' + error.message, 'error');
+            }
+        };
+
+        const deleteClearance = async (id) => {
+            try {
+                await deleteDoc(doc(db, "vehicleClearances", id));
+                closeModal();
+                notify('Clearance deleted successfully!');
+            } catch (error) {
+                notify('Delete failed: ' + error.message, 'error');
+            }
+        };
+
+        const approveRequest = async (id) => {
+            try {
+                const req = requests.find(r => r.id === id);
+                if (req) {
+                    await addDoc(collection(db, "vehicleClearances"), {
+                        ownerName: req.ownerName,
+                        vehicleNumber: req.vehicleNumber,
+                        location: req.location,
+                        entryDate: req.entryDate,
+                        expiryDate: req.expiryDate,
+                        escortRequired: req.escortRequired,
+                        notes: req.notes || '',
+                        createdAt: Timestamp.now()
+                    });
+                    await updateDoc(doc(db, "clearanceRequests", id), {
+                        status: "approved",
+                        approvedAt: Timestamp.now()
+                    });
+                    notify('Request approved and clearance created!');
+                }
+            } catch (error) {
+                notify('Approval failed: ' + error.message, 'error');
+            }
+        };
+
+        const rejectRequest = async (id) => {
+            try {
+                await updateDoc(doc(db, "clearanceRequests", id), {
+                    status: "rejected",
+                    rejectedAt: Timestamp.now()
+                });
+                notify('Request rejected successfully!');
+            } catch (error) {
+                notify('Rejection failed: ' + error.message, 'error');
+            }
+        };
+
+        // --- VIEW RENDERING & UI UPDATES ---
+        const updateRequests = () => {
+            const list = document.getElementById('requestsList');
+            if (!list) return;
+            
+            if (requests.length === 0) {
+                list.innerHTML = `<div class="text-center py-16 glass-effect rounded-2xl"><div class="text-5xl mb-4">📭</div><h3 class="text-xl font-bold text-white mb-2">No Pending Requests</h3><p class="text-slate-300">All caught up! New requests will appear here.</p></div>`;
+                return;
+            }
+
+            list.innerHTML = requests.map(r => `
+                <div class="clearance-card animate-slide-in mb-4">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="font-bold text-white text-lg">${r.ownerName}</h3>
+                            <p class="vehicle-number mt-1">${r.vehicleNumber}</p>
+                            <p class="text-sm text-slate-400 mt-2">📅 Submitted: ${fmt(r.submittedAt)}</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="approveRequest('${r.id}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium btn flex items-center gap-2"><span>✅</span> Approve</button>
+                            <button onclick="rejectRequest('${r.id}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium btn flex items-center gap-2"><span>❌</span> Reject</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div><span class="text-slate-400">📞 Contact:</span> <span class="text-white">${r.contactNumber}</span></div>
+                        <div><span class="text-slate-400">📧 Email:</span> <span class="text-white">${r.email}</span></div>
+                        <div><span class="text-slate-400">📍 Location:</span> <span class="text-white">${r.location}</span></div>
+                        <div><span class="text-slate-400">📅 Duration:</span> <span class="text-white">${fmt(r.entryDate)} - ${fmt(r.expiryDate)}</span></div>
+                        <div><span class="text-slate-400">👤 Escort:</span> <span class="${r.escortRequired ? 'text-green-400' : 'text-slate-300'}">${r.escortRequired ? 'Required' : 'Not Required'}</span></div>
+                    </div>
+                    <div class="mt-4"><p class="text-slate-400 text-sm mb-2">📝 Purpose:</p><div class="notes-text">${r.purpose}</div></div>
+                    ${r.notes ? `<div class="mt-3"><p class="text-slate-400 text-sm mb-2">💬 Additional Notes:</p><div class="notes-text">${r.notes}</div></div>` : ''}
+                </div>
+            `).join('');
+        };
+
+        const updateClearances = () => {
+            const list = document.getElementById('clearancesList');
+            if (!list) return;
+            
+            if (clearances.length === 0) {
+                list.innerHTML = `<div class="text-center py-16 glass-effect rounded-2xl"><div class="text-5xl mb-4">🚗</div><h3 class="text-xl font-bold text-white mb-2">No Active Clearances</h3><p class="text-slate-300">Add your first clearance to get started.</p></div>`;
+                return;
+            }
+
+            const sorted = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
+            list.innerHTML = sorted.map(c => `
+                <div class="clearance-card animate-slide-in">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="font-bold text-white text-lg">${c.ownerName}</p>
+                            <p class="vehicle-number mt-1">${c.vehicleNumber}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="showModal('${c.id}')" class="p-3 btn glass-effect text-blue-400 hover:bg-blue-500 hover:bg-opacity-20 rounded-lg" title="Edit">✏️</button>
+                            <button onclick="confirmDelete('${c.id}')" class="p-3 btn glass-effect text-red-400 hover:bg-red-500 hover:bg-opacity-20 rounded-lg" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div><span class="text-slate-400">📍 Location:</span> <span class="text-white">${c.location}</span></div>
+                        <div><span class="text-slate-400">📅 Valid Period:</span> <span class="text-white">${fmt(c.entryDate)} - ${fmt(c.expiryDate)}</span></div>
+                        <div><span class="text-slate-400">👤 Escort:</span> <span class="${c.escortRequired ? 'escort-required' : 'escort-not-required'}">${c.escortRequired ? 'Required' : 'Not Required'}</span></div>
+                        <div><span class="text-slate-400">🕒 Created:</span> <span class="text-white">${fmt(c.createdAt)}</span></div>
+                    </div>
+                    ${c.notes ? `<div class="mt-4"><p class="text-slate-400 text-sm mb-2">📝 Notes:</p><div class="notes-text">${c.notes}</div></div>` : ''}
+                </div>
+            `).join('');
+        };
+
+        const home = () => {
+            root.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="w-full max-w-lg glass-effect rounded-2xl shadow-2xl p-8 text-center space-y-8 animate-fade-in">
+                        <div>
+                            <div class="text-7xl mb-6 animate-pulse-gentle">🚗</div>
+                            <h1 class="text-4xl font-bold text-white mb-2">Vehicle Clearance</h1>
+                            <p class="text-slate-300 text-lg">Secure Access Management System</p>
+                        </div>
+                        <div class="space-y-4">
+                            <button onclick="requestForm()" class="w-full p-4 glass-effect hover:bg-yellow-500 hover:bg-opacity-20 text-yellow-300 rounded-xl card-hover border border-yellow-500 border-opacity-30"><div class="flex items-center justify-center gap-3"><span class="text-2xl">📝</span><span class="font-semibold">Request Clearance</span></div></button>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button onclick="adminLogin()" class="p-4 glass-effect hover:bg-blue-500 hover:bg-opacity-20 text-blue-300 rounded-xl card-hover border border-blue-500 border-opacity-30"><div class="text-2xl mb-2">🛡️</div><div class="font-semibold">Admin</div></button>
+                                <button onclick="userLogin()" class="p-4 glass-effect hover:bg-green-500 hover:bg-opacity-20 text-green-300 rounded-xl card-hover border border-green-500 border-opacity-30"><div class="text-2xl mb-2">👥</div><div class="font-semibold">User</div></button>
+                            </div>
+                        </div>
+                        <div class="pt-6 border-t border-white border-opacity-20">
+                            <form onsubmit="trackRequest(event)" class="space-y-3">
+                                <label class="text-sm text-slate-300 font-medium">Track Your Request</label>
+                                <div class="flex gap-3">
+                                    <input id="trackInput" class="flex-1 input-field px-4 py-3 rounded-lg" placeholder="Enter Vehicle Number"/>
+                                    <button type="submit" class="px-6 py-3 btn btn-primary text-white rounded-lg font-medium"><span class="flex items-center gap-2">🔍 Track</span></button>
+                                </div>
+                            </form>
+                            <div id="trackResult" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const requestForm = () => {
+            root.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="w-full max-w-3xl glass-effect rounded-2xl shadow-2xl p-8 animate-fade-in">
+                        <div class="text-center mb-8"><div class="text-5xl mb-4">📝</div><h1 class="text-3xl font-bold text-white">Request Vehicle Clearance</h1><p class="text-slate-300 mt-2">Fill in the details for your access request</p></div>
+                        <form onsubmit="submitRequest(event)" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><input name="ownerName" placeholder="Owner Name/Company" class="input-field px-4 py-3 rounded-lg" required /><input name="vehicleNumber" placeholder="Vehicle Number" class="input-field px-4 py-3 rounded-lg" oninput="this.value=this.value.toUpperCase()" required /></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><input name="contactNumber" placeholder="Contact Number" class="input-field px-4 py-3 rounded-lg" required /><input name="email" type="email" placeholder="Email Address" class="input-field px-4 py-3 rounded-lg" required /></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label class="text-sm text-slate-300 font-medium mb-2 block">Entry Date</label><input name="entryDate" type="date" class="w-full input-field px-4 py-3 rounded-lg" required /></div><div><label class="text-sm text-slate-300 font-medium mb-2 block">Expiry Date</label><input name="expiryDate" type="date" class="w-full input-field px-4 py-3 rounded-lg" required /></div></div>
+                            <input name="location" placeholder="Location/Destination" class="w-full input-field px-4 py-3 rounded-lg" required />
+                            <textarea name="purpose" placeholder="Purpose of visit" rows="3" class="w-full input-field px-4 py-3 rounded-lg" required></textarea>
+                            <textarea name="notes" placeholder="Additional notes (optional)" rows="2" class="w-full input-field px-4 py-3 rounded-lg"></textarea>
+                            <div class="flex items-center p-4 glass-effect rounded-lg"><input type="checkbox" id="requestEscort" name="escortRequired" class="mr-3 w-4 h-4 accent-blue-500" /><label for="requestEscort" class="text-slate-200 font-medium">Escort Required</label></div>
+                            <div class="flex justify-between pt-6">
+                                <button type="button" onclick="home()" class="px-8 py-3 btn glass-effect text-slate-300 rounded-lg hover:bg-white hover:bg-opacity-10">← Back to Home</button>
+                                <button type="submit" class="px-8 py-3 btn btn-primary text-white rounded-lg font-medium">Submit Request →</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        };
+
+        const adminLogin = () => {
+            root.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="w-full max-w-md glass-effect rounded-2xl shadow-2xl p-8 animate-fade-in">
+                        <div class="text-center mb-8"><div class="text-5xl mb-4">🛡️</div><h1 class="text-3xl font-bold text-white">Admin Access</h1><p class="text-slate-300 mt-2">Secure administrative login</p></div>
+                        <form onsubmit="adminAuth(event)" class="space-y-6">
+                            <div id="codeField" class="hidden animate-fade-in"><input id="adminCode" placeholder="Admin Code: ADMIN2025" class="w-full input-field px-4 py-3 rounded-lg" /></div>
+                            <input id="adminEmail" type="email" placeholder="Email Address" class="w-full input-field px-4 py-3 rounded-lg" required />
+                            <input id="adminPassword" type="password" placeholder="Password" class="w-full input-field px-4 py-3 rounded-lg" required />
+                            <button type="submit" id="adminBtn" class="w-full py-3 btn btn-primary text-white rounded-lg font-medium">Login</button>
+                        </form>
+                        <p class="text-center text-sm text-slate-400 mt-6"><span id="toggleText">Need an account?</span><button onclick="toggleAdminMode()" id="toggleBtn" class="text-blue-400 ml-2 hover:text-blue-300 transition-colors">Sign Up</button></p>
+                        <button onclick="home()" class="w-full mt-6 py-3 btn glass-effect text-slate-300 rounded-lg hover:bg-white hover:bg-opacity-10">← Back to Home</button>
+                    </div>
+                </div>
+            `;
+        };
+
+        const userLogin = () => {
+            root.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="w-full max-w-md glass-effect rounded-2xl shadow-2xl p-8 animate-fade-in">
+                        <div class="text-center mb-8"><div class="text-5xl mb-4">👥</div><h1 class="text-3xl font-bold text-white">User Access</h1><p class="text-slate-300 mt-2">View today's clearances</p></div>
+                        <form onsubmit="userAuth(event)" class="space-y-6">
+                            <input id="userEmail" type="email" placeholder="Email Address" class="w-full input-field px-4 py-3 rounded-lg" required />
+                            <input id="userPassword" type="password" placeholder="Password" class="w-full input-field px-4 py-3 rounded-lg" required />
+                            <button type="submit" id="userBtn" class="w-full py-3 btn btn-primary text-white rounded-lg font-medium">Login</button>
+                        </form>
+                        <p class="text-center text-sm text-slate-400 mt-6">Need an account? <button onclick="toggleUserMode()" id="userToggle" class="text-green-400 ml-2 hover:text-green-300 transition-colors">Sign Up</button></p>
+                        <button onclick="home()" class="w-full mt-6 py-3 btn glass-effect text-slate-300 rounded-lg hover:bg-white hover:bg-opacity-10">← Back to Home</button>
+                    </div>
+                </div>
+            `;
+        };
+
+        const adminDash = (user) => {
+            root.innerHTML = `
+                <header class="header-gradient sticky top-0 z-40 shadow-xl"><div class="container mx-auto px-6 py-4 flex justify-between items-center"><div class="flex items-center gap-3"><span class="text-3xl">🛡️</span><div><span class="font-bold text-xl text-white">Admin Dashboard</span><p class="text-slate-300 text-sm">Vehicle Clearance Management</p></div></div><div class="flex items-center gap-4"><div class="text-right"><p class="text-sm text-slate-300">Logged in as</p><p class="font-semibold text-white">${user.email}</p></div><button onclick="handleLogout()" class="px-6 py-2 btn btn-danger text-white rounded-lg font-medium">Logout</button></div></div></header>
+                <main class="container mx-auto p-6 space-y-8"><div class="animate-fade-in"><div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-3xl">📋</span>Pending Requests</h2></div><div id="requestsList"></div></div><div class="animate-fade-in"><div class="flex justify-between items-center mb-6"><h1 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-3xl">✅</span>Active Clearances</h1><button onclick="showModal()" class="px-6 py-3 btn btn-primary text-white rounded-lg font-medium"><span class="flex items-center gap-2"><span class="text-xl">➕</span>Add Clearance</span></button></div><div id="clearancesList"></div></div></main>
+            `;
+        };
+
+        const userDash = () => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayClearances = clearances.filter(c => {
+                const entry = c.entryDate.toDate();
+                const expiry = c.expiryDate.toDate();
+                entry.setHours(0, 0, 0, 0);
+                expiry.setHours(23, 59, 59, 999);
+                return today >= entry && today <= expiry;
             });
-            await updateDoc(doc(db, "clearanceRequests", id), {
-                status: "approved",
-                approvedAt: Timestamp.now()
-            });
-            notify('Request approved!');
-        }
-    };
 
-    window.rejectRequest = async (id) => {
-        await updateDoc(doc(db, "clearanceRequests", id), {
-            status: "rejected",
-            rejectedAt: Timestamp.now()
+            root.innerHTML = `
+                <header class="header-gradient sticky top-0 z-40 shadow-xl"><div class="container mx-auto px-6 py-4 flex justify-between items-center"><div class="flex items-center gap-3"><span class="text-3xl">🌅</span><div><span class="font-bold text-xl text-white">Today's Clearances</span><p class="text-slate-300 text-sm">${fmt(today)} • ${todayClearances.length} active</p></div></div><button onclick="handleLogout()" class="px-6 py-2 btn btn-danger text-white rounded-lg font-medium">Logout</button></div></header>
+                <main class="container mx-auto p-6"><div class="space-y-6 animate-fade-in">${todayClearances.length === 0 ? `<div class="text-center py-20 glass-effect rounded-2xl"><div class="text-6xl mb-6">🚗</div><h3 class="text-2xl font-bold text-white mb-2">No Clearances Today</h3><p class="text-slate-300">Check back later for updates</p></div>` : todayClearances.map(c => `<div class="clearance-card animate-slide-in"><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div><p class="text-sm text-slate-400 mb-1">Vehicle Owner</p><p class="font-bold text-white text-lg">${c.ownerName}</p><p class="vehicle-number mt-2">${c.vehicleNumber}</p></div><div><p class="text-sm text-slate-400 mb-1">Location</p><p class="text-white font-medium">${c.location}</p><p class="text-sm text-slate-300 mt-2">Valid: ${fmt(c.entryDate)} - ${fmt(c.expiryDate)}</p></div><div><p class="text-sm text-slate-400 mb-1">Escort Status</p><p class="${c.escortRequired ? 'escort-required' : 'escort-not-required'}">${c.escortRequired ? '✅ Required' : '❌ Not Required'}</p></div></div>${c.notes ? `<div class="mt-4"><p class="text-sm text-slate-400 mb-2">Notes</p><div class="notes-text">${c.notes}</div></div>` : ''}</div>`).join('')}</div></main>
+            `;
+        };
+
+        // --- GLOBAL FUNCTIONS ---
+        // Expose functions to the global window object so inline event handlers can call them
+        Object.assign(window, {
+            home, requestForm, adminLogin, userLogin, handleLogout, submitRequest, trackRequest,
+            toggleAdminMode, toggleUserMode, adminAuth, userAuth, showModal, closeModal,
+            saveClearance, deleteClearance, confirmDelete, approveRequest, rejectRequest
         });
-        notify('Request rejected!');
-    };
 
-    const updateRequests = () => {
-        const list = document.getElementById('requestsList');
-        if (!list) return;
-        
-        if (requests.length === 0) {
-            list.innerHTML = `<div class="text-center p-8 bg-white rounded">No pending requests</div>`;
-            return;
-        }
-
-        list.innerHTML = requests.map(r => `
-            <div class="bg-white rounded shadow p-4 mb-4">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 class="font-bold">${r.ownerName}</h3>
-                        <p class="font-mono text-blue-600">${r.vehicleNumber}</p>
-                        <p class="text-sm text-gray-500">Submitted: ${fmt(r.submittedAt)}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="approveRequest('${r.id}')" class="px-3 py-1 bg-green-600 text-white rounded text-sm">Approve</button>
-                        <button onclick="rejectRequest('${r.id}')" class="px-3 py-1 bg-red-600 text-white rounded text-sm">Reject</button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><span class="text-gray-500">Contact:</span> ${r.contactNumber}</div>
-                    <div><span class="text-gray-500">Location:</span> ${r.location}</div>
-                    <div><span class="text-gray-500">Dates:</span> ${fmt(r.entryDate)} - ${fmt(r.expiryDate)}</div>
-                    <div><span class="text-gray-500">Escort:</span> ${r.escortRequired ? 'Yes' : 'No'}</div>
-                </div>
-                <div class="mt-2 text-sm"><span class="text-gray-500">Purpose:</span> ${r.purpose}</div>
-            </div>
-        `).join('');
-    };
-
-    const updateClearances = () => {
-        const list = document.getElementById('clearancesList');
-        if (!list) return;
-        
-        if (clearances.length === 0) {
-            list.innerHTML = `<div class="text-center p-8 bg-white rounded">No clearances found</div>`;
-            return;
-        }
-
-        const sorted = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
-        list.innerHTML = sorted.map(c => `
-            <div class="bg-white rounded shadow p-4 mb-4">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="font-bold">${c.ownerName}</p>
-                        <p class="font-mono text-lg text-blue-600">${c.vehicleNumber}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="showModal(${JSON.stringify(c).replace(/"/g, '&quot;')})" class="p-2 text-blue-500 hover:bg-blue-100 rounded">✏️</button>
-                        <button onclick="deleteClearance('${c.id}')" class="p-2 text-red-500 hover:bg-red-100 rounded">🗑️</button>
-                    </div>
-                </div>
-                <div class="mt-2 grid grid-cols-2 gap-4 text-sm">
-                    <div><span class="text-gray-500">Location:</span> ${c.location}</div>
-                    <div><span class="text-gray-500">Valid:</span> ${fmt(c.entryDate)} - ${fmt(c.expiryDate)}</div>
-                    <div><span class="text-gray-500">Escort:</span> ${c.escortRequired ? 'Required' : 'Not Required'}</div>
-                    <div><span class="text-gray-500">Notes:</span> ${c.notes || 'None'}</div>
-                </div>
-            </div>
-        `).join('');
-    };
-// Firebase listeners
+        // --- AUTH LISTENER & APP START ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const adminDoc = await getDoc(doc(db, "admins", user.uid));
-                if (adminDoc.exists()) {
-                    adminDash(user);
-                    onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
-                        clearances = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        updateClearances();
-                    });
-                    onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending")), (snap) => {
-                        requests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        updateRequests();
-                    });
-                } else {
-                    userDash();
-                    onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
-                        clearances = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        // Refresh user dashboard when clearances update
-                        if (document.querySelector('main')) {
-                            userDash();
-                        }
-                    });
+                try {
+                    const adminDoc = await getDoc(doc(db, "admins", user.uid));
+                    if (adminDoc.exists()) {
+                        adminDash(user);
+                        onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
+                            clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            updateClearances();
+                        });
+                        onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending")), (snap) => {
+                            requests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            updateRequests();
+                        });
+                    } else {
+                        userDash();
+                        onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
+                            clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            if (document.querySelector('main')) { userDash(); }
+                        });
+                    }
+                } catch (error) {
+                    notify('Authentication check failed: ' + error.message, 'error');
+                    home();
                 }
             } else {
                 home();
@@ -583,8 +723,6 @@
 
         // Initialize the app
         home();
-
     </script>
 </body>
 </html>
-    
