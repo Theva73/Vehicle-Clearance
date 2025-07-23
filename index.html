@@ -393,6 +393,7 @@
             </div>
         </div>`;
         renderRequestManagement();
+        renderSettings();
         renderClearancesList();
     };
 
@@ -820,6 +821,7 @@
 
                 if (password === correctPassword) {
                     // Password is correct, onAuthStateChanged will handle the redirect to the dashboard.
+                    // We don't need to do anything else here.
                     routeHistory.push(renderUserLogin);
                 } else {
                     // Password incorrect, sign out the anonymous user and show error
