@@ -854,8 +854,10 @@
             }
         }
         
+        
         // User Dashboard Search Form
-        if (e.target.id === "daily-clearance-search-form") {
+        if (e.target.id === "daily-clearance-search-form" && document.getElementById("user-dashboard")) {
+    
             const { search } = getFormObj(e.target);
             renderUserDashboard(auth.currentUser, search.toUpperCase());
         }
