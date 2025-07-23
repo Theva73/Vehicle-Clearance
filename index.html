@@ -61,6 +61,7 @@
 
     // ---------- App Configuration ----------
     const ADMIN_INVITE_CODE = "ADMIN2025";
+    const DEFAULT_USER_PASSWORD = "123456";
     const firebaseConfig = {
       apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
       authDomain: "vehicle-clearance.firebaseapp.com",
@@ -86,7 +87,8 @@
     let clearances = [];
     let clearanceRequests = [];
     let myRequests = [];
-    let unsubClearances = null, unsubRequests = null, unsubMyReq = null;
+    let userPasswordConfig = null;
+    let unsubClearances = null, unsubRequests = null, unsubMyReq = null, unsubConfig = null;
     let authMode = "login"; // "login" or "signup"
     let routeHistory = []; // A stack of functions that will re-render a previous view.
 
@@ -216,8 +218,14 @@
             <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in text-center">
                 <div class="w-12 h-12 mx-auto text-green-500">${icons.users}</div>
                 <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">User Access</h1>
-                <p class="text-gray-500 dark:text-gray-400">Proceed anonymously to view today's clearances and track your requests.</p>
-                <button id="anon-login-btn" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700 mt-6">Continue</button>
+                <p class="text-gray-500 dark:text-gray-400">Enter the password to view today's clearances.</p>
+                <form id="user-login-form" class="space-y-4 pt-4">
+                    <div>
+                        <label class="sr-only">Password</label>
+                        <input type="password" name="password" class="block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Password" required />
+                    </div>
+                    <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700">Continue</button>
+                </form>
                 <button id="back-btn" class="mt-4 text-gray-600 hover:text-gray-800 underline text-sm">Back</button>
             </div>
         </div>`;
@@ -355,6 +363,7 @@
         main.innerHTML = `
         <div class="p-4 md:p-8 space-y-8">
             <div id="request-management-section"></div>
+            <div id="settings-section"></div>
             <div>
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Manage Clearances</h1>
@@ -384,7 +393,29 @@
             </div>
         </div>`;
         renderRequestManagement();
+        renderSettings();
         renderClearancesList();
+    };
+
+    const renderSettings = () => {
+        const settingsSection = document.getElementById("settings-section");
+        if (!settingsSection) return;
+        settingsSection.innerHTML = `
+        <div>
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Settings</h2>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+                <form id="user-password-form" class="space-y-4">
+                    <div>
+                        <label for="user-password-input" class="text-sm font-medium text-gray-700 dark:text-gray-300">User Access Password</label>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">This password is required for non-admin users to view the daily clearance list.</p>
+                        <input id="user-password-input" name="password" type="text" class="mt-1 block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" value="${userPasswordConfig?.password || ''}" required />
+                    </div>
+                    <div class="text-right">
+                        <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Save Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>`;
     };
 
     const renderClearancesList = () => {
@@ -549,8 +580,8 @@
                             <p class="text-gray-500 dark:text-gray-400">Showing vehicles cleared for today: ${formatDate(today)}</p>
                         </div>
                     </div>
-                    <button id="back-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-                        <span class="w-4 h-4">${icons.back}</span> Back
+                     <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                        <span class="w-4 h-4">${icons.logout}</span> Logout
                     </button>
                 </div>
                 <div class="space-y-4">${listHTML}</div>
@@ -635,11 +666,12 @@
         unsubClearances && unsubClearances();
         unsubRequests && unsubRequests();
         unsubMyReq && unsubMyReq();
+        unsubConfig && unsubConfig();
 
         // Show a loading spinner while checking auth state
         appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
 
-        if (user) {
+        if (user && !user.isAnonymous) {
             // Check if the user is an admin
             const adminDoc = await getDoc(doc(db, "admins", user.uid));
             if (adminDoc.exists()) {
@@ -652,20 +684,35 @@
                     clearanceRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                      if(document.getElementById("request-management-section")) renderRequestsTable();
                 });
+                
+                const configRef = doc(db, "config", "userAccess");
+                unsubConfig = onSnapshot(configRef, async (snap) => {
+                    if (!snap.exists()) {
+                        await setDoc(configRef, { password: DEFAULT_USER_PASSWORD });
+                    } else {
+                        userPasswordConfig = snap.data();
+                    }
+                    if (document.getElementById("settings-section")) renderSettings();
+                });
+
                 renderAdminDashboard(user);
             } else {
-                // Regular/Anonymous user: subscribe to all clearances and their own requests
-                unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
-                    clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if(document.getElementById("user-dashboard")) renderUserDashboard(user);
-                });
-                unsubMyReq = onSnapshot(query(collection(db, "clearanceRequests"), where("requesterId", "==", user.uid)), snap => {
-                    myRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if(document.getElementById("my-requests-list")) renderMyRequests();
-                });
-                renderUserDashboard(user);
+                // This case should ideally not be reached if non-admins are anonymous
+                await signOut(auth);
             }
-        } else {
+        } else if (user && user.isAnonymous) {
+             // Regular/Anonymous user: subscribe to all clearances and their own requests
+            unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
+                clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if(document.getElementById("user-dashboard")) renderUserDashboard(user);
+            });
+            unsubMyReq = onSnapshot(query(collection(db, "clearanceRequests"), where("requesterId", "==", user.uid)), snap => {
+                myRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if(document.getElementById("my-requests-list")) renderMyRequests();
+            });
+            renderUserDashboard(user);
+        }
+        else {
             // No user logged in, show the landing page
             renderLandingPage();
         }
@@ -689,10 +736,7 @@
             routeHistory.push(renderLandingPage);
             renderUserLogin();
         }
-        if (target.id === "anon-login-btn") {
-            routeHistory.push(renderUserLogin);
-            await signInAnonymously(auth).catch(err => showNotification(err.message, "error"));
-        }
+       
         if (target.id === "back-btn") goBack();
         if (target.id === "logout-button") await signOut(auth);
         
@@ -761,6 +805,26 @@
     document.body.addEventListener("submit", async (e) => {
         e.preventDefault();
 
+        // User Login Form
+        if (e.target.id === "user-login-form") {
+            const { password } = getFormObj(e.target);
+            try {
+                const configRef = doc(db, "config", "userAccess");
+                const configSnap = await getDoc(configRef);
+                const correctPassword = configSnap.exists() ? configSnap.data().password : DEFAULT_USER_PASSWORD;
+
+                if (password === correctPassword) {
+                    routeHistory.push(renderUserLogin);
+                    await signInAnonymously(auth);
+                } else {
+                    showNotification("Incorrect password.", "error");
+                }
+            } catch (err) {
+                showNotification("Could not verify password. Please try again.", "error");
+                console.error("User login error:", err);
+            }
+        }
+
         // Admin Auth Form
         if (e.target.id === "auth-form") {
             routeHistory.push(renderAdminLogin);
@@ -783,6 +847,18 @@
                 routeHistory.pop(); // Pop back if auth fails
             }
         }
+        
+        // Admin Password Change Form
+        if (e.target.id === "user-password-form") {
+            const { password } = getFormObj(e.target);
+            if (password && password.length >= 6) {
+                await setDoc(doc(db, "config", "userAccess"), { password });
+                showNotification("User access password updated successfully!");
+            } else {
+                showNotification("Password must be at least 6 characters long.", "error");
+            }
+        }
+
 
         // Track Request Form
         if (e.target.id === "track-request-form") {
@@ -867,8 +943,8 @@
         // User Request Submission Form
         if (e.target.id === "request-form") {
             const data = getFormObj(e.target);
-            if (!auth.currentUser) {
-                await signInAnonymously(auth);
+            if (!auth.currentUser || !auth.currentUser.isAnonymous) {
+                 await signInAnonymously(auth);
             }
             const payload = {
                 requesterName: data.requesterName,
