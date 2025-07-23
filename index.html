@@ -135,7 +135,8 @@
     };
 
     // ---------- Render Functions (Views) ----------
-    const renderLandingPage = () => {
+    const renderLandingPage = (options = {}) => {
+        const { trackingResultHTML = "", vehicleNumber = "" } = options;
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
             <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
@@ -164,11 +165,11 @@
                     <form id="track-request-form" class="space-y-2">
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
                         <div class="flex gap-2">
-                            <input id="track-id-input" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" />
+                            <input id="track-id-input" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
                             <button type="submit" class="px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700">Track</button>
                         </div>
                     </form>
-                    <div id="tracking-result" class="mt-4"></div>
+                    <div id="tracking-result" class="mt-4">${trackingResultHTML}</div>
                 </div>
             </div>
         </div>`;
@@ -639,22 +640,22 @@
                 // Admin user: subscribe to all clearances and pending requests
                 unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
                     clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderClearancesList();
+                    if(document.getElementById("main-content")) renderClearancesList();
                 });
                 unsubRequests = onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending")), snap => {
                     clearanceRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderRequestsTable();
+                     if(document.getElementById("request-management-section")) renderRequestsTable();
                 });
                 renderAdminDashboard(user);
             } else {
                 // Regular/Anonymous user: subscribe to all clearances and their own requests
                 unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
                     clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderUserDashboard(user);
+                    if(document.getElementById("user-dashboard")) renderUserDashboard(user);
                 });
                 unsubMyReq = onSnapshot(query(collection(db, "clearanceRequests"), where("requesterId", "==", user.uid)), snap => {
                     myRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderMyRequests();
+                    if(document.getElementById("my-requests-list")) renderMyRequests();
                 });
                 renderUserDashboard(user);
             }
@@ -734,6 +735,21 @@
             authMode = authMode === "login" ? "signup" : "login";
             renderAdminLogin();
         }
+        // View Status Button
+        if (target.classList.contains("view-live-status-btn")) {
+            const vehicleNumberInput = document.getElementById("track-id-input");
+            const currentVehicleNumber = vehicleNumberInput ? vehicleNumberInput.value : "";
+            const trackingResultDiv = document.getElementById("tracking-result");
+            const currentTrackingHTML = trackingResultDiv ? trackingResultDiv.innerHTML : "";
+
+            routeHistory.push(() => {
+                renderLandingPage({
+                    vehicleNumber: currentVehicleNumber,
+                    trackingResultHTML: currentTrackingHTML
+                });
+            });
+            renderStatusScreen(target.dataset.id);
+        }
     });
 
     document.body.addEventListener("submit", async (e) => {
@@ -773,16 +789,15 @@
             const q = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
             const snap = await getDocs(q);
             if (snap.empty) {
-                resultDiv.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded-lg">No request found for vehicle number ${vehicleNumber}.</div>`;
+                resultDiv.innerHTML = `<div class="text-red-500 p-3 bg-red-50 dark:bg-red-900/20 dark:text-red-300 rounded-lg">No request found for vehicle number ${vehicleNumber}.</div>`;
                 return;
             }
-            const requestDoc = snap.docs[0];
+            
+            const sortedDocs = snap.docs.sort((a, b) => b.data().createdAt.toMillis() - a.data().createdAt.toMillis());
+            const requestDoc = sortedDocs[0];
             const requestData = { id: requestDoc.id, ...requestDoc.data() };
-            resultDiv.innerHTML = statusCard(requestData) + `<button id="open-live-status" data-id="${requestData.id}" class="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">View Live Status Page</button>`;
-            document.getElementById("open-live-status").onclick = ev => {
-                routeHistory.push(renderLandingPage);
-                renderStatusScreen(ev.target.dataset.id);
-            };
+            
+            resultDiv.innerHTML = statusCard(requestData) + `<button class="view-live-status-btn w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700" data-id="${requestData.id}">View Live Status Page</button>`;
         }
 
         // Admin Add/Edit Clearance Form
@@ -832,13 +847,21 @@
                 createdAt: Timestamp.now()
             };
             try {
-                routeHistory.push(renderRequestForm);
                 const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
                 showNotification("Request submitted successfully!");
-                renderStatusScreen(docRef.id);
+                
+                const newRequestSnap = await getDoc(docRef);
+                const newRequestData = { id: newRequestSnap.id, ...newRequestSnap.data() };
+                
+                const trackingHTML = statusCard(newRequestData) + `<button class="view-live-status-btn w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700" data-id="${newRequestData.id}">View Live Status Page</button>`;
+                
+                renderLandingPage({
+                    trackingResultHTML: trackingHTML,
+                    vehicleNumber: newRequestData.vehicleNumber
+                });
+
             } catch (err) {
                 showNotification(err.message, "error");
-                routeHistory.pop();
             }
         }
     });
