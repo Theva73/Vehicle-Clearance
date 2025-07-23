@@ -168,7 +168,7 @@
                     <form id="track-request-form" class="space-y-2">
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
                         <div class="flex gap-2">
-                            <input id="track-id-input" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
+                            <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
                             <button type="submit" class="px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700">Track</button>
                         </div>
                     </form>
@@ -520,16 +520,20 @@
             </tr>`).join("");
     };
 
-    const renderUserDashboard = (user) => {
+    const renderUserDashboard = (user, vehicleFilter = null) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const dailyClearances = clearances.filter(c => {
+        let dailyClearances = clearances.filter(c => {
             const entryDate = c.entryDate.toDate();
             entryDate.setHours(0, 0, 0, 0);
             const expiryDate = c.expiryDate.toDate();
             expiryDate.setHours(23, 59, 59, 999);
             return today >= entryDate && today <= expiryDate;
         });
+
+        if (vehicleFilter) {
+            dailyClearances = dailyClearances.filter(c => c.vehicleNumber.includes(vehicleFilter));
+        }
 
         const listHTML = dailyClearances.length ? dailyClearances.map(c => `
             <details class="bg-white dark:bg-gray-800 rounded-2xl shadow-md group transition-all duration-300 ease-in-out overflow-hidden">
@@ -565,8 +569,8 @@
             </details>`).join("") : `
             <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
                 <div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div>
-                <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">No Clearances for Today</h3>
-                <p class="mt-1 text-gray-500 dark:text-gray-400">There are no vehicles with clearance for today.</p>
+                <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">${vehicleFilter ? 'No Matching Clearances Found' : 'No Clearances for Today'}</h3>
+                <p class="mt-1 text-gray-500 dark:text-gray-400">${vehicleFilter ? 'Try a different vehicle number or clear the search.' : 'There are no vehicles with clearance for today.'}</p>
             </div>`;
 
         appRoot.innerHTML = `
@@ -584,7 +588,14 @@
                         <span class="w-4 h-4">${icons.logout}</span> Logout
                     </button>
                 </div>
-                <div class="space-y-4">${listHTML}</div>
+                <div class="mb-6">
+                    <form id="daily-clearance-search-form" class="flex gap-2">
+                        <input name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
+                        <button type="submit" class="px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700">Search</button>
+                        <button type="reset" id="clear-search-btn" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
+                    </form>
+                </div>
+                <div id="daily-clearance-list" class="space-y-4">${listHTML}</div>
                 <section class="mt-12">
                     <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">My Requests</h2>
                     <div id="my-requests-list" class="space-y-4"></div>
@@ -828,6 +839,12 @@
                 console.error("User login error:", err);
             }
         }
+        
+        // User Dashboard Search Form
+        if (e.target.id === "daily-clearance-search-form") {
+            const { search } = getFormObj(e.target);
+            renderUserDashboard(auth.currentUser, search.toUpperCase());
+        }
 
         // Admin Auth Form
         if (e.target.id === "auth-form") {
@@ -983,6 +1000,13 @@
             } catch (err) {
                 showNotification(err.message, "error");
             }
+        }
+    });
+    
+    // Handle form reset for the user dashboard search
+    document.body.addEventListener("reset", e => {
+        if (e.target.id === "daily-clearance-search-form") {
+            renderUserDashboard(auth.currentUser, null);
         }
     });
 
