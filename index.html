@@ -809,18 +809,17 @@
         // User Login Form
         if (e.target.id === "user-login-form") {
             const { password } = getFormObj(e.target);
-            let tempAuth;
             try {
                 // Sign in anonymously to get read access for the password check
-                const userCredential = await signInAnonymously(auth);
-                tempAuth = userCredential.user;
-
+                await signInAnonymously(auth);
+                // Now that we are signed in, we can read the config document
                 const configRef = doc(db, "config", "userAccess");
                 const configSnap = await getDoc(configRef);
                 const correctPassword = configSnap.exists() ? configSnap.data().password : DEFAULT_USER_PASSWORD;
 
                 if (password === correctPassword) {
                     // Password is correct, onAuthStateChanged will handle the redirect to the dashboard.
+                    // We don't need to do anything else here.
                     routeHistory.push(renderUserLogin);
                 } else {
                     // Password incorrect, sign out the anonymous user and show error
@@ -828,7 +827,7 @@
                     showNotification("Incorrect password.", "error");
                 }
             } catch (err) {
-                // If any part of the process fails, ensure we sign out the temp anonymous user
+                // If any part of the process fails, ensure we sign out if we managed to sign in
                 if (auth.currentUser && auth.currentUser.isAnonymous) {
                     await signOut(auth);
                 }
