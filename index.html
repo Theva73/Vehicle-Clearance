@@ -674,8 +674,7 @@
             // Check if the user is an admin
             const adminDoc = await getDoc(doc(db, "admins", user.uid));
             if (adminDoc.exists()) {
-                renderAdminDashboard(user);
-
+                
                 // Admin user: subscribe to all clearances and pending requests
                 unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
                     clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -686,7 +685,8 @@
                      if(document.getElementById("request-management-section")) renderRequestsTable();
                 });
                 
-                const configRef = doc(db, "config", "userAccess");
+                // The config must be in a public collection for anonymous users to read it.
+                const configRef = doc(db, "publicConfig", "userAccess");
                 unsubConfig = onSnapshot(configRef, async (snap) => {
                     if (!snap.exists()) {
                         await setDoc(configRef, { password: DEFAULT_USER_PASSWORD });
@@ -694,7 +694,8 @@
                     } else {
                         userPasswordConfig = snap.data();
                     }
-                    if (document.getElementById("settings-section")) renderSettings();
+                    // Only render the dashboard after the config is loaded to prevent race conditions.
+                    renderAdminDashboard(user);
                 });
 
             } else {
@@ -812,14 +813,13 @@
             try {
                 // Sign in anonymously to get read access for the password check
                 await signInAnonymously(auth);
-                // Now that we are signed in, we can read the config document
-                const configRef = doc(db, "config", "userAccess");
+                // Now that we are signed in, we can read the public config document
+                const configRef = doc(db, "publicConfig", "userAccess");
                 const configSnap = await getDoc(configRef);
                 const correctPassword = configSnap.exists() ? configSnap.data().password : DEFAULT_USER_PASSWORD;
 
                 if (password === correctPassword) {
                     // Password is correct, onAuthStateChanged will handle the redirect to the dashboard.
-                    // We don't need to do anything else here.
                     routeHistory.push(renderUserLogin);
                 } else {
                     // Password incorrect, sign out the anonymous user and show error
@@ -863,7 +863,7 @@
         if (e.target.id === "user-password-form") {
             const { password } = getFormObj(e.target);
             if (password && password.length >= 6) {
-                await setDoc(doc(db, "config", "userAccess"), { password });
+                await setDoc(doc(db, "publicConfig", "userAccess"), { password });
                 showNotification("User access password updated successfully!");
             } else {
                 showNotification("Password must be at least 6 characters long.", "error");
