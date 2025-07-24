@@ -718,7 +718,7 @@
 
         try {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
             const now = new Date();
             const todayStart = new Date(now.setHours(0, 0, 0, 0));
@@ -754,8 +754,8 @@
                     'Pending'
                 ]);
             });
-
-            // 3. Generate PDF
+            
+            // 3. Generate PDF using the reliable method from the provided script
             doc.setFontSize(18);
             doc.text("Daily Vehicle Clearance Report", 14, 22);
             doc.setFontSize(11);
@@ -764,19 +764,18 @@
             doc.text("Location: Gelang Patah, Johor, Malaysia", 14, 36);
 
             doc.autoTable({
-                startY: 45,
                 head: [['Vehicle Number', 'Start Date', 'Expiry Date', 'Status']],
                 body: reportData,
+                startY: 45,
                 theme: 'grid',
-                headStyles: { fillColor: [22, 160, 133] },
-                didParseCell: function (data) {
+                headStyles: { fillColor: [45, 55, 72], textColor: 255 },
+                styles: { fontSize: 9, cellPadding: 2, halign: 'center', valign: 'middle' },
+                didParseCell: (data) => {
                     if (data.section === 'body') {
                         const status = data.cell.raw;
                         if (status === 'Pending') {
                             data.cell.styles.textColor = [211, 84, 0];
                             data.cell.styles.fontStyle = 'bold';
-                        } else if (status === 'Approved') {
-                            data.cell.styles.textColor = [39, 174, 96];
                         }
                     }
                 }
