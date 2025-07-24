@@ -34,7 +34,6 @@
     summary { list-style: none; }
     summary::-webkit-details-marker { display: none; }
     
-    /* For the settings panel transition */
     #settings-panel {
         transition: transform 0.3s ease-in-out;
     }
@@ -522,6 +521,7 @@
         return cardDiv.outerHTML;
     };
     
+    // --- MODIFIED: Renders the slimmer list for the user dashboard ---
     const renderClearanceListForUser = (vehicleFilter = null) => {
         const listContainer = document.getElementById('user-clearance-list-container');
         if (!listContainer) return;
@@ -545,18 +545,19 @@
         if (dailyClearances.length > 0) {
             listHTML = dailyClearances.map(c => `
                 <details class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden group animate-fade-in">
-                    <summary class="flex justify-between items-center p-5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                    <summary class="flex justify-between items-center px-5 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                         <div class="flex items-center gap-4">
                             <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90">${icons.chevronRight}</span>
-                            <div>
-                                <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">${c.ownerName}</p>
-                            </div>
+                            <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
                         </div>
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Cleared</span>
                     </summary>
                     <div class="px-5 pb-5 border-t border-gray-200 dark:border-gray-700">
                         <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Owner</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${c.ownerName}</p>
+                            </div>
                             <div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Location</p>
                                 <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
@@ -565,7 +566,7 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Escort</p>
                                 <p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
                             </div>
-                            <div class="col-span-2">
+                            <div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Valid Until</p>
                                 <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
                             </div>
@@ -613,6 +614,7 @@
         
         renderClearanceListForUser(vehicleFilter);
     };
+
 
     const renderAdminDashboard = (adminUser) => {
         appRoot.innerHTML = `
@@ -662,7 +664,6 @@
             </main>
             <div id="modal-container"></div>
 
-            <!-- Settings Side Panel -->
             <div id="settings-panel-container">
                 <div id="settings-backdrop" class="fixed inset-0 bg-black/0 -z-10"></div>
                 <div id="settings-panel" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white dark:bg-gray-800 shadow-xl transform translate-x-full z-40 p-6 flex flex-col">
@@ -903,7 +904,7 @@
                 setTimeout(() => {
                     backdrop.classList.remove('z-30');
                     backdrop.classList.add('-z-10');
-                }, 300); // match transition duration
+                }, 300);
             }
         }
     };
@@ -947,11 +948,9 @@
         }
         if (!button) return;
 
-        // Settings Panel controls
         if (button.id === 'settings-btn') toggleSettingsPanel(true);
         if (button.id === 'close-settings-panel-btn') toggleSettingsPanel(false);
 
-        // Navigation and Actions
         if (button.id === "request-btn") { routeHistory.push(renderLandingPage); renderRequestForm(); }
         if (button.id === "admin-btn") { routeHistory.push(renderLandingPage); renderAdminLogin(); }
         if (button.id === "user-btn") { routeHistory.push(renderLandingPage); renderUserLogin(); }
