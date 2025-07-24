@@ -113,7 +113,7 @@
         edit: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>',
         trash: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
         shield: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
-        users: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path></svg>',
+        greenlist: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
         sun: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
         request: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"></path></svg>',
         search: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>',
@@ -156,8 +156,8 @@
                             <span class="mt-3 font-semibold text-lg">Admin Login</span>
                         </button>
                         <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 text-green-800 dark:text-green-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                            <div class="w-12 h-12">${icons.users}</div>
-                            <span class="mt-3 font-semibold text-lg">User Login</span>
+                            <div class="w-12 h-12">${icons.greenlist}</div>
+                            <span class="mt-3 font-semibold text-lg">Green List</span>
                         </button>
                     </div>
                 </div>
@@ -217,8 +217,8 @@
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
             <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in text-center">
-                <div class="w-12 h-12 mx-auto text-green-500">${icons.users}</div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">User Access</h1>
+                <div class="w-12 h-12 mx-auto text-green-500">${icons.greenlist}</div>
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Green List Access</h1>
                 <p class="text-gray-500 dark:text-gray-400">Enter the password to view today's clearances.</p>
                 <form id="user-login-form" class="space-y-4 pt-4">
                     <div>
@@ -377,7 +377,6 @@
                 </div>`;
         }
         
-        // FIX: Removed the "My Requests" section from this template
         appRoot.innerHTML = `
         <main class="container mx-auto">
             <div class="p-4 md:p-8">
@@ -664,15 +663,14 @@
         </div>`;
     };
 
-    // --- Auth State Listener ---
+    // --- Auth State Listener (FIXED) ---
     onAuthStateChanged(auth, async (user) => {
         unsubClearances?.();
         unsubRequests?.();
         unsubConfig?.();
 
-        appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
-
         if (user && !user.isAnonymous) { // Admin user
+            appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
             const adminDoc = await getDoc(doc(db, "admins", user.uid));
             if (adminDoc.exists()) {
                 const configRef = doc(db, "publicConfig", "userAccess");
@@ -688,21 +686,18 @@
             } else {
                 await signOut(auth);
             }
-        // FIX: Check session storage flag to decide if the dashboard should be rendered
-        } else if (user && user.isAnonymous) {
-            if (sessionStorage.getItem('isDashboardLogin') === 'true') {
-                // This is a user who wants the dashboard
-                unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
-                    clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderUserDashboard(user);
-                });
-            } else {
-                // This is a user who is just tracking or submitting a request from the landing page.
-                // Do nothing here. Let the original function handle the UI.
-            }
-        } else { // No user
+        } else if (user && user.isAnonymous && sessionStorage.getItem('isDashboardLogin') === 'true') {
+            appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
+            unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
+                clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderUserDashboard(user);
+            });
+        } else if (!user) { // No user / logged out
+            sessionStorage.removeItem('isDashboardLogin');
             renderLandingPage();
         }
+        // If user is anonymous BUT not from a dashboard login, do nothing.
+        // This prevents the page from re-rendering during tracking/requesting.
     });
 
     // --- Global Event Listeners ---
@@ -716,8 +711,6 @@
         if (button.id === "user-btn") { routeHistory.push(renderLandingPage); renderUserLogin(); }
         if (button.id === "back-btn") goBack();
         if (button.id === "logout-button") {
-            // FIX: Clear the session storage flag on logout
-            sessionStorage.removeItem('isDashboardLogin');
             await signOut(auth);
         }
         if (button.id === "clear-tracking-btn") renderLandingPage();
@@ -812,7 +805,6 @@
                 const correctPassword = configSnap.exists() ? configSnap.data().password : DEFAULT_USER_PASSWORD;
 
                 if (password === correctPassword) {
-                    // FIX: Set a flag in session storage before signing in
                     sessionStorage.setItem('isDashboardLogin', 'true');
                     await signInAnonymously(auth);
                 } else {
@@ -961,12 +953,14 @@
         
         if (form.id === "request-form") {
             const data = getFormObj(form);
-            if (!auth.currentUser || !auth.currentUser.isAnonymous) {
-                 await signInAnonymously(auth);
+            let currentUser = auth.currentUser;
+            if (!currentUser) {
+                const cred = await signInAnonymously(auth);
+                currentUser = cred.user;
             }
             const payload = {
                 requesterName: data.requesterName,
-                requesterId: auth.currentUser.uid,
+                requesterId: currentUser.uid,
                 vehicleNumber: data.vehicleNumber.toUpperCase(),
                 vehicleType: data.vehicleType,
                 location: data.location,
