@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- jsPDF libraries for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.autotable.min.js"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -118,7 +121,8 @@
         request: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"></path></svg>',
         search: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>',
         x: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
-        chevronRight: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>'
+        chevronRight: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
+        download: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>'
     };
     
     // --- Dashboard Setup ---
@@ -385,7 +389,6 @@
                 </div>`;
         }
         
-        // LAYOUT FIX: Wrap the dashboard in a centered, contained card for better presentation.
         appRoot.innerHTML = `
         <div class="w-full min-h-screen p-2 md:p-4 flex justify-center">
             <main class="w-full max-w-4xl">
@@ -414,7 +417,6 @@
     };
     
     const renderAdminDashboard = (adminUser) => {
-        // LAYOUT FIX: Constrain width of header and main content for better desktop view.
         appRoot.innerHTML = `
         <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40">
             <nav class="w-full max-w-7xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
@@ -441,11 +443,16 @@
                 </section>
 
                 <section>
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="flex flex-wrap gap-4 justify-between items-center mb-6">
                         <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Manage Clearances</h2>
-                        <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                            <span class="w-5 h-5">${icons.plus}</span> Add Clearance
-                        </button>
+                        <div class="flex gap-2">
+                           <button id="download-report-btn" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                <span class="w-5 h-5">${icons.download}</span> Download Report
+                            </button>
+                            <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                <span class="w-5 h-5">${icons.plus}</span> Add Clearance
+                            </button>
+                        </div>
                     </div>
                     <div id="clearance-list" class="space-y-4"></div>
                 </section>
@@ -704,21 +711,106 @@
         }
     });
 
+    // --- PDF Generation ---
+    const generatePDFReport = async (button) => {
+        button.disabled = true;
+        button.innerHTML = 'Generating...';
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const now = new Date();
+            const todayStart = new Date(now.setHours(0, 0, 0, 0));
+            const todayEnd = new Date(now.setHours(23, 59, 59, 999));
+            const twentyFourHoursAgo = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000);
+
+            let reportData = [];
+
+            // 1. Get approved clearances for today
+            const clearancesQuery = query(collection(db, "vehicleClearances"), where("expiryDate", ">=", Timestamp.fromDate(todayStart)));
+            const clearanceSnap = await getDocs(clearancesQuery);
+            const todaysClearances = clearanceSnap.docs
+                .map(d => d.data())
+                .filter(c => c.entryDate.toDate() <= todayEnd);
+            
+            reportData = todaysClearances.map(c => ([
+                c.vehicleNumber,
+                formatDate(c.entryDate),
+                formatDate(c.expiryDate),
+                'Approved'
+            ]));
+
+            // 2. Get pending requests from the last 24 hours
+            const requestsQuery = query(collection(db, "clearanceRequests"), where("status", "==", "pending"), where("createdAt", ">=", twentyFourHoursAgo));
+            const requestSnap = await getDocs(requestsQuery);
+            const pendingRequests = requestSnap.docs.map(d => d.data());
+
+            pendingRequests.forEach(r => {
+                reportData.push([
+                    r.vehicleNumber,
+                    formatDate(r.entryDate),
+                    formatDate(r.expiryDate),
+                    'Pending'
+                ]);
+            });
+
+            // 3. Generate PDF
+            doc.setFontSize(18);
+            doc.text("Daily Vehicle Clearance Report", 14, 22);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+            doc.text("Location: Gelang Patah, Johor, Malaysia", 14, 36);
+
+            doc.autoTable({
+                startY: 45,
+                head: [['Vehicle Number', 'Start Date', 'Expiry Date', 'Status']],
+                body: reportData,
+                theme: 'grid',
+                headStyles: { fillColor: [22, 160, 133] },
+                didParseCell: function (data) {
+                    if (data.section === 'body') {
+                        const status = data.cell.raw;
+                        if (status === 'Pending') {
+                            data.cell.styles.textColor = [211, 84, 0];
+                            data.cell.styles.fontStyle = 'bold';
+                        } else if (status === 'Approved') {
+                            data.cell.styles.textColor = [39, 174, 96];
+                        }
+                    }
+                }
+            });
+
+            doc.save(`Clearance_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+
+        } catch (err) {
+            console.error("PDF Generation Error:", err);
+            showNotification("Failed to generate PDF report.", "error");
+        } finally {
+            button.disabled = false;
+            button.innerHTML = `<span class="w-5 h-5">${icons.download}</span> Download Report`;
+        }
+    };
+
+
     // --- Global Event Listeners ---
     document.body.addEventListener("click", async (e) => {
         const button = e.target.closest('button');
         if (!button) return;
 
-        // Navigation
+        // Navigation and Actions
         if (button.id === "request-btn") { routeHistory.push(renderLandingPage); renderRequestForm(); }
         if (button.id === "admin-btn") { routeHistory.push(renderLandingPage); renderAdminLogin(); }
         if (button.id === "user-btn") { routeHistory.push(renderLandingPage); renderUserLogin(); }
         if (button.id === "back-btn") goBack();
-        if (button.id === "logout-button") {
-            await signOut(auth);
-        }
+        if (button.id === "logout-button") { await signOut(auth); }
         if (button.id === "clear-tracking-btn") renderLandingPage();
         
+        if(button.id === "download-report-btn") {
+            generatePDFReport(button);
+        }
+
         if (button.classList.contains("edit-btn") || button.classList.contains("delete-btn")) {
             e.preventDefault();
         }
