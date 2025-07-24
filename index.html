@@ -1186,54 +1186,68 @@ document.body.addEventListener("click", async (e) => {
         );
  }
     
+    // ================== FIXED LOGIC ==================
+    // This block handles the "Approve" button click on the request review modal.
+    // It now correctly updates the original request with any changes made in the form
+    // before creating the new clearance document.
     if (button.classList.contains("approve-request-btn")) {
         const form = button.closest('form');
- if (form && form.id === 'review-form') {
+        if (form && form.id === 'review-form') {
             if (!form.checkValidity()) {
                 form.reportValidity();
- return;
+                return;
             }
             const data = getFormObj(form);
- // FIXED: Enhanced date parsing with validation
             const entryDate = parseLocalDate(data.entryDate);
- const expiryDate = parseLocalDate(data.expiryDate);
+            const expiryDate = parseLocalDate(data.expiryDate);
 
-            if(!entryDate || !expiryDate) {
-                showNotification("Valid entry and expiry dates are required.", "error");
- return;
+            if (!entryDate || !expiryDate || expiryDate <= entryDate) {
+                showNotification("Expiry date must be after a valid entry date.", "error");
+                return;
             }
 
-            // FIXED: Additional date validation
-            if (expiryDate <= entryDate) {
-                showNotification("Expiry date must be after entry date.", "error");
- return;
-            }
-
+            // Payload for the NEW clearance document
             const clearancePayload = {
                 ownerName: data.ownerName,
                 vehicleNumber: data.vehicleNumber.toUpperCase(),
                 vehicleType: data.vehicleType,
                 location: data.location,
-                
- entryDate: Timestamp.fromDate(entryDate),
+                entryDate: Timestamp.fromDate(entryDate),
                 expiryDate: Timestamp.fromDate(expiryDate),
                 escortRequired: !!data.escortRequired,
-                notes: data.notes ||
- "",
+                notes: data.notes || "",
                 createdAt: Timestamp.now()
             };
- try {
+
+            // Payload to UPDATE the original request document
+            const requestUpdatePayload = {
+                requesterName: data.ownerName, // The form field is ownerName
+                vehicleNumber: data.vehicleNumber.toUpperCase(),
+                vehicleType: data.vehicleType,
+                location: data.location,
+                entryDate: Timestamp.fromDate(entryDate),
+                expiryDate: Timestamp.fromDate(expiryDate),
+                escortRequired: !!data.escortRequired,
+                notes: data.notes || "",
+                status: 'approved' // Set the status to approved
+            };
+
+            try {
+                // Create the new clearance document from the form data
                 await addDoc(collection(db, "vehicleClearances"), clearancePayload);
- await updateDoc(doc(db, "clearanceRequests", data.id), { status: 'approved' });
+                
+                // Update the original request with any edits from the form and set status to 'approved'
+                await updateDoc(doc(db, "clearanceRequests", data.id), requestUpdatePayload);
                 
                 showNotification("Request approved and clearance created.");
                 document.getElementById("modal-container").innerHTML = "";
- } catch (err) {
+            } catch (err) {
                 console.error("Approval error:", err);
- showNotification("Error approving request.", "error");
+                showNotification("Error approving request: " + err.message, "error");
             }
         }
     }
+    // =================================================
 
     if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
         button.closest("#modal-container").innerHTML = "";
@@ -1412,7 +1426,7 @@ document.body.addEventListener("submit", async (e) => {
         
         try {
             if (data.id) {
-                // FIXED: For updates, preserve the original createdAt timestamp
+                // For updates, preserve the original createdAt timestamp
                 await updateDoc(doc(db, "vehicleClearances", data.id), payload);
  showNotification("Clearance updated successfully.");
             } else {
