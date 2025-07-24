@@ -108,12 +108,32 @@
     };
     
     const formatVehicleNumber = (vehicleNumber) => {
-        if (!vehicleNumber || vehicleNumber.length < 4) return vehicleNumber;
-        const match = vehicleNumber.match(/^([A-Z]+)(\d+)([A-Z])$/i);
+        // This function attempts to format a vehicle number string by adding spaces.
+        // It handles the various formats provided (e.g., 'ABC1234' -> 'ABC 1234' and 'QA123A' -> 'QA 123 A').
+        if (!vehicleNumber) return 'N/A';
+        // Remove existing spaces and convert to uppercase for consistent matching.
+        const cleaned = vehicleNumber.replace(/\s/g, '').toUpperCase();
+        
+        // Regex to capture the common pattern: (leading letters)(numbers)(optional trailing letter)
+        const match = cleaned.match(/^([A-Z]+)(\d+)([A-Z])?$/);
+
         if (match) {
-            return `${match[1]} ${match[2]} ${match[3]}`;
+            const letters = match[1];
+            const numbers = match[2];
+            const trailingLetter = match[3]; // This will be undefined if not present
+
+            // If there's a trailing letter, format as "LETTERS NUMBERS LETTER"
+            if (trailingLetter) {
+                return `${letters} ${numbers} ${trailingLetter}`;
+            } else {
+            // Otherwise, format as "LETTERS NUMBERS"
+                return `${letters} ${numbers}`;
+            }
         }
-        return vehicleNumber;
+        
+        // If the vehicle number doesn't match the expected pattern, return it as is.
+        // This acts as a fallback for already formatted numbers or unusual patterns.
+        return vehicleNumber; 
     };
 
     const toISODate = d => d ? new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split("T")[0] : "";
@@ -174,7 +194,6 @@
             
             const now = new Date();
             const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-            const twentyFourHoursFromNow = new Date(now.getTime() + (24 * 60 * 60 * 1000));
             
             let reportData = [];
 
@@ -261,7 +280,7 @@
                         overflow: 'linebreak'
                     },
                     columnStyles: {
-                        0: { halign: 'center', fontStyle: 'bold' }, // Vehicle Number
+                        0: { halign: 'left', fontStyle: 'bold' }, // Vehicle Number
                         1: { halign: 'center' }, // Type
                         2: { halign: 'center' }, // Expiry Date  
                         3: { halign: 'left' }, // Location
