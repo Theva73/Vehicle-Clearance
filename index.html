@@ -72,9 +72,8 @@
     // --- State Management ---
     let clearances = [];
     let clearanceRequests = [];
-    let myRequests = [];
     let userPasswordConfig = null;
-    let unsubClearances = null, unsubRequests = null, unsubMyReq = null, unsubConfig = null;
+    let unsubClearances = null, unsubRequests = null, unsubConfig = null;
     let authMode = "login";
     let routeHistory = [];
 
@@ -378,6 +377,7 @@
                 </div>`;
         }
         
+        // FIX: Removed the "My Requests" section from this template
         appRoot.innerHTML = `
         <main class="container mx-auto">
             <div class="p-4 md:p-8">
@@ -401,25 +401,10 @@
                     </form>
                 </div>
                 <div class="space-y-4">${listHTML}</div>
-                <section class="mt-12">
-                    <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">My Requests</h2>
-                    <div id="my-requests-list" class="space-y-4"></div>
-                </section>
             </div>
         </main>`;
-        renderMyRequests();
     };
-
-    const renderMyRequests = () => {
-        const wrap = document.getElementById("my-requests-list");
-        if (!wrap) return;
-        if (myRequests.length === 0) {
-            wrap.innerHTML = `<div class="text-gray-500 dark:text-gray-400 text-center py-8 bg-white dark:bg-gray-800 rounded-2xl shadow">You have no pending requests.</div>`;
-            return;
-        }
-        wrap.innerHTML = myRequests.map(r => createStatusCard(r)).join("");
-    };
-
+    
     const renderAdminDashboard = (adminUser) => {
         appRoot.innerHTML = `
         <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40">
@@ -607,7 +592,6 @@
                     </div>
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <button type="button" id="reject-request-btn" data-id="${request.id}" class="px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Reject</button>
-                        <!-- FIX: Changed type from "submit" to "button" to use a dedicated click handler -->
                         <button type="button" id="approve-request-btn" class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
                     </div>
                 </form>
@@ -684,7 +668,6 @@
     onAuthStateChanged(auth, async (user) => {
         unsubClearances?.();
         unsubRequests?.();
-        unsubMyReq?.();
         unsubConfig?.();
 
         appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
@@ -705,16 +688,18 @@
             } else {
                 await signOut(auth);
             }
-        } else if (user && user.isAnonymous) { // Logged-in public user
-            unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
-                clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderUserDashboard(user);
-            });
-            unsubMyReq = onSnapshot(query(collection(db, "clearanceRequests"), where("requesterId", "==", user.uid)), snap => {
-                myRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderMyRequests();
-            });
-            renderUserDashboard(user);
+        // FIX: Check session storage flag to decide if the dashboard should be rendered
+        } else if (user && user.isAnonymous) {
+            if (sessionStorage.getItem('isDashboardLogin') === 'true') {
+                // This is a user who wants the dashboard
+                unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
+                    clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderUserDashboard(user);
+                });
+            } else {
+                // This is a user who is just tracking or submitting a request from the landing page.
+                // Do nothing here. Let the original function handle the UI.
+            }
         } else { // No user
             renderLandingPage();
         }
@@ -730,7 +715,11 @@
         if (button.id === "admin-btn") { routeHistory.push(renderLandingPage); renderAdminLogin(); }
         if (button.id === "user-btn") { routeHistory.push(renderLandingPage); renderUserLogin(); }
         if (button.id === "back-btn") goBack();
-        if (button.id === "logout-button") await signOut(auth);
+        if (button.id === "logout-button") {
+            // FIX: Clear the session storage flag on logout
+            sessionStorage.removeItem('isDashboardLogin');
+            await signOut(auth);
+        }
         if (button.id === "clear-tracking-btn") renderLandingPage();
         
         if (button.classList.contains("edit-btn") || button.classList.contains("delete-btn")) {
@@ -770,7 +759,6 @@
                 }
             }
         }
-        // FIX: Added a dedicated click handler for the approve button
         if (button.id === "approve-request-btn") {
             const form = button.closest('form');
             if (form) {
@@ -824,8 +812,9 @@
                 const correctPassword = configSnap.exists() ? configSnap.data().password : DEFAULT_USER_PASSWORD;
 
                 if (password === correctPassword) {
+                    // FIX: Set a flag in session storage before signing in
+                    sessionStorage.setItem('isDashboardLogin', 'true');
                     await signInAnonymously(auth);
-                    routeHistory.push(renderUserLogin);
                 } else {
                     showNotification("Incorrect password.", "error");
                 }
