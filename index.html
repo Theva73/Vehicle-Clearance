@@ -8,11 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  
-  <!-- CORRECTED jsPDF libraries for PDF generation -->
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-  
+
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -35,6 +34,7 @@
     summary { list-style: none; }
     summary::-webkit-details-marker { display: none; }
   </style>
+
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
   <div id="app-root"></div>
@@ -47,9 +47,9 @@
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
       getFirestore, collection, doc, addDoc, setDoc, deleteDoc,
-      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs
+      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    
     // --- Configuration ---
     const ADMIN_INVITE_CODE = "ADMIN2025";
     const DEFAULT_USER_PASSWORD = "123456";
@@ -97,6 +97,15 @@
       const d = date instanceof Date ? date : date.toDate();
       return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
     };
+    const formatDateLongForm = (date) => {
+      if (!date) return "N/A";
+      const d = date instanceof Date ? date : date.toDate();
+      return d.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    };
 
     const toISODate = d => d ? new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split("T")[0] : "";
     const getFormObj = form => Object.fromEntries(new FormData(form).entries());
@@ -126,7 +135,7 @@
         chevronRight: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
         download: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>'
     };
-    
+
     // --- Dashboard Setup ---
     const showUserDashboard = (user) => {
         appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
@@ -134,6 +143,211 @@
             clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             renderUserDashboard(user);
         });
+    };
+
+    // --- FIXED PDF Generation Function ---
+    const generatePDFReport = async (button) => {
+        // Prevent multiple clicks
+        button.disabled = true;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Generating...';
+
+        try {
+            console.log("Starting PDF generation...");
+            // Check if jsPDF is loaded
+            if (typeof window.jspdf === 'undefined') {
+                throw new Error('jsPDF library not loaded');
+            }
+
+            const { jsPDF } = window.jspdf;
+            console.log("jsPDF loaded successfully");
+
+            // Create new PDF document
+            const doc = new jsPDF({ 
+                orientation: "portrait", 
+                unit: "mm", 
+                format: "a4" 
+            });
+            
+            // Calculate 24-hour window
+            const now = new Date();
+            const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            const twentyFourHoursFromNow = new Date(now.getTime() + (24 * 60 * 60 * 1000));
+            
+            console.log("24-hour window:", twentyFourHoursAgo, "to", twentyFourHoursFromNow);
+
+            let reportData = [];
+
+            // 1. Get active clearances (valid within 24-hour window)
+            console.log("Fetching clearances...");
+            const clearancesQuery = query(
+                collection(db, "vehicleClearances"),
+                orderBy("createdAt", "desc")
+            );
+            const clearanceSnap = await getDocs(clearancesQuery);
+            
+            const validClearances = clearanceSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(c => {
+                    const entryDate = c.entryDate.toDate();
+                    const expiryDate = c.expiryDate.toDate();
+                    // Check if clearance is valid within 24-hour window
+                    return (entryDate <= twentyFourHoursFromNow && expiryDate >= twentyFourHoursAgo);
+                });
+
+            console.log(`Found ${validClearances.length} valid clearances`);
+            
+            // Add clearances to report data
+            validClearances.forEach(c => {
+                const status = now >= c.entryDate.toDate() && now <= c.expiryDate.toDate() 
+                    ? 'ACTIVE' 
+                    : c.entryDate.toDate() > now 
+                    ? 'UPCOMING' 
+                    : 'EXPIRED';
+                    
+                reportData.push([
+                    c.vehicleNumber || 'N/A',
+                    c.ownerName || 'N/A',
+                    c.vehicleType || 'N/A',
+                    formatDate(c.entryDate),
+                    formatDate(c.expiryDate),
+                    c.location || 'N/A',
+                    status
+                ]);
+            });
+
+            // 2. Get requests from last 24 hours
+            console.log("Fetching recent requests...");
+            const requestsQuery = query(
+                collection(db, "clearanceRequests"),
+                where("createdAt", ">=", Timestamp.fromDate(twentyFourHoursAgo)),
+                orderBy("createdAt", "desc")
+            );
+            const requestSnap = await getDocs(requestsQuery);
+            const recentRequests = requestSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            console.log(`Found ${recentRequests.length} recent requests`);
+            // Add requests to report data
+            recentRequests.forEach(r => {
+                reportData.push([
+                    r.vehicleNumber || 'N/A',
+                    r.requesterName || 'N/A',
+                    r.vehicleType || 'N/A',
+                    formatDate(r.entryDate),
+                    formatDate(r.expiryDate),
+                    r.location || 'N/A',
+                    r.status?.toUpperCase() || 'PENDING'
+                 ]);
+            });
+
+            console.log(`Total report data rows: ${reportData.length}`);
+            // 3. Create PDF Header
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text("Vehicle Clearance Report", 14, 20);
+            
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100);
+            doc.text(`Report Period: 24-Hour Window`, 14, 30);
+            doc.text(`From: ${formatDateLongForm(twentyFourHoursAgo)}`, 14, 36);
+            doc.text(`To: ${formatDateLongForm(twentyFourHoursFromNow)}`, 14, 42);
+            doc.text(`Generated: ${formatDateLongForm(now)} at ${now.toLocaleTimeString()}`, 14, 48);
+            doc.text("Location: Gelang Patah, Johor, Malaysia", 14, 54);
+            
+            // 4. Create table
+            console.log("Creating PDF table...");
+            if (reportData.length === 0) {
+                doc.setFontSize(14);
+                doc.setTextColor(150);
+                doc.text("No clearances or requests found in the 24-hour window.", 14, 70);
+            } else {
+                doc.autoTable({
+                    head: [['Vehicle No.', 'Owner/Requester', 'Type', 'Start Date', 'End Date', 'Location', 'Status']],
+                    body: reportData,
+                    startY: 65,
+                    theme: 'grid',
+                    headStyles: { 
+                        fillColor: [45, 55, 72], 
+                        textColor: 255,
+                        fontSize: 10,
+                        fontStyle: 'bold'
+                    },
+                    styles: { 
+                        fontSize: 8, 
+                        cellPadding: 3, 
+                        halign: 'center', 
+                        valign: 'middle',
+                        overflow: 'linebreak'
+                    },
+                    columnStyles: {
+                        0: { halign: 'center', fontStyle: 'bold' }, // Vehicle Number
+                        1: { halign: 'left' }, // Owner/Requester
+                        2: { halign: 'center' }, // Type
+                        3: { halign: 'center' }, // Start Date
+                        4: { halign: 'center' }, // End Date  
+                        5: { halign: 'left' }, // Location
+                        6: { halign: 'center', fontStyle: 'bold' } // Status
+                    },
+                    didParseCell: (data) => {
+                        if (data.section === 'body' && data.column.index === 6) {
+                            const status = data.cell.raw;
+                            switch(status) {
+                                case 'ACTIVE':
+                                    data.cell.styles.textColor = [22, 163, 74]; // Green
+                                    break;
+                                case 'PENDING':
+                                    data.cell.styles.textColor = [245, 158, 11]; // Yellow
+                                    break;
+                                case 'EXPIRED':
+                                case 'REJECTED':
+                                    data.cell.styles.textColor = [239, 68, 68]; // Red
+                                    break;
+                                case 'UPCOMING':
+                                    data.cell.styles.textColor = [59, 130, 246]; // Blue
+                                    break;
+                                default:
+                                    data.cell.styles.textColor = [107, 114, 128]; // Gray
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 5. Add summary section
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 80;
+            
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(0);
+            doc.text("Summary", 14, finalY);
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100);
+            const activeClearances = reportData.filter(row => row[6] === 'ACTIVE').length;
+            const pendingRequests = reportData.filter(row => row[6] === 'PENDING').length;
+            const totalRecords = reportData.length;
+            doc.text(`Total Records: ${totalRecords}`, 14, finalY + 8);
+            doc.text(`Active Clearances: ${activeClearances}`, 14, finalY + 16);
+            doc.text(`Pending Requests: ${pendingRequests}`, 14, finalY + 24);
+
+            // 6. Save the PDF
+            const fileName = `Vehicle_Clearance_Report_${now.toISOString().split('T')[0]}_${now.getHours()}${now.getMinutes()}.pdf`;
+            console.log("Saving PDF:", fileName);
+            
+            doc.save(fileName);
+            
+            showNotification("PDF report generated successfully!");
+            console.log("PDF generation completed successfully");
+        } catch (error) {
+            console.error("PDF Generation Error:", error);
+            showNotification(`Failed to generate PDF: ${error.message}`, "error");
+        } finally {
+            // Restore button state
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        }
     };
 
     // --- Render Functions ---
@@ -317,13 +531,12 @@
         
         const cardDiv = document.createElement('div');
         cardDiv.className = `p-4 ${config.bg} rounded-2xl shadow-sm space-y-2 text-left border border-gray-200 dark:border-gray-700`;
-        
         cardDiv.innerHTML = `
             <div class="flex justify-between items-center">
                 <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${r.vehicleNumber}</p>
                 <p class="font-semibold px-2 py-0.5 rounded-md text-xs ${config.color} ${config.bg}">${config.text}</p>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400">${r.vehicleType || "-"} &bull; Requested by ${r.requesterName}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">${r.vehicleType || "-"} • Requested by ${r.requesterName}</p>
             <div class="pt-2 border-t border-gray-200 dark:border-gray-600">
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Proposed Dates</p>
                 <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(r.entryDate)} - ${formatDate(r.expiryDate)}</p>
@@ -406,6 +619,7 @@
                         <span class="w-4 h-4">${icons.logout}</span> Logout
                     </button>
                 </div>
+                
                 <div class="mb-6">
                     <form id="daily-clearance-search-form" class="flex gap-2">
                         <input name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
@@ -417,7 +631,7 @@
             </main>
         </div>`;
     };
-    
+
     const renderAdminDashboard = (adminUser) => {
         appRoot.innerHTML = `
         <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40">
@@ -496,7 +710,6 @@
     const renderRequestsList = () => {
         const list = document.getElementById("requests-list");
         if (!list) return;
-
         if (clearanceRequests.length === 0) {
             list.innerHTML = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No pending requests.</div>`;
             return;
@@ -520,7 +733,6 @@
     const renderClearancesList = () => {
         const list = document.getElementById("clearance-list");
         if (!list) return;
-
         const sorted = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
 
         if (sorted.length === 0) {
@@ -616,17 +828,15 @@
             </div>
         </div>`;
     };
-    
+
     const renderModal = (edit = null) => {
         const modalContainer = document.getElementById("modal-container");
         const isEdit = edit ? true : false;
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
-        
         const optionsHTML = vehicleTypeOptions.map(vType => {
             const selected = edit?.vehicleType === vType ? 'selected' : '';
             return `<option value="${vType}" ${selected}>${vType}</option>`;
         }).join('');
-
         modalContainer.innerHTML = `
         <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
@@ -712,88 +922,6 @@
             renderLandingPage();
         }
     });
-
-    // --- PDF Generation ---
-    const generatePDFReport = async (button) => {
-        button.disabled = true;
-        button.innerHTML = 'Generating...';
-
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-            const now = new Date();
-            const todayStart = new Date(now.setHours(0, 0, 0, 0));
-            const todayEnd = new Date(now.setHours(23, 59, 59, 999));
-            const twentyFourHoursAgo = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000);
-
-            let reportData = [];
-
-            // 1. Get approved clearances for today
-            const clearancesQuery = query(collection(db, "vehicleClearances"), where("expiryDate", ">=", Timestamp.fromDate(todayStart)));
-            const clearanceSnap = await getDocs(clearancesQuery);
-            const todaysClearances = clearanceSnap.docs
-                .map(d => d.data())
-                .filter(c => c.entryDate.toDate() <= todayEnd);
-            
-            reportData = todaysClearances.map(c => ([
-                c.vehicleNumber,
-                formatDate(c.entryDate),
-                formatDate(c.expiryDate),
-                'Approved'
-            ]));
-
-            // 2. Get pending requests from the last 24 hours
-            const requestsQuery = query(collection(db, "clearanceRequests"), where("status", "==", "pending"), where("createdAt", ">=", twentyFourHoursAgo));
-            const requestSnap = await getDocs(requestsQuery);
-            const pendingRequests = requestSnap.docs.map(d => d.data());
-
-            pendingRequests.forEach(r => {
-                reportData.push([
-                    r.vehicleNumber,
-                    formatDate(r.entryDate),
-                    formatDate(r.expiryDate),
-                    'Pending'
-                ]);
-            });
-            
-            // 3. Generate PDF
-            doc.setFontSize(18);
-            doc.text("Daily Vehicle Clearance Report", 14, 22);
-            doc.setFontSize(11);
-            doc.setTextColor(100);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
-            doc.text("Location: Gelang Patah, Johor, Malaysia", 14, 36);
-
-            doc.autoTable({
-                head: [['Vehicle Number', 'Start Date', 'Expiry Date', 'Status']],
-                body: reportData,
-                startY: 45,
-                theme: 'grid',
-                headStyles: { fillColor: [45, 55, 72], textColor: 255 },
-                styles: { fontSize: 9, cellPadding: 2, halign: 'center', valign: 'middle' },
-                didParseCell: (data) => {
-                    if (data.section === 'body') {
-                        const status = data.cell.raw;
-                        if (status === 'Pending') {
-                            data.cell.styles.textColor = [211, 84, 0];
-                            data.cell.styles.fontStyle = 'bold';
-                        }
-                    }
-                }
-            });
-
-            doc.save(`Clearance_Report_${new Date().toISOString().split('T')[0]}.pdf`);
-
-        } catch (err) {
-            console.error("PDF Generation Error:", err);
-            showNotification("Failed to generate PDF report.", "error");
-        } finally {
-            button.disabled = false;
-            button.innerHTML = `<span class="w-5 h-5">${icons.download}</span> Download Report`;
-        }
-    };
-
 
     // --- Global Event Listeners ---
     document.body.addEventListener("click", async (e) => {
@@ -1080,12 +1208,10 @@
                 const newRequestData = { id: newRequestSnap.id, ...newRequestSnap.data() };
                 
                 const trackingHTML = createStatusCard(newRequestData);
-                
                 renderLandingPage({
                     vehicleNumber: newRequestData.vehicleNumber,
                     trackingResult: trackingHTML
                 });
-
             } catch (err) {
                 showNotification(err.message, "error");
             }
@@ -1103,7 +1229,7 @@
             document.getElementById("modal-container").innerHTML = "";
         }
     });
-
+    
     // --- Initial Render ---
     renderLandingPage();
   </script>
