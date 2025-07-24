@@ -231,7 +231,7 @@
             const requestSnap = await getDocs(requestsQuery);
             const recentRequests = requestSnap.docs
                 .map(d => ({ id: d.id, ...d.data() }))
-                .filter(r => r.status !== 'rejected'); // <-- FILTER OUT REJECTED
+                .filter(r => r.status !== 'rejected'); 
 
             recentRequests.forEach(r => {
                  reportData.push([
@@ -251,20 +251,20 @@
             doc.setFontSize(12);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(100);
-            doc.text(`Report Period: 24-Hour Window`, 14, 30);
+            doc.text(`Report Period: 24-Hour`, 14, 30); // "Window" removed
             doc.text(`Generated: ${formatDateLongForm(now)} at ${now.toLocaleTimeString()}`, 14, 36);
-            doc.text("Location: Gelang Patah, Johor, Malaysia", 14, 42);
+            // "Location" line completely removed
             
             // 4. Create table
             if (reportData.length === 0) {
                 doc.setFontSize(14);
                 doc.setTextColor(150);
-                doc.text("No valid clearances or requests found.", 14, 60);
+                doc.text("No valid clearances or requests found.", 14, 55);
             } else {
                 doc.autoTable({
-                    head: [['Vehicle No.', 'Type', 'Expiry Date', 'Location', 'Status']], // <-- MODIFIED HEADERS
+                    head: [['Vehicle No.', 'Type', 'Expiry Date', 'Location', 'Status']], 
                     body: reportData,
-                    startY: 55,
+                    startY: 45, // Adjusted Y position due to removed line
                     theme: 'grid',
                     headStyles: { 
                         fillColor: [45, 55, 72], 
@@ -280,18 +280,18 @@
                         overflow: 'linebreak'
                     },
                     columnStyles: {
-                        0: { halign: 'left', fontStyle: 'bold' }, // Vehicle Number
-                        1: { halign: 'center' }, // Type
-                        2: { halign: 'center' }, // Expiry Date  
-                        3: { halign: 'left' }, // Location
-                        4: { halign: 'center', fontStyle: 'bold' } // Status
+                        0: { halign: 'left', fontStyle: 'bold' }, 
+                        1: { halign: 'center' }, 
+                        2: { halign: 'center' }, 
+                        3: { halign: 'left' }, 
+                        4: { halign: 'center', fontStyle: 'bold' } 
                     },
                     didParseCell: (data) => {
-                        if (data.section === 'body' && data.column.index === 4) { // <-- Status column index is now 4
+                        if (data.section === 'body' && data.column.index === 4) { 
                             const status = data.cell.raw;
                             switch(status) {
                                 case 'ACTIVE':
-                                case 'APPROVED': // Treat APPROVED as ACTIVE for styling
+                                case 'APPROVED':
                                     data.cell.styles.textColor = [22, 163, 74]; // Green
                                     break;
                                 case 'PENDING':
@@ -312,7 +312,7 @@
             }
 
             // 5. Add summary section
-            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 80;
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 65;
             
             doc.setFontSize(14);
             doc.setFont(undefined, 'bold');
