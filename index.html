@@ -108,31 +108,19 @@
     };
     
     const formatVehicleNumber = (vehicleNumber) => {
-        // This function attempts to format a vehicle number string by adding spaces.
-        // It handles the various formats provided (e.g., 'ABC1234' -> 'ABC 1234' and 'QA123A' -> 'QA 123 A').
         if (!vehicleNumber) return 'N/A';
-        // Remove existing spaces and convert to uppercase for consistent matching.
         const cleaned = vehicleNumber.replace(/\s/g, '').toUpperCase();
-        
-        // Regex to capture the common pattern: (leading letters)(numbers)(optional trailing letter)
         const match = cleaned.match(/^([A-Z]+)(\d+)([A-Z])?$/);
-
         if (match) {
             const letters = match[1];
             const numbers = match[2];
-            const trailingLetter = match[3]; // This will be undefined if not present
-
-            // If there's a trailing letter, format as "LETTERS NUMBERS LETTER"
+            const trailingLetter = match[3];
             if (trailingLetter) {
                 return `${letters} ${numbers} ${trailingLetter}`;
             } else {
-            // Otherwise, format as "LETTERS NUMBERS"
                 return `${letters} ${numbers}`;
             }
         }
-        
-        // If the vehicle number doesn't match the expected pattern, return it as is.
-        // This acts as a fallback for already formatted numbers or unusual patterns.
         return vehicleNumber; 
     };
 
@@ -174,7 +162,7 @@
         });
     };
 
-    // --- MODIFIED PDF Generation Function ---
+    // --- PDF Generation Function ---
     const generatePDFReport = async (button) => {
         button.disabled = true;
         const originalHTML = button.innerHTML;
@@ -251,9 +239,8 @@
             doc.setFontSize(12);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(100);
-            doc.text(`Report Period: 24-Hour`, 14, 30); // "Window" removed
+            doc.text(`Report Period: 24-Hour`, 14, 30);
             doc.text(`Generated: ${formatDateLongForm(now)} at ${now.toLocaleTimeString()}`, 14, 36);
-            // "Location" line completely removed
             
             // 4. Create table
             if (reportData.length === 0) {
@@ -264,7 +251,7 @@
                 doc.autoTable({
                     head: [['Vehicle No.', 'Type', 'Expiry Date', 'Location', 'Status']], 
                     body: reportData,
-                    startY: 45, // Adjusted Y position due to removed line
+                    startY: 45,
                     theme: 'grid',
                     headStyles: { 
                         fillColor: [45, 55, 72], 
@@ -292,19 +279,19 @@
                             switch(status) {
                                 case 'ACTIVE':
                                 case 'APPROVED':
-                                    data.cell.styles.textColor = [22, 163, 74]; // Green
+                                    data.cell.styles.textColor = [22, 163, 74];
                                     break;
                                 case 'PENDING':
-                                    data.cell.styles.textColor = [245, 158, 11]; // Yellow
+                                    data.cell.styles.textColor = [245, 158, 11];
                                     break;
                                 case 'EXPIRED':
-                                    data.cell.styles.textColor = [239, 68, 68]; // Red
+                                    data.cell.styles.textColor = [239, 68, 68];
                                     break;
                                 case 'UPCOMING':
-                                    data.cell.styles.textColor = [59, 130, 246]; // Blue
+                                    data.cell.styles.textColor = [59, 130, 246];
                                     break;
                                 default:
-                                    data.cell.styles.textColor = [107, 114, 128]; // Gray
+                                    data.cell.styles.textColor = [107, 114, 128];
                             }
                         }
                     }
@@ -541,10 +528,15 @@
         `;
         return cardDiv.outerHTML;
     };
+    
+    // --- MODIFIED: Renders just the list for live filtering ---
+    const renderClearanceListForUser = (vehicleFilter = null) => {
+        const listContainer = document.getElementById('user-clearance-list-container');
+        if (!listContainer) return;
 
-    const renderUserDashboard = (user, vehicleFilter = null) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        
         let dailyClearances = clearances.filter(c => {
             const entryDate = c.entryDate.toDate();
             entryDate.setHours(0, 0, 0, 0);
@@ -560,7 +552,7 @@
         let listHTML = '';
         if (dailyClearances.length > 0) {
             listHTML = dailyClearances.map(c => `
-                <details class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden group">
+                <details class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden group animate-fade-in">
                     <summary class="flex justify-between items-center p-5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                         <div class="flex items-center gap-4">
                             <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90">${icons.chevronRight}</span>
@@ -591,13 +583,17 @@
                 </details>`).join("");
         } else {
             listHTML = `
-                <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
+                <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md animate-fade-in">
                     <div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div>
                     <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">${vehicleFilter ? 'No Matching Clearances Found' : 'No Clearances for Today'}</h3>
                     <p class="mt-1 text-gray-500 dark:text-gray-400">${vehicleFilter ? 'Try a different vehicle number or clear the search.' : 'There are no vehicles with clearance for today.'}</p>
                 </div>`;
         }
-        
+        listContainer.innerHTML = listHTML;
+    };
+
+    // --- MODIFIED: Renders the page structure, then calls the list renderer ---
+    const renderUserDashboard = (user, vehicleFilter = null) => {
         appRoot.innerHTML = `
         <div class="w-full min-h-screen p-2 md:p-4 flex justify-center">
             <main class="w-full max-w-4xl">
@@ -616,15 +612,17 @@
                 
                 <div class="mb-6">
                     <form id="daily-clearance-search-form" class="flex gap-2">
-                        <input name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
-                        <button type="submit" class="px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700">Search</button>
+                        <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
                         <button type="reset" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
                     </form>
                 </div>
-                <div class="space-y-4">${listHTML}</div>
+                <div id="user-clearance-list-container" class="space-y-4"></div>
             </main>
         </div>`;
+        
+        renderClearanceListForUser(vehicleFilter);
     };
+
 
     const renderAdminDashboard = (adminUser) => {
         appRoot.innerHTML = `
@@ -1038,11 +1036,6 @@
                 showNotification("Could not verify password. Please try again.", "error");
             }
         }
-        
-        if (form.id === "daily-clearance-search-form") {
-            const { search } = getFormObj(form);
-            renderUserDashboard(auth.currentUser, search.toUpperCase());
-        }
 
         if (form.id === "auth-form") {
             routeHistory.push(renderAdminLogin);
@@ -1212,9 +1205,16 @@
         }
     });
 
+    // --- MODIFIED: Listen for 'input' for live search ---
+    document.body.addEventListener("input", e => {
+        if (e.target.id === 'daily-clearance-search-input') {
+            renderClearanceListForUser(e.target.value.toUpperCase());
+        }
+    });
+
     document.body.addEventListener("reset", e => {
         if (e.target.id === "daily-clearance-search-form") {
-            setTimeout(() => renderUserDashboard(auth.currentUser, null), 0);
+            setTimeout(() => renderClearanceListForUser(null), 0);
         }
     });
 
