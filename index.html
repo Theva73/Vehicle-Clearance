@@ -162,6 +162,19 @@
         settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
     };
 
+    // --- NEW: Robust date parsing function ---
+    const parseLocalDate = (dateString) => {
+        if (!dateString) return null;
+        const parts = dateString.split('-');
+        if (parts.length !== 3) return null;
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+        const day = parseInt(parts[2], 10);
+        if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+        return new Date(year, month, day);
+    };
+
+
     // --- Dashboard Setup ---
     const showUserDashboard = (user) => {
         appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
@@ -817,15 +830,14 @@
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <button type="button" id="reject-request-btn" data-id="${request.id}" class="px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Reject</button>
-                        <button type="button" id="approve-request-btn" class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
+                        <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
+                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
                     </div>
                 </form>
             </div>
         </div>`;
     };
     
-    // --- MODIFIED: Renamed modal backdrop ID to avoid conflicts ---
     const renderModal = (edit = null) => {
         const modalContainer = document.getElementById("modal-container");
         const isEdit = edit ? true : false;
@@ -889,7 +901,6 @@
         </div>`;
     };
     
-    // --- NEW: Custom confirmation modal replaces confirm() ---
     const renderConfirmationModal = (title, message, onConfirm) => {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
@@ -967,19 +978,17 @@
         }
     });
 
-    // --- Global Event Listeners ---
+    // --- Global Event Listener ---
     document.body.addEventListener("click", async (e) => {
         const target = e.target;
         const button = target.closest('button');
         
-        // Handle backdrop clicks to close modals
         if (target.id === 'settings-backdrop') toggleSettingsPanel(false);
         if (target.id === 'form-modal-backdrop') target.closest('#modal-container').innerHTML = '';
         if (target.id === 'review-modal-backdrop') target.closest('#modal-container').innerHTML = '';
         
         if (!button) return;
 
-        // --- All button logic ---
         if (button.id === 'settings-btn') toggleSettingsPanel(true);
         if (button.id === 'close-settings-panel-btn') toggleSettingsPanel(false);
 
@@ -998,7 +1007,6 @@
             if (clearanceToEdit) renderModal(clearanceToEdit);
         }
         
-        // MODIFIED: Use custom confirmation modal for delete
         if (button.classList.contains("delete-btn")) {
             const id = button.dataset.id;
             renderConfirmationModal(
@@ -1020,8 +1028,7 @@
             if (requestToReview) renderReviewModal(requestToReview);
         }
         
-        // MODIFIED: Use custom confirmation modal for reject
-        if (button.id === "reject-request-btn") {
+        if (button.classList.contains("reject-request-btn")) {
             const requestId = button.dataset.id;
             const reviewModal = document.getElementById('review-modal-backdrop');
             renderConfirmationModal(
@@ -1031,7 +1038,7 @@
                      try {
                         await updateDoc(doc(db, "clearanceRequests", requestId), { status: 'rejected' });
                         showNotification("Request rejected.");
-                        if(reviewModal) reviewModal.remove(); // Close the review modal
+                        if(reviewModal) reviewModal.remove();
                     } catch (err) {
                         showNotification("Error rejecting request.", "error");
                     }
@@ -1039,21 +1046,29 @@
             );
         }
         
-        if (button.id === "approve-request-btn") {
+        if (button.classList.contains("approve-request-btn")) {
             const form = button.closest('form');
-            if (form) {
+            if (form && form.id === 'review-form') {
                 if (!form.checkValidity()) {
                     form.reportValidity();
                     return;
                 }
                 const data = getFormObj(form);
+                const entryDate = parseLocalDate(data.entryDate);
+                const expiryDate = parseLocalDate(data.expiryDate);
+
+                if(!entryDate || !expiryDate) {
+                    showNotification("Valid entry and expiry dates are required.", "error");
+                    return;
+                }
+
                 const clearancePayload = {
                     ownerName: data.ownerName,
                     vehicleNumber: data.vehicleNumber.toUpperCase(),
                     vehicleType: data.vehicleType,
                     location: data.location,
-                    entryDate: Timestamp.fromDate(new Date(`${data.entryDate}T00:00:00`)),
-                    expiryDate: Timestamp.fromDate(new Date(`${data.expiryDate}T00:00:00`)),
+                    entryDate: Timestamp.fromDate(entryDate),
+                    expiryDate: Timestamp.fromDate(expiryDate),
                     escortRequired: !!data.escortRequired,
                     notes: data.notes || "",
                     createdAt: Timestamp.now()
@@ -1211,20 +1226,23 @@
             }
         }
         
-        // MODIFIED: This is the logic that handles both Update and Add
         if (form.id === "clearance-form") {
             const data = getFormObj(form);
-             if(!data.entryDate || !data.expiryDate) {
-                showNotification("Entry and expiry dates are required.", "error");
+            const entryDate = parseLocalDate(data.entryDate);
+            const expiryDate = parseLocalDate(data.expiryDate);
+
+            if(!entryDate || !expiryDate) {
+                showNotification("Valid entry and expiry dates are required.", "error");
                 return;
             }
+
             const payload = {
                 ownerName: data.ownerName,
                 vehicleNumber: data.vehicleNumber.toUpperCase(),
                 vehicleType: data.vehicleType,
                 location: data.location,
-                entryDate: Timestamp.fromDate(new Date(`${data.entryDate}T00:00:00`)),
-                expiryDate: Timestamp.fromDate(new Date(`${data.expiryDate}T00:00:00`)),
+                entryDate: Timestamp.fromDate(entryDate),
+                expiryDate: Timestamp.fromDate(expiryDate),
                 escortRequired: !!data.escortRequired,
                 notes: data.notes || ""
             };
@@ -1250,18 +1268,22 @@
                 const cred = await signInAnonymously(auth);
                 currentUser = cred.user;
             }
-             if(!data.entryDate || !data.expiryDate) {
-                showNotification("Entry and expiry dates are required.", "error");
+            const entryDate = parseLocalDate(data.entryDate);
+            const expiryDate = parseLocalDate(data.expiryDate);
+
+            if(!entryDate || !expiryDate) {
+                showNotification("Valid entry and expiry dates are required.", "error");
                 return;
             }
+
             const payload = {
                 requesterName: data.requesterName,
                 requesterId: currentUser.uid,
                 vehicleNumber: data.vehicleNumber.toUpperCase(),
                 vehicleType: data.vehicleType,
                 location: data.location,
-                entryDate: Timestamp.fromDate(new Date(`${data.entryDate}T00:00:00`)),
-                expiryDate: Timestamp.fromDate(new Date(`${data.expiryDate}T00:00:00`)),
+                entryDate: Timestamp.fromDate(entryDate),
+                expiryDate: Timestamp.fromDate(expiryDate),
                 escortRequired: !!data.escortRequired,
                 notes: data.notes || "",
                 status: "pending",
