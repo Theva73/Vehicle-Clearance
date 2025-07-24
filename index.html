@@ -120,9 +120,17 @@
         x: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
         chevronRight: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>'
     };
+    
+    // --- Dashboard Setup ---
+    const showUserDashboard = (user) => {
+        appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
+        unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
+            clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderUserDashboard(user);
+        });
+    };
 
     // --- Render Functions ---
-
     const renderLandingPage = (options = {}) => {
         const { vehicleNumber = "", trackingResult = null } = options;
         
@@ -663,7 +671,7 @@
         </div>`;
     };
 
-    // --- Auth State Listener (FIXED) ---
+    // --- Auth State Listener ---
     onAuthStateChanged(auth, async (user) => {
         unsubClearances?.();
         unsubRequests?.();
@@ -687,17 +695,11 @@
                 await signOut(auth);
             }
         } else if (user && user.isAnonymous && sessionStorage.getItem('isDashboardLogin') === 'true') {
-            appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
-            unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
-                clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderUserDashboard(user);
-            });
+            showUserDashboard(user);
         } else if (!user) { // No user / logged out
             sessionStorage.removeItem('isDashboardLogin');
             renderLandingPage();
         }
-        // If user is anonymous BUT not from a dashboard login, do nothing.
-        // This prevents the page from re-rendering during tracking/requesting.
     });
 
     // --- Global Event Listeners ---
@@ -806,7 +808,12 @@
 
                 if (password === correctPassword) {
                     sessionStorage.setItem('isDashboardLogin', 'true');
-                    await signInAnonymously(auth);
+                    // FIX: If user is already anon, auth state won't change, so manually call the dashboard render.
+                    if (auth.currentUser && auth.currentUser.isAnonymous) {
+                        showUserDashboard(auth.currentUser);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 } else {
                     showNotification("Incorrect password.", "error");
                 }
