@@ -200,92 +200,8 @@
       });
     };
     
-    const formatVehicleNumber = (vehicleNumber) => {
-        if (!vehicleNumber) return 'N/A';
-        const cleaned = vehicleNumber.replace(/\s/g, '').toUpperCase();
-        const match = cleaned.match(/^([A-Z]+)(\d+)([A-Z])?$/);
-        if (match) {
-            const letters = match[1];
-            const numbers = match[2];
-            const trailingLetter = match[3];
-            if (trailingLetter) {
-                return `${letters} ${numbers} ${trailingLetter}`;
-            } else {
-                return `${letters} ${numbers}`;
-            }
-        }
-        return vehicleNumber; 
-    };
-
-    const toISODate = (date) => {
-        if (!date) return "";
-        try {
-            let d;
-            if (date instanceof Date) {
-                d = date;
-            } else if (date.toDate && typeof date.toDate === 'function') {
-                d = date.toDate();
-            } else if (date.seconds) {
-                d = new Date(date.seconds * 1000);
-            } else {
-                d = new Date(date);
-            }
-            
-            if (isNaN(d.getTime())) {
-                console.warn("Invalid date:", date);
-                return "";
-            }
-            
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        } catch (error) {
-            console.error("Error converting date to ISO format:", error, date);
-            return "";
-        }
-    };
-
-    const parseLocalDate = (dateString) => {
-        if (!dateString || typeof dateString !== 'string') {
-            console.warn("Invalid date string:", dateString);
-            return null;
-        }
-        
-        try {
-            const parts = dateString.split('-');
-            if (parts.length !== 3) {
-                console.warn("Date string format error:", dateString);
-                return null;
-            }
-            
-            const year = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1;
-            const day = parseInt(parts[2], 10);
-            
-            if (isNaN(year) || isNaN(month) || isNaN(day)) {
-                console.warn("Date parsing error - NaN values:", { year, month, day });
-                return null;
-            }
-            
-            if (year < 1900 || year > 2100 || month < 0 || month > 11 || day < 1 || day > 31) {
-                console.warn("Date out of range:", { year, month, day });
-                return null;
-            }
-            
-            const date = new Date(year, month, day);
-            
-            if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
-                console.warn("Date validation failed:", { input: dateString, created: date });
-                return null;
-            }
-            
-            return date;
-        } catch (error) {
-            console.error("Error parsing date:", error, dateString);
-            return null;
-        }
-    };
+    // MODIFIED: Reverted to the reliable date formatting from your working file
+    const toISODate = d => d ? new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split("T")[0] : "";
 
     const getFormObj = form => Object.fromEntries(new FormData(form).entries());
 
@@ -360,7 +276,7 @@
             validClearances.forEach(c => {
                 const status = now <= c.expiryDate.toDate() ? 'ACTIVE' : 'EXPIRED';
                 reportData.push([
-                    formatVehicleNumber(c.vehicleNumber || 'N/A'),
+                    c.vehicleNumber || 'N/A',
                     c.vehicleType || 'N/A',
                     formatDate(c.expiryDate),
                     c.location || 'N/A',
@@ -380,7 +296,7 @@
 
             recentRequests.forEach(r => {
                 reportData.push([
-                    formatVehicleNumber(r.vehicleNumber || 'N/A'),
+                    r.vehicleNumber || 'N/A',
                     r.vehicleType || 'N/A',
                     formatDate(r.expiryDate),
                     r.location || 'N/A',
@@ -1012,11 +928,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
-                            <input type="date" name="entryDate" value="${toISODate(edit?.entryDate)}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input type="date" name="entryDate" value="${toISODate(edit?.entryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
-                            <input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate)}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                     </div>
                     <div>
@@ -1032,7 +948,6 @@
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
                     <div class="modal-buttons">
-                        <!-- MODIFIED: Changed to type="button" and added a class for the click handler -->
                         <button type="button" class="save-update-btn px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${isEdit ? 'Update' : 'Save'}</button>
                         <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
                     </div>
@@ -1173,10 +1088,10 @@
             const form = button.closest('form');
             if (form && form.checkValidity()) {
                 const data = getFormObj(form);
-                const entryDate = parseLocalDate(data.entryDate);
-                const expiryDate = parseLocalDate(data.expiryDate);
+                const entryDate = new Date(data.entryDate);
+                const expiryDate = new Date(data.expiryDate);
 
-                if (!entryDate || !expiryDate || expiryDate <= entryDate) {
+                if (isNaN(entryDate.getTime()) || isNaN(expiryDate.getTime()) || expiryDate <= entryDate) {
                     showNotification("Valid dates are required and expiry must be after entry.", "error");
                     return;
                 }
@@ -1223,7 +1138,6 @@
             );
         }
         
-        // MODIFIED: Added click handler for Save/Update button
         if (button.classList.contains("save-update-btn")) {
             const form = button.closest('form');
             if (form && form.id === 'clearance-form') {
@@ -1232,10 +1146,10 @@
                     return;
                 }
                 const data = getFormObj(form);
-                const entryDate = parseLocalDate(data.entryDate);
-                const expiryDate = parseLocalDate(data.expiryDate);
+                const entryDate = new Date(data.entryDate);
+                const expiryDate = new Date(data.expiryDate);
 
-                if(!entryDate || !expiryDate || expiryDate <= entryDate) {
+                if(isNaN(entryDate.getTime()) || isNaN(expiryDate.getTime()) || expiryDate <= entryDate) {
                     showNotification("Valid dates are required and expiry must be after entry.", "error");
                     return;
                 }
@@ -1266,7 +1180,6 @@
                 }
             }
         }
-
 
         if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
             button.closest("#modal-container").innerHTML = "";
@@ -1394,9 +1307,6 @@
             }
         }
         
-        // MODIFIED: This is now handled by the click listener
-        // if (form.id === "clearance-form") { ... }
-
         if (form.id === "request-form") {
             const data = getFormObj(form);
             let currentUser = auth.currentUser;
@@ -1405,10 +1315,10 @@
                 currentUser = cred.user;
             }
             
-            const entryDate = parseLocalDate(data.entryDate);
-            const expiryDate = parseLocalDate(data.expiryDate);
+            const entryDate = new Date(data.entryDate);
+            const expiryDate = new Date(data.expiryDate);
 
-            if(!entryDate || !expiryDate) {
+            if(isNaN(entryDate.getTime()) || isNaN(expiryDate.getTime())) {
                 showNotification("Valid entry and expiry dates are required.", "error");
                 return;
             }
