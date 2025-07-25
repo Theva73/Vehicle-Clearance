@@ -27,7 +27,7 @@
       to { opacity: 1; transform: translateX(0); }
     }
     .animate-fade-in { 
-      animation: fadeIn 0.3s ease-out forwards; 
+      animation: fadeIn 0.3s ease-out forwards;
     }
     .animate-slide-in {
       animation: slideIn 0.4s ease-out forwards;
@@ -71,7 +71,6 @@
     // --- Configuration ---
     const ADMIN_INVITE_CODE = "ADMIN2025";
     const DEFAULT_USER_PASSWORD = "123456";
-
     const firebaseConfig = {
       apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
       authDomain: "vehicle-clearance.firebaseapp.com",
@@ -84,7 +83,6 @@
     // --- App Initialization ---
     const appRoot = document.getElementById("app-root");
     let app, auth, db;
-
     try {
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
@@ -118,7 +116,6 @@
       const d = date instanceof Date ? date : date.toDate();
       return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
     };
-
     const formatDateLongForm = (date) => {
       if (!date) return "N/A";
       const d = date instanceof Date ? date : date.toDate();
@@ -137,7 +134,6 @@
     };
 
     const getFormObj = form => Object.fromEntries(new FormData(form).entries());
-
     const showNotification = (message, type = "success") => {
       const notification = document.createElement("div");
       const bgColor = type === "success" ? "bg-green-500" : "bg-red-500";
@@ -172,7 +168,6 @@
         button.disabled = true;
         const originalHTML = button.innerHTML;
         button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Generating...';
-
         try {
             if (typeof window.jspdf === 'undefined') {
                 throw new Error('jsPDF library not loaded');
@@ -367,6 +362,7 @@
                             </button>
                         </div>
                     </div>
+        
                     <div class="pt-6 border-t dark:border-gray-700">
                         <form id="track-request-form" class="space-y-2">
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
@@ -633,7 +629,8 @@
                             ${icons.settings}
                         </button>
                         <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
-                            <span class="w-4 h-4">${icons.logout}</span> Logout
+                            <span class="w-4 h-4">${icons.logout}</span> 
+                            Logout
                         </button>
                     </div>
                 </nav>
@@ -732,7 +729,6 @@
         const list = document.getElementById("clearance-list");
         if (!list) return;
         const sorted = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
-
         if (sorted.length === 0) {
             list.innerHTML = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No clearances found. Add one to get started!</div>`;
             return;
@@ -749,6 +745,7 @@
                             <p class="text-sm text-gray-500 dark:text-gray-400">${c.vehicleType || "-"}</p>
                         </div>
                     </div>
+                    
                     <div class="flex items-center gap-1 flex-shrink-0">
                         <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}">${icons.edit}</button>
                         <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}">${icons.trash}</button>
@@ -834,12 +831,10 @@
     const renderReviewModal = (request) => {
         const modalContainer = document.getElementById("modal-container");
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
-        
         const optionsHTML = vehicleTypeOptions.map(vType => {
             const selected = request.vehicleType === vType ? 'selected' : '';
             return `<option value="${vType}" ${selected}>${vType}</option>`;
         }).join('');
-
         modalContainer.innerHTML = `
         <div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-in">
              <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl animate-fade-in overflow-hidden relative">
@@ -1031,7 +1026,6 @@
         if (button.id === "clear-tracking-btn") renderLandingPage();
 
         if(button.id === "download-report-btn") generatePDFReport(button);
-
         if (button.id === "add-clearance-btn") renderModal();
         if (button.classList.contains("edit-btn")) {
             const clearanceToEdit = clearances.find(c => c.id === button.dataset.id);
@@ -1065,7 +1059,6 @@
                 const data = getFormObj(form);
                 const entryDate = new Date(data.entryDate);
                 const expiryDate = new Date(data.expiryDate);
-
                 if (isNaN(entryDate.getTime()) || isNaN(expiryDate.getTime()) || expiryDate <= entryDate) {
                     showNotification("Valid dates are required and expiry must be after entry.", "error");
                     return;
@@ -1082,7 +1075,6 @@
                     notes: data.notes || "",
                     createdAt: Timestamp.now()
                 };
-                
                 try {
                     await addDoc(collection(db, "vehicleClearances"), clearancePayload);
                     await updateDoc(doc(db, "clearanceRequests", button.dataset.id), { status: "approved" });
@@ -1098,7 +1090,7 @@
         
         if (button.classList.contains("reject-request-btn")) {
             const id = button.dataset.id;
-             renderConfirmationModal(
+            renderConfirmationModal(
                 'Reject Request',
                 'Are you sure you want to reject this request?',
                 async () => {
@@ -1187,7 +1179,6 @@
             
             const entryDate = new Date(formData.entryDate);
             const expiryDate = new Date(formData.expiryDate);
-
             if(isNaN(entryDate.getTime()) || isNaN(expiryDate.getTime()) || expiryDate <= entryDate) {
                 showNotification("Valid dates are required and expiry must be after entry.", "error");
                 return;
@@ -1229,9 +1220,17 @@
                     const sortedDocs = clrSnap.docs.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
                     const latestClearance = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
                     
+                    // FIX: Check expiry date against the current date
+                    const now = new Date();
+                    const isExpired = now > latestClearance.expiryDate.toDate();
+                    const statusText = isExpired ? 'EXPIRED CLEARANCE' : 'ACTIVE CLEARANCE';
+                    const statusColor = isExpired ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400';
+                    
                     const clearanceDiv = document.createElement('div');
                     clearanceDiv.className = 'p-4 bg-white dark:bg-gray-800 rounded-2xl shadow space-y-2 text-left';
-                    clearanceDiv.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p> <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestClearance.vehicleNumber}</p> <p class="text-xs text-gray-500 dark:text-gray-400">${latestClearance.vehicleType || "-"}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p> <p class="font-semibold text-green-600">ACTIVE CLEARANCE</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Owner</p> <p class="font-semibold">${latestClearance.ownerName}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until</p> <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>`;
+                    // FIX: Use dynamic variables for status and color
+                    clearanceDiv.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p> <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestClearance.vehicleNumber}</p> <p class="text-xs text-gray-500 dark:text-gray-400">${latestClearance.vehicleType || "-"}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p> <p class="font-semibold ${statusColor}">${statusText}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Owner</p> <p class="font-semibold">${latestClearance.ownerName}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until</p> <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>`;
+                    
                     renderLandingPage({ vehicleNumber, trackingResult: clearanceDiv.outerHTML });
                     return;
                 }
@@ -1288,7 +1287,6 @@
                 status: "pending",
                 createdAt: Timestamp.now()
             };
-
             try {
                 const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
                 showNotification("Request submitted successfully!");
