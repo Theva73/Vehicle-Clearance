@@ -82,7 +82,7 @@
     
     .modal-buttons {
         display: flex;
-        justify-content: flex-start; /* MODIFIED: Aligned buttons to the left */
+        justify-content: flex-start;
         gap: 0.75rem;
         padding-top: 1rem;
         border-top: 1px solid #e5e7eb;
@@ -90,7 +90,6 @@
         position: sticky;
         bottom: 0;
         background: inherit;
-        /* MODIFIED: Added padding to match modal-form */
         padding-left: 1.5rem;
         padding-right: 1.5rem;
         padding-bottom: 1.5rem;
@@ -218,7 +217,6 @@
         return vehicleNumber; 
     };
 
-    // Improved date conversion functions
     const toISODate = (date) => {
         if (!date) return "";
         try {
@@ -282,7 +280,6 @@
                 return null;
             }
             
-            console.log("Successfully parsed date:", dateString, "->", date);
             return date;
         } catch (error) {
             console.error("Error parsing date:", error, dateString);
@@ -971,8 +968,7 @@
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
                     <div class="modal-buttons">
-                        <!-- MODIFIED: Button order swapped -->
-                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
+                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" data-id="${request.id}">Approve</button>
                         <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
                     </div>
                 </form>
@@ -980,7 +976,6 @@
         </div>`;
     };
 
-    // Enhanced modal with proper layout and button visibility
     const renderModal = (edit = null) => {
         const modalContainer = document.getElementById("modal-container");
         const isEdit = edit ? true : false;
@@ -1037,7 +1032,6 @@
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
                     <div class="modal-buttons">
-                        <!-- MODIFIED: Button order swapped -->
                         <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${isEdit ? 'Update' : 'Save'}</button>
                         <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
                     </div>
@@ -1050,11 +1044,10 @@
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
         <div class="modal-backdrop">
-            <div class="modal-content p-6"> <!-- MODIFIED: Added padding directly here -->
+            <div class="modal-content p-6"> 
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">${title}</h2>
                 <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${message}</p>
                 <div class="modal-buttons">
-                     <!-- MODIFIED: Button order swapped -->
                     <button id="confirm-action-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Confirm</button>
                     <button id="cancel-confirm-btn" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
                 </div>
@@ -1128,7 +1121,10 @@
         const target = e.target;
         const button = target.closest('button');
         
-        if (target.classList.contains('modal-backdrop')) target.closest('#modal-container').innerHTML = '';
+        if (target.classList.contains('modal-backdrop')) {
+            const modalContainer = target.closest('#modal-container');
+            if (modalContainer) modalContainer.innerHTML = '';
+        }
         if (target.id === 'settings-backdrop') toggleSettingsPanel(false);
         
         if (!button) return;
@@ -1172,50 +1168,19 @@
             if (requestToReview) renderReviewModal(requestToReview);
         }
         
-        if (button.classList.contains("reject-request-btn")) {
-            const requestId = button.dataset.id;
-            const reviewModal = document.querySelector('.modal-backdrop');
-            renderConfirmationModal(
-                'Reject Request',
-                'Are you sure you want to reject this request?',
-                async () => {
-                    try {
-                        await updateDoc(doc(db, "clearanceRequests", requestId), { status: 'rejected' });
-                        showNotification("Request rejected.");
-                        if(reviewModal) reviewModal.remove();
-                    } catch (err) {
-                        showNotification("Error rejecting request.", "error");
-                    }
-                }
-            );
-        }
-        
-        // Improved approve request logic with better date handling
+        // MODIFIED: Reverted to the direct click handling from your working file
         if (button.classList.contains("approve-request-btn")) {
             const form = button.closest('form');
-            if (form && form.id === 'review-form') {
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-                
+            if (form && form.checkValidity()) {
                 const data = getFormObj(form);
-                console.log("Form data:", data);
-                
                 const entryDate = parseLocalDate(data.entryDate);
                 const expiryDate = parseLocalDate(data.expiryDate);
 
-                if (!entryDate || !expiryDate) {
-                    showNotification("Please provide valid entry and expiry dates.", "error");
+                if (!entryDate || !expiryDate || expiryDate <= entryDate) {
+                    showNotification("Valid dates are required and expiry must be after entry.", "error");
                     return;
                 }
 
-                if (expiryDate <= entryDate) {
-                    showNotification("Expiry date must be after entry date.", "error");
-                    return;
-                }
-
-                // Payload for the NEW clearance document
                 const clearancePayload = {
                     ownerName: data.ownerName,
                     vehicleNumber: data.vehicleNumber.toUpperCase(),
@@ -1227,36 +1192,35 @@
                     notes: data.notes || "",
                     createdAt: Timestamp.now()
                 };
-
-                // Payload to UPDATE the original request document
-                const requestUpdatePayload = {
-                    requesterName: data.ownerName, // The form field is ownerName
-                    vehicleNumber: data.vehicleNumber.toUpperCase(),
-                    vehicleType: data.vehicleType,
-                    location: data.location,
-                    entryDate: Timestamp.fromDate(entryDate),
-                    expiryDate: Timestamp.fromDate(expiryDate),
-                    escortRequired: !!data.escortRequired,
-                    notes: data.notes || "",
-                    status: 'approved' // Set the status to approved
-                };
-
+                
                 try {
-                    console.log("Creating clearance with payload:", clearancePayload);
-                    
-                    // Create the new clearance document from the form data
                     await addDoc(collection(db, "vehicleClearances"), clearancePayload);
-                    
-                    // Update the original request with any edits from the form and set status to 'approved'
-                    await updateDoc(doc(db, "clearanceRequests", data.id), requestUpdatePayload);
-                    
+                    await updateDoc(doc(db, "clearanceRequests", button.dataset.id), { status: "approved" });
                     showNotification("Request approved and clearance created.");
                     document.getElementById("modal-container").innerHTML = "";
-                } catch (err) {
-                    console.error("Approval error:", err);
-                    showNotification("Error approving request: " + err.message, "error");
+                } catch(err) {
+                    showNotification("Error approving request.", "error");
                 }
+            } else if (form) {
+                form.reportValidity();
             }
+        }
+        
+        if (button.classList.contains("reject-request-btn")) {
+            const id = button.dataset.id;
+             renderConfirmationModal(
+                'Reject Request',
+                'Are you sure you want to reject this request?',
+                async () => {
+                    try {
+                        await updateDoc(doc(db, "clearanceRequests", id), { status: 'rejected' });
+                        showNotification("Request rejected.");
+                        document.getElementById("modal-container").innerHTML = "";
+                    } catch (err) {
+                        showNotification("Error rejecting request.", "error");
+                    }
+                }
+            );
         }
 
         if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
@@ -1385,24 +1349,16 @@
             }
         }
         
-        // Enhanced clearance form submission with detailed debugging  
         if (form.id === "clearance-form") {
-            console.log("Clearance form submitted");
-            
             const data = getFormObj(form);
-            console.log("Form data:", data);
-            
-            // Enhanced date parsing with better validation
             const entryDate = parseLocalDate(data.entryDate);
             const expiryDate = parseLocalDate(data.expiryDate);
 
             if(!entryDate || !expiryDate) {
-                console.error("Date parsing failed:", { entryDate, expiryDate, originalData: { entryDate: data.entryDate, expiryDate: data.expiryDate } });
                 showNotification("Valid entry and expiry dates are required.", "error");
                 return;
             }
 
-            // Additional date validation
             if (expiryDate <= entryDate) {
                 showNotification("Expiry date must be after entry date.", "error");
                 return;
@@ -1419,17 +1375,11 @@
                 notes: data.notes || ""
             };
             
-            console.log("Payload to save:", payload);
-            
             try {
                 if (data.id) {
-                    // For updates, preserve the original createdAt timestamp
-                    console.log("Updating clearance with ID:", data.id);
                     await updateDoc(doc(db, "vehicleClearances", data.id), payload);
                     showNotification("Clearance updated successfully.");
                 } else {
-                    // For new records, add createdAt timestamp
-                    console.log("Creating new clearance");
                     await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now() });
                     showNotification("Clearance saved successfully.");
                 }
@@ -1448,7 +1398,6 @@
                 currentUser = cred.user;
             }
             
-            // Enhanced date parsing with validation
             const entryDate = parseLocalDate(data.entryDate);
             const expiryDate = parseLocalDate(data.expiryDate);
 
@@ -1457,7 +1406,6 @@
                 return;
             }
 
-            // Additional date validation
             if (expiryDate <= entryDate) {
                 showNotification("Expiry date must be after entry date.", "error");
                 return;
