@@ -10,7 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
   <style>
@@ -28,12 +27,13 @@
       to { opacity: 1; transform: translateX(0); }
     }
     .animate-fade-in { 
-      animation: fadeIn 0.3s ease-out forwards;
+      animation: fadeIn 0.3s ease-out forwards; 
     }
     .animate-slide-in {
       animation: slideIn 0.4s ease-out forwards;
     }
     
+    /* Invert calendar icon color for dark mode */
     input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(0.5);
     }
@@ -41,6 +41,7 @@
       filter: invert(1);
     }
 
+    /* Remove default marker from details/summary */
     summary { list-style: none; }
     summary::-webkit-details-marker { display: none; }
     
@@ -49,68 +50,6 @@
     }
     #settings-backdrop {
         transition: background-color 0.3s ease-in-out;
-    }
-
-    .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 50;
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        padding: 1rem;
-        overflow-y: auto;
-    }
-    
-    .modal-content {
-        background: white;
-        border-radius: 1rem;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        width: 100%;
-        max-width: 28rem;
-        margin: 2rem auto;
-        max-height: calc(100vh - 4rem);
-        overflow-y: auto;
-        position: relative;
-    }
-    
-    .dark .modal-content {
-        background: rgb(31 41 55);
-    }
-    
-    .modal-form {
-        padding: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .modal-buttons {
-        display: flex;
-        justify-content: flex-start;
-        gap: 0.75rem;
-        padding-top: 1rem;
-        border-top: 1px solid #e5e7eb;
-        margin-top: 1rem;
-        position: sticky;
-        bottom: 0;
-        background: inherit;
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
-        padding-bottom: 1.5rem;
-        margin-left: -1.5rem;
-        margin-right: -1.5rem;
-        margin-bottom: -1.5rem;
-        border-bottom-left-radius: 1rem;
-        border-bottom-right-radius: 1rem;
-    }
-    
-    .dark .modal-buttons {
-        border-top-color: #374151;
     }
   </style>
 
@@ -132,6 +71,7 @@
     // --- Configuration ---
     const ADMIN_INVITE_CODE = "ADMIN2025";
     const DEFAULT_USER_PASSWORD = "123456";
+
     const firebaseConfig = {
       apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
       authDomain: "vehicle-clearance.firebaseapp.com",
@@ -144,6 +84,7 @@
     // --- App Initialization ---
     const appRoot = document.getElementById("app-root");
     let app, auth, db;
+
     try {
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
@@ -177,6 +118,7 @@
       const d = date instanceof Date ? date : date.toDate();
       return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
     };
+
     const formatDateLongForm = (date) => {
       if (!date) return "N/A";
       const d = date instanceof Date ? date : date.toDate();
@@ -195,6 +137,7 @@
     };
 
     const getFormObj = form => Object.fromEntries(new FormData(form).entries());
+
     const showNotification = (message, type = "success") => {
       const notification = document.createElement("div");
       const bgColor = type === "success" ? "bg-green-500" : "bg-red-500";
@@ -229,6 +172,7 @@
         button.disabled = true;
         const originalHTML = button.innerHTML;
         button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Generating...';
+
         try {
             if (typeof window.jspdf === 'undefined') {
                 throw new Error('jsPDF library not loaded');
@@ -423,7 +367,6 @@
                             </button>
                         </div>
                     </div>
-        
                     <div class="pt-6 border-t dark:border-gray-700">
                         <form id="track-request-form" class="space-y-2">
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
@@ -690,8 +633,7 @@
                             ${icons.settings}
                         </button>
                         <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
-                            <span class="w-4 h-4">${icons.logout}</span> 
-                            Logout
+                            <span class="w-4 h-4">${icons.logout}</span> Logout
                         </button>
                     </div>
                 </nav>
@@ -790,6 +732,7 @@
         const list = document.getElementById("clearance-list");
         if (!list) return;
         const sorted = [...clearances].sort((a, b) => b.entryDate.toDate() - a.entryDate.toDate());
+
         if (sorted.length === 0) {
             list.innerHTML = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No clearances found. Add one to get started!</div>`;
             return;
@@ -806,7 +749,6 @@
                             <p class="text-sm text-gray-500 dark:text-gray-400">${c.vehicleType || "-"}</p>
                         </div>
                     </div>
-                    
                     <div class="flex items-center gap-1 flex-shrink-0">
                         <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}">${icons.edit}</button>
                         <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full" data-id="${c.id}">${icons.trash}</button>
@@ -833,20 +775,22 @@
         }).join('');
 
         modalContainer.innerHTML = `
-        <div class="modal-backdrop">
-            <div class="modal-content">
-                <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 z-10">${icons.x}</button>
-                <form id="clearance-form" class="modal-form" data-editing-id="${edit?.id || ''}">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${isEdit ? 'Edit' : 'Add'} Clearance</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label>
-                            <input name="ownerName" value="${edit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
-                            <input name="vehicleNumber" value="${edit?.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                        </div>
+        <div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl animate-fade-in overflow-hidden">
+                <form id="clearance-form" class="space-y-4 p-8" data-editing-id="${edit?.id || ''}">
+                    <div class="text-center mb-6">
+                        <div class="w-12 h-12 mx-auto text-blue-500">${isEdit ? icons.edit : icons.plus}</div>
+                        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">${isEdit ? 'Edit' : 'Add'} Clearance</h1>
+                        <p class="text-gray-500 dark:text-gray-400">${isEdit ? 'Update the details below.' : 'Fill in the details for a new clearance.'}</p>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label>
+                        <input name="ownerName" value="${edit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
+                        <input name="vehicleNumber" value="${edit?.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
@@ -855,7 +799,11 @@
                             ${optionsHTML}
                         </select>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                        <input name="location" value="${edit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
                             <input type="date" name="entryDate" value="${toISODate(edit?.entryDate)}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
@@ -865,21 +813,18 @@
                             <input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate)}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                     </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <input name="location" value="${edit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${edit?.notes || ''}</textarea>
-                    </div>
                     <div class="flex items-center">
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${edit?.escortRequired ? 'checked' : ''}/>
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
-                    <div class="modal-buttons">
-                        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${isEdit ? 'Update' : 'Save'}</button>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes (optional)</label>
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${edit?.notes || ''}</textarea>
+                    </div>
+                    
+                    <div class="flex justify-end gap-4 pt-4">
                         <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+                        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${isEdit ? 'Update' : 'Save'}</button>
                     </div>
                 </form>
             </div>
@@ -889,17 +834,25 @@
     const renderReviewModal = (request) => {
         const modalContainer = document.getElementById("modal-container");
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
+        
         const optionsHTML = vehicleTypeOptions.map(vType => {
             const selected = request.vehicleType === vType ? 'selected' : '';
             return `<option value="${vType}" ${selected}>${vType}</option>`;
         }).join('');
+
         modalContainer.innerHTML = `
-        <div class="modal-backdrop">
-            <div class="modal-content">
+        <div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-in">
+             <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl animate-fade-in overflow-hidden relative">
                 <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">${icons.x}</button>
-                <form id="review-form" class="modal-form">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Review Request</h2>
+                <form id="review-form" class="space-y-4 p-8">
                     <input type="hidden" name="id" value="${request.id}">
+
+                    <div class="text-center mb-6">
+                        <div class="w-12 h-12 mx-auto text-yellow-500">${icons.request}</div>
+                        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Review Request</h1>
+                        <p class="text-gray-500 dark:text-gray-400">Review the details and take action.</p>
+                    </div>
+
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Name</label>
                         <input name="ownerName" value="${request.requesterName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
@@ -915,6 +868,10 @@
                             ${optionsHTML}
                         </select>
                     </div>
+                     <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                        <input name="location" value="${request.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
@@ -925,21 +882,17 @@
                             <input type="date" name="expiryDate" value="${toISODate(request.expiryDate)}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                     </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <input name="location" value="${request.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${request.notes || ''}</textarea>
-                    </div>
                     <div class="flex items-center">
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${request.escortRequired ? 'checked' : ''}/>
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
-                    <div class="modal-buttons">
-                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" data-id="${request.id}">Approve</button>
+                     <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes (optional)</label>
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${request.notes || ''}</textarea>
+                    </div>
+                    <div class="flex justify-end gap-4 pt-4">
                         <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
+                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" data-id="${request.id}">Approve</button>
                     </div>
                 </form>
             </div>
@@ -949,13 +902,13 @@
     const renderConfirmationModal = (title, message, onConfirm) => {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
-        <div class="modal-backdrop">
-            <div class="modal-content p-6"> 
+        <div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm w-full"> 
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">${title}</h2>
                 <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${message}</p>
-                <div class="modal-buttons">
-                    <button id="confirm-action-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Confirm</button>
+                <div class="mt-6 flex justify-end gap-4">
                     <button id="cancel-confirm-btn" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+                    <button id="confirm-action-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Confirm</button>
                 </div>
             </div>
         </div>
@@ -1057,14 +1010,14 @@
     // --- Global Event Listener ---
     document.body.addEventListener("click", async (e) => {
         const target = e.target;
-        const button = target.closest('button');
         
         if (target.classList.contains('modal-backdrop')) {
-            const modalContainer = target.closest('#modal-container');
+            const modalContainer = document.getElementById('modal-container');
             if (modalContainer) modalContainer.innerHTML = '';
         }
         if (target.id === 'settings-backdrop') toggleSettingsPanel(false);
         
+        const button = target.closest('button');
         if (!button) return;
 
         if (button.id === 'settings-btn') toggleSettingsPanel(true);
@@ -1078,6 +1031,7 @@
         if (button.id === "clear-tracking-btn") renderLandingPage();
 
         if(button.id === "download-report-btn") generatePDFReport(button);
+
         if (button.id === "add-clearance-btn") renderModal();
         if (button.classList.contains("edit-btn")) {
             const clearanceToEdit = clearances.find(c => c.id === button.dataset.id);
@@ -1111,6 +1065,7 @@
                 const data = getFormObj(form);
                 const entryDate = new Date(data.entryDate);
                 const expiryDate = new Date(data.expiryDate);
+
                 if (isNaN(entryDate.getTime()) || isNaN(expiryDate.getTime()) || expiryDate <= entryDate) {
                     showNotification("Valid dates are required and expiry must be after entry.", "error");
                     return;
@@ -1127,6 +1082,7 @@
                     notes: data.notes || "",
                     createdAt: Timestamp.now()
                 };
+                
                 try {
                     await addDoc(collection(db, "vehicleClearances"), clearancePayload);
                     await updateDoc(doc(db, "clearanceRequests", button.dataset.id), { status: "approved" });
@@ -1142,7 +1098,7 @@
         
         if (button.classList.contains("reject-request-btn")) {
             const id = button.dataset.id;
-            renderConfirmationModal(
+             renderConfirmationModal(
                 'Reject Request',
                 'Are you sure you want to reject this request?',
                 async () => {
@@ -1231,6 +1187,7 @@
             
             const entryDate = new Date(formData.entryDate);
             const expiryDate = new Date(formData.expiryDate);
+
             if(isNaN(entryDate.getTime()) || isNaN(expiryDate.getTime()) || expiryDate <= entryDate) {
                 showNotification("Valid dates are required and expiry must be after entry.", "error");
                 return;
@@ -1272,26 +1229,9 @@
                     const sortedDocs = clrSnap.docs.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
                     const latestClearance = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
                     
-                    // --- FIX START ---
-                    const now = new Date();
-                    const isExpired = now > latestClearance.expiryDate.toDate();
-                    const statusText = isExpired ? 'EXPIRED CLEARANCE' : 'ACTIVE CLEARANCE';
-                    const statusColor = isExpired ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400';
-                    // --- FIX END ---
-                    
                     const clearanceDiv = document.createElement('div');
                     clearanceDiv.className = 'p-4 bg-white dark:bg-gray-800 rounded-2xl shadow space-y-2 text-left';
-                    clearanceDiv.innerHTML = `
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p>
-                        <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestClearance.vehicleNumber}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">${latestClearance.vehicleType || "-"}</p>
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p>
-                        <p class="font-semibold ${statusColor}">${statusText}</p>
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Owner</p>
-                        <p class="font-semibold">${latestClearance.ownerName}</p>
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until</p>
-                        <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>`;
-                    
+                    clearanceDiv.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p> <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestClearance.vehicleNumber}</p> <p class="text-xs text-gray-500 dark:text-gray-400">${latestClearance.vehicleType || "-"}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p> <p class="font-semibold text-green-600">ACTIVE CLEARANCE</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Owner</p> <p class="font-semibold">${latestClearance.ownerName}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until</p> <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>`;
                     renderLandingPage({ vehicleNumber, trackingResult: clearanceDiv.outerHTML });
                     return;
                 }
@@ -1348,6 +1288,7 @@
                 status: "pending",
                 createdAt: Timestamp.now()
             };
+
             try {
                 const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
                 showNotification("Request submitted successfully!");
