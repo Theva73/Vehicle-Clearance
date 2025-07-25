@@ -267,7 +267,6 @@
                 return null;
             }
             
-            console.log("Successfully parsed date:", dateString, "->", date);
             return date;
         } catch (error) {
             console.error("Error parsing date:", error, dateString);
@@ -957,7 +956,7 @@
                     </div>
                     <div class="modal-buttons">
                         <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
-                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
+                        <button type="submit" class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
                     </div>
                 </form>
             </div>
@@ -1033,7 +1032,7 @@
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
         <div class="modal-backdrop">
-            <div class="modal-content">
+            <div class="modal-content p-6">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">${title}</h2>
                 <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${message}</p>
                 <div class="modal-buttons">
@@ -1171,75 +1170,6 @@
                 }
             );
         }
-        
-        // Improved approve request logic with better date handling
-        if (button.classList.contains("approve-request-btn")) {
-            const form = button.closest('form');
-            if (form && form.id === 'review-form') {
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-                
-                const data = getFormObj(form);
-                console.log("Form data:", data);
-                
-                const entryDate = parseLocalDate(data.entryDate);
-                const expiryDate = parseLocalDate(data.expiryDate);
-
-                if (!entryDate || !expiryDate) {
-                    showNotification("Please provide valid entry and expiry dates.", "error");
-                    return;
-                }
-
-                if (expiryDate <= entryDate) {
-                    showNotification("Expiry date must be after entry date.", "error");
-                    return;
-                }
-
-                // Payload for the NEW clearance document
-                const clearancePayload = {
-                    ownerName: data.ownerName,
-                    vehicleNumber: data.vehicleNumber.toUpperCase(),
-                    vehicleType: data.vehicleType,
-                    location: data.location,
-                    entryDate: Timestamp.fromDate(entryDate),
-                    expiryDate: Timestamp.fromDate(expiryDate),
-                    escortRequired: !!data.escortRequired,
-                    notes: data.notes || "",
-                    createdAt: Timestamp.now()
-                };
-
-                // Payload to UPDATE the original request document
-                const requestUpdatePayload = {
-                    requesterName: data.ownerName, // The form field is ownerName
-                    vehicleNumber: data.vehicleNumber.toUpperCase(),
-                    vehicleType: data.vehicleType,
-                    location: data.location,
-                    entryDate: Timestamp.fromDate(entryDate),
-                    expiryDate: Timestamp.fromDate(expiryDate),
-                    escortRequired: !!data.escortRequired,
-                    notes: data.notes || "",
-                    status: 'approved' // Set the status to approved
-                };
-
-                try {
-                    console.log("Creating clearance with payload:", clearancePayload);
-                    
-                    // Create the new clearance document from the form data
-                    await addDoc(collection(db, "vehicleClearances"), clearancePayload);
-                    
-                    // Update the original request with any edits from the form and set status to 'approved'
-                    await updateDoc(doc(db, "clearanceRequests", data.id), requestUpdatePayload);
-                    
-                    showNotification("Request approved and clearance created.");
-                    document.getElementById("modal-container").innerHTML = "";
-                } catch (err) {
-                    console.error("Approval error:", err);
-                    showNotification("Error approving request: " + err.message, "error");
-                }
-            }
-        }
 
         if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
             button.closest("#modal-container").innerHTML = "";
@@ -1367,26 +1297,28 @@
             }
         }
         
-        // Enhanced clearance form submission with detailed debugging  
         if (form.id === "clearance-form") {
-            console.log("Clearance form submitted");
-            
             const data = getFormObj(form);
-            console.log("Form data:", data);
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonHTML = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = `<div class="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
             
-            // Enhanced date parsing with better validation
             const entryDate = parseLocalDate(data.entryDate);
             const expiryDate = parseLocalDate(data.expiryDate);
 
-            if(!entryDate || !expiryDate) {
-                console.error("Date parsing failed:", { entryDate, expiryDate, originalData: { entryDate: data.entryDate, expiryDate: data.expiryDate } });
-                showNotification("Valid entry and expiry dates are required.", "error");
+            if(!entryDate || !expiryDate || !form.checkValidity()) {
+                showNotification("Please fill all required fields and provide valid dates.", "error");
+                form.reportValidity();
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHTML;
                 return;
             }
 
-            // Additional date validation
             if (expiryDate <= entryDate) {
                 showNotification("Expiry date must be after entry date.", "error");
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHTML;
                 return;
             }
 
@@ -1401,17 +1333,11 @@
                 notes: data.notes || ""
             };
             
-            console.log("Payload to save:", payload);
-            
             try {
                 if (data.id) {
-                    // For updates, preserve the original createdAt timestamp
-                    console.log("Updating clearance with ID:", data.id);
                     await updateDoc(doc(db, "vehicleClearances", data.id), payload);
                     showNotification("Clearance updated successfully.");
                 } else {
-                    // For new records, add createdAt timestamp
-                    console.log("Creating new clearance");
                     await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now() });
                     showNotification("Clearance saved successfully.");
                 }
@@ -1419,29 +1345,108 @@
             } catch (err) {
                 console.error("Clearance form error:", err);
                 showNotification("Error saving clearance: " + err.message, "error");
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHTML;
+            }
+        }
+        
+        if (form.id === "review-form") {
+            const data = getFormObj(form);
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonHTML = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = `<div class="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+
+            const entryDate = parseLocalDate(data.entryDate);
+            const expiryDate = parseLocalDate(data.expiryDate);
+
+            if (!entryDate || !expiryDate || !form.checkValidity()) {
+                showNotification("Please fill all required fields and provide valid dates.", "error");
+                form.reportValidity();
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHTML;
+                return;
+            }
+
+            if (expiryDate <= entryDate) {
+                showNotification("Expiry date must be after entry date.", "error");
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHTML;
+                return;
+            }
+
+            const clearancePayload = {
+                ownerName: data.ownerName,
+                vehicleNumber: data.vehicleNumber.toUpperCase(),
+                vehicleType: data.vehicleType,
+                location: data.location,
+                entryDate: Timestamp.fromDate(entryDate),
+                expiryDate: Timestamp.fromDate(expiryDate),
+                escortRequired: !!data.escortRequired,
+                notes: data.notes || "",
+                createdAt: Timestamp.now()
+            };
+
+            const requestUpdatePayload = {
+                requesterName: data.ownerName,
+                vehicleNumber: data.vehicleNumber.toUpperCase(),
+                vehicleType: data.vehicleType,
+                location: data.location,
+                entryDate: Timestamp.fromDate(entryDate),
+                expiryDate: Timestamp.fromDate(expiryDate),
+                escortRequired: !!data.escortRequired,
+                notes: data.notes || "",
+                status: 'approved'
+            };
+
+            try {
+                await addDoc(collection(db, "vehicleClearances"), clearancePayload);
+                await updateDoc(doc(db, "clearanceRequests", data.id), requestUpdatePayload);
+                
+                showNotification("Request approved and clearance created.");
+                document.getElementById("modal-container").innerHTML = "";
+            } catch (err) {
+                console.error("Approval error:", err);
+                showNotification("Error approving request: " + err.message, "error");
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHTML;
             }
         }
 
         if (form.id === "request-form") {
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonHTML = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = 'Submitting...';
+
             const data = getFormObj(form);
             let currentUser = auth.currentUser;
             if (!currentUser) {
-                const cred = await signInAnonymously(auth);
-                currentUser = cred.user;
+                try {
+                    const cred = await signInAnonymously(auth);
+                    currentUser = cred.user;
+                } catch(authError){
+                    showNotification("Authentication failed. Please try again.", "error");
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonHTML;
+                    return;
+                }
             }
             
-            // Enhanced date parsing with validation
             const entryDate = parseLocalDate(data.entryDate);
             const expiryDate = parseLocalDate(data.expiryDate);
 
             if(!entryDate || !expiryDate) {
                 showNotification("Valid entry and expiry dates are required.", "error");
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHTML;
                 return;
             }
 
-            // Additional date validation
             if (expiryDate <= entryDate) {
                 showNotification("Expiry date must be after entry date.", "error");
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHTML;
                 return;
             }
 
@@ -1474,6 +1479,8 @@
             } catch (err) {
                 console.error("Request submission error:", err);
                 showNotification("Error submitting request: " + err.message, "error");
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHTML;
             }
         }
     });
