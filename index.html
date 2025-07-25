@@ -1032,7 +1032,8 @@
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
                     <div class="modal-buttons">
-                        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${isEdit ? 'Update' : 'Save'}</button>
+                        <!-- MODIFIED: Changed to type="button" and added a class for the click handler -->
+                        <button type="button" class="save-update-btn px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${isEdit ? 'Update' : 'Save'}</button>
                         <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
                     </div>
                 </form>
@@ -1168,7 +1169,6 @@
             if (requestToReview) renderReviewModal(requestToReview);
         }
         
-        // MODIFIED: Reverted to the direct click handling from your working file
         if (button.classList.contains("approve-request-btn")) {
             const form = button.closest('form');
             if (form && form.checkValidity()) {
@@ -1199,7 +1199,7 @@
                     showNotification("Request approved and clearance created.");
                     document.getElementById("modal-container").innerHTML = "";
                 } catch(err) {
-                    showNotification("Error approving request.", "error");
+                    showNotification("Error approving request: " + err.message, "error");
                 }
             } else if (form) {
                 form.reportValidity();
@@ -1217,11 +1217,56 @@
                         showNotification("Request rejected.");
                         document.getElementById("modal-container").innerHTML = "";
                     } catch (err) {
-                        showNotification("Error rejecting request.", "error");
+                        showNotification("Error rejecting request: " + err.message, "error");
                     }
                 }
             );
         }
+        
+        // MODIFIED: Added click handler for Save/Update button
+        if (button.classList.contains("save-update-btn")) {
+            const form = button.closest('form');
+            if (form && form.id === 'clearance-form') {
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                const data = getFormObj(form);
+                const entryDate = parseLocalDate(data.entryDate);
+                const expiryDate = parseLocalDate(data.expiryDate);
+
+                if(!entryDate || !expiryDate || expiryDate <= entryDate) {
+                    showNotification("Valid dates are required and expiry must be after entry.", "error");
+                    return;
+                }
+
+                const payload = {
+                    ownerName: data.ownerName,
+                    vehicleNumber: data.vehicleNumber.toUpperCase(),
+                    vehicleType: data.vehicleType,
+                    location: data.location,
+                    entryDate: Timestamp.fromDate(entryDate),
+                    expiryDate: Timestamp.fromDate(expiryDate),
+                    escortRequired: !!data.escortRequired,
+                    notes: data.notes || ""
+                };
+
+                try {
+                    if (data.id) {
+                        await updateDoc(doc(db, "vehicleClearances", data.id), payload);
+                        showNotification("Clearance updated successfully.");
+                    } else {
+                        await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now() });
+                        showNotification("Clearance saved successfully.");
+                    }
+                    document.getElementById("modal-container").innerHTML = "";
+                } catch (err) {
+                    console.error("Clearance form error:", err);
+                    showNotification("Error saving clearance: " + err.message, "error");
+                }
+            }
+        }
+
 
         if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
             button.closest("#modal-container").innerHTML = "";
@@ -1349,46 +1394,8 @@
             }
         }
         
-        if (form.id === "clearance-form") {
-            const data = getFormObj(form);
-            const entryDate = parseLocalDate(data.entryDate);
-            const expiryDate = parseLocalDate(data.expiryDate);
-
-            if(!entryDate || !expiryDate) {
-                showNotification("Valid entry and expiry dates are required.", "error");
-                return;
-            }
-
-            if (expiryDate <= entryDate) {
-                showNotification("Expiry date must be after entry date.", "error");
-                return;
-            }
-
-            const payload = {
-                ownerName: data.ownerName,
-                vehicleNumber: data.vehicleNumber.toUpperCase(),
-                vehicleType: data.vehicleType,
-                location: data.location,
-                entryDate: Timestamp.fromDate(entryDate),
-                expiryDate: Timestamp.fromDate(expiryDate),
-                escortRequired: !!data.escortRequired,
-                notes: data.notes || ""
-            };
-            
-            try {
-                if (data.id) {
-                    await updateDoc(doc(db, "vehicleClearances", data.id), payload);
-                    showNotification("Clearance updated successfully.");
-                } else {
-                    await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now() });
-                    showNotification("Clearance saved successfully.");
-                }
-                document.getElementById("modal-container").innerHTML = "";
-            } catch (err) {
-                console.error("Clearance form error:", err);
-                showNotification("Error saving clearance: " + err.message, "error");
-            }
-        }
+        // MODIFIED: This is now handled by the click listener
+        // if (form.id === "clearance-form") { ... }
 
         if (form.id === "request-form") {
             const data = getFormObj(form);
