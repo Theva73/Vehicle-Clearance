@@ -8,10 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -22,26 +20,30 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .animate-fade-in { 
+      animation: fadeIn 0.3s ease-out forwards; 
+    }
+    .animate-slide-in {
+      animation: slideIn 0.4s ease-out forwards;
+    }
     input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(0.5);
     }
     .dark input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(1);
     }
-
     summary { list-style: none; }
     summary::-webkit-details-marker { display: none; }
-    
     #settings-panel {
         transition: transform 0.3s ease-in-out;
     }
     #settings-backdrop {
         transition: background-color 0.3s ease-in-out;
     }
-
-    /* Modal improvements for mobile */
     .modal-backdrop {
         position: fixed;
         top: 0;
@@ -56,7 +58,6 @@
         padding: 1rem;
         overflow-y: auto;
     }
-    
     .modal-content {
         background: white;
         border-radius: 1rem;
@@ -68,18 +69,15 @@
         overflow-y: auto;
         position: relative;
     }
-    
     .dark .modal-content {
         background: rgb(31 41 55);
     }
-    
     .modal-form {
         padding: 1.5rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
     }
-    
     .modal-buttons {
         display: flex;
         justify-content: flex-start;
@@ -99,32 +97,10 @@
         border-bottom-left-radius: 1rem;
         border-bottom-right-radius: 1rem;
     }
-    
     .dark .modal-buttons {
         border-top-color: #374151;
     }
-
-    @media (max-height: 600px) {
-        .modal-backdrop {
-            align-items: flex-start;
-            padding: 0.5rem;
-        }
-        .modal-content {
-            margin: 0.5rem auto;
-            max-height: calc(100vh - 1rem);
-        }
-        .modal-form {
-            padding: 1rem;
-        }
-        .modal-buttons {
-            padding: 1rem;
-            margin-left: -1rem;
-            margin-right: -1rem;
-            margin-bottom: -1rem;
-        }
-    }
   </style>
-
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
   <div id="app-root"></div>
@@ -144,6 +120,7 @@
     const ADMIN_INVITE_CODE = "ADMIN2025";
     const DEFAULT_USER_PASSWORD = "123456";
 
+    // IMPORTANT: Replace with your actual Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
       authDomain: "vehicle-clearance.firebaseapp.com",
@@ -173,6 +150,7 @@
     let unsubClearances = null, unsubRequests = null, unsubConfig = null;
     let authMode = "login";
     let routeHistory = [];
+    let currentUser = null;
 
     // --- Utility Functions ---
     const goBack = () => {
@@ -189,7 +167,7 @@
       const d = date instanceof Date ? date : date.toDate();
       return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
     };
-
+    
     const formatDateLongForm = (date) => {
       if (!date) return "N/A";
       const d = date instanceof Date ? date : date.toDate();
@@ -199,9 +177,13 @@
         day: 'numeric' 
       });
     };
-    
-    // MODIFIED: Reverted to the reliable date formatting from your working file
-    const toISODate = d => d ? new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split("T")[0] : "";
+
+    const toISODate = (date) => {
+        if (!date) return '';
+        const d = date instanceof Date ? date : date.toDate();
+        // Adjust for timezone offset to get the correct date in the input
+        return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    };
 
     const getFormObj = form => Object.fromEntries(new FormData(form).entries());
 
@@ -229,16 +211,9 @@
         x: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
         chevronRight: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
         download: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
-        settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
-    };
-
-    // --- Dashboard Setup ---
-    const showUserDashboard = (user) => {
-        appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
-        unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
-            clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderUserDashboard(user);
-        });
+        settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+        check: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+        back: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>'
     };
 
     // --- PDF Generation Function ---
@@ -248,7 +223,7 @@
         button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Generating...';
 
         try {
-            if (typeof window.jspdf === 'undefined') {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
                 throw new Error('jsPDF library not loaded');
             }
 
@@ -311,7 +286,7 @@
             doc.setFontSize(12);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(100);
-            doc.text(`Report Period: 24-Hour`, 14, 30);
+            doc.text("Report Period: 24-Hour", 14, 30);
             doc.text(`Generated: ${formatDateLongForm(now)} at ${now.toLocaleTimeString()}`, 14, 36);
             
             if (reportData.length === 0) {
@@ -394,7 +369,16 @@
             button.innerHTML = originalHTML;
         }
     };
-
+    
+    // --- Dashboard Setup ---
+    const showUserDashboard = (user) => {
+        appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
+        unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
+            clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderUserDashboard(user);
+        });
+    };
+    
     // --- Render Functions ---
     const renderLandingPage = (options = {}) => {
         const { vehicleNumber = "", trackingResult = null } = options;
@@ -770,7 +754,7 @@
             }
         });
     };
-    
+
     const renderRequestsList = () => {
         const list = document.getElementById("requests-list");
         if (!list) return;
@@ -829,7 +813,70 @@
                 </div>
             </details>`).join("");
     };
+    
+    const renderModal = (edit = null) => {
+        const modalContainer = document.getElementById("modal-container");
+        const isEdit = edit ? true : false;
+        const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
+        const optionsHTML = vehicleTypeOptions.map(vType => {
+            const selected = edit?.vehicleType === vType ? 'selected' : '';
+            return `<option value="${vType}" ${selected}>${vType}</option>`;
+        }).join('');
 
+        modalContainer.innerHTML = `
+        <div class="modal-backdrop">
+            <div class="modal-content">
+                <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 z-10">${icons.x}</button>
+                <form id="clearance-form" class="modal-form" data-editing-id="${edit?.id || ''}">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${isEdit ? 'Edit' : 'Add'} Clearance</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label>
+                            <input name="ownerName" value="${edit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
+                            <input name="vehicleNumber" value="${edit?.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
+                        <select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                            <option value="">Select type...</option>
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
+                            <input type="date" name="entryDate" value="${toISODate(edit?.entryDate)}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
+                            <input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate)}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                        <input name="location" value="${edit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${edit?.notes || ''}</textarea>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${edit?.escortRequired ? 'checked' : ''}/>
+                        <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${isEdit ? 'Update' : 'Save'}</button>
+                        <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>`;
+    };
+    
     const renderReviewModal = (request) => {
         const modalContainer = document.getElementById("modal-container");
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
@@ -864,11 +911,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
-                            <input type="date" name="entryDate" value="${toISODate(request.entryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input type="date" name="entryDate" value="${toISODate(request.entryDate)}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
-                            <input type="date" name="expiryDate" value="${toISODate(request.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input type="date" name="expiryDate" value="${toISODate(request.expiryDate)}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                     </div>
                     <div>
@@ -886,70 +933,6 @@
                     <div class="modal-buttons">
                         <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" data-id="${request.id}">Approve</button>
                         <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
-                    </div>
-                </form>
-            </div>
-        </div>`;
-    };
-
-    const renderModal = (edit = null) => {
-        const modalContainer = document.getElementById("modal-container");
-        const isEdit = edit ? true : false;
-        const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
-        const optionsHTML = vehicleTypeOptions.map(vType => {
-            const selected = edit?.vehicleType === vType ? 'selected' : '';
-            return `<option value="${vType}" ${selected}>${vType}</option>`;
-        }).join('');
-
-        modalContainer.innerHTML = `
-        <div class="modal-backdrop">
-            <div class="modal-content">
-                <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 z-10">${icons.x}</button>
-                <form id="clearance-form" class="modal-form">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${isEdit ? 'Edit' : 'Add'} Clearance</h2>
-                    <input type="hidden" name="id" value="${edit?.id || ''}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label>
-                            <input name="ownerName" value="${edit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
-                            <input name="vehicleNumber" value="${edit?.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
-                        <select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
-                            <option value="">Select type...</option>
-                            ${optionsHTML}
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
-                            <input type="date" name="entryDate" value="${toISODate(edit?.entryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
-                            <input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate?.toDate())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <input name="location" value="${edit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${edit?.notes || ''}</textarea>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${edit?.escortRequired ? 'checked' : ''}/>
-                        <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
-                    </div>
-                    <div class="modal-buttons">
-                        <button type="button" class="save-update-btn px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${isEdit ? 'Update' : 'Save'}</button>
-                        <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -1001,13 +984,46 @@
         }
     };
 
+    const handleClearanceSubmission = async (formData, editingId = null) => {
+        try {
+            const clearanceData = {
+                ownerName: formData.ownerName,
+                vehicleNumber: formData.vehicleNumber.toUpperCase(),
+                vehicleType: formData.vehicleType,
+                location: formData.location,
+                entryDate: Timestamp.fromDate(new Date(formData.entryDate)),
+                expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+                escortRequired: !!formData.escortRequired,
+                notes: formData.notes || "",
+                updatedAt: Timestamp.now()
+            };
+
+            if (editingId) {
+                await updateDoc(doc(db, "vehicleClearances", editingId), clearanceData);
+                showNotification("Clearance updated successfully!");
+            } else {
+                clearanceData.createdAt = Timestamp.now();
+                clearanceData.createdBy = currentUser.uid;
+                await addDoc(collection(db, "vehicleClearances"), clearanceData);
+                showNotification("Clearance added successfully!");
+            }
+
+            document.getElementById('modal-container').innerHTML = '';
+        } catch (error) {
+            console.error("Clearance submission error:", error);
+            showNotification("Failed to save clearance: " + error.message, "error");
+        }
+    };
+
     // --- Auth State Listener ---
     onAuthStateChanged(auth, async (user) => {
+        currentUser = user;
+        // Clean up previous listeners
         unsubClearances?.();
         unsubRequests?.();
         unsubConfig?.();
 
-        if (user && !user.isAnonymous) { // Admin user
+        if (user && !user.isAnonymous) { // Admin user is logged in
             appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
             const adminDoc = await getDoc(doc(db, "admins", user.uid));
             if (adminDoc.exists()) {
@@ -1021,12 +1037,13 @@
                     }
                     renderAdminDashboard(user);
                 });
-            } else {
+            } else { // If user is not in the 'admins' collection, log them out.
                 await signOut(auth);
             }
         } else if (user && user.isAnonymous && sessionStorage.getItem('isDashboardLogin') === 'true') {
+            // User has entered the correct password for the Green List
             showUserDashboard(user);
-        } else if (!user) { // No user / logged out
+        } else { // No user / logged out
             sessionStorage.removeItem('isDashboardLogin');
             renderLandingPage();
         }
@@ -1045,18 +1062,16 @@
         
         if (!button) return;
 
+        // Handle button clicks
         if (button.id === 'settings-btn') toggleSettingsPanel(true);
         if (button.id === 'close-settings-panel-btn') toggleSettingsPanel(false);
-
         if (button.id === "request-btn") { routeHistory.push(renderLandingPage); renderRequestForm(); }
         if (button.id === "admin-btn") { routeHistory.push(renderLandingPage); renderAdminLogin(); }
         if (button.id === "user-btn") { routeHistory.push(renderLandingPage); renderUserLogin(); }
         if (button.id === "back-btn") goBack();
         if (button.id === "logout-button") { await signOut(auth); }
         if (button.id === "clear-tracking-btn") renderLandingPage();
-
         if(button.id === "download-report-btn") generatePDFReport(button);
-
         if (button.id === "add-clearance-btn") renderModal();
         if (button.classList.contains("edit-btn")) {
             const clearanceToEdit = clearances.find(c => c.id === button.dataset.id);
@@ -1105,7 +1120,8 @@
                     expiryDate: Timestamp.fromDate(expiryDate),
                     escortRequired: !!data.escortRequired,
                     notes: data.notes || "",
-                    createdAt: Timestamp.now()
+                    createdAt: Timestamp.now(),
+                    createdBy: currentUser.uid
                 };
                 
                 try {
@@ -1123,7 +1139,7 @@
         
         if (button.classList.contains("reject-request-btn")) {
             const id = button.dataset.id;
-             renderConfirmationModal(
+            renderConfirmationModal(
                 'Reject Request',
                 'Are you sure you want to reject this request?',
                 async () => {
@@ -1137,53 +1153,11 @@
                 }
             );
         }
-        
-        if (button.classList.contains("save-update-btn")) {
-            const form = button.closest('form');
-            if (form && form.id === 'clearance-form') {
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-                const data = getFormObj(form);
-                const entryDate = new Date(data.entryDate);
-                const expiryDate = new Date(data.expiryDate);
-
-                if(isNaN(entryDate.getTime()) || isNaN(expiryDate.getTime()) || expiryDate <= entryDate) {
-                    showNotification("Valid dates are required and expiry must be after entry.", "error");
-                    return;
-                }
-
-                const payload = {
-                    ownerName: data.ownerName,
-                    vehicleNumber: data.vehicleNumber.toUpperCase(),
-                    vehicleType: data.vehicleType,
-                    location: data.location,
-                    entryDate: Timestamp.fromDate(entryDate),
-                    expiryDate: Timestamp.fromDate(expiryDate),
-                    escortRequired: !!data.escortRequired,
-                    notes: data.notes || ""
-                };
-
-                try {
-                    if (data.id) {
-                        await updateDoc(doc(db, "vehicleClearances", data.id), payload);
-                        showNotification("Clearance updated successfully.");
-                    } else {
-                        await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now() });
-                        showNotification("Clearance saved successfully.");
-                    }
-                    document.getElementById("modal-container").innerHTML = "";
-                } catch (err) {
-                    console.error("Clearance form error:", err);
-                    showNotification("Error saving clearance: " + err.message, "error");
-                }
-            }
-        }
 
         if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
             button.closest("#modal-container").innerHTML = "";
         }
+
         if (button.id === "auth-toggle-button") {
             authMode = authMode === "login" ? "signup" : "login";
             renderAdminLogin();
@@ -1216,14 +1190,14 @@
                 showNotification("Could not verify password. Please try again.", "error");
             }
         }
-
+        
         if (form.id === "auth-form") {
             routeHistory.push(renderAdminLogin);
             const { email, password, inviteCode } = getFormObj(form);
             try {
                 if (authMode === "login") {
                     await signInWithEmailAndPassword(auth, email, password);
-                } else {
+                } else { // Signup mode
                     if (inviteCode !== ADMIN_INVITE_CODE) {
                         showNotification("Invalid admin invite code.", "error");
                         routeHistory.pop();
@@ -1249,6 +1223,21 @@
             }
         }
 
+        if (form.id === "clearance-form") {
+            const formData = getFormObj(form);
+            const editingId = form.dataset.editingId;
+            
+            const entryDate = new Date(formData.entryDate);
+            const expiryDate = new Date(formData.expiryDate);
+
+            if(isNaN(entryDate.getTime()) || isNaN(expiryDate.getTime()) || expiryDate <= entryDate) {
+                showNotification("Valid dates are required and expiry must be after entry.", "error");
+                return;
+            }
+
+            await handleClearanceSubmission(formData, editingId || null);
+        }
+
         if (form.id === "track-request-form") {
             const vehicleNumber = document.getElementById("track-id-input").value.trim().toUpperCase();
             if (!vehicleNumber) {
@@ -1257,34 +1246,39 @@
             }
 
             try {
-                if (!auth.currentUser) {
+                if (!auth.currentUser || !auth.currentUser.uid) {
                     await signInAnonymously(auth);
                 }
                 
-                const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
+                const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber), orderBy("createdAt", "desc"));
                 const reqSnap = await getDocs(reqQuery);
 
                 if (!reqSnap.empty) {
-                    const sortedDocs = reqSnap.docs.sort((a, b) => b.data().createdAt.toMillis() - a.data().createdAt.toMillis());
-                    const latestRequest = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
-                    if (latestRequest.status === 'approved') {
-                       // Fall through to check clearances
-                    } else {
+                    const latestRequest = { id: reqSnap.docs[0].id, ...reqSnap.docs[0].data() };
+                    if (latestRequest.status !== 'approved') {
                         renderLandingPage({ vehicleNumber, trackingResult: createStatusCard(latestRequest) });
                         return;
                     }
                 }
 
-                const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
+                const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber), orderBy("createdAt", "desc"));
                 const clrSnap = await getDocs(clrQuery);
 
                 if (!clrSnap.empty) {
-                    const sortedDocs = clrSnap.docs.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
-                    const latestClearance = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
+                    const latestClearance = { id: clrSnap.docs[0].id, ...clrSnap.docs[0].data() };
                     
                     const clearanceDiv = document.createElement('div');
                     clearanceDiv.className = 'p-4 bg-white dark:bg-gray-800 rounded-2xl shadow space-y-2 text-left';
-                    clearanceDiv.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p> <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestClearance.vehicleNumber}</p> <p class="text-xs text-gray-500 dark:text-gray-400">${latestClearance.vehicleType || "-"} </p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p> <p class="font-semibold text-green-600">ACTIVE CLEARANCE</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Owner</p> <p class="font-semibold">${latestClearance.ownerName}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until</p> <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>`;
+                    clearanceDiv.innerHTML = `
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p>
+                        <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestClearance.vehicleNumber}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">${latestClearance.vehicleType || "-"}</p>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p>
+                        <p class="font-semibold text-green-600">ACTIVE CLEARANCE</p>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Owner</p>
+                        <p class="font-semibold">${latestClearance.ownerName}</p>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until</p>
+                        <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>`;
                     renderLandingPage({ vehicleNumber, trackingResult: clearanceDiv.outerHTML });
                     return;
                 }
@@ -1309,10 +1303,10 @@
         
         if (form.id === "request-form") {
             const data = getFormObj(form);
-            let currentUser = auth.currentUser;
-            if (!currentUser) {
+            let user = auth.currentUser;
+            if (!user) {
                 const cred = await signInAnonymously(auth);
-                currentUser = cred.user;
+                user = cred.user;
             }
             
             const entryDate = new Date(data.entryDate);
@@ -1330,7 +1324,7 @@
 
             const payload = {
                 requesterName: data.requesterName,
-                requesterId: currentUser.uid,
+                requesterId: user.uid,
                 vehicleNumber: data.vehicleNumber.toUpperCase(),
                 vehicleType: data.vehicleType,
                 location: data.location,
@@ -1376,7 +1370,6 @@
     // --- Initial Render ---
     console.log("Starting application");
     renderLandingPage();
-
   </script>
 </body>
 </html>
