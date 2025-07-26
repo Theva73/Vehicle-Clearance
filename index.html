@@ -337,17 +337,30 @@
         }
     };
 
-    // --- Dashboard Setup ---
+    /**
+     * Optimized Dashboard Setup: Fetches clearances and requests in parallel 
+     * for faster loading and sets up real-time listeners.
+     */
     const showUserDashboard = (user) => {
         appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
-        unsubClearances = onSnapshot(query(collection(db, "vehicleClearances")), snap => {
+
+        // Detach previous listeners to prevent memory leaks
+        unsubClearances?.();
+        unsubRequests?.();
+
+        // Set up real-time listeners for both collections.
+        // The dashboard will automatically update when data changes.
+        unsubClearances = onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
             clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-             onSnapshot(query(collection(db, "clearanceRequests")), reqSnap => {
-                clearanceRequests = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderUserDashboard(user);
-            });
+            renderUserDashboard(user);
+        });
+
+        unsubRequests = onSnapshot(query(collection(db, "clearanceRequests")), (snap) => {
+            clearanceRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderUserDashboard(user);
         });
     };
+
 
     // --- Render Functions ---
     const renderLandingPage = (options = {}) => {
@@ -609,43 +622,46 @@
     };
 
     const renderUserDashboard = (user, vehicleFilter = null) => {
-        appRoot.innerHTML = `
-        <div class="w-full min-h-screen flex justify-center">
-            <div class="w-full max-w-4xl flex flex-col">
-                <!-- Sticky Header: Contains title, date, logout, and search bar -->
-                <header class="sticky top-0 bg-gray-100 dark:bg-gray-900 z-10 py-4 px-2 md:px-0">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-4">
-                            <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
-                            <div>
-                                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">Daily Vehicle Clearances</h1>
-                                <p class="text-gray-500 dark:text-gray-400 text-sm">Showing vehicles cleared for today: ${formatDate(new Date())}</p>
+        // This function might be called multiple times by the listeners.
+        // Only re-render the whole structure if it doesn't exist yet.
+        if (!document.getElementById('user-dashboard-header')) {
+            appRoot.innerHTML = `
+            <div class="w-full min-h-screen flex justify-center">
+                <div class="w-full max-w-4xl flex flex-col">
+                    <header id="user-dashboard-header" class="sticky top-0 bg-gray-100 dark:bg-gray-900 z-10 py-4 px-2 md:px-0">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-4">
+                                <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
+                                <div>
+                                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">Daily Vehicle Clearances</h1>
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm">Showing vehicles cleared for today: ${formatDate(new Date())}</p>
+                                </div>
+                            </div>
+                            <button id="logout-button" class="flex-shrink-0 flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                                <span class="w-4 h-4">${icons.logout}</span> 
+                                <span class="hidden sm:inline">Logout</span>
+                            </button>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="flex gap-2">
+                                <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()">
+                                <button id="voice-search-btn" type="button" class="flex-shrink-0 p-2 rounded-lg text-gray-600 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">
+                                    <span class="w-6 h-6">${icons.mic}</span>
+                                </button>
+                                <button id="clear-search-btn" type="button" class="flex-shrink-0 px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
                             </div>
                         </div>
-                        <button id="logout-button" class="flex-shrink-0 flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-                            <span class="w-4 h-4">${icons.logout}</span> 
-                            <span class="hidden sm:inline">Logout</span>
-                        </button>
-                    </div>
-                    
-                    <div class="relative">
-                        <div class="flex gap-2">
-                            <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
-                            <button id="voice-search-btn" type="button" class="flex-shrink-0 p-2 rounded-lg text-gray-600 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">
-                                <span class="w-6 h-6">${icons.mic}</span>
-                            </button>
-                            <button id="clear-search-btn" type="button" class="flex-shrink-0 px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
-                        </div>
-                    </div>
-                </header>
-                <!-- Scrollable Content -->
-                <main class="px-2 md:px-0 mt-4 flex-grow">
-                    <div id="user-clearance-list-container" class="space-y-4"></div>
-                </main>
-            </div>
-        </div>`;
+                    </header>
+                    <main class="px-2 md:px-0 mt-4 flex-grow">
+                        <div id="user-clearance-list-container" class="space-y-4"></div>
+                    </main>
+                </div>
+            </div>`;
+        }
         
-        renderClearanceListForUser(vehicleFilter);
+        const searchInput = document.getElementById('daily-clearance-search-input');
+        renderClearanceListForUser(searchInput?.value || null);
     };
 
     const renderAdminDashboard = (adminUser) => {
@@ -1036,7 +1052,7 @@
         }
     });
 
-    // --- VOICE SEARCH FUNCTIONALITY (ENHANCED) ---
+    // --- VOICE SEARCH FUNCTIONALITY (ROBUST) ---
 
     const renderListeningModal = (show) => {
         const container = document.getElementById('voice-listening-modal-container');
@@ -1053,14 +1069,20 @@
             const modal = document.getElementById('voice-listening-modal');
             if(modal) {
                modal.classList.replace('animate-fade-in', 'animate-fade-out');
-               setTimeout(() => container.innerHTML = '', 300); // Remove after animation
+               setTimeout(() => container.innerHTML = '', 300);
             } else {
                container.innerHTML = '';
             }
         }
     };
     
+    /**
+     * Aggressively processes the voice transcript to extract only alphanumeric characters.
+     * @param {string} transcript - The raw transcript from the SpeechRecognition API.
+     * @returns {string} The processed, uppercase, alphanumeric string.
+     */
     const processVoiceInput = (transcript) => {
+        // First, handle common number word misinterpretations
         const numberWords = {
             'zero': '0', 'o': '0', 'oh': '0',
             'one': '1',
@@ -1073,19 +1095,15 @@
             'eight': '8', 'ate': '8',
             'nine': '9', 'niner': '9'
         };
-        const fillerWords = ['search', 'find', 'vehicle', 'number', 'plate', 'is', 'a', 'the', 'it\'s', 'it', 'is'];
 
         let processed = transcript.toLowerCase();
         
-        fillerWords.forEach(word => {
-            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), '');
-        });
+        for (const [word, digit] of Object.entries(numberWords)) {
+             processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), digit);
+        }
 
-        Object.keys(numberWords).forEach(word => {
-            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), numberWords[word]);
-        });
-
-        // Remove all non-alphanumeric characters (including spaces)
+        // Now, remove all characters that are NOT letters or numbers.
+        // This is a much safer "allow-list" approach than trying to blacklist filler words.
         processed = processed.replace(/[^a-z0-9]/gi, '');
 
         return processed.toUpperCase();
@@ -1096,22 +1114,26 @@
             return "Sorry, I did not catch that. Please try again.";
         }
         
-        // Use live data fetched by onSnapshot
-        const allRecords = [...clearances, ...clearanceRequests];
-        const latestRecord = allRecords
+        // Use live data fetched by onSnapshot from the main `clearances` array
+        const latestClearance = clearances
             .filter(r => r.vehicleNumber === vehicleNumber)
             .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))[0];
 
-        if (!latestRecord) return "No record.";
-
-        if (latestRecord.status === 'rejected') return "Access denied.";
-        if (latestRecord.status === 'pending') return "Status is pending approval.";
-
-        // If it's a clearance (or an approved request that became a clearance)
-        if (latestRecord.expiryDate) {
+        if (latestClearance) {
             const now = new Date();
-            const isExpired = now > latestRecord.expiryDate.toDate();
+            const isExpired = now > latestClearance.expiryDate.toDate();
             return isExpired ? "Access expired." : "Access clear.";
+        }
+
+        // If not found in clearances, check the requests
+        const latestRequest = clearanceRequests
+            .filter(r => r.vehicleNumber === vehicleNumber)
+            .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))[0];
+            
+        if (latestRequest) {
+            if (latestRequest.status === 'rejected') return "Access denied.";
+            if (latestRequest.status === 'pending') return "Status is pending approval.";
+            // If approved, it should have a corresponding clearance record, which is checked first.
         }
 
         return "No record.";
@@ -1153,7 +1175,6 @@
             searchInput.value = processedResult;
             searchInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-            // Provide enhanced voice feedback by reading back the searched term
             const status = findClearanceStatus(processedResult);
             const feedback = `Searching for ${processedResult.split('').join(' ')}. ${status}`;
             speak(feedback);
@@ -1501,7 +1522,8 @@
 
     document.body.addEventListener("input", e => {
         if (e.target.id === 'daily-clearance-search-input') {
-            renderClearanceListForUser(e.target.value.toUpperCase());
+            const searchInput = document.getElementById('daily-clearance-search-input');
+            renderClearanceListForUser(searchInput.value);
         }
     });
 
@@ -1511,4 +1533,3 @@
   </script>
 </body>
 </html>
-
