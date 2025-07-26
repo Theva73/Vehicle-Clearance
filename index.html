@@ -51,11 +51,20 @@
     #settings-backdrop {
         transition: background-color 0.3s ease-in-out;
     }
+
+    /* Voice search pulse animation */
+    @keyframes pulse {
+        50% { opacity: 0.5; }
+    }
+    .mic-icon-pulse { 
+        animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
+    }
   </style>
 
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
   <div id="app-root"></div>
+  <div id="voice-listening-modal-container"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -141,6 +150,16 @@
       notification.innerHTML = `<span class="mr-3">${type === "success" ? "✓" : "✗"}</span><span>${message}</span>`;
       document.body.appendChild(notification);
       setTimeout(() => notification.remove(), 4000);
+    };
+    
+    const speak = (text) => {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      } else {
+        console.warn("Speech synthesis not supported in this browser.");
+      }
     };
 
     // --- Icon Library ---
@@ -322,7 +341,11 @@
         appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
         unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
             clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderUserDashboard(user);
+            // Also fetch pending requests for voice feedback
+             onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending")), reqSnap => {
+                clearanceRequests = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderUserDashboard(user);
+            });
         });
     };
 
@@ -1006,11 +1029,86 @@
         }
     });
 
-    // --- Voice Search Functionality ---
+    // --- ENHANCED VOICE SEARCH FUNCTIONALITY ---
+
+    const renderListeningModal = (show) => {
+        const container = document.getElementById('voice-listening-modal-container');
+        if (show) {
+            container.innerHTML = `
+            <div id="voice-listening-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-fade-in">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-2xl">
+                    <div class="mic-icon-pulse w-16 h-16 mx-auto text-blue-500">${icons.mic}</div>
+                    <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">Listening...</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Say a vehicle number or "Clearance"</p>
+                </div>
+            </div>`;
+        } else {
+            const modal = document.getElementById('voice-listening-modal');
+            if(modal) {
+               modal.classList.replace('animate-fade-in', 'animate-fade-out'); // Assuming you have a fade-out animation
+               setTimeout(() => container.innerHTML = '', 300); // Remove after animation
+            } else {
+               container.innerHTML = '';
+            }
+        }
+    };
+
+    const processVoiceInput = (transcript) => {
+        const numberWords = {
+            'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 
+            'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
+            'to': 2, 'tree': 3, 'for': 4 // Common misinterpretations
+        };
+        const filterWords = ['search', 'find', 'vehicle', 'number', 'is', 'a', 'plate'];
+
+        let processed = transcript.toLowerCase();
+        
+        filterWords.forEach(word => {
+            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), '');
+        });
+
+        Object.keys(numberWords).forEach(word => {
+            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), numberWords[word]);
+        });
+
+        // Remove all non-alphanumeric characters
+        processed = processed.replace(/[^a-z0-9]/gi, '');
+
+        return processed.toUpperCase();
+    };
+    
+    const findClearanceStatus = (vehicleNumber) => {
+        // 1. Check if cleared for today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isCleared = clearances.some(c => {
+            const entryDate = c.entryDate.toDate();
+            entryDate.setHours(0, 0, 0, 0);
+            const expiryDate = c.expiryDate.toDate();
+            expiryDate.setHours(23, 59, 59, 999);
+            return c.vehicleNumber === vehicleNumber && today >= entryDate && today <= expiryDate;
+        });
+
+        if (isCleared) {
+            return "Cleared";
+        }
+
+        // 2. Check for pending requests
+        const isPending = clearanceRequests.some(r => r.vehicleNumber === vehicleNumber && r.status === 'pending');
+        if (isPending) {
+            return "Status is pending approval";
+        }
+
+        // 3. If not found in either
+        return "Vehicle not found";
+    };
+
+
     const startVoiceSearch = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
             showNotification("Voice search is not supported in this browser.", "error");
+            speak("Sorry, voice search is not supported on this device.");
             return;
         }
 
@@ -1021,15 +1119,30 @@
 
         const voiceButton = document.getElementById('voice-search-btn');
         voiceButton.classList.add('text-blue-500');
-
+        renderListeningModal(true);
+        
         recognition.start();
 
         recognition.onresult = (event) => {
-            const speechResult = event.results[0][0].transcript;
-            const processedResult = speechResult.toUpperCase().replace(/\s/g, '');
+            const speechResult = event.results[0][0].transcript.toLowerCase().trim();
             const searchInput = document.getElementById('daily-clearance-search-input');
+
+            // Check for the "clearance" command first
+            if (speechResult === "clearance") {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                speak("Search cleared");
+                return;
+            }
+            
+            // If not a command, process as a vehicle number
+            const processedResult = processVoiceInput(speechResult);
             searchInput.value = processedResult;
             searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+            // Provide voice feedback on the status
+            const status = findClearanceStatus(processedResult);
+            speak(status);
         };
 
         recognition.onspeechend = () => {
@@ -1037,17 +1150,21 @@
         };
         
         recognition.onend = () => {
+            renderListeningModal(false);
             voiceButton.classList.remove('text-blue-500');
         };
 
         recognition.onerror = (event) => {
+            let errorMsg;
             if (event.error === 'no-speech' || event.error === 'audio-capture') {
-                showNotification("No speech detected. Please try again.", "error");
+                errorMsg = "No speech detected. Please try again.";
             } else if (event.error === 'not-allowed') {
-                showNotification("Microphone access was denied.", "error");
+                errorMsg = "Microphone access was denied.";
             } else {
-                showNotification("An error occurred with voice search.", "error");
+                errorMsg = "An error occurred with voice search.";
             }
+            showNotification(errorMsg, "error");
+            speak("Sorry, I could not hear you. Please try again.");
         };
     };
 
