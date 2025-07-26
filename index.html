@@ -340,10 +340,9 @@
     // --- Dashboard Setup ---
     const showUserDashboard = (user) => {
         appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
-        unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
+        unsubClearances = onSnapshot(query(collection(db, "vehicleClearances")), snap => {
             clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            // Also fetch pending requests for voice feedback
-             onSnapshot(query(collection(db, "clearanceRequests"), where("status", "==", "pending")), reqSnap => {
+             onSnapshot(query(collection(db, "clearanceRequests")), reqSnap => {
                 clearanceRequests = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderUserDashboard(user);
             });
@@ -1031,7 +1030,7 @@
             }
         } else if (user && user.isAnonymous && sessionStorage.getItem('isDashboardLogin') === 'true') {
             showUserDashboard(user);
-        } else if (!user) { // No user / logged out
+        } else { // No user / logged out
             sessionStorage.removeItem('isDashboardLogin');
             renderLandingPage();
         }
@@ -1094,31 +1093,28 @@
     
     const findClearanceStatus = (vehicleNumber) => {
         if (!vehicleNumber) {
-            return "Sorry, I didn't catch that. Please try again.";
+            return "Sorry, I did not catch that. Please try again.";
         }
-        // 1. Check if cleared for today
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const isCleared = clearances.some(c => {
-            const entryDate = c.entryDate.toDate();
-            entryDate.setHours(0, 0, 0, 0);
-            const expiryDate = c.expiryDate.toDate();
-            expiryDate.setHours(23, 59, 59, 999);
-            return c.vehicleNumber === vehicleNumber && today >= entryDate && today <= expiryDate;
-        });
+        
+        // Use live data fetched by onSnapshot
+        const allRecords = [...clearances, ...clearanceRequests];
+        const latestRecord = allRecords
+            .filter(r => r.vehicleNumber === vehicleNumber)
+            .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))[0];
 
-        if (isCleared) {
-            return `Result: Cleared.`;
-        }
+        if (!latestRecord) return "No record.";
 
-        // 2. Check for pending requests
-        const isPending = clearanceRequests.some(r => r.vehicleNumber === vehicleNumber && r.status === 'pending');
-        if (isPending) {
-            return `Result: Status is pending approval.`;
+        if (latestRecord.status === 'rejected') return "Access denied.";
+        if (latestRecord.status === 'pending') return "Status is pending approval.";
+
+        // If it's a clearance (or an approved request that became a clearance)
+        if (latestRecord.expiryDate) {
+            const now = new Date();
+            const isExpired = now > latestRecord.expiryDate.toDate();
+            return isExpired ? "Access expired." : "Access clear.";
         }
 
-        // 3. If not found in either
-        return `Result: Vehicle not found.`;
+        return "No record.";
     };
 
     const startVoiceSearch = () => {
@@ -1392,58 +1388,60 @@
             }
 
             try {
-                if (!auth.currentUser) {
+                if (!auth.currentUser || !auth.currentUser.uid) {
                     await signInAnonymously(auth);
                 }
                 
                 const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
-                const reqSnap = await getDocs(reqQuery);
-
-                if (!reqSnap.empty) {
-                    const sortedDocs = reqSnap.docs.sort((a, b) => b.data().createdAt.toMillis() - a.data().createdAt.toMillis());
-                    const latestRequest = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
-                    if (latestRequest.status === 'approved') {
-                       // Fall through to check clearances
-                    } else {
-                        renderLandingPage({ vehicleNumber, trackingResult: createStatusCard(latestRequest) });
-                        return;
-                    }
-                }
-
                 const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
-                const clrSnap = await getDocs(clrQuery);
+                
+                const [reqSnap, clrSnap] = await Promise.all([getDocs(reqQuery), getDocs(clrQuery)]);
 
-                if (!clrSnap.empty) {
-                    const sortedDocs = clrSnap.docs.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
-                    const latestClearance = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
-                    
+                const allRecords = [
+                    ...reqSnap.docs.map(d => ({...d.data(), type: 'request'})),
+                    ...clrSnap.docs.map(d => ({...d.data(), type: 'clearance'}))
+                ].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                const latestRecord = allRecords[0];
+                let trackingHTML, spokenFeedback;
+
+                if (!latestRecord) {
+                    spokenFeedback = "No record.";
+                    const notFoundDiv = document.createElement('div');
+                    notFoundDiv.className = 'p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-center';
+                    notFoundDiv.innerHTML = `<div class="w-12 h-12 mx-auto text-red-500 mb-3">${icons.x}</div><p class="font-semibold text-red-600 dark:text-red-400">No request or clearance found for ${vehicleNumber}</p>`;
+                    trackingHTML = notFoundDiv.outerHTML;
+                } else if (latestRecord.type === 'request') {
+                    trackingHTML = createStatusCard(latestRecord);
+                    if (latestRecord.status === 'rejected') {
+                        spokenFeedback = "Access denied.";
+                    } else if (latestRecord.status === 'pending') {
+                        spokenFeedback = "Status is pending approval.";
+                    } else { // approved, but not yet a full clearance record
+                        spokenFeedback = "Access clear.";
+                    }
+                } else { // It's a clearance
                     const now = new Date();
-                    const isExpired = now > latestClearance.expiryDate.toDate();
+                    const isExpired = now > latestRecord.expiryDate.toDate();
+                    spokenFeedback = isExpired ? "Access expired." : "Access clear.";
+
                     const statusText = isExpired ? 'EXPIRED CLEARANCE' : 'ACTIVE CLEARANCE';
                     const statusColor = isExpired ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400';
-                    
                     const clearanceDiv = document.createElement('div');
                     clearanceDiv.className = 'p-4 bg-white dark:bg-gray-800 rounded-2xl shadow space-y-2 text-left';
-                    clearanceDiv.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p> <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestClearance.vehicleNumber}</p> <p class="text-xs text-gray-500 dark:text-gray-400">${latestClearance.vehicleType || "-"}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p> <p class="font-semibold ${statusColor}">${statusText}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Owner</p> <p class="font-semibold">${latestClearance.ownerName}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until</p> <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>`;
-                    
-                    renderLandingPage({ vehicleNumber, trackingResult: clearanceDiv.outerHTML });
-                    return;
+                    clearanceDiv.innerHTML = `<p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestRecord.vehicleNumber}</p><p class="font-semibold ${statusColor}">${statusText}</p><p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until: ${formatDate(latestRecord.expiryDate)}</p>`;
+                    trackingHTML = clearanceDiv.outerHTML;
                 }
-
-                const notFoundDiv = document.createElement('div');
-                notFoundDiv.className = 'p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-center';
-                notFoundDiv.innerHTML = `
-                    <div class="w-12 h-12 mx-auto text-red-500 mb-3">${icons.x}</div>
-                    <p class="font-semibold text-red-600 dark:text-red-400">No request or clearance found for ${vehicleNumber}</p>
-                    <p class="text-sm text-red-500 dark:text-red-400 mt-1">Please check the vehicle number and try again.</p>
-                `;
-                renderLandingPage({ vehicleNumber, trackingResult: notFoundDiv.outerHTML });
+                
+                speak(spokenFeedback);
+                renderLandingPage({ vehicleNumber, trackingResult: trackingHTML });
 
             } catch (err) {
                 console.error("Tracking error:", err);
+                speak("An error occurred during tracking.");
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-center';
-                errorDiv.innerHTML = `<div class="w-12 h-12 mx-auto text-red-500 mb-3">${icons.x}</div> <p class="font-semibold text-red-600 dark:text-red-400">An error occurred during tracking</p> <p class="text-sm text-red-500 dark:text-red-400 mt-1">Please try again later.</p>`;
+                errorDiv.innerHTML = `<p class="font-semibold text-red-600 dark:text-red-400">An error occurred. Please try again later.</p>`;
                 renderLandingPage({ vehicleNumber, trackingResult: errorDiv.outerHTML });
             }
         }
@@ -1507,16 +1505,9 @@
         }
     });
 
-    document.body.addEventListener("reset", e => {
-        if (e.target.id === "daily-clearance-search-form") {
-            setTimeout(() => renderClearanceListForUser(null), 0);
-        }
-    });
-
     // --- Initial Render ---
     console.log("Starting application");
     renderLandingPage();
   </script>
 </body>
 </html>
-
