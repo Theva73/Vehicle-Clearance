@@ -658,31 +658,60 @@
         return result.join('').toUpperCase();
     };
 
-    const findClearanceStatus = (vehicleNumber) => {
+    /**
+     * [ENHANCED] Performs a live Firestore query to get the most up-to-date status for a vehicle.
+     * This avoids race conditions where the local data hasn't updated yet.
+     * @param {string} vehicleNumber - The vehicle number to check.
+     * @returns {Promise<string>} The current status of the vehicle ('Clear', 'Expired', 'Pending', etc.).
+     */
+    const findClearanceStatus = async (vehicleNumber) => {
         if (!vehicleNumber) return "No vehicle number detected";
-        const latestClearance = clearances.filter(c => c.vehicleNumber === vehicleNumber).sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))[0];
-        if (latestClearance) {
-            const now = new Date();
-            const expiryDate = latestClearance.expiryDate.toDate();
-            const isExpired = now > expiryDate;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const entryDate = latestClearance.entryDate.toDate();
-            entryDate.setHours(0, 0, 0, 0);
-            expiryDate.setHours(23, 59, 59, 999);
-            const isValidToday = today >= entryDate && today <= expiryDate;
-            if (isExpired) return "Expired";
-            if (isValidToday) return "Clear";
-            return "Not valid today";
+
+        try {
+            // 1. Check for an active or future clearance first
+            const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
+            const clrSnap = await getDocs(clrQuery);
+            const allClearances = clrSnap.docs.map(d => d.data()).sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+
+            if (allClearances.length > 0) {
+                const latestClearance = allClearances[0];
+                const now = new Date();
+                const expiryDate = latestClearance.expiryDate.toDate();
+                const entryDate = latestClearance.entryDate.toDate();
+                
+                // Set times to check full days
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                expiryDate.setHours(23, 59, 59, 999);
+                entryDate.setHours(0, 0, 0, 0);
+
+                if (now > expiryDate) return "Expired";
+                if (today >= entryDate && today <= expiryDate) return "Clear";
+                if (today < entryDate) return "Upcoming"; // It's cleared for a future date
+            }
+
+            // 2. If no valid clearance, check for a pending request
+            const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
+            const reqSnap = await getDocs(reqQuery);
+            const allRequests = reqSnap.docs.map(d => d.data()).sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+            
+            if (allRequests.length > 0) {
+                const latestRequest = allRequests[0];
+                if (latestRequest.status === 'rejected') return "Denied Entry";
+                if (latestRequest.status === 'pending') return "Pending";
+                // If approved, it should have been found in the clearance check above, but we can double-check
+                if (latestRequest.status === 'approved') return "Clear";
+            }
+
+            // 3. If no records are found anywhere
+            return "No Record";
+
+        } catch (error) {
+            console.error("Error during live status check:", error);
+            return "Error Checking";
         }
-        const latestRequest = clearanceRequests.filter(r => r.vehicleNumber === vehicleNumber).sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))[0];
-        if (latestRequest) {
-            if (latestRequest.status === 'rejected') return "Denied Entry";
-            if (latestRequest.status === 'pending') return "Pending";
-            if (latestRequest.status === 'approved') return "Clear";
-        }
-        return "No Record";
     };
+
 
     const renderListeningModal = (show, confidence = 0) => {
         const container = document.getElementById('voice-listening-modal-container');
@@ -775,7 +804,7 @@
             }
         };
         
-        voiceRecognition.onend = () => {
+        voiceRecognition.onend = async () => { // Make this function async
             clearTimeout(timeoutId);
             renderListeningModal(false);
             if (voiceButton) {
@@ -797,15 +826,15 @@
                     searchInput.dispatchEvent(new Event('input', { bubbles: true }));
                 }
                 if (processedResult) {
-                    const status = findClearanceStatus(processedResult);
+                    // [ENHANCED] Await the result from the live database check
+                    const status = await findClearanceStatus(processedResult); 
+                    
                     const vehicleSpoken = processedResult.split('').join(' ');
                     const feedback = `Searching for ${vehicleSpoken}. Status: ${status}.`;
                     speak(feedback);
-                    const statusColor = {
-                        'Clear': 'text-green-600', 'Denied Entry': 'text-red-600', 'Expired': 'text-red-600',
-                        'Pending': 'text-yellow-600', 'No Record': 'text-gray-600'
-                    }[status] || 'text-gray-600';
-                    showNotification(`${processedResult}: ${status}`, status === 'Clear' ? 'success' : 'error');
+                    
+                    const statusType = (status === 'Clear' || status === 'Upcoming') ? 'success' : 'error';
+                    showNotification(`${processedResult}: ${status}`, statusType);
                 } else {
                     speak("No vehicle number detected. Please try again.");
                     showNotification("Could not detect vehicle number", "error");
@@ -1531,4 +1560,3 @@
   </script>
 </body>
 </html>
-
