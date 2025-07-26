@@ -22,17 +22,17 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-20px); }
-      to { opacity: 1; transform: translateX(0); }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
     }
     .animate-fade-in { 
       animation: fadeIn 0.3s ease-out forwards;
     }
-    .animate-slide-in {
-      animation: slideIn 0.4s ease-out forwards;
+    .animate-fade-out { 
+      animation: fadeOut 0.3s ease-out forwards;
     }
-    
+
     /* Invert calendar icon color for dark mode */
     input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(0.5);
@@ -154,6 +154,7 @@
     
     const speak = (text) => {
       if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // Cancel any previous speech
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
         window.speechSynthesis.speak(utterance);
@@ -608,34 +609,46 @@
         listContainer.innerHTML = listHTML;
     };
 
+    /**
+     * Renders the user dashboard with a sticky header.
+     * @param {object} user - The authenticated user object.
+     * @param {string|null} vehicleFilter - The current search filter for vehicle numbers.
+     */
     const renderUserDashboard = (user, vehicleFilter = null) => {
         appRoot.innerHTML = `
-        <div class="w-full min-h-screen p-2 md:p-4 flex justify-center">
-            <main class="w-full max-w-4xl">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center gap-4">
-                        <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
-                        <div>
-                            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Daily Vehicle Clearances</h1>
-                            <p class="text-gray-500 dark:text-gray-400">Showing vehicles cleared for today: ${formatDate(new Date())}</p>
+        <div class="w-full min-h-screen flex justify-center">
+            <div class="w-full max-w-4xl flex flex-col">
+                <!-- Sticky Header: Contains title, date, logout, and search bar -->
+                <header class="sticky top-0 bg-gray-100 dark:bg-gray-900 z-10 py-4 px-2 md:px-0">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-4">
+                            <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
+                            <div>
+                                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">Daily Vehicle Clearances</h1>
+                                <p class="text-gray-500 dark:text-gray-400 text-sm">Showing vehicles cleared for today: ${formatDate(new Date())}</p>
+                            </div>
+                        </div>
+                        <button id="logout-button" class="flex-shrink-0 flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                            <span class="w-4 h-4">${icons.logout}</span> 
+                            <span class="hidden sm:inline">Logout</span>
+                        </button>
+                    </div>
+                    
+                    <div class="relative">
+                        <div class="flex gap-2">
+                            <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
+                            <button id="voice-search-btn" type="button" class="flex-shrink-0 p-2 rounded-lg text-gray-600 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">
+                                <span class="w-6 h-6">${icons.mic}</span>
+                            </button>
+                            <button id="clear-search-btn" type="button" class="flex-shrink-0 px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
                         </div>
                     </div>
-                    <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-                        <span class="w-4 h-4">${icons.logout}</span> Logout
-                    </button>
-                </div>
-                
-                <div class="mb-6">
-                    <div class="flex gap-2">
-                        <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
-                        <button id="voice-search-btn" type="button" class="p-2 rounded-lg text-gray-600 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">
-                            <span class="w-6 h-6">${icons.mic}</span>
-                        </button>
-                        <button id="clear-search-btn" type="button" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
-                    </div>
-                </div>
-                <div id="user-clearance-list-container" class="space-y-4"></div>
-            </main>
+                </header>
+                <!-- Scrollable Content -->
+                <main class="px-2 md:px-0 mt-4 flex-grow">
+                    <div id="user-clearance-list-container" class="space-y-4"></div>
+                </main>
+            </div>
         </div>`;
         
         renderClearanceListForUser(vehicleFilter);
@@ -1029,55 +1042,60 @@
         }
     });
 
-    // --- ENHANCED VOICE SEARCH FUNCTIONALITY ---
+    // --- VOICE SEARCH FUNCTIONALITY ---
 
     const renderListeningModal = (show) => {
         const container = document.getElementById('voice-listening-modal-container');
         if (show) {
             container.innerHTML = `
-            <div id="voice-listening-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-fade-in">
+            <div id="voice-listening-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] animate-fade-in">
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-2xl">
                     <div class="mic-icon-pulse w-16 h-16 mx-auto text-blue-500">${icons.mic}</div>
                     <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">Listening...</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Say a vehicle number or "Clearance"</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Say a vehicle number or "Clear search"</p>
                 </div>
             </div>`;
         } else {
             const modal = document.getElementById('voice-listening-modal');
             if(modal) {
-               modal.classList.replace('animate-fade-in', 'animate-fade-out'); // Assuming you have a fade-out animation
+               modal.classList.replace('animate-fade-in', 'animate-fade-out');
                setTimeout(() => container.innerHTML = '', 300); // Remove after animation
             } else {
                container.innerHTML = '';
             }
         }
     };
-
+    
+    /**
+     * More robustly processes the voice transcript to extract a vehicle number.
+     * @param {string} transcript - The raw transcript from the SpeechRecognition API.
+     * @returns {string} The processed, uppercase, alphanumeric string.
+     */
     const processVoiceInput = (transcript) => {
         const numberWords = {
-            'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 
-            'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
-            'to': 2, 'tree': 3, 'for': 4 // Common misinterpretations
+            'zero': '0', 'one': '1', 'two': '2', 'to': '2', 'too': '2', 
+            'three': '3', 'tree': '3', 'four': '4', 'for': '4', 
+            'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9'
         };
-        const filterWords = ['search', 'find', 'vehicle', 'number', 'is', 'a', 'plate'];
 
         let processed = transcript.toLowerCase();
+
+        // Replace all spoken number words with their digit equivalents
+        for (const [word, digit] of Object.entries(numberWords)) {
+            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), digit);
+        }
         
-        filterWords.forEach(word => {
-            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), '');
-        });
-
-        Object.keys(numberWords).forEach(word => {
-            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), numberWords[word]);
-        });
-
-        // Remove all non-alphanumeric characters
+        // Remove all characters that are not letters or numbers.
+        // This is safer than trying to filter out specific words.
         processed = processed.replace(/[^a-z0-9]/gi, '');
 
         return processed.toUpperCase();
     };
     
     const findClearanceStatus = (vehicleNumber) => {
+        if (!vehicleNumber) {
+            return "Sorry, I didn't catch that. Please try again.";
+        }
         // 1. Check if cleared for today
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -1090,20 +1108,22 @@
         });
 
         if (isCleared) {
-            return "Cleared";
+            return `${vehicleNumber} is cleared.`;
         }
 
         // 2. Check for pending requests
         const isPending = clearanceRequests.some(r => r.vehicleNumber === vehicleNumber && r.status === 'pending');
         if (isPending) {
-            return "Status is pending approval";
+            return `Status for ${vehicleNumber} is pending approval.`;
         }
 
         // 3. If not found in either
-        return "Vehicle not found";
+        return `Vehicle ${vehicleNumber} not found.`;
     };
 
-
+    /**
+     * Initiates the voice search process using the SpeechRecognition API.
+     */
     const startVoiceSearch = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -1116,6 +1136,7 @@
         recognition.lang = 'en-US';
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
+        recognition.continuous = false; // We only need one utterance
 
         const voiceButton = document.getElementById('voice-search-btn');
         voiceButton.classList.add('text-blue-500');
@@ -1124,34 +1145,35 @@
         recognition.start();
 
         recognition.onresult = (event) => {
+            recognition.stop(); // Stop listening as soon as we have a result.
             const speechResult = event.results[0][0].transcript.toLowerCase().trim();
             const searchInput = document.getElementById('daily-clearance-search-input');
 
-            // Check for the "clearance" command first
-            if (speechResult === "clearance") {
+            // Check for a clear command
+            if (speechResult.includes("clear")) {
                 searchInput.value = '';
+                // Manually trigger the input event to re-render the list
                 searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-                speak("Search cleared");
+                speak("Search cleared.");
                 return;
             }
             
             // If not a command, process as a vehicle number
             const processedResult = processVoiceInput(speechResult);
             searchInput.value = processedResult;
+            // Manually trigger the input event to filter the list
             searchInput.dispatchEvent(new Event('input', { bubbles: true }));
 
             // Provide voice feedback on the status
             const status = findClearanceStatus(processedResult);
             speak(status);
         };
-
-        recognition.onspeechend = () => {
-            recognition.stop();
-        };
         
         recognition.onend = () => {
             renderListeningModal(false);
-            voiceButton.classList.remove('text-blue-500');
+            if (voiceButton) {
+                voiceButton.classList.remove('text-blue-500');
+            }
         };
 
         recognition.onerror = (event) => {
@@ -1161,7 +1183,8 @@
             } else if (event.error === 'not-allowed') {
                 errorMsg = "Microphone access was denied.";
             } else {
-                errorMsg = "An error occurred with voice search.";
+                errorMsg = "An error occurred during voice search.";
+                console.error("Speech Recognition Error:", event.error);
             }
             showNotification(errorMsg, "error");
             speak("Sorry, I could not hear you. Please try again.");
