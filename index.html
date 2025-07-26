@@ -33,6 +33,7 @@
       animation: fadeOut 0.3s ease-out forwards;
     }
 
+    /* Invert calendar icon color for dark mode */
     input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(0.5);
     }
@@ -40,6 +41,7 @@
       filter: invert(1);
     }
 
+    /* Remove default marker from details/summary */
     summary { list-style: none; }
     summary::-webkit-details-marker { display: none; }
     
@@ -50,49 +52,22 @@
         transition: background-color 0.3s ease-in-out;
     }
 
-    @keyframes pulseSmooth {
-        0%, 100% { 
-            opacity: 1; 
-            transform: scale(1); 
-        }
-        50% { 
-            opacity: 0.8; 
-            transform: scale(1.05); 
-        }
+    /* Voice search pulse animation */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.1); }
     }
     .mic-icon-pulse { 
-        animation: pulseSmooth 2s ease-in-out infinite;
-        will-change: transform, opacity;
+        animation: pulse 1s ease-in-out infinite; 
     }
 
-    @keyframes voiceWaveStable {
-        0%, 100% { 
-            transform: scale(1); 
-            opacity: 0.9; 
-        }
-        50% { 
-            transform: scale(1.1); 
-            opacity: 1; 
-        }
+    /* Enhanced voice modal animations */
+    @keyframes voiceWave {
+        0%, 100% { transform: scale(1); opacity: 0.7; }
+        50% { transform: scale(1.2); opacity: 1; }
     }
     .voice-wave {
-        animation: voiceWaveStable 1.8s ease-in-out infinite;
-        will-change: transform, opacity;
-    }
-
-    .confidence-bar {
-        transition: width 0.3s ease-out;
-        will-change: width;
-    }
-
-    .voice-search-container {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .voice-modal-overlay {
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
+        animation: voiceWave 1.5s ease-in-out infinite;
     }
   </style>
 
@@ -112,7 +87,7 @@
       onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Configuration
+    // --- Configuration ---
     const ADMIN_INVITE_CODE = "ADMIN2025";
     const DEFAULT_USER_PASSWORD = "123456";
     const firebaseConfig = {
@@ -124,7 +99,7 @@
       appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    // App Initialization
+    // --- App Initialization ---
     const appRoot = document.getElementById("app-root");
     let app, auth, db;
     try {
@@ -136,7 +111,7 @@
       appRoot.innerHTML = '<div class="p-8 text-center text-red-500 bg-red-100 rounded-lg"><b>Error:</b> Firebase initialization failed. Check console for details.</div>';
     }
 
-    // State Management
+    // --- State Management ---
     let clearances = [];
     let clearanceRequests = [];
     let userPasswordConfig = null;
@@ -145,9 +120,8 @@
     let routeHistory = [];
     let currentUser = null;
     let voiceRecognition = null;
-    let isVoiceSearchActive = false;
 
-    // Utility Functions
+    // --- Utility Functions ---
     const goBack = () => {
         if (routeHistory.length > 0) {
             const renderPrevious = routeHistory.pop();
@@ -162,7 +136,6 @@
       const d = date instanceof Date ? date : date.toDate();
       return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
     };
-
     const formatDateLongForm = (date) => {
       if (!date) return "N/A";
       const d = date instanceof Date ? date : date.toDate();
@@ -181,7 +154,6 @@
     };
 
     const getFormObj = form => Object.fromEntries(new FormData(form).entries());
-    
     const showNotification = (message, type = "success") => {
       const notification = document.createElement("div");
       const bgColor = type === "success" ? "bg-green-500" : "bg-red-500";
@@ -192,33 +164,20 @@
     };
     
     const speak = (text) => {
-      return new Promise((resolve) => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          
-          setTimeout(() => {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.85;
-            utterance.pitch = 1;
-            utterance.volume = 0.9;
-            
-            utterance.onend = () => resolve();
-            utterance.onerror = (e) => {
-              console.warn("Speech synthesis error:", e);
-              resolve();
-            };
-            
-            window.speechSynthesis.speak(utterance);
-          }, 100);
-        } else {
-          console.warn("Speech synthesis not supported in this browser.");
-          resolve();
-        }
-      });
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // Cancel any previous speech
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9; // Slightly slower for better clarity
+        utterance.pitch = 1;
+        utterance.volume = 0.8;
+        window.speechSynthesis.speak(utterance);
+      } else {
+        console.warn("Speech synthesis not supported in this browser.");
+      }
     };
-    
-    // Icon Library
+
+    // --- Icon Library ---
     const icons = {
         car: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-1.5"></path><path d="M20 10h-5.41l-1.42-2.84a1 1 0 0 0-.84-.55H10a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"></path><circle cx="7" cy="16.5" r="2.5"></circle><circle cx="17" cy="16.5" r="2.5"></circle></svg>',
         logout: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
@@ -239,350 +198,7 @@
         mic: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>'
     };
 
-    // Enhanced Voice Processing
-    const numberWords = {
-        'zero': '0', 'o': '0', 'oh': '0', 'nil': '0',
-        'one': '1', 'won': '1',
-        'two': '2', 'to': '2', 'too': '2', 'tu': '2',
-        'three': '3', 'tree': '3', 'free': '3',
-        'four': '4', 'for': '4', 'fore': '4',
-        'five': '5', 'fife': '5',
-        'six': '6', 'sex': '6', 'sicks': '6',
-        'seven': '7', 'heaven': '7',
-        'eight': '8', 'ate': '8', 'ait': '8',
-        'nine': '9', 'niner': '9', 'line': '9'
-    };
-
-    const letterMappings = {
-        'a': 'a', 'alpha': 'a', 'apple': 'a', 'eh': 'a',
-        'b': 'b', 'bravo': 'b', 'boy': 'b', 'beta': 'b', 'bee': 'b',
-        'c': 'c', 'charlie': 'c', 'cat': 'c', 'see': 'c', 'sea': 'c',
-        'd': 'd', 'delta': 'd', 'dog': 'd', 'dee': 'd',
-        'e': 'e', 'echo': 'e', 'easy': 'e',
-        'f': 'f', 'foxtrot': 'f', 'fox': 'f', 'eff': 'f',
-        'g': 'g', 'golf': 'g', 'george': 'g', 'gee': 'g',
-        'h': 'h', 'hotel': 'h', 'house': 'h', 'aitch': 'h',
-        'i': 'i', 'india': 'i', 'ice': 'i', 'eye': 'i',
-        'j': 'j', 'juliet': 'j', 'john': 'j', 'jay': 'j',
-        'k': 'k', 'kilo': 'k', 'king': 'k', 'kay': 'k',
-        'l': 'l', 'lima': 'l', 'love': 'l', 'el': 'l', 'ell': 'l',
-        'm': 'm', 'mike': 'm', 'mary': 'm', 'em': 'm',
-        'n': 'n', 'november': 'n', 'nancy': 'n', 'en': 'n',
-        'o': 'o', 'oscar': 'o', 'orange': 'o',
-        'p': 'p', 'papa': 'p', 'peter': 'p', 'pee': 'p',
-        'q': 'q', 'quebec': 'q', 'queen': 'q', 'cue': 'q',
-        'r': 'r', 'romeo': 'r', 'robert': 'r', 'are': 'r', 'arr': 'r',
-        's': 's', 'sierra': 's', 'sam': 's', 'ess': 's',
-        't': 't', 'tango': 't', 'tom': 't', 'tee': 't',
-        'u': 'u', 'uniform': 'u', 'uncle': 'u', 'you': 'u',
-        'v': 'v', 'victor': 'v', 'victory': 'v', 'vee': 'v',
-        'w': 'w', 'whiskey': 'w', 'william': 'w', 'double-u': 'w', 'double u': 'w',
-        'x': 'x', 'xray': 'x', 'x-ray': 'x', 'ex': 'x',
-        'y': 'y', 'yankee': 'y', 'yellow': 'y', 'why': 'y',
-        'z': 'z', 'zulu': 'z', 'zebra': 'z', 'zee': 'z', 'zed': 'z'
-    };
-
-    const processVoiceInput = (transcript) => {
-        let processed = transcript.toLowerCase().trim();
-        
-        if (processed.includes("clear") || processed.includes("reset")) {
-            return "";
-        }
-        
-        let words = processed.split(/[\s\-_.,]+/);
-        let result = [];
-        
-        for (let word of words) {
-            word = word.replace(/[^\w]/g, '');
-            
-            if (!word) continue;
-            
-            if (numberWords[word]) {
-                result.push(numberWords[word]);
-            }
-            else if (letterMappings[word]) {
-                result.push(letterMappings[word]);
-            }
-            else if (/^[a-z0-9]$/i.test(word)) {
-                result.push(word);
-            }
-            else if (/^[a-z0-9]+$/i.test(word)) {
-                result.push(word);
-            }
-        }
-        
-        return result.join('').toUpperCase();
-    };
-
-    /**
-     * [IMPROVED] Finds the status of a vehicle by checking local caches.
-     * This new logic is more robust:
-     * 1. It combines clearances and requests to find the most recent record.
-     * 2. It prioritizes EXACT vehicle number matches over PARTIAL matches.
-     * This provides more accurate and consistent results.
-    */
-    const findClearanceStatus = (vehicleNumber) => {
-        if (!vehicleNumber || vehicleNumber.length === 0) {
-            return "No vehicle number detected";
-        }
-        
-        console.log("Searching for vehicle (new logic):", vehicleNumber);
-
-        // Combine all records from local cache for a unified search
-        const allRecords = [
-            ...clearances.map(c => ({ ...c, type: 'clearance' })),
-            ...clearanceRequests.map(r => ({ ...r, type: 'request' }))
-        ];
-
-        // 1. Prioritize an exact match
-        const exactMatches = allRecords
-            .filter(rec => rec.vehicleNumber === vehicleNumber)
-            .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-
-        let recordToUse = exactMatches[0];
-
-        // 2. If no exact match found, fall back to a partial match
-        if (!recordToUse && vehicleNumber.length >= 3) {
-            const partialMatches = allRecords
-                .filter(rec => rec.vehicleNumber.includes(vehicleNumber) || vehicleNumber.includes(rec.vehicleNumber))
-                .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-            recordToUse = partialMatches[0];
-        }
-
-        // 3. Determine status based on the found record
-        if (recordToUse) {
-            if (recordToUse.type === 'clearance') {
-                const now = new Date();
-                const expiryDate = recordToUse.expiryDate.toDate();
-                const isExpired = now > expiryDate;
-                
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const entryDate = recordToUse.entryDate.toDate();
-                entryDate.setHours(0, 0, 0, 0);
-                expiryDate.setHours(23, 59, 59, 999);
-                
-                const isValidToday = today >= entryDate && today <= expiryDate;
-                
-                if (isExpired) return "Expired";
-                if (isValidToday) return "Clear";
-                return "Not valid today";
-
-            } else if (recordToUse.type === 'request') {
-                if (recordToUse.status === 'rejected') return "Denied Entry";
-                if (recordToUse.status === 'pending') return "Pending";
-                if (recordToUse.status === 'approved') return "Clear";
-            }
-        }
-
-        return "No Record";
-    };
-
-    const renderListeningModal = (show, confidence = 0, transcript = "") => {
-        const container = document.getElementById('voice-listening-modal-container');
-        if (show) {
-            container.innerHTML = `
-            <div id="voice-listening-modal" class="voice-modal-overlay fixed inset-0 bg-black/70 flex items-center justify-center z-[100] animate-fade-in"> 
-                <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 text-center shadow-2xl max-w-sm w-full mx-4"> 
-                    <div class="voice-wave w-20 h-20 mx-auto text-blue-500 mb-4">${icons.mic}</div> 
-                    <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Listening...</h3> 
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Say the vehicle number clearly</p> 
-                    ${transcript ? `<p class="text-xs text-blue-600 dark:text-blue-400 mt-2 font-mono">"${transcript}"</p>` : ''} 
-                    <div class="mt-4 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden"> 
-                        <div class="confidence-bar bg-blue-500 h-full" style="width: ${Math.min(confidence, 100)}%"></div> 
-                    </div> 
-                    <p class="text-xs text-gray-400 mt-2">Confidence: ${Math.round(confidence)}%</p> 
-                    <button id="cancel-voice-search" class="mt-4 px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"> Cancel </button> 
-                </div> 
-            </div>`;
-        } else {
-            const modal = document.getElementById('voice-listening-modal');
-            if (modal) {
-                modal.classList.replace('animate-fade-in', 'animate-fade-out');
-                setTimeout(() => container.innerHTML = '', 300);
-            } else {
-                container.innerHTML = '';
-            }
-        }
-    };
-
-    const startVoiceSearch = async () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            showNotification("Voice search is not supported in this browser.", "error");
-            await speak("Sorry, voice search is not supported on this device.");
-            return;
-        }
-
-        if (isVoiceSearchActive || voiceRecognition) {
-            return;
-        }
-
-        isVoiceSearchActive = true;
-        voiceRecognition = new SpeechRecognition();
-        voiceRecognition.lang = 'en-US';
-        voiceRecognition.interimResults = true;
-        voiceRecognition.maxAlternatives = 5;
-        voiceRecognition.continuous = false;
-
-        const voiceButton = document.getElementById('voice-search-btn');
-        if (voiceButton) {
-            voiceButton.classList.add('text-blue-500', 'bg-blue-100', 'dark:bg-blue-900');
-            voiceButton.disabled = true;
-        }
-        
-        renderListeningModal(true, 0);
-        
-        let finalTranscript = '';
-        let timeoutId;
-        let hasProcessedResult = false;
-
-        const resetTimeout = () => {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                if (voiceRecognition && !hasProcessedResult) {
-                    voiceRecognition.stop();
-                }
-            }, 6000);
-        };
-
-        const cleanup = () => {
-            clearTimeout(timeoutId);
-            isVoiceSearchActive = false;
-            renderListeningModal(false);
-            if (voiceButton) {
-                voiceButton.classList.remove('text-blue-500', 'bg-blue-100', 'dark:bg-blue-900');
-                voiceButton.disabled = false;
-            }
-            voiceRecognition = null;
-        };
-
-        try {
-            voiceRecognition.start();
-            resetTimeout();
-        } catch (error) {
-            console.error("Voice recognition start error:", error);
-            cleanup();
-            await speak("Could not start voice recognition. Please try again.");
-            return;
-        }
-
-        voiceRecognition.onresult = async (event) => {
-            if (hasProcessedResult) return;
-            
-            resetTimeout();
-            
-            let interimTranscript = '';
-            let confidence = 0;
-            
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const result = event.results[i];
-                confidence = Math.max(confidence, (result[0].confidence || 0.5) * 100);
-                
-                if (result.isFinal) {
-                    finalTranscript += result[0].transcript;
-                } else {
-                    interimTranscript += result[0].transcript;
-                }
-            }
-            
-            const currentTranscript = finalTranscript + interimTranscript;
-            
-            renderListeningModal(true, confidence, currentTranscript);
-            
-            if (finalTranscript.trim() && confidence > 60) {
-                hasProcessedResult = true;
-                voiceRecognition.stop();
-            }
-        };
-        
-        voiceRecognition.onend = async () => {
-            if (hasProcessedResult) return;
-            hasProcessedResult = true;
-            
-            cleanup();
-            
-            const searchInput = document.getElementById('daily-clearance-search-input');
-            
-            if (finalTranscript.toLowerCase().includes("clear")) {
-                if (searchInput) {
-                    searchInput.value = '';
-                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-                await speak("Search cleared.");
-                return;
-            }
-            
-            if (finalTranscript.trim()) {
-                const processedResult = processVoiceInput(finalTranscript);
-                console.log("Voice input processed:", finalTranscript, "->", processedResult);
-                
-                if (searchInput) {
-                    searchInput.value = processedResult;
-                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-
-                if (processedResult) {
-                    const status = findClearanceStatus(processedResult);
-                    const vehicleSpoken = processedResult.split('').join(' ');
-                    
-                    await speak(`Searching for ${vehicleSpoken}. Status: ${status}.`);
-                    
-                    const statusColor = {
-                        'Clear': 'success',
-                        'Denied Entry': 'error',
-                        'Expired': 'error',
-                        'Pending': 'success',
-                        'No Record': 'error'
-                    }[status] || 'error';
-                    
-                    showNotification(`${processedResult}: ${status}`, statusColor);
-                } else {
-                    await speak("No vehicle number detected. Please try again.");
-                    showNotification("Could not detect vehicle number", "error");
-                }
-            } else {
-                await speak("No speech detected. Please try again.");
-                showNotification("No speech detected", "error");
-            }
-        };
-
-        voiceRecognition.onerror = async (event) => {
-            if (hasProcessedResult) return;
-            hasProcessedResult = true;
-            
-            cleanup();
-            
-            let errorMsg, spokenMsg;
-            
-            switch(event.error) {
-                case 'no-speech':
-                    errorMsg = "No speech detected. Please try again.";
-                    spokenMsg = "I didn't hear anything. Please try again.";
-                    break;
-                case 'audio-capture':
-                    errorMsg = "Microphone not accessible.";
-                    spokenMsg = "Cannot access microphone. Please check permissions.";
-                    break;
-                case 'not-allowed':
-                    errorMsg = "Microphone access denied.";
-                    spokenMsg = "Microphone access was denied. Please allow microphone permissions.";
-                    break;
-                case 'network':
-                    errorMsg = "Network error occurred.";
-                    spokenMsg = "Network error. Please check your connection.";
-                    break;
-                default:
-                    errorMsg = "Voice recognition error occurred.";
-                    spokenMsg = "An error occurred. Please try again.";
-            }
-            
-            console.error("Speech Recognition Error:", event.error);
-            showNotification(errorMsg, "error");
-            await speak(spokenMsg);
-        };
-    };
-
+    // --- PDF Generation Function ---
     const generatePDFReport = async (button) => {
         button.disabled = true;
         const originalHTML = button.innerHTML;
@@ -751,57 +367,60 @@
             renderUserDashboard(user);
         }, (error) => console.error("Error fetching requests:", error));
     };
-    
+
+
+    // --- Render Functions ---
     const renderLandingPage = (options = {}) => {
         const { vehicleNumber = "", trackingResult = null } = options;
         let trackingHTML = '';
         if (trackingResult) {
             trackingHTML = `
-            <div class="mt-4 space-y-4"> 
-                <div class="text-sm font-medium text-gray-700 dark:text-gray-300">Tracking Result:</div> 
-                ${trackingResult} 
-                <button id="clear-tracking-btn" class="w-full px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Clear Result</button> 
-            </div>`;
+                <div class="mt-4 space-y-4">
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-300">Tracking Result:</div>
+                    ${trackingResult}
+                    <button id="clear-tracking-btn" class="w-full px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Clear Result</button>
+                </div>
+            `;
         }
         appRoot.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
-                <div>
-                    <div class="w-16 h-16 mx-auto text-blue-500">${icons.car}</div>
-                    <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance</h1>
-                    <p class="text-gray-500 dark:text-gray-400 mt-2">Please select an option to continue.</p>
-                </div>
-                <div class="grid grid-cols-1 gap-6">
-                    <button id="request-btn" class="flex items-center justify-center p-6 bg-yellow-50 dark:bg-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                        <div class="w-12 h-12">${icons.request}</div>
-                        <span class="ml-4 font-semibold text-lg">Request Clearance</span>
-                    </button>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                            <div class="w-12 h-12">${icons.shield}</div>
-                            <span class="mt-3 font-semibold text-lg">Admin Login</span>
-                        </button>
-                        <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 text-green-800 dark:text-green-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                            <div class="w-12 h-12">${icons.greenlist}</div>
-                            <span class="mt-3 font-semibold text-lg">Green List</span>
-                        </button>
+            <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+                <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
+                    <div>
+                        <div class="w-16 h-16 mx-auto text-blue-500">${icons.car}</div>
+                        <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance</h1>
+                        <p class="text-gray-500 dark:text-gray-400 mt-2">Please select an option to continue.</p>
                     </div>
-                </div>
-                <div class="pt-6 border-t dark:border-gray-700">
-                    <form id="track-request-form" class="space-y-2">
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
-                        <div class="flex gap-2">
-                            <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
-                            <button type="submit" class="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700">
-                                <span class="w-4 h-4">${icons.search}</span>Track
+                    <div class="grid grid-cols-1 gap-6">
+                        <button id="request-btn" class="flex items-center justify-center p-6 bg-yellow-50 dark:bg-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-lg transition-all duration-300 transform hover:scale-105">
+                            <div class="w-12 h-12">${icons.request}</div>
+                            <span class="ml-4 font-semibold text-lg">Request Clearance</span>
+                        </button>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-lg transition-all duration-300 transform hover:scale-105">
+                                <div class="w-12 h-12">${icons.shield}</div>
+                                <span class="mt-3 font-semibold text-lg">Admin Login</span>
+                            </button>
+                            <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 text-green-800 dark:text-green-300 rounded-lg transition-all duration-300 transform hover:scale-105">
+                                <div class="w-12 h-12">${icons.greenlist}</div>
+                                <span class="mt-3 font-semibold text-lg">Green List</span>
                             </button>
                         </div>
-                    </form>
-                    <div id="tracking-result">${trackingHTML}</div>
+                    </div>
+                    <div class="pt-6 border-t dark:border-gray-700">
+                        <form id="track-request-form" class="space-y-2">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
+                            <div class="flex gap-2">
+                                <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
+                                <button type="submit" class="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700">
+                                    <span class="w-4 h-4">${icons.search}</span>Track
+                                </button>
+                            </div>
+                        </form>
+                        <div id="tracking-result">${trackingHTML}</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div id="modal-container"></div>`;
+            <div id="modal-container"></div>`;
         routeHistory = [];
     };
 
@@ -1008,10 +627,217 @@
         listContainer.innerHTML = listHTML;
     };
 
+    // --- ENHANCED VOICE SEARCH FUNCTIONALITY ---
+    const numberWords = {
+        'zero': '0', 'o': '0', 'oh': '0', 'nil': '0', 'one': '1', 'won': '1',
+        'two': '2', 'to': '2', 'too': '2', 'tu': '2', 'three': '3', 'tree': '3', 'free': '3',
+        'four': '4', 'for': '4', 'fore': '4', 'five': '5', 'fife': '5', 'six': '6', 'sex': '6', 'sicks': '6',
+        'seven': '7', 'heaven': '7', 'eight': '8', 'ate': '8', 'ait': '8', 'nine': '9', 'niner': '9', 'line': '9'
+    };
+    const letterMappings = {
+        'a': 'a', 'alpha': 'a', 'apple': 'a', 'b': 'b', 'bravo': 'b', 'boy': 'b', 'beta': 'b', 'c': 'c', 'charlie': 'c', 'cat': 'c', 'see': 'c',
+        'd': 'd', 'delta': 'd', 'dog': 'd', 'e': 'e', 'echo': 'e', 'easy': 'e', 'f': 'f', 'foxtrot': 'f', 'fox': 'f', 'g': 'g', 'golf': 'g', 'george': 'g',
+        'h': 'h', 'hotel': 'h', 'house': 'h', 'i': 'i', 'india': 'i', 'ice': 'i', 'j': 'j', 'juliet': 'j', 'john': 'j', 'k': 'k', 'kilo': 'k', 'king': 'k',
+        'l': 'l', 'lima': 'l', 'love': 'l', 'm': 'm', 'mike': 'm', 'mary': 'm', 'n': 'n', 'november': 'n', 'nancy': 'n', 'o': 'o', 'oscar': 'o', 'orange': 'o',
+        'p': 'p', 'papa': 'p', 'peter': 'p', 'q': 'q', 'quebec': 'q', 'queen': 'q', 'r': 'r', 'romeo': 'r', 'robert': 'r', 's': 's', 'sierra': 's', 'sam': 's',
+        't': 't', 'tango': 't', 'tom': 't', 'u': 'u', 'uniform': 'u', 'uncle': 'u', 'v': 'v', 'victor': 'v', 'victory': 'v', 'w': 'w', 'whiskey': 'w', 'william': 'w',
+        'x': 'x', 'xray': 'x', 'x-ray': 'x', 'y': 'y', 'yankee': 'y', 'yellow': 'y', 'z': 'z', 'zulu': 'z', 'zebra': 'z'
+    };
+
+    const processVoiceInput = (transcript) => {
+        let processed = transcript.toLowerCase().trim();
+        if (processed.includes("clear") || processed.includes("reset")) return "";
+        let words = processed.split(/\s+/);
+        let result = [];
+        for (let word of words) {
+            word = word.replace(/[^\w]/g, '');
+            if (numberWords[word]) result.push(numberWords[word]);
+            else if (letterMappings[word]) result.push(letterMappings[word]);
+            else if (/^[a-z0-9]+$/i.test(word)) result.push(word);
+        }
+        return result.join('').toUpperCase();
+    };
+
+    const findClearanceStatus = (vehicleNumber) => {
+        if (!vehicleNumber) return "No vehicle number detected";
+        const latestClearance = clearances.filter(c => c.vehicleNumber === vehicleNumber).sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))[0];
+        if (latestClearance) {
+            const now = new Date();
+            const expiryDate = latestClearance.expiryDate.toDate();
+            const isExpired = now > expiryDate;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const entryDate = latestClearance.entryDate.toDate();
+            entryDate.setHours(0, 0, 0, 0);
+            expiryDate.setHours(23, 59, 59, 999);
+            const isValidToday = today >= entryDate && today <= expiryDate;
+            if (isExpired) return "Expired";
+            if (isValidToday) return "Clear";
+            return "Not valid today";
+        }
+        const latestRequest = clearanceRequests.filter(r => r.vehicleNumber === vehicleNumber).sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))[0];
+        if (latestRequest) {
+            if (latestRequest.status === 'rejected') return "Denied Entry";
+            if (latestRequest.status === 'pending') return "Pending";
+            if (latestRequest.status === 'approved') return "Clear";
+        }
+        return "No Record";
+    };
+
+    const renderListeningModal = (show, confidence = 0) => {
+        const container = document.getElementById('voice-listening-modal-container');
+        if (show) {
+            container.innerHTML = `
+            <div id="voice-listening-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] animate-fade-in">
+                <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 text-center shadow-2xl max-w-sm w-full mx-4">
+                    <div class="voice-wave w-20 h-20 mx-auto text-blue-500 mb-4">${icons.mic}</div>
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Listening...</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Say the vehicle number clearly</p>
+                    <div class="mt-4 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                        <div class="confidence-bar bg-blue-500 h-full transition-all duration-300" style="width: ${confidence}%"></div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Confidence: ${Math.round(confidence)}%</p>
+                    <button id="cancel-voice-search" class="mt-4 px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">
+                        Cancel
+                    </button>
+                </div>
+            </div>`;
+        } else {
+            const modal = document.getElementById('voice-listening-modal');
+            if(modal) {
+               modal.classList.replace('animate-fade-in', 'animate-fade-out');
+               setTimeout(() => container.innerHTML = '', 300);
+            } else {
+               container.innerHTML = '';
+            }
+        }
+    };
+
+    const startVoiceSearch = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            showNotification("Voice search is not supported in this browser.", "error");
+            speak("Sorry, voice search is not supported on this device.");
+            return;
+        }
+
+        if (voiceRecognition) {
+            voiceRecognition.stop();
+            voiceRecognition = null;
+        }
+
+        voiceRecognition = new SpeechRecognition();
+        voiceRecognition.lang = 'en-US';
+        voiceRecognition.interimResults = true;
+        voiceRecognition.maxAlternatives = 3;
+        voiceRecognition.continuous = false;
+
+        const voiceButton = document.getElementById('voice-search-btn');
+        if (voiceButton) {
+            voiceButton.classList.add('text-blue-500', 'bg-blue-100', 'dark:bg-blue-900');
+        }
+        
+        renderListeningModal(true);
+        
+        let finalTranscript = '';
+        let timeoutId;
+
+        const resetTimeout = () => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                if(voiceRecognition) voiceRecognition.stop();
+            }, 5000);
+        };
+
+        voiceRecognition.start();
+        resetTimeout();
+
+        voiceRecognition.onresult = (event) => {
+            resetTimeout();
+            let interimTranscript = '';
+            let confidence = 0;
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const result = event.results[i];
+                confidence = Math.max(confidence, result[0].confidence * 100);
+                if (result.isFinal) {
+                    finalTranscript += result[0].transcript;
+                } else {
+                    interimTranscript += result[0].transcript;
+                }
+            }
+            renderListeningModal(true, confidence);
+            const currentTranscript = finalTranscript + interimTranscript;
+            if (currentTranscript.trim()) {
+                const processedResult = processVoiceInput(currentTranscript);
+                if (processedResult.length >= 4 && confidence > 70) {
+                    if(voiceRecognition) voiceRecognition.stop();
+                }
+            }
+        };
+        
+        voiceRecognition.onend = () => {
+            clearTimeout(timeoutId);
+            renderListeningModal(false);
+            if (voiceButton) {
+                voiceButton.classList.remove('text-blue-500', 'bg-blue-100', 'dark:bg-blue-900');
+            }
+            const searchInput = document.getElementById('daily-clearance-search-input');
+            if (finalTranscript.toLowerCase().includes("clear")) {
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                speak("Search cleared.");
+                return;
+            }
+            if (finalTranscript.trim()) {
+                const processedResult = processVoiceInput(finalTranscript);
+                if (searchInput) {
+                    searchInput.value = processedResult;
+                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                if (processedResult) {
+                    const status = findClearanceStatus(processedResult);
+                    const vehicleSpoken = processedResult.split('').join(' ');
+                    const feedback = `Searching for ${vehicleSpoken}. Status: ${status}.`;
+                    speak(feedback);
+                    const statusColor = {
+                        'Clear': 'text-green-600', 'Denied Entry': 'text-red-600', 'Expired': 'text-red-600',
+                        'Pending': 'text-yellow-600', 'No Record': 'text-gray-600'
+                    }[status] || 'text-gray-600';
+                    showNotification(`${processedResult}: ${status}`, status === 'Clear' ? 'success' : 'error');
+                } else {
+                    speak("No vehicle number detected. Please try again.");
+                    showNotification("Could not detect vehicle number", "error");
+                }
+            } else {
+                speak("No speech detected. Please try again.");
+                showNotification("No speech detected", "error");
+            }
+            voiceRecognition = null;
+        };
+
+        voiceRecognition.onerror = (event) => {
+            clearTimeout(timeoutId);
+            let errorMsg, spokenMsg;
+            switch(event.error) {
+                case 'no-speech': errorMsg = "No speech detected. Please try again."; spokenMsg = "I didn't hear anything. Please try again."; break;
+                case 'audio-capture': errorMsg = "Microphone not accessible."; spokenMsg = "Cannot access microphone. Please check permissions."; break;
+                case 'not-allowed': errorMsg = "Microphone access denied."; spokenMsg = "Microphone access was denied. Please allow microphone permissions."; break;
+                case 'network': errorMsg = "Network error occurred."; spokenMsg = "Network error. Please check your connection."; break;
+                default: errorMsg = "Voice recognition error occurred."; spokenMsg = "An error occurred. Please try again.";
+            }
+            console.error("Speech Recognition Error:", event.error);
+            showNotification(errorMsg, "error");
+            speak(spokenMsg);
+            voiceRecognition = null;
+        };
+    };
+
     const renderUserDashboard = (user) => {
         if (!document.getElementById('user-dashboard-header')) {
             appRoot.innerHTML = `
-            <div class="w-full min-h-screen flex justify-center voice-search-container">
+            <div class="w-full min-h-screen flex justify-center">
                 <div class="w-full max-w-4xl flex flex-col">
                     <header id="user-dashboard-header" class="sticky top-0 bg-gray-100 dark:bg-gray-900 z-10 py-4 px-2 md:px-0">
                         <div class="flex justify-between items-center mb-4">
@@ -1030,7 +856,7 @@
                         <div class="relative">
                             <div class="flex gap-2">
                                 <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()">
-                                <button id="voice-search-btn" type="button" class="flex-shrink-0 p-2 rounded-lg text-gray-600 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <button id="voice-search-btn" type="button" class="flex-shrink-0 p-2 rounded-lg text-gray-600 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-200">
                                     <span class="w-6 h-6">${icons.mic}</span>
                                 </button>
                                 <button id="clear-search-btn" type="button" class="flex-shrink-0 px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
@@ -1228,7 +1054,7 @@
                             ${optionsHTML}
                         </select>
                     </div>
-                    <div>
+                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
                         <input name="location" value="${edit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                     </div>
@@ -1269,7 +1095,7 @@
         }).join('');
         modalContainer.innerHTML = `
         <div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-in">
-            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl animate-fade-in overflow-hidden relative">
+             <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl animate-fade-in overflow-hidden relative">
                 <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">${icons.x}</button>
                 <form id="review-form" class="space-y-4 p-8">
                     <input type="hidden" name="id" value="${request.id}">
@@ -1279,6 +1105,7 @@
                         <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Review Request</h1>
                         <p class="text-gray-500 dark:text-gray-400">Review the details and take action.</p>
                     </div>
+
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Name</label>
                         <input name="ownerName" value="${request.requesterName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
@@ -1294,7 +1121,7 @@
                             ${optionsHTML}
                         </select>
                     </div>
-                    <div>
+                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
                         <input name="location" value="${request.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                     </div>
@@ -1312,7 +1139,7 @@
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${request.escortRequired ? 'checked' : ''}/>
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
-                    <div>
+                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes (optional)</label>
                         <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${request.notes || ''}</textarea>
                     </div>
@@ -1329,7 +1156,7 @@
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
         <div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm w-full"> 
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm w-full">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">${title}</h2>
                 <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${message}</p>
                 <div class="mt-6 flex justify-end gap-4">
@@ -1337,8 +1164,7 @@
                     <button id="confirm-action-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Confirm</button>
                 </div>
             </div>
-        </div>
-        `;
+        </div>`;
         document.getElementById('confirm-action-btn').onclick = () => {
             onConfirm();
             modalContainer.innerHTML = '';
@@ -1401,14 +1227,14 @@
         }
     };
 
-    // Auth State Listener
+    // --- Auth State Listener ---
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         unsubClearances?.();
         unsubRequests?.();
         unsubConfig?.();
 
-        if (user && !user.isAnonymous) {
+        if (user && !user.isAnonymous) { // Admin user
             appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
             const adminDoc = await getDoc(doc(db, "admins", user.uid));
             if (adminDoc.exists()) {
@@ -1427,13 +1253,13 @@
             }
         } else if (user && user.isAnonymous && sessionStorage.getItem('isDashboardLogin') === 'true') {
             showUserDashboard(user);
-        } else {
+        } else { // No user / logged out
             sessionStorage.removeItem('isDashboardLogin');
             renderLandingPage();
         }
     });
 
-    // Event Listeners
+    // --- Global Event Listener ---
     document.body.addEventListener("click", async (e) => {
         const target = e.target;
         
@@ -1447,17 +1273,12 @@
                 voiceRecognition.stop();
             }
             renderListeningModal(false);
-            isVoiceSearchActive = false;
         }
         
         const button = target.closest('button');
         if (!button) return;
 
-        if (button.id === 'voice-search-btn') {
-            if (!isVoiceSearchActive) {
-                await startVoiceSearch();
-            }
-        }
+        if (button.id === 'voice-search-btn') startVoiceSearch();
         if (button.id === 'clear-search-btn') {
             const searchInput = document.getElementById('daily-clearance-search-input');
             if (searchInput) {
@@ -1639,7 +1460,7 @@
                     if (latestRecord.status === 'rejected') { spokenFeedback = "Denied Entry"; }
                     else if (latestRecord.status === 'pending') { spokenFeedback = "Pending"; }
                     else { spokenFeedback = "Clear"; }
-                } else {
+                } else { // It's a clearance
                     const now = new Date();
                     const isExpired = now > latestRecord.expiryDate.toDate();
                     spokenFeedback = isExpired ? "Expired" : "Clear";
@@ -1652,12 +1473,12 @@
                     trackingHTML = clearanceDiv.outerHTML;
                 }
                 
-                await speak(spokenFeedback);
+                speak(spokenFeedback);
                 renderLandingPage({ vehicleNumber, trackingResult: trackingHTML });
 
             } catch (err) {
                 console.error("Tracking error:", err);
-                await speak("An error occurred during tracking.");
+                speak("An error occurred during tracking.");
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-center';
                 errorDiv.innerHTML = `<p class="font-semibold text-red-600 dark:text-red-400">An error occurred. Please try again later.</p>`;
@@ -1703,8 +1524,8 @@
         }
     });
 
-    // Initial Render
-    console.log("Starting application with enhanced voice search functionality");
+    // --- Initial Render ---
+    console.log("Starting application with enhanced voice search");
     renderLandingPage();
 
   </script>
