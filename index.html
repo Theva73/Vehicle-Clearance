@@ -609,11 +609,6 @@
         listContainer.innerHTML = listHTML;
     };
 
-    /**
-     * Renders the user dashboard with a sticky header.
-     * @param {object} user - The authenticated user object.
-     * @param {string|null} vehicleFilter - The current search filter for vehicle numbers.
-     */
     const renderUserDashboard = (user, vehicleFilter = null) => {
         appRoot.innerHTML = `
         <div class="w-full min-h-screen flex justify-center">
@@ -1042,7 +1037,7 @@
         }
     });
 
-    // --- VOICE SEARCH FUNCTIONALITY ---
+    // --- VOICE SEARCH FUNCTIONALITY (ENHANCED) ---
 
     const renderListeningModal = (show) => {
         const container = document.getElementById('voice-listening-modal-container');
@@ -1052,7 +1047,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-2xl">
                     <div class="mic-icon-pulse w-16 h-16 mx-auto text-blue-500">${icons.mic}</div>
                     <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">Listening...</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Say a vehicle number or "Clear search"</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Say the vehicle number clearly.</p>
                 </div>
             </div>`;
         } else {
@@ -1066,27 +1061,32 @@
         }
     };
     
-    /**
-     * More robustly processes the voice transcript to extract a vehicle number.
-     * @param {string} transcript - The raw transcript from the SpeechRecognition API.
-     * @returns {string} The processed, uppercase, alphanumeric string.
-     */
     const processVoiceInput = (transcript) => {
         const numberWords = {
-            'zero': '0', 'one': '1', 'two': '2', 'to': '2', 'too': '2', 
-            'three': '3', 'tree': '3', 'four': '4', 'for': '4', 
-            'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9'
+            'zero': '0', 'o': '0', 'oh': '0',
+            'one': '1',
+            'two': '2', 'to': '2', 'too': '2',
+            'three': '3', 'tree': '3',
+            'four': '4', 'for': '4',
+            'five': '5',
+            'six': '6',
+            'seven': '7',
+            'eight': '8', 'ate': '8',
+            'nine': '9', 'niner': '9'
         };
+        const fillerWords = ['search', 'find', 'vehicle', 'number', 'plate', 'is', 'a', 'the', 'it\'s', 'it', 'is'];
 
         let processed = transcript.toLowerCase();
-
-        // Replace all spoken number words with their digit equivalents
-        for (const [word, digit] of Object.entries(numberWords)) {
-            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), digit);
-        }
         
-        // Remove all characters that are not letters or numbers.
-        // This is safer than trying to filter out specific words.
+        fillerWords.forEach(word => {
+            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), '');
+        });
+
+        Object.keys(numberWords).forEach(word => {
+            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'g'), numberWords[word]);
+        });
+
+        // Remove all non-alphanumeric characters (including spaces)
         processed = processed.replace(/[^a-z0-9]/gi, '');
 
         return processed.toUpperCase();
@@ -1108,22 +1108,19 @@
         });
 
         if (isCleared) {
-            return `${vehicleNumber} is cleared.`;
+            return `Result: Cleared.`;
         }
 
         // 2. Check for pending requests
         const isPending = clearanceRequests.some(r => r.vehicleNumber === vehicleNumber && r.status === 'pending');
         if (isPending) {
-            return `Status for ${vehicleNumber} is pending approval.`;
+            return `Result: Status is pending approval.`;
         }
 
         // 3. If not found in either
-        return `Vehicle ${vehicleNumber} not found.`;
+        return `Result: Vehicle not found.`;
     };
 
-    /**
-     * Initiates the voice search process using the SpeechRecognition API.
-     */
     const startVoiceSearch = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -1136,7 +1133,7 @@
         recognition.lang = 'en-US';
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
-        recognition.continuous = false; // We only need one utterance
+        recognition.continuous = false;
 
         const voiceButton = document.getElementById('voice-search-btn');
         voiceButton.classList.add('text-blue-500');
@@ -1145,28 +1142,25 @@
         recognition.start();
 
         recognition.onresult = (event) => {
-            recognition.stop(); // Stop listening as soon as we have a result.
+            recognition.stop();
             const speechResult = event.results[0][0].transcript.toLowerCase().trim();
             const searchInput = document.getElementById('daily-clearance-search-input');
 
-            // Check for a clear command
             if (speechResult.includes("clear")) {
                 searchInput.value = '';
-                // Manually trigger the input event to re-render the list
                 searchInput.dispatchEvent(new Event('input', { bubbles: true }));
                 speak("Search cleared.");
                 return;
             }
             
-            // If not a command, process as a vehicle number
             const processedResult = processVoiceInput(speechResult);
             searchInput.value = processedResult;
-            // Manually trigger the input event to filter the list
             searchInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-            // Provide voice feedback on the status
+            // Provide enhanced voice feedback by reading back the searched term
             const status = findClearanceStatus(processedResult);
-            speak(status);
+            const feedback = `Searching for ${processedResult.split('').join(' ')}. ${status}`;
+            speak(feedback);
         };
         
         recognition.onend = () => {
