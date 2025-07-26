@@ -160,7 +160,8 @@
         download: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
         settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
         check: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-        back: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>'
+        back: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
+        mic: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>'
     };
 
     // --- PDF Generation Function ---
@@ -602,10 +603,13 @@
                 </div>
                 
                 <div class="mb-6">
-                    <form id="daily-clearance-search-form" class="flex gap-2">
+                    <div class="flex gap-2">
                         <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
-                        <button type="reset" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
-                    </form>
+                        <button id="voice-search-btn" type="button" class="p-2 rounded-lg text-gray-600 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">
+                            <span class="w-6 h-6">${icons.mic}</span>
+                        </button>
+                        <button id="clear-search-btn" type="button" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
+                    </div>
                 </div>
                 <div id="user-clearance-list-container" class="space-y-4"></div>
             </main>
@@ -1002,6 +1006,51 @@
         }
     });
 
+    // --- Voice Search Functionality ---
+    const startVoiceSearch = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            showNotification("Voice search is not supported in this browser.", "error");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        const voiceButton = document.getElementById('voice-search-btn');
+        voiceButton.classList.add('text-blue-500');
+
+        recognition.start();
+
+        recognition.onresult = (event) => {
+            const speechResult = event.results[0][0].transcript;
+            const processedResult = speechResult.toUpperCase().replace(/\s/g, '');
+            const searchInput = document.getElementById('daily-clearance-search-input');
+            searchInput.value = processedResult;
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
+        recognition.onspeechend = () => {
+            recognition.stop();
+        };
+        
+        recognition.onend = () => {
+            voiceButton.classList.remove('text-blue-500');
+        };
+
+        recognition.onerror = (event) => {
+            if (event.error === 'no-speech' || event.error === 'audio-capture') {
+                showNotification("No speech detected. Please try again.", "error");
+            } else if (event.error === 'not-allowed') {
+                showNotification("Microphone access was denied.", "error");
+            } else {
+                showNotification("An error occurred with voice search.", "error");
+            }
+        };
+    };
+
     // --- Global Event Listener ---
     document.body.addEventListener("click", async (e) => {
         const target = e.target;
@@ -1014,6 +1063,20 @@
         
         const button = target.closest('button');
         if (!button) return;
+
+        // Handle Voice Search Button
+        if (button.id === 'voice-search-btn') {
+            startVoiceSearch();
+        }
+
+        // Handle Clear Search Button
+        if (button.id === 'clear-search-btn') {
+            const searchInput = document.getElementById('daily-clearance-search-input');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
 
         if (button.id === 'settings-btn') toggleSettingsPanel(true);
         if (button.id === 'close-settings-panel-btn') toggleSettingsPanel(false);
@@ -1220,7 +1283,6 @@
                     const sortedDocs = clrSnap.docs.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
                     const latestClearance = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
                     
-                    // FIX: Check expiry date against the current date
                     const now = new Date();
                     const isExpired = now > latestClearance.expiryDate.toDate();
                     const statusText = isExpired ? 'EXPIRED CLEARANCE' : 'ACTIVE CLEARANCE';
@@ -1228,7 +1290,6 @@
                     
                     const clearanceDiv = document.createElement('div');
                     clearanceDiv.className = 'p-4 bg-white dark:bg-gray-800 rounded-2xl shadow space-y-2 text-left';
-                    // FIX: Use dynamic variables for status and color
                     clearanceDiv.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p> <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestClearance.vehicleNumber}</p> <p class="text-xs text-gray-500 dark:text-gray-400">${latestClearance.vehicleType || "-"}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p> <p class="font-semibold ${statusColor}">${statusText}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Owner</p> <p class="font-semibold">${latestClearance.ownerName}</p> <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until</p> <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>`;
                     
                     renderLandingPage({ vehicleNumber, trackingResult: clearanceDiv.outerHTML });
