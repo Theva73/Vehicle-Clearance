@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vehicle Clearance System (Refined)</title>
+  <title>Vehicle Clearance System (Enhanced with Camera)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,6 +11,9 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Add Tesseract.js for OCR functionality -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
   <style>
     body {
@@ -70,14 +73,99 @@
     .voice-wave {
         animation: voiceWave 1.5s ease-in-out infinite;
     }
+
+    /* Camera specific styles */
+    .camera-recording {
+        animation: pulse 1.2s ease-in-out infinite;
+        color: #10b981; /* green-500 */
+    }
+    
+    /* Detection frame animations */
+    @keyframes detectingPulse {
+        0%, 100% { border-color: #ffffff; opacity: 0.8; }
+        50% { border-color: #10b981; opacity: 1; transform: scale(1.02); }
+    }
+    .detecting-frame {
+        animation: detectingPulse 2s ease-in-out infinite;
+    }
+    
+    .detected-frame {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    }
+    
+    /* Camera video styling */
+    #camera-video {
+        object-fit: cover;
+        transform: scaleX(-1); /* Mirror effect for front camera */
+    }
+    
+    /* Real-time result overlay */
+    .realtime-overlay {
+        background: linear-gradient(145deg, rgba(0,0,0,0.8), rgba(0,0,0,0.9));
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    /* Processing animation */
+    @keyframes processing {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .processing-spinner {
+        animation: processing 1s linear infinite;
+    }
+
+    /* Camera permission styles */
+    .camera-permission-modal {
+        backdrop-filter: blur(5px);
+    }
+    
+    /* Confidence indicator */
+    .confidence-bar {
+        transition: width 0.3s ease-in-out;
+    }
+    
+    /* Toggle switch styles */
+    .toggle {
+        appearance: none;
+        width: 48px;
+        height: 24px;
+        background-color: #e5e7eb;
+        border-radius: 12px;
+        position: relative;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .toggle:checked {
+        background-color: #10b981;
+    }
+    
+    .toggle::before {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        background-color: white;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.3s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .toggle:checked::before {
+        transform: translateX(24px);
+    }
   </style>
 
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
   <div id="app-root"></div>
   <div id="voice-listening-modal-container"></div>
-
-  <script type="module">
+  <div id="camera-modal-container"></div>
+	<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import {
       getAuth, onAuthStateChanged, signInWithEmailAndPassword,
@@ -125,6 +213,15 @@
     let voiceRecognition = null;
     let voiceSearchActive = false;
     let bestVoiceResult = { result: '', confidence: 0, isValid: false };
+
+    // Camera search state
+    let cameraStream = null;
+    let cameraSearchActive = false;
+    let realtimeProcessing = false;
+    let ocrWorker = null;
+    let lastDetectedResult = { result: '', confidence: 0, isValid: false };
+    let realtimeScanInterval = null;
+    let cameraMode = 'realtime'; // 'realtime' or 'capture'
 
     // --- Utility Functions ---
     const goBack = () => {
@@ -185,8 +282,7 @@
         console.warn("Speech synthesis not supported in this browser.");
       }
     };
-
-    // --- Icon Library ---
+    // — Icon Library —
     const icons = {
         car: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-1.5"></path><path d="M20 10h-5.41l-1.42-2.84a1 1 0 0 0-.84-.55H10a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"></path><circle cx="7" cy="16.5" r="2.5"></circle><circle cx="17" cy="16.5" r="2.5"></circle></svg>',
         logout: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
@@ -204,510 +300,138 @@
         settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
         check: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
         back: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
-        mic: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>'
+        mic: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>',
+        camera: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>'
     };
 
-    // --- PDF Generation Function ---
-    const generatePDFReport = async (button) => {
-        button.disabled = true;
-        const originalHTML = button.innerHTML;
-        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Generating...';
-        try {
-            if (typeof window.jspdf === 'undefined') {
-                throw new Error('jsPDF library not loaded');
-            }
+    // --- Camera OCR Functions ---
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ 
-                orientation: "portrait", 
-                unit: "mm", 
-                format: "a4" 
-            });
-
-            const now = new Date();
-            const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-            let reportData = [];
-
-            const clearancesQuery = query(
-                collection(db, "vehicleClearances"),
-                orderBy("createdAt", "desc")
-            );
-            const clearanceSnap = await getDocs(clearancesQuery);
-            
-            const validClearances = clearanceSnap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(c => c.expiryDate.toDate() >= twentyFourHoursAgo);
-
-            validClearances.forEach(c => {
-                const status = now <= c.expiryDate.toDate() ? 'ACTIVE' : 'EXPIRED';
-                reportData.push([
-                    c.vehicleNumber || 'N/A',
-                    c.vehicleType || 'N/A',
-                    formatDate(c.expiryDate),
-                    c.location || 'N/A',
-                    status
-                ]);
-            });
-
-            const requestsQuery = query(
-                collection(db, "clearanceRequests"),
-                where("createdAt", ">=", Timestamp.fromDate(twentyFourHoursAgo)),
-                orderBy("createdAt", "desc")
-            );
-            const requestSnap = await getDocs(requestsQuery);
-            const recentRequests = requestSnap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(r => r.status !== 'rejected');
-
-            recentRequests.forEach(r => {
-                reportData.push([
-                    r.vehicleNumber || 'N/A',
-                    r.vehicleType || 'N/A',
-                    formatDate(r.expiryDate),
-                    r.location || 'N/A',
-                    r.status?.toUpperCase() || 'PENDING'
-                ]);
-            });
-
-            doc.setFontSize(20);
-            doc.setFont(undefined, 'bold');
-            doc.text("Vehicle Clearance Report", 14, 20);
-            
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(100);
-            doc.text(`Report Period: 24-Hour`, 14, 30);
-            doc.text(`Generated: ${formatDateLongForm(now)} at ${now.toLocaleTimeString()}`, 14, 36);
-            
-            if (reportData.length === 0) {
-                doc.setFontSize(14);
-                doc.setTextColor(150);
-                doc.text("No valid clearances or requests found.", 14, 55);
-            } else {
-                doc.autoTable({
-                    head: [['Vehicle No.', 'Type', 'Expiry Date', 'Location', 'Status']], 
-                    body: reportData,
-                    startY: 45,
-                    theme: 'grid',
-                    headStyles: { 
-                        fillColor: [45, 55, 72], 
-                        textColor: 255,
-                        fontSize: 10,
-                        fontStyle: 'bold'
-                    },
-                    styles: { 
-                        fontSize: 8, 
-                        cellPadding: 3, 
-                        halign: 'center', 
-                        valign: 'middle',
-                        overflow: 'linebreak'
-                    },
-                    columnStyles: {
-                        0: { halign: 'left', fontStyle: 'bold' }, 
-                        1: { halign: 'center' }, 
-                        2: { halign: 'center' }, 
-                        3: { halign: 'left' }, 
-                        4: { halign: 'center', fontStyle: 'bold' } 
-                    },
-                    didParseCell: (data) => {
-                        if (data.section === 'body' && data.column.index === 4) { 
-                            const status = data.cell.raw;
-                            switch(status) {
-                                case 'ACTIVE':
-                                case 'APPROVED':
-                                    data.cell.styles.textColor = [22, 163, 74]; break;
-                                case 'PENDING':
-                                    data.cell.styles.textColor = [245, 158, 11]; break;
-                                case 'EXPIRED':
-                                    data.cell.styles.textColor = [239, 68, 68]; break;
-                                case 'UPCOMING':
-                                    data.cell.styles.textColor = [59, 130, 246]; break;
-                                default:
-                                    data.cell.styles.textColor = [107, 114, 128];
-                            }
+    // Initialize OCR worker (lazy loading)
+    const initializeOCRWorker = async () => {
+        if (!ocrWorker && typeof Tesseract !== 'undefined') {
+            try {
+                console.log('Initializing OCR worker...');
+                ocrWorker = await Tesseract.createWorker('eng', 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            updateCameraProcessingProgress(Math.round(m.progress * 100));
                         }
                     }
                 });
+                
+                await ocrWorker.setParameters({
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',
+                    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
+                    preserve_interword_spaces: '0'
+                });
+                
+                console.log('OCR worker initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize OCR worker:', error);
+                ocrWorker = null;
             }
-
-            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 65;
-            
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(0);
-            doc.text("Summary", 14, finalY);
-            
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(100);
-            const activeClearances = reportData.filter(row => row[4] === 'ACTIVE' || row[4] === 'APPROVED').length;
-            const pendingRequests = reportData.filter(row => row[4] === 'PENDING').length;
-            const totalRecords = reportData.length;
-            doc.text(`Total Records: ${totalRecords}`, 14, finalY + 8);
-            doc.text(`Active Clearances: ${activeClearances}`, 14, finalY + 16);
-            doc.text(`Pending Requests: ${pendingRequests}`, 14, finalY + 24);
-
-            const fileName = `Vehicle_Clearance_Report_${now.toISOString().split('T')[0]}_${now.getHours()}${now.getMinutes()}.pdf`;
-            doc.save(fileName);
-            
-            showNotification("PDF report generated successfully!");
-        } catch (error) {
-            console.error("PDF Generation Error:", error);
-            showNotification(`Failed to generate PDF: ${error.message}`, "error");
-        } finally {
-            button.disabled = false;
-            button.innerHTML = originalHTML;
         }
+        return ocrWorker;
     };
 
-    const showUserDashboard = (user) => {
-        appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
-
-        unsubClearances?.();
-        unsubRequests?.();
-
-        unsubClearances = onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
-            clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderUserDashboard(user);
-        }, (error) => console.error("Error fetching clearances:", error));
-
-        unsubRequests = onSnapshot(query(collection(db, "clearanceRequests")), (snap) => {
-            clearanceRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderUserDashboard(user);
-        }, (error) => console.error("Error fetching requests:", error));
-    };
-
-
-    // --- Render Functions ---
-    const renderLandingPage = (options = {}) => {
-        const { vehicleNumber = "", trackingResult = null } = options;
-        let trackingHTML = '';
-        if (trackingResult) {
-            trackingHTML = `
-                <div class="mt-4 space-y-4">
-                    <div class="text-sm font-medium text-gray-700 dark:text-gray-300">Tracking Result:</div>
-                    ${trackingResult}
-                    <button id="clear-tracking-btn" class="w-full px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Clear Result</button>
-                </div>
-            `;
-        }
-        appRoot.innerHTML = `
-            <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-                <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
-                    <div>
-                        <div class="w-16 h-16 mx-auto text-blue-500">${icons.car}</div>
-                        <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance</h1>
-                        <p class="text-gray-500 dark:text-gray-400 mt-2">Please select an option to continue.</p>
-                    </div>
-                    <div class="grid grid-cols-1 gap-6">
-                        <button id="request-btn" class="flex items-center justify-center p-6 bg-yellow-50 dark:bg-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                            <div class="w-12 h-12">${icons.request}</div>
-                            <span class="ml-4 font-semibold text-lg">Request Clearance</span>
-                        </button>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                                <div class="w-12 h-12">${icons.shield}</div>
-                                <span class="mt-3 font-semibold text-lg">Admin Login</span>
-                            </button>
-                            <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 text-green-800 dark:text-green-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                                <div class="w-12 h-12">${icons.greenlist}</div>
-                                <span class="mt-3 font-semibold text-lg">Green List</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="pt-6 border-t dark:border-gray-700">
-                        <form id="track-request-form" class="space-y-2">
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
-                            <div class="flex gap-2">
-                                <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
-                                <button type="submit" class="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700">
-                                    <span class="w-4 h-4">${icons.search}</span>Track
-                                </button>
-                            </div>
-                        </form>
-                        <div id="tracking-result">${trackingHTML}</div>
-                    </div>
-                </div>
-            </div>
-            <div id="modal-container"></div>`;
-        routeHistory = [];
-    };
-
-    const renderAdminLogin = () => {
-        const isSignup = authMode === "signup";
-        appRoot.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
-                <div class="text-center">
-                    <div class="w-12 h-12 mx-auto text-blue-500">${icons.shield}</div>
-                    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Admin Access</h1>
-                    <p class="text-gray-500 dark:text-gray-400">${isSignup ? "Create an admin account" : "Sign in to manage clearances"}</p>
-                </div>
-                <form id="auth-form" class="space-y-6">
-                    <div class="${isSignup ? '' : 'hidden'}">
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Invite Code</label>
-                        <input type="text" name="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter the secret code" />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                        <input type="email" name="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="admin@example.com" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                        <input type="password" name="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="••••••••" required />
-                    </div>
-                    <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">${isSignup ? "Sign Up" : "Login"}</button>
-                </form>
-                <p class="text-center text-sm text-gray-500 dark:text-gray-400">
-                    <span>${isSignup ? "Already have an account?" : "Need an admin account?"}</span>
-                    <button id="auth-toggle-button" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 ml-1">${isSignup ? "Login" : "Sign Up"}</button>
-                </p>
-                <button id="back-btn" class="mt-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 underline text-sm block mx-auto">Back</button>
-            </div>
-        </div>`;
-    };
-
-    const renderUserLogin = () => {
-        appRoot.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in text-center">
-                <div class="w-12 h-12 mx-auto text-green-500">${icons.greenlist}</div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Green List Access</h1>
-                <p class="text-gray-500 dark:text-gray-400">Enter the password to view today's clearances.</p>
-                <form id="user-login-form" class="space-y-4 pt-4">
-                    <div>
-                        <input type="password" name="password" class="block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Password" required />
-                    </div>
-                    <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700">Continue</button>
-                </form>
-                <button id="back-btn" class="mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 underline text-sm">Back</button>
-            </div>
-        </div>`;
-    };
-
-    const renderRequestForm = () => {
-        appRoot.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
-                <div class="text-center">
-                    <div class="w-12 h-12 mx-auto text-yellow-500">${icons.request}</div>
-                    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Request Vehicle Clearance</h1>
-                    <p class="text-gray-500 dark:text-gray-400">Fill in the details below</p>
-                </div>
-                <form id="request-form" class="space-y-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Your Name</label>
-                        <input name="requesterName" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
-                        <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
-                        <select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
-                            <option value="">Select type...</option>
-                            <option>Car</option>
-                            <option>Motorcycle</option>
-                            <option>Van</option>
-                            <option>Tow Truck</option>
-                            <option>Lorry</option>
-                            <option>Bus</option>
-                            <option>Others</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <input name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
-                            <input type="date" name="entryDate" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
-                            <input type="date" name="expiryDate" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" />
-                        <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes (optional)</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"></textarea>
-                    </div>
-                    <div class="flex justify-between pt-4">
-                        <button id="back-btn" type="button" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Back</button>
-                        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Submit</button>
-                    </div>
-                </form>
-            </div>
-        </div>`;
-    };
-
-    const createStatusCard = (r) => {
-        const statusConfig = {
-            approved: { text: "APPROVED", color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/20" },
-            rejected: { text: "REJECTED", color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20" },
-            pending: { text: "PENDING", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-900/20" }
-        };
-        const config = statusConfig[r.status] || statusConfig.pending;
-        
-        const cardDiv = document.createElement('div');
-        cardDiv.className = `p-4 ${config.bg} rounded-2xl shadow-sm space-y-2 text-left border border-gray-200 dark:border-gray-700`;
-        cardDiv.innerHTML = `
-            <div class="flex justify-between items-center">
-                <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${r.vehicleNumber}</p>
-                <p class="font-semibold px-2 py-0.5 rounded-md text-xs ${config.color} ${config.bg}">${config.text}</p>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400">${r.vehicleType || "-"} • Requested by ${r.requesterName}</p>
-            <div class="pt-2 border-t border-gray-200 dark:border-gray-600">
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Proposed Dates</p>
-                <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(r.entryDate)} - ${formatDate(r.expiryDate)}</p>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Location</p>
-                <p class="font-semibold">${r.location}</p>
-                ${r.notes ? `<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200">${r.notes}</p>` : ""}
-            </div>
-        `;
-        return cardDiv.outerHTML;
-    };
-
-    const renderClearanceListForUser = (vehicleFilter = null) => {
-        const listContainer = document.getElementById('user-clearance-list-container');
-        if (!listContainer) return;
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        let dailyClearances = clearances.filter(c => {
-            const entryDate = c.entryDate.toDate();
-            entryDate.setHours(0, 0, 0, 0);
-            const expiryDate = c.expiryDate.toDate();
-            expiryDate.setHours(23, 59, 59, 999);
-            return today >= entryDate && today <= expiryDate;
-        });
-
-        if (vehicleFilter) {
-            dailyClearances = dailyClearances.filter(c => c.vehicleNumber.includes(vehicleFilter));
-        }
-
-        let listHTML = '';
-        if (dailyClearances.length > 0) {
-            listHTML = dailyClearances.map(c => `
-                <details class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden group animate-fade-in">
-                    <summary class="flex justify-between items-center px-5 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
-                        <div class="flex items-center gap-4">
-                            <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90">${icons.chevronRight}</span>
-                            <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
-                        </div>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Cleared</span>
-                    </summary>
-                    <div class="px-5 pb-5 border-t border-gray-200 dark:border-gray-700">
-                        <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Owner</p>
-                                <p class="font-semibold text-gray-800 dark:text-gray-200">${c.ownerName}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Location</p>
-                                <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Escort</p>
-                                <p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Valid Until</p>
-                                <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
-                            </div>
-                            ${c.notes ? `<div class="col-span-2"><p class="text-xs text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-wrap">${c.notes}</p></div>` : ""}
-                        </div>
-                    </div>
-                </details>`).join("");
-        } else {
-            listHTML = `
-                <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md animate-fade-in">
-                    <div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div>
-                    <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">${vehicleFilter ? 'No Matching Clearances Found' : 'No Clearances for Today'}</h3>
-                    <p class="mt-1 text-gray-500 dark:text-gray-400">${vehicleFilter ? 'Try a different vehicle number or clear the search.' : 'There are no vehicles with clearance for today.'}</p>
-                </div>`;
-        }
-        listContainer.innerHTML = listHTML;
-    };
-
-    // --- UNIFIED STATUS & VOICE SEARCH SYSTEM ---
-
-    /**
-     * Centralized function to get the most recent status of a vehicle.
-     * It checks both clearances and requests collections.
-     * @param {string} vehicleNumber - The vehicle registration number.
-     * @returns {Promise<object>} A promise that resolves to an object {status, record, type}.
-     */
-    const getVehicleStatus = async (vehicleNumber) => {
-        if (!vehicleNumber) return { status: "No Record Found", record: null, type: null };
-
+    // Process license plate using OCR
+    const processLicensePlateOCR = async (imageSource) => {
         try {
-            // Ensure user is authenticated for query
-            if (auth.currentUser?.isAnonymous === false && !auth.currentUser) {
-                 await signInAnonymously(auth);
+            const worker = await initializeOCRWorker();
+            if (!worker) {
+                throw new Error('OCR worker not available');
             }
+
+            console.log('Processing image with OCR...');
+            const { data: { text, confidence } } = await worker.recognize(imageSource);
             
-            const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
-            const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
+            console.log('Raw OCR result:', text, 'Confidence:', confidence);
             
-            const [reqSnap, clrSnap] = await Promise.all([getDocs(reqQuery), getDocs(clrQuery)]);
-
-            const allRecords = [
-                ...reqSnap.docs.map(d => ({...d.data(), id: d.id, type: 'request'})),
-                ...clrSnap.docs.map(d => ({...d.data(), id: d.id, type: 'clearance'}))
-            ].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-
-            const latestRecord = allRecords[0];
-
-            if (!latestRecord) {
-                return { status: "No Record Found", record: null, type: null };
-            }
-
-            if (latestRecord.type === 'clearance') {
-                const now = new Date();
-                const expiryDate = latestRecord.expiryDate.toDate();
-                const isExpired = now > expiryDate;
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const entryDate = latestRecord.entryDate.toDate();
-                entryDate.setHours(0, 0, 0, 0);
-                expiryDate.setHours(23, 59, 59, 999);
-                const isValidToday = today >= entryDate && today <= expiryDate;
-
-                if (isExpired) return { status: "Expired", record: latestRecord, type: 'clearance' };
-                if (isValidToday) return { status: "Clear", record: latestRecord, type: 'clearance' };
-                return { status: "Not valid today", record: latestRecord, type: 'clearance' };
-            }
-
-            if (latestRecord.type === 'request') {
-                if (latestRecord.status === 'rejected') return { status: "Access Denied", record: latestRecord, type: 'request' };
-                if (latestRecord.status === 'pending') return { status: "Pending Approval", record: latestRecord, type: 'request' };
-                if (latestRecord.status === 'approved') {
-                    return { status: "Clear", record: latestRecord, type: 'request' };
-                }
-            }
-
-            return { status: "No Record Found", record: null, type: null }; // Fallback
-
-        } catch (err) {
-            console.error("getVehicleStatus Error:", err);
-            return { status: "Error", record: null, type: null };
+            // Clean the extracted text
+            const cleanedText = text
+                .replace(/[^A-Z0-9]/g, '')
+                .trim()
+                .toUpperCase();
+                
+            console.log('Cleaned text:', cleanedText);
+            
+            // Validate against existing patterns
+            const isValid = validateVehiclePattern(cleanedText);
+            
+            return {
+                result: cleanedText,
+                confidence: confidence,
+                isValid: isValid,
+                rawText: text
+            };
+        } catch (error) {
+            console.error('OCR processing error:', error);
+            return { 
+                result: '', 
+                confidence: 0, 
+                isValid: false, 
+                error: error.message 
+            };
         }
     };
-    
+
+    // Preprocess image for better OCR results
+    const preprocessImageForOCR = (canvas, sourceVideo) => {
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        canvas.width = sourceVideo.videoWidth || 640;
+        canvas.height = sourceVideo.videoHeight || 480;
+        
+        // Draw the video frame
+        ctx.drawImage(sourceVideo, 0, 0, canvas.width, canvas.height);
+        
+        // Get image data for processing
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        // Apply basic image enhancements
+        for (let i = 0; i < data.length; i += 4) {
+            // Convert to grayscale and increase contrast
+            const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+            const enhanced = gray > 128 ? Math.min(255, gray * 1.2) : Math.max(0, gray * 0.8);
+            
+            data[i] = enhanced;     // Red
+            data[i + 1] = enhanced; // Green
+            data[i + 2] = enhanced; // Blue
+            // Alpha remains unchanged
+        }
+        
+        // Put processed image data back
+        ctx.putImageData(imageData, 0, 0);
+        
+        return canvas;
+    };
+
+    // Update camera processing progress
+    const updateCameraProcessingProgress = (progress) => {
+        const progressElement = document.getElementById('camera-progress');
+        const progressBar = document.getElementById('camera-progress-bar');
+        const progressText = document.getElementById('camera-progress-text');
+        
+        if (progressElement && progressBar && progressText) {
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `Processing... ${progress}%`;
+        }
+    };
+
+    // Vehicle registration patterns (enhanced)
     const vehicleRegPatterns = {
         'singapore': [
             /^S[A-Z]{1,2}\s*\d{1,4}\s*[A-Z]$/,   // SBA1234A, SGX123B
             /^[A-Z]{3}\s*\d{1,4}$/,              // SGP1234
             /^[A-Z]{2}\s*\d{1,4}\s*[A-Z]$/,      // SG1234A
             /^S\d{1,4}\s*[A-Z]{1,2}$/,          // S1234AB
+        ],
+        'malaysia': [
+            /^[A-Z]{1,3}\s*\d{1,4}\s*[A-Z]{1,2}$/,  // ABC1234D, WA123A
+            /^[A-Z]{2}\s*\d{1,4}$/,                  // KL1234
+            /^[A-Z]\s*\d{1,4}\s*[A-Z]{2,3}$/,       // A1234BC
         ],
         'special': [
             /^CD\s*\d{1,4}$/, /^CC\s*\d{1,4}$/, /^SH\s*\d{1,4}$/,
@@ -770,6 +494,7 @@
         if (!input || input.length < 2) return false;
         const allPatterns = [
             ...vehicleRegPatterns.singapore,
+            ...vehicleRegPatterns.malaysia,
             ...vehicleRegPatterns.special,
             ...vehicleRegPatterns.international
         ];
@@ -986,6 +711,820 @@
         const voiceButton = document.getElementById('voice-search-btn');
         if (voiceButton) voiceButton.classList.remove('mic-recording');
     };
+    // — Camera Functions —
+    const renderCameraModal = (show, data = {}) => {
+        const container = document.getElementById('camera-modal-container');
+        if (show) {
+            const { 
+                isProcessing = false, 
+                result = "", 
+                confidence = 0, 
+                isValid = false,
+                progress = 0,
+                error = null
+            } = data;
+            
+            container.innerHTML = `
+            <div id="camera-modal" class="fixed inset-0 bg-black/90 flex flex-col z-[100] animate-fade-in">
+                <!-- Header -->
+                <div class="flex justify-between items-center p-4 text-white bg-black/50">
+                    <h3 class="text-lg font-semibold">📷 Scan License Plate</h3>
+                    <button id="close-camera-btn" class="text-white hover:text-gray-300 p-1">
+                        ${icons.x}
+                    </button>
+                </div>
+                
+                <!-- Camera Feed -->
+                <div class="flex-1 relative overflow-hidden">
+                    <video id="camera-video" class="w-full h-full object-cover" autoplay playsinline muted></video>
+                    
+                    <!-- Detection Overlay -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div id="detection-frame" class="border-2 border-white w-80 h-20 rounded-lg ${cameraMode === 'realtime' && !isProcessing ? 'detecting-frame' : ''}">
+                            <div class="text-white text-sm mt-2 text-center bg-black/50 rounded px-2 py-1 mx-4">
+                                Position license plate here
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Real-time Results Overlay -->
+                    ${result && !isProcessing ? `
+                    <div class="absolute bottom-24 left-4 right-4">
+                        <div class="realtime-overlay text-white p-4 rounded-lg text-center">
+                            <div class="font-mono text-2xl font-bold ${isValid ? 'text-green-400' : 'text-orange-400'}" id="detected-text">${result}</div>
+                            <div class="text-sm opacity-80 mt-1" id="confidence-text">Confidence: ${Math.round(confidence)}%</div>
+                            ${isValid ? '<div class="text-xs text-green-400 mt-1">✓ Valid Format</div>' : result.length > 0 ? '<div class="text-xs text-orange-400 mt-1">⚠ Check Format</div>' : ''}
+                        </div>
+                    </div>` : ''}
+                    
+                    <!-- Processing Overlay -->
+                    ${isProcessing ? `
+                    <div class="absolute inset-0 bg-black/70 flex items-center justify-center">
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center max-w-sm mx-4">
+                            <div class="processing-spinner w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Processing Image</h4>
+                            <div class="mt-3">
+                                <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                    <div id="camera-progress-bar" class="bg-blue-500 h-full transition-all duration-300 confidence-bar" style="width: ${progress}%"></div>
+                                </div>
+                                <p id="camera-progress-text" class="text-sm text-gray-600 dark:text-gray-400 mt-2">Processing... ${progress}%</p>
+                            </div>
+                        </div>
+                    </div>` : ''}
+                    
+                    <!-- Error Overlay -->
+                    ${error ? `
+                    <div class="absolute bottom-24 left-4 right-4">
+                        <div class="bg-red-500/90 text-white p-3 rounded-lg text-center">
+                            <div class="font-semibold">Processing Error</div>
+                            <div class="text-sm mt-1">${error}</div>
+                        </div>
+                    </div>` : ''}
+                </div>
+                
+                <!-- Controls -->
+                <div class="p-4 bg-white dark:bg-gray-800 space-y-3">
+                    <!-- Mode Toggle -->
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Auto-scan mode</label>
+                        <input type="checkbox" id="realtime-toggle" ${cameraMode === 'realtime' ? 'checked' : ''} class="toggle">
+                    </div>
+                    
+                    <!-- Control Buttons -->
+                    <div class="space-y-2">
+                        ${!isProcessing ? `
+                        <button id="manual-capture-btn" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                            📸 Capture Photo
+                        </button>` : ''}
+                        
+                        ${result && confidence > 50 && !isProcessing ? `
+                        <button id="use-camera-result" class="w-full py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium" data-result="${result}">
+                            ✓ Use "${result}"
+                        </button>` : ''}
+                        
+                        ${!isProcessing ? `
+                        <button id="switch-to-file-input" class="w-full py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
+                            📁 Choose from Gallery
+                        </button>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        } else {
+            const modal = document.getElementById('camera-modal');
+            if (modal) {
+                modal.classList.replace('animate-fade-in', 'animate-fade-out');
+                setTimeout(() => container.innerHTML = '', 300);
+            } else {
+                container.innerHTML = '';
+            }
+        }
+    };
+
+    const startCameraScanning = async () => {
+        try {
+            // Check if camera is already active
+            if (cameraSearchActive) {
+                stopCameraScanning();
+                return;
+            }
+
+            // Initialize OCR worker
+            showNotification("Initializing camera scanner...", "success");
+            await initializeOCRWorker();
+
+            cameraSearchActive = true;
+            lastDetectedResult = { result: '', confidence: 0, isValid: false };
+
+            // Request camera access
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { 
+                    facingMode: 'environment', // Back camera on mobile
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
+
+            renderCameraModal(true);
+            
+            const video = document.getElementById('camera-video');
+            if (video) {
+                video.srcObject = cameraStream;
+                
+                // Start real-time scanning when video loads
+                video.onloadedmetadata = () => {
+                    const cameraButton = document.getElementById('camera-search-btn');
+                    if (cameraButton) cameraButton.classList.add('camera-recording');
+                    
+                    if (cameraMode === 'realtime') {
+                        startRealtimeScanning();
+                    }
+                    
+                    speak("Camera ready. Position license plate in the frame.");
+                };
+            }
+
+        } catch (error) {
+            console.error('Camera access error:', error);
+            
+            let errorMessage = 'Camera access denied or not available';
+            let spokenMessage = 'Cannot access camera';
+            
+            if (error.name === 'NotAllowedError') {
+                errorMessage = 'Camera permission denied. Please allow camera access.';
+                spokenMessage = 'Camera permission denied';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage = 'No camera found on this device.';
+                spokenMessage = 'No camera found';
+            }
+            
+            showNotification(errorMessage, 'error');
+            speak(spokenMessage);
+            
+            // Fallback: show file input
+            setTimeout(() => {
+                showFileUploadOption();
+            }, 1000);
+        }
+    };
+
+    const stopCameraScanning = () => {
+        cameraSearchActive = false;
+        realtimeProcessing = false;
+        
+        // Stop real-time scanning
+        if (realtimeScanInterval) {
+            clearInterval(realtimeScanInterval);
+            realtimeScanInterval = null;
+        }
+        
+        // Stop camera stream
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        
+        // Close modal
+        renderCameraModal(false);
+        
+        // Remove camera recording indicator
+        const cameraButton = document.getElementById('camera-search-btn');
+        if (cameraButton) cameraButton.classList.remove('camera-recording');
+    };
+
+    const startRealtimeScanning = () => {
+        if (!cameraSearchActive || realtimeProcessing) return;
+        
+        const processFrame = async () => {
+            if (!cameraSearchActive || realtimeProcessing) return;
+            
+            const video = document.getElementById('camera-video');
+            const realtimeToggle = document.getElementById('realtime-toggle');
+            
+            if (!video || !realtimeToggle || !realtimeToggle.checked) {
+                setTimeout(processFrame, 2000);
+                return;
+            }
+            
+            realtimeProcessing = true;
+            
+            try {
+                // Create temporary canvas for processing
+                const canvas = document.createElement('canvas');
+                const processedCanvas = preprocessImageForOCR(canvas, video);
+                
+                // Process with OCR
+                const result = await processLicensePlateOCR(processedCanvas);
+                
+                if (result.result && result.confidence > lastDetectedResult.confidence) {
+                    lastDetectedResult = result;
+                    
+                    // Update UI with result
+                    renderCameraModal(true, {
+                        result: result.result,
+                        confidence: result.confidence,
+                        isValid: result.isValid
+                    });
+                    
+                    // Auto-accept if high confidence and valid
+                    if (result.confidence > 85 && result.isValid && result.result.length >= 4) {
+                        const detectionFrame = document.getElementById('detection-frame');
+                        if (detectionFrame) {
+                            detectionFrame.classList.add('detected-frame');
+                            speak(`Detected: ${result.result.split('').join(' ')}`);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Real-time processing error:', error);
+            }
+            
+            realtimeProcessing = false;
+            
+            // Continue scanning
+            if (cameraSearchActive) {
+                setTimeout(processFrame, 3000); // Scan every 3 seconds
+            }
+        };
+        
+        // Start the scanning loop
+        setTimeout(processFrame, 2000); // Initial delay
+    };
+
+    const manualCapturePhoto = async () => {
+        const video = document.getElementById('camera-video');
+        if (!video) return;
+        
+        try {
+            // Show processing state
+            renderCameraModal(true, { isProcessing: true, progress: 0 });
+            
+            // Create canvas and capture frame
+            const canvas = document.createElement('canvas');
+            const processedCanvas = preprocessImageForOCR(canvas, video);
+            
+            // Process with OCR
+            const result = await processLicensePlateOCR(processedCanvas);
+            
+            if (result.error) {
+                renderCameraModal(true, { 
+                    error: result.error,
+                    isProcessing: false 
+                });
+                speak("Failed to process image. Please try again.");
+            } else if (result.result) {
+                renderCameraModal(true, {
+                    result: result.result,
+                    confidence: result.confidence,
+                    isValid: result.isValid,
+                    isProcessing: false
+                });
+                
+                const vehicleSpoken = result.result.split('').join(' ');
+                if (result.isValid && result.confidence > 70) {
+                    speak(`Captured: ${vehicleSpoken}`);
+                } else {
+                    speak(`Detected: ${vehicleSpoken}. Please verify.`);
+                }
+            } else {
+                renderCameraModal(true, { 
+                    error: "No text detected in image",
+                    isProcessing: false 
+                });
+                speak("No license plate detected. Please try again.");
+            }
+            
+        } catch (error) {
+            console.error('Manual capture error:', error);
+            renderCameraModal(true, { 
+                error: error.message,
+                isProcessing: false 
+            });
+            speak("Processing failed. Please try again.");
+        }
+    };
+
+    const showFileUploadOption = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment';
+        
+        input.onchange = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                showNotification("Processing image from gallery...", "success");
+                
+                // Create image element for processing
+                const img = new Image();
+                img.onload = async () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Process with OCR
+                    const result = await processLicensePlateOCR(canvas);
+                    
+                    if (result.result) {
+                        const searchInput = document.getElementById('daily-clearance-search-input');
+                        if (searchInput) {
+                            searchInput.value = result.result;
+                            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        
+                        const statusInfo = await findClearanceStatusForVoice(result.result);
+                        speak(`From image: ${result.result.split('').join(' ')}. Status: ${statusInfo.status}`);
+                        showNotification(`Detected: ${result.result}`, result.isValid ? 'success' : 'error');
+                    } else {
+                        showNotification("No license plate detected in image", "error");
+                        speak("No license plate found in image");
+                    }
+                };
+
+                img.src = URL.createObjectURL(file);
+                
+            } catch (error) {
+                console.error('File upload processing error:', error);
+                showNotification("Failed to process image file", "error");
+                speak("Failed to process image");
+            }
+        };
+        
+        input.click();
+    };
+
+    // --- Vehicle Status System ---
+
+    /**
+     * Centralized function to get the most recent status of a vehicle.
+     * It checks both clearances and requests collections.
+     * @param {string} vehicleNumber - The vehicle registration number.
+     * @returns {Promise<object>} A promise that resolves to an object {status, record, type}.
+     */
+    const getVehicleStatus = async (vehicleNumber) => {
+        if (!vehicleNumber) return { status: "No Record Found", record: null, type: null };
+
+        try {
+            // Ensure user is authenticated for query
+            if (auth.currentUser?.isAnonymous === false && !auth.currentUser) {
+                 await signInAnonymously(auth);
+            }
+            
+            const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
+            const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
+            
+            const [reqSnap, clrSnap] = await Promise.all([getDocs(reqQuery), getDocs(clrQuery)]);
+
+            const allRecords = [
+                ...reqSnap.docs.map(d => ({...d.data(), id: d.id, type: 'request'})),
+                ...clrSnap.docs.map(d => ({...d.data(), id: d.id, type: 'clearance'}))
+            ].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+            const latestRecord = allRecords[0];
+
+            if (!latestRecord) {
+                return { status: "No Record Found", record: null, type: null };
+            }
+
+            if (latestRecord.type === 'clearance') {
+                const now = new Date();
+                const expiryDate = latestRecord.expiryDate.toDate();
+                const isExpired = now > expiryDate;
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const entryDate = latestRecord.entryDate.toDate();
+                entryDate.setHours(0, 0, 0, 0);
+                expiryDate.setHours(23, 59, 59, 999);
+                const isValidToday = today >= entryDate && today <= expiryDate;
+
+                if (isExpired) return { status: "Expired", record: latestRecord, type: 'clearance' };
+                if (isValidToday) return { status: "Clear", record: latestRecord, type: 'clearance' };
+                return { status: "Not valid today", record: latestRecord, type: 'clearance' };
+            }
+
+            if (latestRecord.type === 'request') {
+                if (latestRecord.status === 'rejected') return { status: "Access Denied", record: latestRecord, type: 'request' };
+                if (latestRecord.status === 'pending') return { status: "Pending Approval", record: latestRecord, type: 'request' };
+                if (latestRecord.status === 'approved') {
+                    return { status: "Clear", record: latestRecord, type: 'request' };
+                }
+            }
+
+            return { status: "No Record Found", record: null, type: null }; // Fallback
+
+        } catch (err) {
+            console.error("getVehicleStatus Error:", err);
+            return { status: "Error", record: null, type: null };
+        }
+    };
+
+    // --- PDF Generation Function ---
+    const generatePDFReport = async (button) => {
+        button.disabled = true;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Generating...';
+        try {
+            if (typeof window.jspdf === 'undefined') {
+                throw new Error('jsPDF library not loaded');
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ 
+                orientation: "portrait", 
+                unit: "mm", 
+                format: "a4" 
+            });
+
+            const now = new Date();
+            const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            let reportData = [];
+
+            const clearancesQuery = query(
+                collection(db, "vehicleClearances"),
+                orderBy("createdAt", "desc")
+            );
+            const clearanceSnap = await getDocs(clearancesQuery);
+            
+            const validClearances = clearanceSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(c => c.expiryDate.toDate() >= twentyFourHoursAgo);
+
+            validClearances.forEach(c => {
+                const status = now <= c.expiryDate.toDate() ? 'ACTIVE' : 'EXPIRED';
+                reportData.push([
+                    c.vehicleNumber || 'N/A',
+                    c.vehicleType || 'N/A',
+                    formatDate(c.expiryDate),
+                    c.location || 'N/A',
+                    status
+                ]);
+            });
+
+            const requestsQuery = query(
+                collection(db, "clearanceRequests"),
+                where("createdAt", ">=", Timestamp.fromDate(twentyFourHoursAgo)),
+                orderBy("createdAt", "desc")
+            );
+            const requestSnap = await getDocs(requestsQuery);
+            const recentRequests = requestSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(r => r.status !== 'rejected');
+
+            recentRequests.forEach(r => {
+                reportData.push([
+                    r.vehicleNumber || 'N/A',
+                    r.vehicleType || 'N/A',
+                    formatDate(r.expiryDate),
+                    r.location || 'N/A',
+                    r.status?.toUpperCase() || 'PENDING'
+                ]);
+            });
+
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text("Vehicle Clearance Report", 14, 20);
+            
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100);
+            doc.text(`Report Period: 24-Hour`, 14, 30);
+            doc.text(`Generated: ${formatDateLongForm(now)} at ${now.toLocaleTimeString()}`, 14, 36);
+            
+            if (reportData.length === 0) {
+                doc.setFontSize(14);
+                doc.setTextColor(150);
+                doc.text("No valid clearances or requests found.", 14, 55);
+            } else {
+                doc.autoTable({
+                    head: [['Vehicle No.', 'Type', 'Expiry Date', 'Location', 'Status']], 
+                    body: reportData,
+                    startY: 45,
+                    theme: 'grid',
+                    headStyles: { 
+                        fillColor: [45, 55, 72], 
+                        textColor: 255,
+                        fontSize: 10,
+                        fontStyle: 'bold'
+                    },
+                    styles: { 
+                        fontSize: 8, 
+                        cellPadding: 3, 
+                        halign: 'center', 
+                        valign: 'middle',
+                        overflow: 'linebreak'
+                    },
+                    columnStyles: {
+                        0: { halign: 'left', fontStyle: 'bold' }, 
+                        1: { halign: 'center' }, 
+                        2: { halign: 'center' }, 
+                        3: { halign: 'left' }, 
+                        4: { halign: 'center', fontStyle: 'bold' } 
+                    },
+                    didParseCell: (data) => {
+                        if (data.section === 'body' && data.column.index === 4) { 
+                            const status = data.cell.raw;
+                            switch(status) {
+                                case 'ACTIVE':
+                                case 'APPROVED':
+                                    data.cell.styles.textColor = [22, 163, 74]; break;
+                                case 'PENDING':
+                                    data.cell.styles.textColor = [245, 158, 11]; break;
+                                case 'EXPIRED':
+                                    data.cell.styles.textColor = [239, 68, 68]; break;
+                                case 'UPCOMING':
+                                    data.cell.styles.textColor = [59, 130, 246]; break;
+                                default:
+                                    data.cell.styles.textColor = [107, 114, 128];
+                            }
+                        }
+                    }
+                });
+            }
+
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 65;
+            
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(0);
+            doc.text("Summary", 14, finalY);
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100);
+            const activeClearances = reportData.filter(row => row[4] === 'ACTIVE' || row[4] === 'APPROVED').length;
+            const pendingRequests = reportData.filter(row => row[4] === 'PENDING').length;
+            const totalRecords = reportData.length;
+            doc.text(`Total Records: ${totalRecords}`, 14, finalY + 8);
+            doc.text(`Active Clearances: ${activeClearances}`, 14, finalY + 16);
+            doc.text(`Pending Requests: ${pendingRequests}`, 14, finalY + 24);
+
+            const fileName = `Vehicle_Clearance_Report_${now.toISOString().split('T')[0]}_${now.getHours()}${now.getMinutes()}.pdf`;
+            doc.save(fileName);
+            
+            showNotification("PDF report generated successfully!");
+        } catch (error) {
+            console.error("PDF Generation Error:", error);
+            showNotification(`Failed to generate PDF: ${error.message}`, "error");
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        }
+    };
+
+    const showUserDashboard = (user) => {
+        appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
+
+        unsubClearances?.();
+        unsubRequests?.();
+
+        unsubClearances = onSnapshot(query(collection(db, "vehicleClearances")), (snap) => {
+            clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderUserDashboard(user);
+        }, (error) => console.error("Error fetching clearances:", error));
+
+        unsubRequests = onSnapshot(query(collection(db, "clearanceRequests")), (snap) => {
+            clearanceRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderUserDashboard(user);
+        }, (error) => console.error("Error fetching requests:", error));
+    };
+    // — Render Functions —
+    const renderLandingPage = (options = {}) => {
+        const { vehicleNumber = "", trackingResult = null } = options;
+        let trackingHTML = '';
+        if (trackingResult) {
+            trackingHTML = `<div class="mt-4 space-y-4"> <div class="text-sm font-medium text-gray-700 dark:text-gray-300">Tracking Result:</div> ${trackingResult} <button id="clear-tracking-btn" class="w-full px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Clear Result</button> </div>`;
+        }
+        appRoot.innerHTML = ` <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4"> <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in"> <div> <div class="w-16 h-16 mx-auto text-blue-500">${icons.car}</div> <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance</h1> <p class="text-gray-500 dark:text-gray-400 mt-2">Please select an option to continue.</p> </div> <div class="grid grid-cols-1 gap-6"> <button id="request-btn" class="flex items-center justify-center p-6 bg-yellow-50 dark:bg-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-lg transition-all duration-300 transform hover:scale-105"> <div class="w-12 h-12">${icons.request}</div> <span class="ml-4 font-semibold text-lg">Request Clearance</span> </button> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-lg transition-all duration-300 transform hover:scale-105"> <div class="w-12 h-12">${icons.shield}</div> <span class="mt-3 font-semibold text-lg">Admin Login</span> </button> <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 text-green-800 dark:text-green-300 rounded-lg transition-all duration-300 transform hover:scale-105"> <div class="w-12 h-12">${icons.greenlist}</div> <span class="mt-3 font-semibold text-lg">Green List</span> </button> </div> </div> <div class="pt-6 border-t dark:border-gray-700"> <form id="track-request-form" class="space-y-2"> <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label> <div class="flex gap-2"> <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" value="${vehicleNumber}" /> <button type="submit" class="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700"> <span class="w-4 h-4">${icons.search}</span>Track </button> </div> </form> <div id="tracking-result">${trackingHTML}</div> </div> </div> </div> <div id="modal-container"></div>`;
+        routeHistory = [];
+    };
+
+    const renderAdminLogin = () => {
+        const isSignup = authMode === "signup";
+        appRoot.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+            <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+                <div class="text-center">
+                    <div class="w-12 h-12 mx-auto text-blue-500">${icons.shield}</div>
+                    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Admin Access</h1>
+                    <p class="text-gray-500 dark:text-gray-400">${isSignup ? "Create an admin account" : "Sign in to manage clearances"}</p>
+                </div>
+                <form id="auth-form" class="space-y-6">
+                    <div class="${isSignup ? '' : 'hidden'}">
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Invite Code</label>
+                        <input type="text" name="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter the secret code" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                        <input type="email" name="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="admin@example.com" required />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                        <input type="password" name="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="••••••••" required />
+                    </div>
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">${isSignup ? "Sign Up" : "Login"}</button>
+                </form>
+                <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+                    <span>${isSignup ? "Already have an account?" : "Need an admin account?"}</span>
+                    <button id="auth-toggle-button" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 ml-1">${isSignup ? "Login" : "Sign Up"}</button>
+                </p>
+                <button id="back-btn" class="mt-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 underline text-sm block mx-auto">Back</button>
+            </div>
+        </div>`;
+    };
+
+    const renderUserLogin = () => {
+        appRoot.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+            <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in text-center">
+                <div class="w-12 h-12 mx-auto text-green-500">${icons.greenlist}</div>
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Green List Access</h1>
+                <p class="text-gray-500 dark:text-gray-400">Enter the password to view today's clearances.</p>
+                <form id="user-login-form" class="space-y-4 pt-4">
+                    <div>
+                        <input type="password" name="password" class="block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Password" required />
+                    </div>
+                    <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700">Continue</button>
+                </form>
+                <button id="back-btn" class="mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 underline text-sm">Back</button>
+            </div>
+        </div>`;
+    };
+
+    const renderRequestForm = () => {
+        appRoot.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+                <div class="text-center">
+                    <div class="w-12 h-12 mx-auto text-yellow-500">${icons.request}</div>
+                    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Request Vehicle Clearance</h1>
+                    <p class="text-gray-500 dark:text-gray-400">Fill in the details below</p>
+                </div>
+                <form id="request-form" class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Your Name</label>
+                        <input name="requesterName" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
+                        <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
+                        <select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                            <option value="">Select type...</option>
+                            <option>Car</option>
+                            <option>Motorcycle</option>
+                            <option>Van</option>
+                            <option>Tow Truck</option>
+                            <option>Lorry</option>
+                            <option>Bus</option>
+                            <option>Others</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                        <input name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
+                            <input type="date" name="entryDate" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
+                            <input type="date" name="expiryDate" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" />
+                        <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes (optional)</label>
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"></textarea>
+                    </div>
+                    <div class="flex justify-between pt-4">
+                        <button id="back-btn" type="button" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Back</button>
+                        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>`;
+    };
+
+    const createStatusCard = (r) => {
+        const statusConfig = {
+            approved: { text: "APPROVED", color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/20" },
+            rejected: { text: "REJECTED", color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20" },
+            pending: { text: "PENDING", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-900/20" }
+        };
+        const config = statusConfig[r.status] || statusConfig.pending;
+        
+        const cardDiv = document.createElement('div');
+        cardDiv.className = `p-4 ${config.bg} rounded-2xl shadow-sm space-y-2 text-left border border-gray-200 dark:border-gray-700`;
+        cardDiv.innerHTML = `
+            <div class="flex justify-between items-center">
+                <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${r.vehicleNumber}</p>
+                <p class="font-semibold px-2 py-0.5 rounded-md text-xs ${config.color} ${config.bg}">${config.text}</p>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400">${r.vehicleType || "-"} • Requested by ${r.requesterName}</p>
+            <div class="pt-2 border-t border-gray-200 dark:border-gray-600">
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Proposed Dates</p>
+                <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(r.entryDate)} - ${formatDate(r.expiryDate)}</p>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Location</p>
+                <p class="font-semibold">${r.location}</p>
+                ${r.notes ? `<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200">${r.notes}</p>` : ""}
+            </div>
+        `;
+        return cardDiv.outerHTML;
+    };
+
+    const renderClearanceListForUser = (vehicleFilter = null) => {
+        const listContainer = document.getElementById('user-clearance-list-container');
+        if (!listContainer) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let dailyClearances = clearances.filter(c => {
+            const entryDate = c.entryDate.toDate();
+            entryDate.setHours(0, 0, 0, 0);
+            const expiryDate = c.expiryDate.toDate();
+            expiryDate.setHours(23, 59, 59, 999);
+            return today >= entryDate && today <= expiryDate;
+        });
+
+        if (vehicleFilter) {
+            dailyClearances = dailyClearances.filter(c => c.vehicleNumber.includes(vehicleFilter));
+        }
+
+        let listHTML = '';
+        if (dailyClearances.length > 0) {
+            listHTML = dailyClearances.map(c => `
+                <details class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden group animate-fade-in">
+                    <summary class="flex justify-between items-center px-5 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                        <div class="flex items-center gap-4">
+                            <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90">${icons.chevronRight}</span>
+                            <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Cleared</span>
+                    </summary>
+                    <div class="px-5 pb-5 border-t border-gray-200 dark:border-gray-700">
+                        <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Owner</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${c.ownerName}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Location</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Escort</p>
+                                <p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Valid Until</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
+                            </div>
+                            ${c.notes ? `<div class="col-span-2"><p class="text-xs text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-wrap">${c.notes}</p></div>` : ""}
+                        </div>
+                    </div>
+                </details>`).join("");
+        } else {
+            listHTML = `
+                <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md animate-fade-in">
+                    <div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div>
+                    <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-100">${vehicleFilter ? 'No Matching Clearances Found' : 'No Clearances for Today'}</h3>
+                    <p class="mt-1 text-gray-500 dark:text-gray-400">${vehicleFilter ? 'Try a different vehicle number or clear the search.' : 'There are no vehicles with clearance for today.'}</p>
+                </div>`;
+        }
+        listContainer.innerHTML = listHTML;
+    };
 
     const renderUserDashboard = (user) => {
         if (!document.getElementById('user-dashboard-header')) {
@@ -1011,6 +1550,9 @@
                                 <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()">
                                 <button id="voice-search-btn" type="button" class="flex-shrink-0 p-2 rounded-lg text-gray-600 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-200">
                                     <span class="w-6 h-6">${icons.mic}</span>
+                                </button>
+                                <button id="camera-search-btn" type="button" class="flex-shrink-0 p-2 rounded-lg text-gray-600 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-200">
+                                    <span class="w-6 h-6">${icons.camera}</span>
                                 </button>
                                 <button id="clear-search-btn" type="button" class="flex-shrink-0 px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
                             </div>
@@ -1425,6 +1967,41 @@
         const button = target.closest('button');
         if (!button) return;
 
+        // --- Camera Search Button Handlers ---
+        if (button.id === 'camera-search-btn') {
+            e.preventDefault();
+            startCameraScanning();
+        }
+        if (button.id === 'close-camera-btn') {
+            stopCameraScanning();
+        }
+        if (button.id === 'manual-capture-btn') {
+            manualCapturePhoto();
+        }
+        if (button.id === 'use-camera-result') {
+            const result = button.dataset.result;
+            if (result) {
+                const searchInput = document.getElementById('daily-clearance-search-input');
+                if (searchInput) {
+                    searchInput.value = result;
+                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                const statusInfo = await findClearanceStatusForVoice(result);
+                speak(`Using ${result.split('').join(' ')}. Status: ${statusInfo.status}`);
+            }
+            stopCameraScanning();
+        }
+        if (button.id === 'switch-to-file-input') {
+            stopCameraScanning();
+            showFileUploadOption();
+        }
+        if (target.id === 'realtime-toggle') {
+            cameraMode = target.checked ? 'realtime' : 'capture';
+            if (cameraMode === 'realtime' && cameraSearchActive) {
+                startRealtimeScanning();
+            }
+        }
+
         // --- Voice Search Button Handlers ---
         if (button.id === 'voice-search-btn') {
             e.preventDefault();
@@ -1528,6 +2105,7 @@
         }
     });
 
+    // --- Form Submit Events ---
     document.body.addEventListener("submit", async (e) => {
         e.preventDefault();
         const form = e.target;
@@ -1663,17 +2241,38 @@
         }
     });
 
+    // --- Input Events ---
     document.body.addEventListener("input", e => {
         if (e.target.id === 'daily-clearance-search-input') {
             const searchInput = document.getElementById('daily-clearance-search-input');
             renderClearanceListForUser(searchInput.value);
         }
+        if (e.target.id === 'realtime-toggle') {
+            cameraMode = e.target.checked ? 'realtime' : 'capture';
+        }
+    });
+
+    // --- Cleanup on page unload ---
+    window.addEventListener('beforeunload', () => {
+        // Stop camera stream
+        stopCameraScanning();
+        stopVoiceSearch();
+        
+        // Terminate OCR worker
+        if (ocrWorker) {
+            ocrWorker.terminate();
+            ocrWorker = null;
+        }
+        
+        // Unsubscribe from Firebase listeners
+        unsubClearances?.();
+        unsubRequests?.();
+        unsubConfig?.();
     });
 
     // --- Initial Render ---
-    console.log("Starting application with refined voice search");
+    console.log("Starting enhanced vehicle clearance system with camera and voice search");
     renderLandingPage();
-
   </script>
 </body>
 </html>
