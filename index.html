@@ -1150,7 +1150,8 @@
                     </div>
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
-                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
+                        <!-- FIX: Changed button type to "submit" to trigger the form's submit event -->
+                        <button type="submit" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
                     </div>
                 </form>
             </div>
@@ -1376,45 +1377,8 @@
             );
         }
         
-        if (button.classList.contains("approve-request-btn")) {
-            const form = button.closest('form');
-            if (form && form.id === 'review-form') {
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-                const data = getFormObj(form);
-                const entryDate = parseLocalDate(data.entryDate);
-                const expiryDate = parseLocalDate(data.expiryDate);
-
-                if(!entryDate || !expiryDate) {
-                    showNotification("Valid entry and expiry dates are required.", "error");
-                    return;
-                }
-
-                const clearancePayload = {
-                    ownerName: data.ownerName,
-                    vehicleNumber: data.vehicleNumber.toUpperCase(),
-                    vehicleType: data.vehicleType,
-                    location: data.location,
-                    entryDate: Timestamp.fromDate(entryDate),
-                    expiryDate: Timestamp.fromDate(expiryDate),
-                    escortRequired: !!data.escortRequired,
-                    notes: data.notes || "",
-                    createdAt: Timestamp.now()
-                };
-                try {
-                    await addDoc(collection(db, "vehicleClearances"), clearancePayload);
-                    await updateDoc(doc(db, "clearanceRequests", data.id), { status: 'approved' });
-                    
-                    showNotification("Request approved and clearance created.");
-                    document.getElementById("modal-container").innerHTML = "";
-                } catch (err) {
-                    console.error("Approval error:", err);
-                    showNotification("Error approving request.", "error");
-                }
-            }
-        }
+        // FIX: Removed the "approve-request-btn" handler from the click listener. 
+        // Its logic is now handled by the "submit" listener below.
 
         if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
             button.closest("#modal-container").innerHTML = "";
@@ -1556,6 +1520,41 @@
             }
         }
         
+        // FIX: Added handler for the review form submission (Approve button)
+        if (form.id === "review-form") {
+            const data = getFormObj(form);
+            const entryDate = parseLocalDate(data.entryDate);
+            const expiryDate = parseLocalDate(data.expiryDate);
+
+            if(!entryDate || !expiryDate || !form.checkValidity()) {
+                form.reportValidity();
+                showNotification("Please fill all required fields with valid dates.", "error");
+                return;
+            }
+
+            const clearancePayload = {
+                ownerName: data.ownerName,
+                vehicleNumber: data.vehicleNumber.toUpperCase(),
+                vehicleType: data.vehicleType,
+                location: data.location,
+                entryDate: Timestamp.fromDate(entryDate),
+                expiryDate: Timestamp.fromDate(expiryDate),
+                escortRequired: !!data.escortRequired,
+                notes: data.notes || "",
+                createdAt: Timestamp.now()
+            };
+            try {
+                await addDoc(collection(db, "vehicleClearances"), clearancePayload);
+                await updateDoc(doc(db, "clearanceRequests", data.id), { status: 'approved' });
+                
+                showNotification("Request approved and clearance created.");
+                document.getElementById("modal-container").innerHTML = "";
+            } catch (err) {
+                console.error("Approval error:", err);
+                showNotification("Error approving request.", "error");
+            }
+        }
+
         if (form.id === "clearance-form") {
             const data = getFormObj(form);
             const entryDate = parseLocalDate(data.entryDate);
@@ -1660,6 +1659,3 @@
   </script>
 </body>
 </html>
-```
-
-I've integrated the new code. This version is now highly optimized for recognizing spoken numbers, which should improve the accuracy of your voice search feature. Let me know if there's anything else you ne
