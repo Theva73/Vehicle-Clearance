@@ -501,7 +501,8 @@
             result: finalResult,
             isCommand: false,
             confidence: adjustedConfidence,
-            isValid: isValidPattern
+            isValid: isValidPattern,
+            rawTranscript: transcript // Keep the original transcript for display
         };
     };
 
@@ -566,7 +567,7 @@
                     </div>
                     <div class="flex gap-2 mt-4">
                         <button id="cancel-voice-search" class="flex-1 px-3 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
-                        ${processedResult && confidence > 40 ? `
+                        ${processedResult && confidence > 30 ? `
                         <button id="accept-voice-result" class="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Use Result</button>` : ''}
                     </div>
                 </div>
@@ -596,7 +597,7 @@
         }
 
         voiceSearchActive = true;
-        bestVoiceResult = { result: '', confidence: 0, isValid: false };
+        bestVoiceResult = { result: '', confidence: 0, isValid: false, rawTranscript: '' };
 
         if (voiceRecognition) {
             voiceRecognition.stop();
@@ -613,7 +614,9 @@
         if (voiceButton) voiceButton.classList.add('mic-recording');
 
         renderVoiceModal(true);
-        speak("Ready to listen for vehicle number");
+        // On iOS, the first `speak` must be from a direct user tap.
+        // We call it here, knowing this function is triggered by a tap on the mic icon.
+        speak("Ready to listen");
 
         let finalTranscript = '';
         let timeoutId;
@@ -622,7 +625,7 @@
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
                 if(voiceRecognition && voiceSearchActive) voiceRecognition.stop();
-            }, 8000); // 8 second timeout
+            }, 5000); // 5 second timeout after last word
         };
 
         voiceRecognition.start();
@@ -648,55 +651,39 @@
             const currentTranscript = finalTranscript + interimTranscript;
             const processed = processVehicleVoiceInput(currentTranscript);
             
-            if (processed.confidence > bestVoiceResult.confidence && processed.result.length >= 3) {
+            // Only update the best result if the new one is better
+            if (processed.confidence > bestVoiceResult.confidence && processed.result.length >= bestVoiceResult.result.length) {
                 bestVoiceResult = processed;
             }
             
             renderVoiceModal(true, {
-                confidence: currentConfidence,
+                confidence: bestVoiceResult.confidence || currentConfidence,
                 transcript: currentTranscript.trim(),
                 processedResult: bestVoiceResult.result,
                 isValid: bestVoiceResult.isValid
             });
             
-            if (bestVoiceResult.confidence > 85 && bestVoiceResult.isValid && bestVoiceResult.result.length >= 4) {
+            // Stop early if a very confident and valid result is found
+            if (bestVoiceResult.confidence > 90 && bestVoiceResult.isValid && bestVoiceResult.result.length >= 5) {
                 setTimeout(() => {
                     if (voiceRecognition && voiceSearchActive) voiceRecognition.stop();
-                }, 800);
+                }, 1200);
             }
         };
 
-        voiceRecognition.onend = async () => {
+        voiceRecognition.onend = () => {
             stopVoiceSearch();
-            const searchInput = document.getElementById('daily-clearance-search-input');
             
-            if (bestVoiceResult.isCommand) {
-                if (searchInput) {
-                    searchInput.value = '';
-                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-                speak("Search cleared.");
-                return;
-            }
+            // Re-render the modal with the final, best result for confirmation by the user.
+            renderVoiceModal(true, {
+                confidence: bestVoiceResult.confidence,
+                transcript: bestVoiceResult.rawTranscript,
+                processedResult: bestVoiceResult.result,
+                isValid: bestVoiceResult.isValid
+            });
             
-            if (bestVoiceResult.result && bestVoiceResult.confidence > 30) {
-                if (searchInput) {
-                    searchInput.value = bestVoiceResult.result;
-                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-                
-                const statusInfo = await findClearanceStatusForVoice(bestVoiceResult.result);
-                const vehicleSpoken = bestVoiceResult.result.split('').join(' ');
-                
-                let audioFeedback = `Vehicle ${vehicleSpoken}. Status: ${statusInfo.status}`;
-                speak(audioFeedback);
-                
-                if (statusInfo.status !== "No Record Found") {
-                    const notificationType = statusInfo.color === 'green' ? 'success' : 'error';
-                    showNotification(`${bestVoiceResult.result}: ${statusInfo.status}`, notificationType);
-                }
-            } else {
-                speak("Could not detect vehicle number clearly. Please try again.");
+            if (!bestVoiceResult.result && voiceSearchActive) {
+                speak("Could not detect vehicle number clearly.");
             }
         };
 
@@ -713,16 +700,16 @@
             showNotification(errorMsg, "error");
             speak(spokenMsg);
             stopVoiceSearch();
+            renderVoiceModal(false);
         };
     };
 
     const stopVoiceSearch = () => {
-        voiceSearchActive = false;
         if (voiceRecognition) {
             voiceRecognition.stop();
             voiceRecognition = null;
         }
-        renderVoiceModal(false);
+        voiceSearchActive = false;
         const voiceButton = document.getElementById('voice-search-btn');
         if (voiceButton) voiceButton.classList.remove('mic-recording');
     };
@@ -2024,6 +2011,7 @@
         }
         if (button.id === 'cancel-voice-search') {
             stopVoiceSearch();
+            renderVoiceModal(false); // Close the modal on cancel
         }
         if (button.id === 'accept-voice-result') {
             if (bestVoiceResult.result) {
@@ -2032,10 +2020,19 @@
                     searchInput.value = bestVoiceResult.result;
                     searchInput.dispatchEvent(new Event('input', { bubbles: true }));
                 }
+                // This is now a direct user action, so audio should work on iOS
                 const statusInfo = await findClearanceStatusForVoice(bestVoiceResult.result);
-                speak(`Using ${bestVoiceResult.result}. Status: ${statusInfo.status}`);
+                const vehicleSpoken = bestVoiceResult.result.split('').join(' ');
+                let audioFeedback = `Vehicle ${vehicleSpoken}. Status: ${statusInfo.status}`;
+                speak(audioFeedback);
+                
+                if (statusInfo.status !== "No Record Found") {
+                    const notificationType = statusInfo.color === 'green' ? 'success' : 'error';
+                    showNotification(`${bestVoiceResult.result}: ${statusInfo.status}`, notificationType);
+                }
             }
             stopVoiceSearch();
+            renderVoiceModal(false); // Close modal after using result
         }
         if (button.id === 'clear-search-btn') {
             const searchInput = document.getElementById('daily-clearance-search-input');
