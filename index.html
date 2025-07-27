@@ -442,10 +442,26 @@
         ]
     };
 
+    // Mappings for voice recognition, converting spoken words to characters.
     const phoneticMappings = {
         'zero':'0','o':'0','oh':'0','nil':'0','naught':'0','one':'1','won':'1','juan':'1','two':'2','to':'2','too':'2','tu':'2','tuo':'2','three':'3','tree':'3','free':'3','thee':'3','four':'4','for':'4','fore':'4','foor':'4','five':'5','fife':'5','fyve':'5','six':'6','sex':'6','sicks':'6','siks':'6','seven':'7','heaven':'7','severn':'7','eight':'8','ate':'8','ait':'8','eyt':'8','nine':'9','niner':'9','line':'9','nyne':'9','a':'a','alpha':'a','alfa':'a','apple':'a','ay':'a','b':'b','bravo':'b','beta':'b','boy':'b','bee':'b','c':'c','charlie':'c','cat':'c','see':'c','sea':'c','d':'d','delta':'d','dog':'d','dee':'d','e':'e','echo':'e','easy':'e','egg':'e','f':'f','foxtrot':'f','fox':'f','frank':'f','g':'g','golf':'g','george':'g','gun':'g','h':'h','hotel':'h','house':'h','henry':'h','i':'i','india':'i','ice':'i','item':'i','eye':'i','j':'j','juliet':'j','john':'j','jay':'j','k':'k','kilo':'k','king':'k','kay':'k','l':'l','lima':'l','love':'l','lion':'l','m':'m','mike':'m','mary':'m','mouse':'m','n':'n','november':'n','nancy':'n','net':'n','o':'o','oscar':'o','orange':'o','ocean':'o','p':'p','papa':'p','peter':'p','paul':'p','q':'q','quebec':'q','queen':'q','quick':'q','r':'r','romeo':'r','robert':'r','red':'r','s':'s','sierra':'s','sam':'s','sugar':'s','t':'t','tango':'t','tom':'t','tiger':'t','u':'u','uniform':'u','uncle':'u','under':'u','v':'v','victor':'v','victory':'v','violet':'v','w':'w','whiskey':'w','william':'w','white':'w','x':'x','xray':'x','x-ray':'x','xerox':'x','y':'y','yankee':'y','yellow':'y','young':'y','z':'z','zulu':'z','zebra':'z'
     };
 
+    // Helper function to determine if a word is a likely part of a license plate
+    const isLikelyPartialPlate = (word) => {
+        if (/^\d+$/.test(word)) return true; // The word is only digits (e.g., "1234")
+        if (/^[a-z]+$/i.test(word) && word.length <= 3) return true; // The word is only letters and short (e.g., "SBA")
+        if (/[a-z]/i.test(word) && /\d/.test(word)) return true; // The word is mixed alphanumeric (e.g., "SBA12")
+        return false;
+    };
+
+    /**
+     * Enhanced voice processing function.
+     * This version is stricter and focuses on number and license plate patterns
+     * to avoid including misinterpreted words.
+     * @param {string} transcript - The raw transcript from speech recognition.
+     * @returns {object} - The processed result.
+     */
     const processVehicleVoiceInput = (transcript) => {
         let processed = transcript.toLowerCase().trim();
 
@@ -453,34 +469,33 @@
             return { result: "", isCommand: true, confidence: 100 };
         }
 
-        let words = processed.split(/\s+/);
+        const words = processed.split(/\s+/);
         let result = [];
         let totalConfidence = 0;
         let processedWords = 0;
 
         for (let word of words) {
-            word = word.replace(/[^\w]/g, '');
-            if (!word) continue;
+            const cleanedWord = word.replace(/[^\w]/g, '');
+            if (!cleanedWord) continue;
             
-            if (phoneticMappings[word]) {
-                result.push(phoneticMappings[word]);
-                totalConfidence += 90;
+            if (phoneticMappings[cleanedWord]) {
+                result.push(phoneticMappings[cleanedWord]);
+                totalConfidence += 90; // High confidence for phonetic matches
                 processedWords++;
-            } else if (/^[a-z0-9]$/i.test(word)) {
-                result.push(word.toLowerCase());
-                totalConfidence += 95;
-                processedWords++;
-            } else if (/^[a-z0-9]{2,}$/i.test(word)) {
-                result.push(word.toLowerCase());
-                totalConfidence += 70;
+            } else if (isLikelyPartialPlate(cleanedWord)) {
+                result.push(cleanedWord);
+                totalConfidence += 85; // High confidence for likely plate parts
                 processedWords++;
             }
+            // Words not matching either condition are ignored, filtering out noise.
         }
 
         const finalResult = result.join('').toUpperCase();
         const avgConfidence = processedWords > 0 ? totalConfidence / processedWords : 0;
         const isValidPattern = validateVehiclePattern(finalResult);
-        const adjustedConfidence = isValidPattern ? Math.min(avgConfidence + 15, 100) : Math.max(avgConfidence - 10, 0);
+        
+        // Boost confidence slightly if the combined result is a valid pattern
+        const adjustedConfidence = isValidPattern ? Math.min(avgConfidence + 10, 100) : avgConfidence;
 
         return {
             result: finalResult,
