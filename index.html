@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vehicle Clearance System (Refined)</title>
+  <title>Vehicle Clearance System (Enhanced Voice)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -58,7 +58,7 @@
         50% { opacity: 0.7; transform: scale(1.1); }
     }
     .mic-recording { 
-        animation: pulse 1.2s ease-in-out infinite;
+        animation: pulse 1s ease-in-out infinite;
         color: #3b82f6; /* blue-500 */
     }
 
@@ -636,93 +636,71 @@
         listContainer.innerHTML = listHTML;
     };
 
-    // --- UNIFIED STATUS & VOICE SEARCH SYSTEM ---
-
-    /**
-     * Centralized function to get the most recent status of a vehicle.
-     * It checks both clearances and requests collections.
-     * @param {string} vehicleNumber - The vehicle registration number.
-     * @returns {Promise<object>} A promise that resolves to an object {status, record, type}.
-     */
-    const getVehicleStatus = async (vehicleNumber) => {
-        if (!vehicleNumber) return { status: "No Record Found", record: null, type: null };
-
-        try {
-            // Ensure user is authenticated for query
-            if (auth.currentUser?.isAnonymous === false && !auth.currentUser) {
-                 await signInAnonymously(auth);
-            }
-            
-            const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
-            const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
-            
-            const [reqSnap, clrSnap] = await Promise.all([getDocs(reqQuery), getDocs(clrQuery)]);
-
-            const allRecords = [
-                ...reqSnap.docs.map(d => ({...d.data(), id: d.id, type: 'request'})),
-                ...clrSnap.docs.map(d => ({...d.data(), id: d.id, type: 'clearance'}))
-            ].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-
-            const latestRecord = allRecords[0];
-
-            if (!latestRecord) {
-                return { status: "No Record Found", record: null, type: null };
-            }
-
-            if (latestRecord.type === 'clearance') {
-                const now = new Date();
-                const expiryDate = latestRecord.expiryDate.toDate();
-                const isExpired = now > expiryDate;
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const entryDate = latestRecord.entryDate.toDate();
-                entryDate.setHours(0, 0, 0, 0);
-                expiryDate.setHours(23, 59, 59, 999);
-                const isValidToday = today >= entryDate && today <= expiryDate;
-
-                if (isExpired) return { status: "Expired", record: latestRecord, type: 'clearance' };
-                if (isValidToday) return { status: "Clear", record: latestRecord, type: 'clearance' };
-                return { status: "Not valid today", record: latestRecord, type: 'clearance' };
-            }
-
-            if (latestRecord.type === 'request') {
-                if (latestRecord.status === 'rejected') return { status: "Access Denied", record: latestRecord, type: 'request' };
-                if (latestRecord.status === 'pending') return { status: "Pending Approval", record: latestRecord, type: 'request' };
-                if (latestRecord.status === 'approved') {
-                    return { status: "Clear", record: latestRecord, type: 'request' };
-                }
-            }
-
-            return { status: "No Record Found", record: null, type: null }; // Fallback
-
-        } catch (err) {
-            console.error("getVehicleStatus Error:", err);
-            return { status: "Error", record: null, type: null };
-        }
-    };
-    
+    // --- ENHANCED VOICE SEARCH SYSTEM ---
     const vehicleRegPatterns = {
+        // Singapore patterns - common formats
         'singapore': [
-            /^S[A-Z]{1,2}\s*\d{1,4}\s*[A-Z]$/,   // SBA1234A, SGX123B
-            /^[A-Z]{3}\s*\d{1,4}$/,              // SGP1234
-            /^[A-Z]{2}\s*\d{1,4}\s*[A-Z]$/,      // SG1234A
-            /^S\d{1,4}\s*[A-Z]{1,2}$/,          // S1234AB
+            /^S[A-Z]{1,2}\s*\d{1,4}\s*[A-Z]$/,   // SBA1234A, SGX123B (current format)
+            /^[A-Z]{3}\s*\d{1,4}$/,              // SGP1234 (older format)
+            /^[A-Z]{2}\s*\d{1,4}\s*[A-Z]$/,      // SG1234A (common format)
+            /^S\d{1,4}\s*[A-Z]{1,2}$/,          // S1234AB (alternate format)
         ],
+        // Special Singapore vehicle types
         'special': [
-            /^CD\s*\d{1,4}$/, /^CC\s*\d{1,4}$/, /^SH\s*\d{1,4}$/,
+            /^CD\s*\d{1,4}$/,                    // CD123 (Diplomatic vehicles)
+            /^CC\s*\d{1,4}$/,                    // CC123 (Consular vehicles)
+            /^SH\s*\d{1,4}$/,                    // SH123 (Special vehicles)
         ],
+        // International patterns
         'international': [
-            /^[A-Z0-9]{2,8}$/,
-            /^\d{1,4}\s*[A-Z]{1,4}\s*\d{0,4}$/
+            /^[A-Z0-9]{2,8}$/,                   // Basic alphanumeric
+            /^\d{1,4}\s*[A-Z]{1,4}\s*\d{0,4}$/  // Mixed patterns
         ]
     };
 
     const phoneticMappings = {
-        'zero':'0','o':'0','oh':'0','nil':'0','naught':'0','one':'1','won':'1','juan':'1','two':'2','to':'2','too':'2','tu':'2','tuo':'2','three':'3','tree':'3','free':'3','thee':'3','four':'4','for':'4','fore':'4','foor':'4','five':'5','fife':'5','fyve':'5','six':'6','sex':'6','sicks':'6','siks':'6','seven':'7','heaven':'7','severn':'7','eight':'8','ate':'8','ait':'8','eyt':'8','nine':'9','niner':'9','line':'9','nyne':'9','a':'a','alpha':'a','alfa':'a','apple':'a','ay':'a','b':'b','bravo':'b','beta':'b','boy':'b','bee':'b','c':'c','charlie':'c','cat':'c','see':'c','sea':'c','d':'d','delta':'d','dog':'d','dee':'d','e':'e','echo':'e','easy':'e','egg':'e','f':'f','foxtrot':'f','fox':'f','frank':'f','g':'g','golf':'g','george':'g','gun':'g','h':'h','hotel':'h','house':'h','henry':'h','i':'i','india':'i','ice':'i','item':'i','eye':'i','j':'j','juliet':'j','john':'j','jay':'j','k':'k','kilo':'k','king':'k','kay':'k','l':'l','lima':'l','love':'l','lion':'l','m':'m','mike':'m','mary':'m','mouse':'m','n':'n','november':'n','nancy':'n','net':'n','o':'o','oscar':'o','orange':'o','ocean':'o','p':'p','papa':'p','peter':'p','paul':'p','q':'q','quebec':'q','queen':'q','quick':'q','r':'r','romeo':'r','robert':'r','red':'r','s':'s','sierra':'s','sam':'s','sugar':'s','t':'t','tango':'t','tom':'t','tiger':'t','u':'u','uniform':'u','uncle':'u','under':'u','v':'v','victor':'v','victory':'v','violet':'v','w':'w','whiskey':'w','william':'w','white':'w','x':'x','xray':'x','x-ray':'x','xerox':'x','y':'y','yankee':'y','yellow':'y','young':'y','z':'z','zulu':'z','zebra':'z'
+        // Numbers with common phonetic variations
+        'zero': '0', 'o': '0', 'oh': '0', 'nil': '0', 'naught': '0',
+        'one': '1', 'won': '1', 'juan': '1',
+        'two': '2', 'to': '2', 'too': '2', 'tu': '2', 'tuo': '2',
+        'three': '3', 'tree': '3', 'free': '3', 'thee': '3',
+        'four': '4', 'for': '4', 'fore': '4', 'foor': '4',
+        'five': '5', 'fife': '5', 'fyve': '5',
+        'six': '6', 'sex': '6', 'sicks': '6', 'siks': '6',
+        'seven': '7', 'heaven': '7', 'severn': '7',
+        'eight': '8', 'ate': '8', 'ait': '8', 'eyt': '8',
+        'nine': '9', 'niner': '9', 'line': '9', 'nyne': '9',
+        // Letters with phonetic NATO alphabet and common variations
+        'a': 'a', 'alpha': 'a', 'alfa': 'a', 'apple': 'a', 'ay': 'a',
+        'b': 'b', 'bravo': 'b', 'beta': 'b', 'boy': 'b', 'bee': 'b',
+        'c': 'c', 'charlie': 'c', 'cat': 'c', 'see': 'c', 'sea': 'c',
+        'd': 'd', 'delta': 'd', 'dog': 'd', 'dee': 'd',
+        'e': 'e', 'echo': 'e', 'easy': 'e', 'egg': 'e',
+        'f': 'f', 'foxtrot': 'f', 'fox': 'f', 'frank': 'f',
+        'g': 'g', 'golf': 'g', 'george': 'g', 'gun': 'g',
+        'h': 'h', 'hotel': 'h', 'house': 'h', 'henry': 'h',
+        'i': 'i', 'india': 'i', 'ice': 'i', 'item': 'i', 'eye': 'i',
+        'j': 'j', 'juliet': 'j', 'john': 'j', 'jay': 'j',
+        'k': 'k', 'kilo': 'k', 'king': 'k', 'kay': 'k',
+        'l': 'l', 'lima': 'l', 'love': 'l', 'lion': 'l',
+        'm': 'm', 'mike': 'm', 'mary': 'm', 'mouse': 'm',
+        'n': 'n', 'november': 'n', 'nancy': 'n', 'net': 'n',
+        'o': 'o', 'oscar': 'o', 'orange': 'o', 'ocean': 'o',
+        'p': 'p', 'papa': 'p', 'peter': 'p', 'paul': 'p',
+        'q': 'q', 'quebec': 'q', 'queen': 'q', 'quick': 'q',
+        'r': 'r', 'romeo': 'r', 'robert': 'r', 'red': 'r',
+        's': 's', 'sierra': 's', 'sam': 's', 'sugar': 's',
+        't': 't', 'tango': 't', 'tom': 't', 'tiger': 't',
+        'u': 'u', 'uniform': 'u', 'uncle': 'u', 'under': 'u',
+        'v': 'v', 'victor': 'v', 'victory': 'v', 'violet': 'v',
+        'w': 'w', 'whiskey': 'w', 'william': 'w', 'white': 'w',
+        'x': 'x', 'xray': 'x', 'x-ray': 'x', 'xerox': 'x',
+        'y': 'y', 'yankee': 'y', 'yellow': 'y', 'young': 'y',
+        'z': 'z', 'zulu': 'z', 'zebra': 'z'
     };
 
     const processVehicleVoiceInput = (transcript) => {
+        console.log("Processing voice input:", transcript);
         let processed = transcript.toLowerCase().trim();
 
         if (processed.includes("clear") || processed.includes("reset") || processed.includes("delete")) {
@@ -758,6 +736,7 @@
         const isValidPattern = validateVehiclePattern(finalResult);
         const adjustedConfidence = isValidPattern ? Math.min(avgConfidence + 15, 100) : Math.max(avgConfidence - 10, 0);
 
+        console.log("Processed result:", finalResult, "Confidence:", adjustedConfidence);
         return {
             result: finalResult,
             isCommand: false,
@@ -776,22 +755,41 @@
         return allPatterns.some(pattern => pattern.test(input));
     };
 
-    const findClearanceStatusForVoice = async (vehicleNumber) => {
+    const findClearanceStatus = (vehicleNumber) => {
         if (!vehicleNumber) return { status: "No vehicle number detected", color: "gray" };
 
-        const { status } = await getVehicleStatus(vehicleNumber);
+        const latestClearance = clearances
+            .filter(c => c.vehicleNumber === vehicleNumber)
+            .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))[0];
 
-        const colorMap = {
-            "Clear": "green",
-            "Expired": "red",
-            "Not valid today": "yellow",
-            "Access Denied": "red",
-            "Pending Approval": "yellow",
-            "No Record Found": "gray",
-            "Error": "red"
-        };
+        if (latestClearance) {
+            const now = new Date();
+            const expiryDate = latestClearance.expiryDate.toDate();
+            const isExpired = now > expiryDate;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const entryDate = latestClearance.entryDate.toDate();
+            entryDate.setHours(0, 0, 0, 0);
+            expiryDate.setHours(23, 59, 59, 999);
+            const isValidToday = today >= entryDate && today <= expiryDate;
+            
+            if (isExpired) return { status: "Expired", color: "red" };
+            if (isValidToday) return { status: "Clear", color: "green" };
+            return { status: "Not valid today", color: "yellow" };
+        }
 
-        return { status: status, color: colorMap[status] || "gray" };
+        const latestRequest = clearanceRequests
+            .filter(r => r.vehicleNumber === vehicleNumber)
+            .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))[0];
+
+        if (latestRequest) {
+            if (latestRequest.status === 'rejected') return { status: "Access Denied", color: "red" };
+            if (latestRequest.status === 'pending') return { status: "Pending Approval", color: "yellow" };
+            if (latestRequest.status === 'approved') return { status: "Clear", color: "green" };
+        }
+
+        return { status: "No Record Found", color: "gray" };
     };
 
     const renderVoiceModal = (show, data = {}) => {
@@ -882,7 +880,7 @@
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
                 if(voiceRecognition && voiceSearchActive) voiceRecognition.stop();
-            }, 8000); // 8 second timeout
+            }, 10000); // 10 second timeout
         };
 
         voiceRecognition.start();
@@ -915,18 +913,18 @@
             renderVoiceModal(true, {
                 confidence: currentConfidence,
                 transcript: currentTranscript.trim(),
-                processedResult: bestVoiceResult.result,
-                isValid: bestVoiceResult.isValid
+                processedResult: processed.result,
+                isValid: processed.isValid
             });
             
-            if (bestVoiceResult.confidence > 85 && bestVoiceResult.isValid && bestVoiceResult.result.length >= 4) {
+            if (processed.confidence > 85 && processed.isValid && processed.result.length >= 4) {
                 setTimeout(() => {
                     if (voiceRecognition && voiceSearchActive) voiceRecognition.stop();
                 }, 800);
             }
         };
 
-        voiceRecognition.onend = async () => {
+        voiceRecognition.onend = () => {
             stopVoiceSearch();
             const searchInput = document.getElementById('daily-clearance-search-input');
             
@@ -945,7 +943,7 @@
                     searchInput.dispatchEvent(new Event('input', { bubbles: true }));
                 }
                 
-                const statusInfo = await findClearanceStatusForVoice(bestVoiceResult.result);
+                const statusInfo = findClearanceStatus(bestVoiceResult.result);
                 const vehicleSpoken = bestVoiceResult.result.split('').join(' ');
                 
                 let audioFeedback = `Vehicle ${vehicleSpoken}. Status: ${statusInfo.status}`;
@@ -1440,7 +1438,7 @@
                     searchInput.value = bestVoiceResult.result;
                     searchInput.dispatchEvent(new Event('input', { bubbles: true }));
                 }
-                const statusInfo = await findClearanceStatusForVoice(bestVoiceResult.result);
+                const statusInfo = findClearanceStatus(bestVoiceResult.result);
                 speak(`Using ${bestVoiceResult.result}. Status: ${statusInfo.status}`);
             }
             stopVoiceSearch();
@@ -1600,36 +1598,59 @@
                 return;
             }
 
-            const { status, record, type } = await getVehicleStatus(vehicleNumber);
-            let trackingHTML, spokenFeedback;
-            
-            if (status === "Error") {
-                spokenFeedback = "An error occurred during tracking.";
+            try {
+                if (!auth.currentUser || !auth.currentUser.uid) {
+                    await signInAnonymously(auth);
+                }
+                
+                const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
+                const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
+                
+                const [reqSnap, clrSnap] = await Promise.all([getDocs(reqQuery), getDocs(clrQuery)]);
+
+                const allRecords = [
+                    ...reqSnap.docs.map(d => ({...d.data(), id: d.id, type: 'request'})),
+                    ...clrSnap.docs.map(d => ({...d.data(), id: d.id, type: 'clearance'}))
+                ].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                const latestRecord = allRecords[0];
+                let trackingHTML, spokenFeedback;
+
+                if (!latestRecord) {
+                    spokenFeedback = "No Record";
+                    const notFoundDiv = document.createElement('div');
+                    notFoundDiv.className = 'p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-center';
+                    notFoundDiv.innerHTML = `<div class="w-12 h-12 mx-auto text-red-500 mb-3">${icons.x}</div><p class="font-semibold text-red-600 dark:text-red-400">No request or clearance found for ${vehicleNumber}</p>`;
+                    trackingHTML = notFoundDiv.outerHTML;
+                } else if (latestRecord.type === 'request') {
+                    trackingHTML = createStatusCard(latestRecord);
+                    if (latestRecord.status === 'rejected') { spokenFeedback = "Denied Entry"; }
+                    else if (latestRecord.status === 'pending') { spokenFeedback = "Pending"; }
+                    else { spokenFeedback = "Clear"; }
+                } else { // It's a clearance
+                    const now = new Date();
+                    const isExpired = now > latestRecord.expiryDate.toDate();
+                    spokenFeedback = isExpired ? "Expired" : "Clear";
+
+                    const statusText = isExpired ? 'EXPIRED CLEARANCE' : 'ACTIVE CLEARANCE';
+                    const statusColor = isExpired ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400';
+                    const clearanceDiv = document.createElement('div');
+                    clearanceDiv.className = 'p-4 bg-white dark:bg-gray-800 rounded-2xl shadow space-y-2 text-left';
+                    clearanceDiv.innerHTML = `<p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestRecord.vehicleNumber}</p><p class="font-semibold ${statusColor}">${statusText}</p><p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until: ${formatDate(latestRecord.expiryDate)}</p>`;
+                    trackingHTML = clearanceDiv.outerHTML;
+                }
+                
+                speak(spokenFeedback);
+                renderLandingPage({ vehicleNumber, trackingResult: trackingHTML });
+
+            } catch (err) {
+                console.error("Tracking error:", err);
+                speak("An error occurred during tracking.");
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-center';
                 errorDiv.innerHTML = `<p class="font-semibold text-red-600 dark:text-red-400">An error occurred. Please try again later.</p>`;
-                trackingHTML = errorDiv.outerHTML;
-            } else if (status === "No Record Found" || !record) {
-                spokenFeedback = "No Record";
-                const notFoundDiv = document.createElement('div');
-                notFoundDiv.className = 'p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-center';
-                notFoundDiv.innerHTML = `<div class="w-12 h-12 mx-auto text-red-500 mb-3">${icons.x}</div><p class="font-semibold text-red-600 dark:text-red-400">No request or clearance found for ${vehicleNumber}</p>`;
-                trackingHTML = notFoundDiv.outerHTML;
-            } else if (type === 'request') {
-                trackingHTML = createStatusCard(record);
-                spokenFeedback = record.status;
-            } else { // It's a clearance
-                spokenFeedback = status;
-                const statusText = status === 'Clear' ? 'ACTIVE CLEARANCE' : (status === 'Expired' ? 'EXPIRED CLEARANCE' : 'UPCOMING CLEARANCE');
-                const statusColor = status === 'Clear' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-                const clearanceDiv = document.createElement('div');
-                clearanceDiv.className = 'p-4 bg-white dark:bg-gray-800 rounded-2xl shadow space-y-2 text-left';
-                clearanceDiv.innerHTML = `<p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${record.vehicleNumber}</p><p class="font-semibold ${statusColor}">${statusText}</p><p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until: ${formatDate(record.expiryDate)}</p>`;
-                trackingHTML = clearanceDiv.outerHTML;
+                renderLandingPage({ vehicleNumber, trackingResult: errorDiv.outerHTML });
             }
-            
-            speak(spokenFeedback);
-            renderLandingPage({ vehicleNumber, trackingResult: trackingHTML });
         }
         
         if (form.id === "request-form") {
@@ -1671,7 +1692,7 @@
     });
 
     // --- Initial Render ---
-    console.log("Starting application with refined voice search");
+    console.log("Starting application with enhanced voice search");
     renderLandingPage();
 
   </script>
