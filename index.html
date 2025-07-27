@@ -40,12 +40,22 @@
     #settings-backdrop {
         transition: background-color 0.3s ease-in-out;
     }
+    
+    /* Voice Search Pulse Animation */
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    }
+    .mic-pulse {
+        animation: pulse 2s infinite;
+    }
 
   </style>
 
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
   <div id="app-root"></div>
+  <div id="modal-container"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -72,6 +82,7 @@
 
     // --- App Initialization ---
     const appRoot = document.getElementById("app-root");
+    const modalContainer = document.getElementById("modal-container");
     let app, auth, db;
     try {
       app = initializeApp(firebaseConfig);
@@ -89,6 +100,7 @@
     let unsubClearances = null, unsubRequests = null, unsubConfig = null;
     let authMode = "login";
     let routeHistory = [];
+    let speechRecognition = null;
 
     // --- Utility Functions ---
     const goBack = () => {
@@ -159,7 +171,8 @@
         x: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
         chevronRight: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
         download: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
-        settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
+        settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+        mic: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>'
     };
 
     // --- NEW: Robust date parsing function ---
@@ -388,8 +401,7 @@
                     <div id="tracking-result">${trackingHTML}</div>
                 </div>
             </div>
-        </div>
-        <div id="modal-container"></div>`;
+        </div>`;
         routeHistory = [];
     };
 
@@ -550,7 +562,9 @@
         });
 
         if (vehicleFilter) {
-            dailyClearances = dailyClearances.filter(c => c.vehicleNumber.includes(vehicleFilter));
+            // Updated filter to handle partial matches from any part of the vehicle number
+            const normalizedFilter = vehicleFilter.replace(/\s/g, '');
+            dailyClearances = dailyClearances.filter(c => c.vehicleNumber.replace(/\s/g, '').includes(normalizedFilter));
         }
 
         let listHTML = '';
@@ -599,7 +613,7 @@
 
     const renderUserDashboard = (user, vehicleFilter = null) => {
         appRoot.innerHTML = `
-        <div class="w-full min-h-screen p-2 md:p-4 flex justify-center">
+        <div class="w-full min-h-screen p-2 md:p-4 flex justify-center bg-gray-100 dark:bg-gray-900">
             <main class="w-full max-w-4xl">
                 <div class="flex justify-between items-center mb-6">
                     <div class="flex items-center gap-4">
@@ -615,9 +629,14 @@
                 </div>
                 
                 <div class="mb-6">
-                    <form id="daily-clearance-search-form" class="flex gap-2">
-                        <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
-                        <button type="reset" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
+                    <form id="daily-clearance-search-form" class="relative">
+                        <div class="flex gap-2">
+                           <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-3 pl-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
+                           <button id="voice-search-btn" type="button" class="absolute left-0 top-0 h-full px-4 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400">
+                                ${icons.mic}
+                           </button>
+                           <button type="reset" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
+                        </div>
                     </form>
                 </div>
                 <div id="user-clearance-list-container" class="space-y-4"></div>
@@ -674,7 +693,6 @@
                     </section>
                 </div>
             </main>
-            <div id="modal-container"></div>
 
             <div id="settings-panel-container">
                 <div id="settings-backdrop" class="fixed inset-0 bg-black/0 -z-10"></div>
@@ -777,7 +795,6 @@
     };
 
     const renderReviewModal = (request) => {
-        const modalContainer = document.getElementById("modal-container");
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
         
         const optionsHTML = vehicleTypeOptions.map(vType => {
@@ -839,7 +856,6 @@
     };
     
     const renderModal = (edit = null) => {
-        const modalContainer = document.getElementById("modal-container");
         const isEdit = edit ? true : false;
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
         const optionsHTML = vehicleTypeOptions.map(vType => {
@@ -902,7 +918,6 @@
     };
     
     const renderConfirmationModal = (title, message, onConfirm) => {
-        const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
         <div id="confirm-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-[60] flex justify-center items-center p-4">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm relative animate-fade-in">
@@ -926,6 +941,139 @@
             if (e.target.id === 'confirm-modal-backdrop') closeModal();
         };
     };
+    
+    // --- NEW: Voice Search Modal ---
+    const renderVoiceSearchModal = () => {
+        modalContainer.innerHTML = `
+        <div id="voice-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+            <div class="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-fade-in text-white text-center">
+                <div id="mic-icon-container" class="w-20 h-20 mx-auto bg-blue-500 rounded-full flex items-center justify-center text-white mb-6 mic-pulse">
+                    ${icons.mic}
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Voice Search Active</h2>
+                <p id="voice-status" class="text-gray-300 mb-6">Say vehicle registration number clearly</p>
+
+                <div class="bg-gray-700 rounded-lg p-4 space-y-4 text-left mb-6">
+                    <div>
+                        <label class="text-xs text-gray-400">Heard:</label>
+                        <p id="heard-text" class="text-lg font-mono">"..."</p>
+                    </div>
+                     <div>
+                        <label class="text-xs text-gray-400">Detected:</label>
+                        <div class="flex items-center justify-between">
+                            <p id="detected-text" class="text-3xl font-bold text-blue-300">---</p>
+                            <p id="format-status" class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-600 text-gray-300"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="text-xs text-gray-400">Accuracy: <span id="accuracy-percent">0%</span></label>
+                    <div class="w-full bg-gray-600 rounded-full h-2.5 mt-1">
+                        <div id="accuracy-bar" class="bg-green-500 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button id="cancel-voice-btn" class="px-8 py-3 rounded-lg bg-gray-600 hover:bg-gray-500 w-full">Cancel</button>
+                    <button id="use-voice-result-btn" class="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 w-full disabled:bg-gray-500 disabled:cursor-not-allowed" disabled>Use Result</button>
+                </div>
+            </div>
+        </div>`;
+    };
+
+    // --- NEW: Voice Search Logic ---
+    const handleVoiceSearch = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            showNotification("Voice search is not supported by your browser.", "error");
+            return;
+        }
+
+        if (speechRecognition && speechRecognition.isListening) {
+            speechRecognition.stop();
+            return;
+        }
+
+        renderVoiceSearchModal();
+        const useBtn = document.getElementById('use-voice-result-btn');
+
+        speechRecognition = new SpeechRecognition();
+        speechRecognition.continuous = false;
+        speechRecognition.lang = 'en-US';
+        speechRecognition.interimResults = true;
+        speechRecognition.maxAlternatives = 1;
+        speechRecognition.isListening = false;
+
+        speechRecognition.onstart = () => {
+            speechRecognition.isListening = true;
+            document.getElementById('voice-status').textContent = "Listening...";
+            document.getElementById('mic-icon-container').classList.add('mic-pulse');
+        };
+
+        speechRecognition.onend = () => {
+            speechRecognition.isListening = false;
+            document.getElementById('voice-status').textContent = "Processing...";
+            document.getElementById('mic-icon-container').classList.remove('mic-pulse');
+        };
+        
+        speechRecognition.onerror = (event) => {
+            console.error("Speech recognition error", event.error);
+            document.getElementById('voice-status').textContent = `Error: ${event.error}`;
+        };
+        
+        // This is the main function where the magic happens
+        speechRecognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            
+            // Use the most complete transcript available (final if ready, otherwise interim)
+            const transcript = (finalTranscript || interimTranscript).trim();
+            document.getElementById('heard-text').textContent = `"${transcript}"`;
+
+            // ** THE FIX IS HERE **
+            // We correctly process the entire transcript to extract all alphanumeric characters,
+            // preventing the last digit from being dropped.
+            const detectedValue = transcript.replace(/\s+/g, '').toUpperCase();
+            document.getElementById('detected-text').textContent = detectedValue || '---';
+
+            const formatStatus = document.getElementById('format-status');
+            const accuracyBar = document.getElementById('accuracy-bar');
+            const accuracyPercent = document.getElementById('accuracy-percent');
+            const confidence = event.results[0][0].confidence;
+            
+            let isValid = /^[A-Z0-9]+$/.test(detectedValue) && detectedValue.length > 2;
+
+            if(isValid) {
+                formatStatus.textContent = 'Valid Format';
+                formatStatus.className = 'text-xs font-semibold px-2 py-1 rounded-full bg-green-800 text-green-200';
+                useBtn.disabled = false;
+            } else {
+                formatStatus.textContent = 'Invalid Format';
+                formatStatus.className = 'text-xs font-semibold px-2 py-1 rounded-full bg-red-800 text-red-200';
+                useBtn.disabled = true;
+            }
+            
+            const accuracy = Math.round(confidence * 100);
+            accuracyBar.style.width = `${accuracy}%`;
+            accuracyPercent.textContent = `${accuracy}%`;
+
+            if (event.results[0].isFinal) {
+                document.getElementById('voice-status').textContent = "Finished. You can now use the result.";
+            }
+        };
+
+        speechRecognition.start();
+    };
+
 
     const toggleSettingsPanel = (show) => {
         const panel = document.getElementById('settings-panel');
@@ -984,13 +1132,36 @@
         const button = target.closest('button');
         
         if (target.id === 'settings-backdrop') toggleSettingsPanel(false);
-        if (target.id === 'form-modal-backdrop') target.closest('#modal-container').innerHTML = '';
-        if (target.id === 'review-modal-backdrop') target.closest('#modal-container').innerHTML = '';
+        if (target.id === 'form-modal-backdrop') modalContainer.innerHTML = '';
+        if (target.id === 'review-modal-backdrop') modalContainer.innerHTML = '';
+        if (target.id === 'voice-modal-backdrop') {
+             if (speechRecognition) speechRecognition.stop();
+             modalContainer.innerHTML = '';
+        }
         
         if (!button) return;
 
         if (button.id === 'settings-btn') toggleSettingsPanel(true);
         if (button.id === 'close-settings-panel-btn') toggleSettingsPanel(false);
+        
+        if (button.id === "voice-search-btn") handleVoiceSearch();
+        if (button.id === "cancel-voice-btn") {
+            if (speechRecognition) speechRecognition.stop();
+            modalContainer.innerHTML = '';
+        }
+        if (button.id === "use-voice-result-btn") {
+            const result = document.getElementById('detected-text').textContent;
+            if (result && result !== '---') {
+                const searchInput = document.getElementById('daily-clearance-search-input');
+                searchInput.value = result;
+                // Create and dispatch an input event to trigger the search
+                const event = new Event('input', { bubbles: true, cancelable: true });
+                searchInput.dispatchEvent(event);
+            }
+            if (speechRecognition) speechRecognition.stop();
+            modalContainer.innerHTML = '';
+        }
+
 
         if (button.id === "request-btn") { routeHistory.push(renderLandingPage); renderRequestForm(); }
         if (button.id === "admin-btn") { routeHistory.push(renderLandingPage); renderAdminLogin(); }
@@ -1078,7 +1249,7 @@
                     await updateDoc(doc(db, "clearanceRequests", data.id), { status: 'approved' });
                     
                     showNotification("Request approved and clearance created.");
-                    document.getElementById("modal-container").innerHTML = "";
+                    modalContainer.innerHTML = "";
                 } catch (err) {
                     console.error("Approval error:", err);
                     showNotification("Error approving request.", "error");
@@ -1254,7 +1425,7 @@
                     await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now() });
                     showNotification("Clearance saved successfully.");
                 }
-                document.getElementById("modal-container").innerHTML = "";
+                modalContainer.innerHTML = "";
             } catch (err) {
                 console.error("Clearance form error:", err);
                 showNotification(err.message, "error");
