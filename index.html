@@ -40,14 +40,36 @@
     #settings-backdrop {
         transition: background-color 0.3s ease-in-out;
     }
-    
-    /* Voice Search Pulse Animation */
-    @keyframes pulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+
+    /* Voice Search Improvements */
+    .voice-modal {
+        backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.6);
     }
-    .mic-pulse {
+    
+    .voice-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .voice-icon {
         animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.7; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .listening-indicator {
+        animation: listening 1.5s infinite;
+    }
+    
+    @keyframes listening {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
     }
 
   </style>
@@ -55,7 +77,6 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
   <div id="app-root"></div>
-  <div id="modal-container"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -82,7 +103,6 @@
 
     // --- App Initialization ---
     const appRoot = document.getElementById("app-root");
-    const modalContainer = document.getElementById("modal-container");
     let app, auth, db;
     try {
       app = initializeApp(firebaseConfig);
@@ -100,7 +120,306 @@
     let unsubClearances = null, unsubRequests = null, unsubConfig = null;
     let authMode = "login";
     let routeHistory = [];
-    let speechRecognition = null;
+
+    // --- Voice Recognition Variables ---
+    let recognition = null;
+    let isVoiceSearchActive = false;
+    let voiceSearchTimeout = null;
+    let currentVoiceInput = null;
+    
+    // --- Voice Recognition Setup ---
+    const initializeVoiceRecognition = () => {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            console.warn('Speech recognition not supported');
+            return false;
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = () => {
+            console.log('Voice recognition started');
+            isVoiceSearchActive = true;
+            updateVoiceSearchUI('listening');
+        };
+
+        recognition.onresult = (event) => {
+            handleVoiceResult(event);
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Voice recognition error:', event.error);
+            if (event.error === 'no-speech') {
+                updateVoiceSearchUI('no-speech');
+            } else {
+                updateVoiceSearchUI('error');
+            }
+            setTimeout(() => stopVoiceSearch(), 2000);
+        };
+
+        recognition.onend = () => {
+            console.log('Voice recognition ended');
+            isVoiceSearchActive = false;
+            if (voiceSearchTimeout) {
+                clearTimeout(voiceSearchTimeout);
+            }
+        };
+
+        return true;
+    };
+
+    // --- [REFINED] Vehicle Number Processing ---
+    const processVehicleNumber = (spokenText) => {
+        console.log('Processing spoken text:', spokenText);
+
+        let processed = spokenText.toUpperCase().trim();
+
+        // Simple number and letter extraction - don't over-process
+        // Replace spoken numbers with digits
+        processed = processed
+            .replace(/\bONE\b/g, '1')
+            .replace(/\bTWO\b/g, '2') 
+            .replace(/\bTHREE\b/g, '3')
+            .replace(/\bFOUR\b/g, '4')
+            .replace(/\bFIVE\b/g, '5')
+            .replace(/\bSIX\b/g, '6')
+            .replace(/\bSEVEN\b/g, '7')
+            .replace(/\bEIGHT\b/g, '8')
+            .replace(/\bNINE\b/g, '9')
+            .replace(/\bZERO\b/g, '0');
+
+        // Extract all letters and numbers in sequence
+        const matches = processed.match(/[A-Z0-9]/g);
+        if (matches) {
+            return matches.join('');
+        }
+
+        // Fallback: just remove spaces and keep alphanumeric characters
+        return processed.replace(/[^A-Z0-9]/g, '');
+    };
+
+    // --- Malaysian Vehicle Number Validation (Kept for UI feedback) ---
+    const isValidMalaysianVehicleNumber = (vehicleNumber) => {
+        if (!vehicleNumber || vehicleNumber.length < 3) return false;
+        
+        const malaysianPatterns = [
+            /^[A-Z]{1,3}\d{1,4}[A-Z]?$/,
+            /^[A-Z]\d{1,4}[A-Z]{1,3}$/,
+            /^\d{1,4}[A-Z]{1,2}$/,
+            /^[A-Z]{2,3}\d{3,4}$/
+        ];
+        
+        return malaysianPatterns.some(pattern => pattern.test(vehicleNumber));
+    };
+
+    // --- [REFINED] Voice Result Handling ---
+    const handleVoiceResult = (event) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+
+        const currentTranscript = finalTranscript || interimTranscript;
+
+        if (currentTranscript.trim()) {
+            const detectedNumber = processVehicleNumber(currentTranscript);
+            updateVoiceSearchUI('processing', currentTranscript, detectedNumber);
+            
+            // Auto-complete if we have a final result and it looks like a vehicle number
+            if (finalTranscript && detectedNumber && detectedNumber.length >= 3) {
+                setTimeout(() => {
+                    completeVoiceSearch(detectedNumber);
+                }, 1000);
+            }
+        }
+    };
+
+    // --- Voice Search UI Management ---
+    const updateVoiceSearchUI = (status, heard = '', detected = '') => {
+        const modal = document.getElementById('voice-search-modal');
+        if (!modal) return;
+        
+        const heardElement = modal.querySelector('#heard-text');
+        const detectedElement = modal.querySelector('#detected-text');
+        const statusElement = modal.querySelector('#voice-status');
+        const accuracyElement = modal.querySelector('#accuracy-indicator');
+        const progressBar = modal.querySelector('#progress-bar');
+        
+        if (heardElement) heardElement.textContent = heard || '';
+        if (detectedElement) {
+            detectedElement.textContent = detected || '';
+            // Basic UI feedback if it looks like a valid format
+            detectedElement.className = detected && isValidMalaysianVehicleNumber(detected) 
+                ? 'text-2xl font-bold text-green-400' 
+                : 'text-2xl font-bold text-yellow-400';
+        }
+        
+        switch (status) {
+            case 'listening':
+                if (statusElement) statusElement.textContent = 'Say vehicle registration number clearly';
+                if (progressBar) progressBar.style.width = '30%';
+                if (accuracyElement) accuracyElement.textContent = 'Listening...';
+                break;
+            case 'processing':
+                if (statusElement) statusElement.textContent = 'Processing...';
+                if (progressBar) progressBar.style.width = '70%';
+                if (accuracyElement) accuracyElement.textContent = `Confidence: ${isValidMalaysianVehicleNumber(detected) ? 'High' : 'Low'}`;
+                break;
+            case 'no-speech':
+                if (statusElement) statusElement.textContent = 'No speech detected. Please try again.';
+                if (progressBar) progressBar.style.width = '0%';
+                break;
+            case 'error':
+                if (statusElement) statusElement.textContent = 'Error occurred. Please try again.';
+                if (progressBar) progressBar.style.width = '0%';
+                break;
+        }
+    };
+    
+    // --- Voice Search Controls ---
+    const startVoiceSearch = (inputElement) => {
+        if (!recognition) {
+            if (!initializeVoiceRecognition()) {
+                showNotification("Voice search not supported on this device", "error");
+                return;
+            }
+        }
+
+        if (isVoiceSearchActive) {
+            stopVoiceSearch();
+            return;
+        }
+        
+        currentVoiceInput = inputElement;
+        showVoiceSearchModal();
+        
+        try {
+            recognition.start();
+            voiceSearchTimeout = setTimeout(() => {
+                stopVoiceSearch();
+            }, 10000); // Auto-stop after 10 seconds
+        } catch (error) {
+            console.error('Failed to start voice recognition:', error);
+            hideVoiceSearchModal();
+            showNotification("Failed to start voice search", "error");
+        }
+    };
+
+    const stopVoiceSearch = () => {
+        if (recognition && isVoiceSearchActive) {
+            recognition.stop();
+        }
+        if (voiceSearchTimeout) {
+            clearTimeout(voiceSearchTimeout);
+            voiceSearchTimeout = null;
+        }
+        isVoiceSearchActive = false;
+        // Keep the modal briefly for user to see the final result
+        setTimeout(hideVoiceSearchModal, 500);
+    };
+
+    const completeVoiceSearch = (detectedNumber) => {
+        if (currentVoiceInput && detectedNumber) {
+            currentVoiceInput.value = detectedNumber;
+            // Trigger input event to update any listeners (e.g., search filters)
+            currentVoiceInput.dispatchEvent(new Event('input', { bubbles: true }));
+            showNotification(`Vehicle number "${detectedNumber}" detected!`);
+        }
+        stopVoiceSearch();
+    };
+
+    // --- Voice Search Modal ---
+    const showVoiceSearchModal = () => {
+        const modal = document.createElement('div');
+        modal.id = 'voice-search-modal';
+        modal.className = 'fixed inset-0 z-50 voice-modal flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="voice-content w-full max-w-md p-8 text-white text-center">
+                <div class="voice-icon w-16 h-16 mx-auto mb-6 text-white">
+                    ${icons.mic}
+                </div>
+                <h2 class="text-2xl font-bold mb-4">Voice Search Active</h2>
+                <p id="voice-status" class="mb-6 text-blue-100">Initializing...</p>
+                
+                <div class="mb-4">
+                    <div class="text-sm text-blue-200 mb-2">Heard:</div>
+                    <div id="heard-text" class="bg-white/20 rounded-lg p-3 min-h-[50px] text-lg font-mono">
+                        Listening...
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="text-sm text-blue-200 mb-2">Detected:</div>
+                    <div id="detected-text" class="text-2xl font-bold text-green-400 mb-2">
+                        ---
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="bg-white/20 rounded-full h-2 mb-2">
+                        <div id="progress-bar" class="bg-green-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div id="accuracy-indicator" class="text-sm text-blue-200">Accuracy: --</div>
+                </div>
+                
+                <div class="flex gap-4 justify-center">
+                    <button id="cancel-voice-btn" class="px-6 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button id="use-result-btn" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors" disabled>
+                        Use Result
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        modal.querySelector('#cancel-voice-btn').onclick = stopVoiceSearch;
+        modal.querySelector('#use-result-btn').onclick = () => {
+            const detected = modal.querySelector('#detected-text').textContent;
+            if (detected && detected !== '---') {
+                completeVoiceSearch(detected);
+            }
+        };
+        
+        // Enable/disable 'Use Result' button
+        const observer = new MutationObserver(() => {
+            const detectedText = modal.querySelector('#detected-text').textContent;
+            const useBtn = modal.querySelector('#use-result-btn');
+            if (useBtn) {
+                useBtn.disabled = !detectedText || detectedText === '---' || detectedText.length < 3;
+                useBtn.className = useBtn.disabled 
+                    ? 'px-6 py-2 bg-gray-500 rounded-lg cursor-not-allowed opacity-50'
+                    : 'px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors';
+            }
+        });
+        
+        const detectedElement = modal.querySelector('#detected-text');
+        if (detectedElement) {
+            observer.observe(detectedElement, { childList: true, subtree: true });
+        }
+    };
+
+    const hideVoiceSearchModal = () => {
+        const modal = document.getElementById('voice-search-modal');
+        if (modal) {
+            modal.remove();
+        }
+        currentVoiceInput = null;
+    };
 
     // --- Utility Functions ---
     const goBack = () => {
@@ -117,6 +436,7 @@
       const d = date instanceof Date ? date : date.toDate();
       return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
     };
+
     const formatDateLongForm = (date) => {
       if (!date) return "N/A";
       const d = date instanceof Date ? date : date.toDate();
@@ -126,7 +446,7 @@
         day: 'numeric' 
       });
     };
-    
+
     const formatVehicleNumber = (vehicleNumber) => {
         if (!vehicleNumber) return 'N/A';
         const cleaned = vehicleNumber.replace(/\s/g, '').toUpperCase();
@@ -168,11 +488,11 @@
         sun: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
         request: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"></path></svg>',
         search: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>',
+        mic: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>',
         x: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
         chevronRight: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
         download: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
-        settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
-        mic: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>'
+        settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
     };
 
     // --- NEW: Robust date parsing function ---
@@ -186,7 +506,6 @@
         if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
         return new Date(year, month, day);
     };
-
 
     // --- Dashboard Setup ---
     const showUserDashboard = (user) => {
@@ -347,12 +666,11 @@
             button.innerHTML = originalHTML;
         }
     };
-
-
+    
     // --- Render Functions ---
     const renderLandingPage = (options = {}) => {
         const { vehicleNumber = "", trackingResult = null } = options;
-        
+
         let trackingHTML = '';
         if (trackingResult) {
             trackingHTML = `
@@ -393,6 +711,9 @@
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
                         <div class="flex gap-2">
                             <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
+                            <button type="button" id="voice-search-btn" class="flex items-center gap-1 px-3 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search">
+                                <span class="w-4 h-4">${icons.mic}</span>
+                            </button>
                             <button type="submit" class="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700">
                                 <span class="w-4 h-4">${icons.search}</span>Track
                             </button>
@@ -401,7 +722,8 @@
                     <div id="tracking-result">${trackingHTML}</div>
                 </div>
             </div>
-        </div>`;
+        </div>
+        <div id="modal-container"></div>`;
         routeHistory = [];
     };
 
@@ -473,7 +795,12 @@
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
-                        <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        <div class="flex gap-2">
+                            <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 flex-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <button type="button" class="voice-search-btn mt-1 flex items-center gap-1 px-3 py-3 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search">
+                                <span class="w-4 h-4">${icons.mic}</span>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
@@ -545,7 +872,7 @@
         `;
         return cardDiv.outerHTML;
     };
-    
+
     const renderClearanceListForUser = (vehicleFilter = null) => {
         const listContainer = document.getElementById('user-clearance-list-container');
         if (!listContainer) return;
@@ -562,9 +889,7 @@
         });
 
         if (vehicleFilter) {
-            // Updated filter to handle partial matches from any part of the vehicle number
-            const normalizedFilter = vehicleFilter.replace(/\s/g, '');
-            dailyClearances = dailyClearances.filter(c => c.vehicleNumber.replace(/\s/g, '').includes(normalizedFilter));
+            dailyClearances = dailyClearances.filter(c => c.vehicleNumber.includes(vehicleFilter));
         }
 
         let listHTML = '';
@@ -613,7 +938,7 @@
 
     const renderUserDashboard = (user, vehicleFilter = null) => {
         appRoot.innerHTML = `
-        <div class="w-full min-h-screen p-2 md:p-4 flex justify-center bg-gray-100 dark:bg-gray-900">
+        <div class="w-full min-h-screen p-2 md:p-4 flex justify-center">
             <main class="w-full max-w-4xl">
                 <div class="flex justify-between items-center mb-6">
                     <div class="flex items-center gap-4">
@@ -629,14 +954,12 @@
                 </div>
                 
                 <div class="mb-6">
-                    <form id="daily-clearance-search-form" class="relative">
-                        <div class="flex gap-2">
-                           <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-3 pl-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
-                           <button id="voice-search-btn" type="button" class="absolute left-0 top-0 h-full px-4 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400">
-                                ${icons.mic}
-                           </button>
-                           <button type="reset" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
-                        </div>
+                    <form id="daily-clearance-search-form" class="flex gap-2">
+                        <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
+                        <button type="button" class="voice-search-btn px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search">
+                            <span class="w-4 h-4">${icons.mic}</span>
+                        </button>
+                        <button type="reset" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
                     </form>
                 </div>
                 <div id="user-clearance-list-container" class="space-y-4"></div>
@@ -645,7 +968,6 @@
         
         renderClearanceListForUser(vehicleFilter);
     };
-
 
     const renderAdminDashboard = (adminUser) => {
         appRoot.innerHTML = `
@@ -693,6 +1015,7 @@
                     </section>
                 </div>
             </main>
+            <div id="modal-container"></div>
 
             <div id="settings-panel-container">
                 <div id="settings-backdrop" class="fixed inset-0 bg-black/0 -z-10"></div>
@@ -733,7 +1056,7 @@
             }
         });
     };
-
+            
     const renderRequestsList = () => {
         const list = document.getElementById("requests-list");
         if (!list) return;
@@ -795,6 +1118,7 @@
     };
 
     const renderReviewModal = (request) => {
+        const modalContainer = document.getElementById("modal-container");
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
         
         const optionsHTML = vehicleTypeOptions.map(vType => {
@@ -854,8 +1178,9 @@
             </div>
         </div>`;
     };
-    
+
     const renderModal = (edit = null) => {
+        const modalContainer = document.getElementById("modal-container");
         const isEdit = edit ? true : false;
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
         const optionsHTML = vehicleTypeOptions.map(vType => {
@@ -916,8 +1241,9 @@
             </div>
         </div>`;
     };
-    
+
     const renderConfirmationModal = (title, message, onConfirm) => {
+        const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
         <div id="confirm-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-[60] flex justify-center items-center p-4">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm relative animate-fade-in">
@@ -941,139 +1267,6 @@
             if (e.target.id === 'confirm-modal-backdrop') closeModal();
         };
     };
-    
-    // --- NEW: Voice Search Modal ---
-    const renderVoiceSearchModal = () => {
-        modalContainer.innerHTML = `
-        <div id="voice-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-            <div class="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-fade-in text-white text-center">
-                <div id="mic-icon-container" class="w-20 h-20 mx-auto bg-blue-500 rounded-full flex items-center justify-center text-white mb-6 mic-pulse">
-                    ${icons.mic}
-                </div>
-                <h2 class="text-2xl font-bold mb-2">Voice Search Active</h2>
-                <p id="voice-status" class="text-gray-300 mb-6">Say vehicle registration number clearly</p>
-
-                <div class="bg-gray-700 rounded-lg p-4 space-y-4 text-left mb-6">
-                    <div>
-                        <label class="text-xs text-gray-400">Heard:</label>
-                        <p id="heard-text" class="text-lg font-mono">"..."</p>
-                    </div>
-                     <div>
-                        <label class="text-xs text-gray-400">Detected:</label>
-                        <div class="flex items-center justify-between">
-                            <p id="detected-text" class="text-3xl font-bold text-blue-300">---</p>
-                            <p id="format-status" class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-600 text-gray-300"></p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mb-6">
-                    <label class="text-xs text-gray-400">Accuracy: <span id="accuracy-percent">0%</span></label>
-                    <div class="w-full bg-gray-600 rounded-full h-2.5 mt-1">
-                        <div id="accuracy-bar" class="bg-green-500 h-2.5 rounded-full" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="flex justify-center gap-4">
-                    <button id="cancel-voice-btn" class="px-8 py-3 rounded-lg bg-gray-600 hover:bg-gray-500 w-full">Cancel</button>
-                    <button id="use-voice-result-btn" class="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 w-full disabled:bg-gray-500 disabled:cursor-not-allowed" disabled>Use Result</button>
-                </div>
-            </div>
-        </div>`;
-    };
-
-    // --- NEW: Voice Search Logic ---
-    const handleVoiceSearch = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            showNotification("Voice search is not supported by your browser.", "error");
-            return;
-        }
-
-        if (speechRecognition && speechRecognition.isListening) {
-            speechRecognition.stop();
-            return;
-        }
-
-        renderVoiceSearchModal();
-        const useBtn = document.getElementById('use-voice-result-btn');
-
-        speechRecognition = new SpeechRecognition();
-        speechRecognition.continuous = false;
-        speechRecognition.lang = 'en-US';
-        speechRecognition.interimResults = true;
-        speechRecognition.maxAlternatives = 1;
-        speechRecognition.isListening = false;
-
-        speechRecognition.onstart = () => {
-            speechRecognition.isListening = true;
-            document.getElementById('voice-status').textContent = "Listening...";
-            document.getElementById('mic-icon-container').classList.add('mic-pulse');
-        };
-
-        speechRecognition.onend = () => {
-            speechRecognition.isListening = false;
-            document.getElementById('voice-status').textContent = "Processing...";
-            document.getElementById('mic-icon-container').classList.remove('mic-pulse');
-        };
-        
-        speechRecognition.onerror = (event) => {
-            console.error("Speech recognition error", event.error);
-            document.getElementById('voice-status').textContent = `Error: ${event.error}`;
-        };
-        
-        // This is the main function where the magic happens
-        speechRecognition.onresult = (event) => {
-            let interimTranscript = '';
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
-                }
-            }
-            
-            // Use the most complete transcript available (final if ready, otherwise interim)
-            const transcript = (finalTranscript || interimTranscript).trim();
-            document.getElementById('heard-text').textContent = `"${transcript}"`;
-
-            // ** THE FIX IS HERE **
-            // We correctly process the entire transcript to extract all alphanumeric characters,
-            // preventing the last digit from being dropped.
-            const detectedValue = transcript.replace(/\s+/g, '').toUpperCase();
-            document.getElementById('detected-text').textContent = detectedValue || '---';
-
-            const formatStatus = document.getElementById('format-status');
-            const accuracyBar = document.getElementById('accuracy-bar');
-            const accuracyPercent = document.getElementById('accuracy-percent');
-            const confidence = event.results[0][0].confidence;
-            
-            let isValid = /^[A-Z0-9]+$/.test(detectedValue) && detectedValue.length > 2;
-
-            if(isValid) {
-                formatStatus.textContent = 'Valid Format';
-                formatStatus.className = 'text-xs font-semibold px-2 py-1 rounded-full bg-green-800 text-green-200';
-                useBtn.disabled = false;
-            } else {
-                formatStatus.textContent = 'Invalid Format';
-                formatStatus.className = 'text-xs font-semibold px-2 py-1 rounded-full bg-red-800 text-red-200';
-                useBtn.disabled = true;
-            }
-            
-            const accuracy = Math.round(confidence * 100);
-            accuracyBar.style.width = `${accuracy}%`;
-            accuracyPercent.textContent = `${accuracy}%`;
-
-            if (event.results[0].isFinal) {
-                document.getElementById('voice-status').textContent = "Finished. You can now use the result.";
-            }
-        };
-
-        speechRecognition.start();
-    };
-
 
     const toggleSettingsPanel = (show) => {
         const panel = document.getElementById('settings-panel');
@@ -1132,36 +1325,25 @@
         const button = target.closest('button');
         
         if (target.id === 'settings-backdrop') toggleSettingsPanel(false);
-        if (target.id === 'form-modal-backdrop') modalContainer.innerHTML = '';
-        if (target.id === 'review-modal-backdrop') modalContainer.innerHTML = '';
-        if (target.id === 'voice-modal-backdrop') {
-             if (speechRecognition) speechRecognition.stop();
-             modalContainer.innerHTML = '';
-        }
+        if (target.id === 'form-modal-backdrop') target.closest('#modal-container').innerHTML = '';
+        if (target.id === 'review-modal-backdrop') target.closest('#modal-container').innerHTML = '';
         
         if (!button) return;
 
         if (button.id === 'settings-btn') toggleSettingsPanel(true);
         if (button.id === 'close-settings-panel-btn') toggleSettingsPanel(false);
-        
-        if (button.id === "voice-search-btn") handleVoiceSearch();
-        if (button.id === "cancel-voice-btn") {
-            if (speechRecognition) speechRecognition.stop();
-            modalContainer.innerHTML = '';
-        }
-        if (button.id === "use-voice-result-btn") {
-            const result = document.getElementById('detected-text').textContent;
-            if (result && result !== '---') {
-                const searchInput = document.getElementById('daily-clearance-search-input');
-                searchInput.value = result;
-                // Create and dispatch an input event to trigger the search
-                const event = new Event('input', { bubbles: true, cancelable: true });
-                searchInput.dispatchEvent(event);
-            }
-            if (speechRecognition) speechRecognition.stop();
-            modalContainer.innerHTML = '';
-        }
 
+        // Voice search buttons
+        if (button.id === 'voice-search-btn' || button.classList.contains('voice-search-btn')) {
+            const input = button.id === 'voice-search-btn' 
+                ? document.getElementById('track-id-input')
+                : button.closest('form')?.querySelector('input[name="vehicleNumber"]') 
+                  || button.closest('.flex')?.querySelector('input') 
+                  || document.getElementById('daily-clearance-search-input');
+            if (input) {
+                startVoiceSearch(input);
+            }
+        }
 
         if (button.id === "request-btn") { routeHistory.push(renderLandingPage); renderRequestForm(); }
         if (button.id === "admin-btn") { routeHistory.push(renderLandingPage); renderAdminLogin(); }
@@ -1249,7 +1431,7 @@
                     await updateDoc(doc(db, "clearanceRequests", data.id), { status: 'approved' });
                     
                     showNotification("Request approved and clearance created.");
-                    modalContainer.innerHTML = "";
+                    document.getElementById("modal-container").innerHTML = "";
                 } catch (err) {
                     console.error("Approval error:", err);
                     showNotification("Error approving request.", "error");
@@ -1425,7 +1607,7 @@
                     await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now() });
                     showNotification("Clearance saved successfully.");
                 }
-                modalContainer.innerHTML = "";
+                document.getElementById("modal-container").innerHTML = "";
             } catch (err) {
                 console.error("Clearance form error:", err);
                 showNotification(err.message, "error");
@@ -1489,9 +1671,15 @@
             setTimeout(() => renderClearanceListForUser(null), 0);
         }
     });
-    
+
+    // --- Initialize Voice Recognition on Load ---
+    window.addEventListener('load', () => {
+        initializeVoiceRecognition();
+    });
+
     // --- Initial Render ---
     renderLandingPage();
+
   </script>
 </body>
 </html>
