@@ -420,7 +420,7 @@
         x: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`,
         chevronRight: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`,
         download: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
-        settings: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
+        settings: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
         star: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`
     };
 
@@ -808,7 +808,12 @@
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
-                        <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                        <div class="flex gap-2">
+                            <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 flex-1 p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                            <button type="button" class="voice-search-btn mt-1 flex items-center gap-1 px-3 py-3 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search">
+                                <span class="w-4 h-4">${icons.mic}</span>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Type</label>
@@ -857,7 +862,7 @@
         const config = statusConfig[r.status] || statusConfig.pending;
 
         const cardDiv = document.createElement('div');
-        cardDiv.className = `p-4 ${config.bg} ${config.border} rounded-xl space-y-3 text-left border animate-fade-in`;
+        cardDiv.className = `p-4 ${config.bg} ${config.border} rounded-xl space-y-3 text-left border`;
         cardDiv.innerHTML = `
             <div class="flex justify-between items-start">
                 <p class="font-mono text-2xl font-bold text-slate-100">${r.vehicleNumber}</p>
@@ -1768,59 +1773,63 @@
                 const vehicleNumber = document.getElementById("track-id-input").value.trim().toUpperCase();
                 if (!vehicleNumber) {
                     showNotification("Please enter a vehicle number.", "error");
+                    if (button) button.disabled = false;
                     return;
                 }
 
                 if (!auth.currentUser || !auth.currentUser.isAnonymous) {
                     await signInAnonymously(auth);
                 }
-                
-                // --- START FIX: Changed database query for stability ---
-                // Query for requests first, without ordering by date initially
-                const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
-                const reqSnap = await getDocs(reqQuery);
-                
-                // Sort the results by date here in the code
-                const sortedRequests = reqSnap.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
-                    .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
-                // Check the latest request
-                if (sortedRequests.length > 0) {
-                    const latestRequest = sortedRequests[0];
-                    if (latestRequest.status !== 'approved') {
-                        renderLandingPage({ vehicleNumber, trackingResult: createStatusCard(latestRequest) });
-                        return; // Stop here if we found a pending/rejected request
+                // 1. Prioritize checking for an ACTIVE or UPCOMING clearance.
+                const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber), orderBy("createdAt", "desc"));
+                const clrSnap = await getDocs(clrQuery);
+                let activeClearance = null;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (!clrSnap.empty) {
+                    for (const doc of clrSnap.docs) {
+                        const c = { id: doc.id, ...doc.data() };
+                        const expiryDate = c.expiryDate.toDate();
+                        expiryDate.setHours(23, 59, 59, 999);
+                        if (expiryDate >= today) { // Check if expiry is today or in the future
+                            activeClearance = c;
+                            break; // Found the most recent, valid clearance
+                        }
                     }
                 }
 
-                // If no pending requests were found, now check for active clearances
-                const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
-                const clrSnap = await getDocs(clrQuery);
-
-                // Sort clearances by date here in the code
-                const sortedClearances = clrSnap.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
-                    .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-
-                if (sortedClearances.length > 0) {
-                    const latestClearance = sortedClearances[0];
+                if (activeClearance) {
+                    // If an active/upcoming clearance is found, display it and stop.
                     const clearanceDiv = document.createElement('div');
                     clearanceDiv.className = 'p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2 text-left animate-fade-in';
                     clearanceDiv.innerHTML = `
                         <p class="text-sm text-slate-400">Vehicle</p>
-                        <p class="font-mono text-xl font-bold text-blue-400">${latestClearance.vehicleNumber}</p>
-                        <p class="text-xs text-slate-400">${latestClearance.vehicleType || "-"}</p>
+                        <p class="font-mono text-xl font-bold text-blue-400">${activeClearance.vehicleNumber}</p>
+                        <p class="text-xs text-slate-400">${activeClearance.vehicleType || "-"}</p>
                         <p class="mt-2 text-sm text-slate-400">Status</p>
                         <p class="font-semibold text-green-400">ACTIVE CLEARANCE</p>
                         <p class="mt-2 text-sm text-slate-400">Owner</p>
-                        <p class="font-semibold text-slate-200">${latestClearance.ownerName}</p>
+                        <p class="font-semibold text-slate-200">${activeClearance.ownerName}</p>
                         <p class="mt-2 text-sm text-slate-400">Valid Until</p>
-                        <p class="font-semibold text-slate-200">${formatDate(latestClearance.expiryDate)}</p>
+                        <p class="font-semibold text-slate-200">${formatDate(activeClearance.expiryDate)}</p>
                     `;
                     renderLandingPage({ vehicleNumber, trackingResult: clearanceDiv.outerHTML });
+                    if (button) button.disabled = false;
+                    return; // Exit
+                }
+
+                // 2. If no active clearance, check for the latest request.
+                const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber), orderBy("createdAt", "desc"));
+                const reqSnap = await getDocs(reqQuery);
+
+                if (!reqSnap.empty) {
+                    const latestRequest = { id: reqSnap.docs[0].id, ...reqSnap.docs[0].data() };
+                    renderLandingPage({ vehicleNumber, trackingResult: createStatusCard(latestRequest) });
                 } else {
-                     const notFoundDiv = document.createElement('div');
+                    // 3. If no clearance and no request found.
+                    const notFoundDiv = document.createElement('div');
                     notFoundDiv.className = 'p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in';
                     notFoundDiv.innerHTML = `
                         <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
@@ -1829,7 +1838,7 @@
                     `;
                     renderLandingPage({ vehicleNumber, trackingResult: notFoundDiv.outerHTML });
                 }
-                // --- END FIX ---
+
             } else if (form.id === "request-form") {
                 const data = getFormObj(form);
                 let currentUser = auth.currentUser;
