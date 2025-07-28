@@ -704,11 +704,11 @@
                     
                     <div class="grid grid-cols-2 gap-4">
                         <button id="admin-btn" class="flex flex-col items-center justify-center p-4 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors duration-300">
-                            <div class="w-8 h-8">${icons.shield}</div>
+                            <div class="w-8 h-8 text-blue-400">${icons.shield}</div>
                             <span class="mt-2 font-semibold">Admin</span>
                         </button>
                         <button id="user-btn" class="flex flex-col items-center justify-center p-4 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors duration-300">
-                            <div class="w-8 h-8">${icons.greenlist}</div>
+                            <div class="w-8 h-8 text-green-400">${icons.greenlist}</div>
                             <span class="mt-2 font-semibold">Green List</span>
                         </button>
                     </div>
@@ -805,9 +805,6 @@
                         <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
                         <div class="flex gap-2">
                             <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 flex-1 p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
-                            <button type="button" class="voice-search-btn mt-1 flex items-center gap-1 px-3 py-3 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search">
-                                <span class="w-4 h-4">${icons.mic}</span>
-                            </button>
                         </div>
                     </div>
                     <div>
