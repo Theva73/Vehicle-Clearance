@@ -808,12 +808,7 @@
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
-                        <div class="flex gap-2">
-                            <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 flex-1 p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
-                            <button type="button" class="voice-search-btn mt-1 flex items-center gap-1 px-3 py-3 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search">
-                                <span class="w-4 h-4">${icons.mic}</span>
-                            </button>
-                        </div>
+                        <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Type</label>
@@ -862,7 +857,7 @@
         const config = statusConfig[r.status] || statusConfig.pending;
 
         const cardDiv = document.createElement('div');
-        cardDiv.className = `p-4 ${config.bg} ${config.border} rounded-xl space-y-3 text-left border`;
+        cardDiv.className = `p-4 ${config.bg} ${config.border} rounded-xl space-y-3 text-left border animate-fade-in`;
         cardDiv.innerHTML = `
             <div class="flex justify-between items-start">
                 <p class="font-mono text-2xl font-bold text-slate-100">${r.vehicleNumber}</p>
@@ -1780,24 +1775,38 @@
                     await signInAnonymously(auth);
                 }
                 
-                const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber), orderBy("createdAt", "desc"));
+                // --- START FIX: Changed database query for stability ---
+                // Query for requests first, without ordering by date initially
+                const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
                 const reqSnap = await getDocs(reqQuery);
+                
+                // Sort the results by date here in the code
+                const sortedRequests = reqSnap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
-                if (!reqSnap.empty) {
-                    const latestRequest = { id: reqSnap.docs[0].id, ...reqSnap.docs[0].data() };
+                // Check the latest request
+                if (sortedRequests.length > 0) {
+                    const latestRequest = sortedRequests[0];
                     if (latestRequest.status !== 'approved') {
                         renderLandingPage({ vehicleNumber, trackingResult: createStatusCard(latestRequest) });
-                        return;
+                        return; // Stop here if we found a pending/rejected request
                     }
                 }
 
-                const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber), orderBy("createdAt", "desc"));
+                // If no pending requests were found, now check for active clearances
+                const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
                 const clrSnap = await getDocs(clrQuery);
 
-                if (!clrSnap.empty) {
-                    const latestClearance = { id: clrSnap.docs[0].id, ...clrSnap.docs[0].data() };
+                // Sort clearances by date here in the code
+                const sortedClearances = clrSnap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                if (sortedClearances.length > 0) {
+                    const latestClearance = sortedClearances[0];
                     const clearanceDiv = document.createElement('div');
-                    clearanceDiv.className = 'p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2 text-left';
+                    clearanceDiv.className = 'p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2 text-left animate-fade-in';
                     clearanceDiv.innerHTML = `
                         <p class="text-sm text-slate-400">Vehicle</p>
                         <p class="font-mono text-xl font-bold text-blue-400">${latestClearance.vehicleNumber}</p>
@@ -1812,7 +1821,7 @@
                     renderLandingPage({ vehicleNumber, trackingResult: clearanceDiv.outerHTML });
                 } else {
                      const notFoundDiv = document.createElement('div');
-                    notFoundDiv.className = 'p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center';
+                    notFoundDiv.className = 'p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in';
                     notFoundDiv.innerHTML = `
                         <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
                         <p class="font-semibold text-red-400">No request or clearance found for ${vehicleNumber}</p>
@@ -1820,6 +1829,7 @@
                     `;
                     renderLandingPage({ vehicleNumber, trackingResult: notFoundDiv.outerHTML });
                 }
+                // --- END FIX ---
             } else if (form.id === "request-form") {
                 const data = getFormObj(form);
                 let currentUser = auth.currentUser;
