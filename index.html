@@ -17,6 +17,10 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
+    .dark-theme-bg {
+        background-color: #0f172a;
+        background-image: radial-gradient(circle at top, #1e293b, #0f172a);
+    }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -498,6 +502,8 @@
     // — Dashboard Setup —
     const showUserDashboard = (user) => {
         appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
+        document.body.classList.remove('dark-theme-bg');
+        document.body.classList.add('bg-gray-100', 'dark:bg-gray-900');
         unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
             clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             renderUserDashboard(user);
@@ -665,54 +671,61 @@
     // — Render Functions —
     const renderLandingPage = (options = {}) => {
         const { vehicleNumber = "", trackingResult = null } = options;
+        document.body.className = 'dark-theme-bg';
 
         let trackingHTML = '';
         if (trackingResult) {
             trackingHTML = `
-                <div class="mt-4 space-y-4">
-                    <div class="text-sm font-medium text-gray-700 dark:text-gray-300">Tracking Result:</div>
+                <div class="mt-6 space-y-4">
+                    <h3 class="text-sm font-medium text-slate-300">Tracking Result:</h3>
                     ${trackingResult}
-                    <button id="clear-tracking-btn" class="w-full px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Clear Result</button>
+                    <button id="clear-tracking-btn" class="w-full px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded-lg hover:bg-slate-700">Clear Result</button>
                 </div>
             `;
         }
 
         appRoot.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 text-center animate-fade-in">
-                <div>
-                    <div class="w-16 h-16 mx-auto text-blue-500">${icons.car}</div>
-                    <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-4">Vehicle Clearance</h1>
-                    <p class="text-gray-500 dark:text-gray-400 mt-2">Please select an option to continue.</p>
-                </div>
-                <div class="grid grid-cols-1 gap-6">
-                    <button id="request-btn" class="flex items-center justify-center p-6 bg-yellow-50 dark:bg-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                        <div class="w-12 h-12">${icons.request}</div>
-                        <span class="ml-4 font-semibold text-lg">Request Clearance</span>
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-8 space-y-8 text-center animate-fade-in">
+                
+                <header class="space-y-4">
+                    <div class="w-20 h-20 mx-auto text-blue-400 opacity-90">${icons.car}</div>
+                    <div>
+                        <h1 class="text-4xl font-bold tracking-tight text-white">Vehicle Clearance</h1>
+                        <p class="text-slate-400 mt-2">Your gateway to seamless access.</p>
+                    </div>
+                </header>
+
+                <main class="space-y-4">
+                    <button id="request-btn" class="w-full flex items-center justify-center gap-3 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-600/20">
+                        <div class="w-6 h-6">${icons.request}</div>
+                        <span class="font-semibold text-lg">Request Clearance</span>
                     </button>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <button id="admin-btn" class="flex flex-col items-center justify-center p-6 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                            <div class="w-12 h-12">${icons.shield}</div>
-                            <span class="mt-3 font-semibold text-lg">Admin Login</span>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="admin-btn" class="flex flex-col items-center justify-center p-4 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors duration-300">
+                            <div class="w-8 h-8">${icons.shield}</div>
+                            <span class="mt-2 font-semibold">Admin</span>
                         </button>
-                        <button id="user-btn" class="flex flex-col items-center justify-center p-6 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 text-green-800 dark:text-green-300 rounded-lg transition-all duration-300 transform hover:scale-105">
-                            <div class="w-12 h-12">${icons.greenlist}</div>
-                            <span class="mt-3 font-semibold text-lg">Green List</span>
+                        <button id="user-btn" class="flex flex-col items-center justify-center p-4 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors duration-300">
+                            <div class="w-8 h-8">${icons.greenlist}</div>
+                            <span class="mt-2 font-semibold">Green List</span>
                         </button>
                     </div>
-                </div>
-                <div class="pt-6 border-t dark:border-gray-700">
-                    <form id="track-request-form" class="space-y-2">
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a request? Track it here.</label>
+                </main>
+
+                <footer class="pt-8">
+                    <form id="track-request-form" class="space-y-3">
+                        <label class="text-sm font-medium text-slate-400">Or, track an existing request.</label>
                         <div class="flex gap-2">
-                            <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
-                            <button type="submit" class="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700">
-                                <span class="w-4 h-4">${icons.search}</span>Track
+                            <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="block w-full px-4 py-2 bg-slate-900/70 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
+                            <button type="submit" class="flex items-center justify-center px-4 py-2 rounded-lg text-white bg-slate-700 hover:bg-slate-600 transition-colors">
+                                <span class="w-5 h-5">${icons.search}</span>
                             </button>
                         </div>
                     </form>
                     <div id="tracking-result">${trackingHTML}</div>
-                </div>
+                </footer>
             </div>
         </div>
         <div id="modal-container"></div>`;
@@ -720,117 +733,114 @@
     };
 
     const renderAdminLogin = () => {
+        document.body.className = 'dark-theme-bg';
         const isSignup = authMode === "signup";
         appRoot.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-slate-800/80 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-8 space-y-6 animate-fade-in">
                 <div class="text-center">
-                    <div class="w-12 h-12 mx-auto text-blue-500">${icons.shield}</div>
-                    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Admin Access</h1>
-                    <p class="text-gray-500 dark:text-gray-400">${isSignup ? "Create an admin account" : "Sign in to manage clearances"}</p>
+                    <div class="w-12 h-12 mx-auto text-blue-400">${icons.shield}</div>
+                    <h1 class="text-3xl font-bold text-white mt-4">Admin Access</h1>
+                    <p class="text-slate-400">${isSignup ? "Create an admin account" : "Sign in to manage clearances"}</p>
                 </div>
                 <form id="auth-form" class="space-y-6">
                     <div class="${isSignup ? '' : 'hidden'}">
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Invite Code</label>
-                        <input type="text" name="inviteCode" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter the secret code" />
+                        <label class="text-sm font-medium text-slate-300">Admin Invite Code</label>
+                        <input type="text" name="inviteCode" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter the secret code" />
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                        <input type="email" name="email" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="admin@example.com" required />
+                        <label class="text-sm font-medium text-slate-300">Email</label>
+                        <input type="email" name="email" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="admin@example.com" required />
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                        <input type="password" name="password" class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="••••••••" required />
+                        <label class="text-sm font-medium text-slate-300">Password</label>
+                        <input type="password" name="password" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="••••••••" required />
                     </div>
                     <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">${isSignup ? "Sign Up" : "Login"}</button>
                 </form>
-                <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+                <p class="text-center text-sm text-slate-400">
                     <span>${isSignup ? "Already have an account?" : "Need an admin account?"}</span>
-                    <button id="auth-toggle-button" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 ml-1">${isSignup ? "Login" : "Sign Up"}</button>
+                    <button id="auth-toggle-button" class="font-medium text-blue-400 hover:text-blue-300 ml-1">${isSignup ? "Login" : "Sign Up"}</button>
                 </p>
-                <button id="back-btn" class="mt-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 underline text-sm block mx-auto">Back</button>
+                <button id="back-btn" class="mt-2 text-slate-400 hover:text-slate-200 underline text-sm block mx-auto">Back</button>
             </div>
         </div>`;
     };
 
     const renderUserLogin = () => {
+        document.body.className = 'dark-theme-bg';
         appRoot.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in text-center">
-                <div class="w-12 h-12 mx-auto text-green-500">${icons.greenlist}</div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Green List Access</h1>
-                <p class="text-gray-500 dark:text-gray-400">Enter the password to view today's clearances.</p>
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-slate-800/80 backdrop-blur-sm border border-green-500/20 rounded-2xl shadow-2xl shadow-green-900/20 p-8 space-y-6 animate-fade-in text-center">
+                <div class="w-12 h-12 mx-auto text-green-400">${icons.greenlist}</div>
+                <h1 class="text-3xl font-bold text-white mt-4">Green List Access</h1>
+                <p class="text-slate-400">Enter the password to view today's clearances.</p>
                 <form id="user-login-form" class="space-y-4 pt-4">
                     <div>
-                        <input type="password" name="password" class="block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Enter Password" required />
+                        <input type="password" name="password" class="block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter Password" required />
                     </div>
                     <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700">Continue</button>
                 </form>
-                <button id="back-btn" class="mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 underline text-sm">Back</button>
+                <button id="back-btn" class="mt-4 text-slate-400 hover:text-slate-200 underline text-sm">Back</button>
             </div>
         </div>`;
     };
 
     const renderRequestForm = () => {
+        document.body.className = 'dark-theme-bg';
         appRoot.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 animate-fade-in">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-lg bg-slate-800/80 backdrop-blur-sm border border-yellow-500/20 rounded-2xl shadow-2xl shadow-yellow-900/20 p-8 space-y-6 animate-fade-in">
                 <div class="text-center">
-                    <div class="w-12 h-12 mx-auto text-yellow-500">${icons.request}</div>
-                    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-4">Request Vehicle Clearance</h1>
-                    <p class="text-gray-500 dark:text-gray-400">Fill in the details below</p>
+                    <div class="w-12 h-12 mx-auto text-yellow-400">${icons.request}</div>
+                    <h1 class="text-3xl font-bold text-white mt-4">Request Vehicle Clearance</h1>
+                    <p class="text-slate-400">Fill in the details below</p>
                 </div>
-                <form id="request-form" class="space-y-4">
+                <form id="request-form" class="space-y-4 text-left">
                     <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Your Name</label>
-                        <input name="requesterName" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        <label class="text-sm font-medium text-slate-300">Your Name</label>
+                        <input name="requesterName" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
+                        <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
                         <div class="flex gap-2">
-                            <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 flex-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 flex-1 p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                             <button type="button" class="voice-search-btn mt-1 flex items-center gap-1 px-3 py-3 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search">
                                 <span class="w-4 h-4">${icons.mic}</span>
                             </button>
                         </div>
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
-                        <select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                        <label class="text-sm font-medium text-slate-300">Vehicle Type</label>
+                        <select name="vehicleType" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
                             <option value="">Select type...</option>
-                            <option>Car</option>
-                            <option>Motorcycle</option>
-                            <option>Van</option>
-                            <option>Tow Truck</option>
-                            <option>Lorry</option>
-                            <option>Bus</option>
-                            <option>Others</option>
+                            <option>Car</option><option>Motorcycle</option><option>Van</option><option>Tow Truck</option><option>Lorry</option><option>Bus</option><option>Others</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <input name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        <label class="text-sm font-medium text-slate-300">Location</label>
+                        <input name="location" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
-                            <input type="date" name="entryDate" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <label class="text-sm font-medium text-slate-300">Entry Date</label>
+                            <input type="date" name="entryDate" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                         </div>
                         <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
-                            <input type="date" name="expiryDate" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <label class="text-sm font-medium text-slate-300">Expiry Date</label>
+                            <input type="date" name="expiryDate" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                         </div>
                     </div>
                     <div class="flex items-center">
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" />
-                        <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
+                        <label class="ml-2 text-slate-300">Escort Required</label>
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes (optional)</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"></textarea>
+                        <label class="text-sm font-medium text-slate-300">Notes (optional)</label>
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white"></textarea>
                     </div>
                     <div class="flex justify-between pt-4">
-                        <button id="back-btn" type="button" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Back</button>
+                        <button id="back-btn" type="button" class="px-6 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Back</button>
                         <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Submit</button>
                     </div>
                 </form>
@@ -840,30 +850,29 @@
 
     const createStatusCard = (r) => {
         const statusConfig = {
-            approved: { text: "APPROVED", color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/20" },
-            rejected: { text: "REJECTED", color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20" },
-            pending: { text: "PENDING", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-900/20" }
+            approved: { text: "APPROVED", color: "text-green-300", bg: "bg-green-500/10", border: "border-green-500/20" },
+            rejected: { text: "REJECTED", color: "text-red-300", bg: "bg-red-500/10", border: "border-red-500/20" },
+            pending: { text: "PENDING", color: "text-yellow-300", bg: "bg-yellow-500/10", border: "border-yellow-500/20" }
         };
         const config = statusConfig[r.status] || statusConfig.pending;
 
         const cardDiv = document.createElement('div');
-        cardDiv.className = `p-4 ${config.bg} rounded-2xl shadow-sm space-y-2 text-left border border-gray-200 dark:border-gray-700`;
+        cardDiv.className = `p-4 ${config.bg} ${config.border} rounded-xl space-y-3 text-left border`;
         cardDiv.innerHTML = `
-            <div class="flex justify-between items-center">
-                <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${r.vehicleNumber}</p>
-                <p class="font-semibold px-2 py-0.5 rounded-md text-xs ${config.color} ${config.bg}">${config.text}</p>
+            <div class="flex justify-between items-start">
+                <p class="font-mono text-2xl font-bold text-slate-100">${r.vehicleNumber}</p>
+                <p class="font-bold px-2.5 py-1 rounded-full text-xs ${config.color} ${config.bg}">${config.text}</p>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400">${r.vehicleType || "-"} • Requested by ${r.requesterName}</p>
-            <div class="pt-2 border-t border-gray-200 dark:border-gray-600">
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Proposed Dates</p>
-                <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(r.entryDate)} - ${formatDate(r.expiryDate)}</p>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Location</p>
-                <p class="font-semibold">${r.location}</p>
-                ${r.notes ? `<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200">${r.notes}</p>` : ""}
+            <div class="text-sm text-slate-400">
+                <p>${r.vehicleType || "-"} &bull; Requested by ${r.requesterName}</p>
+                <p class="mt-2"><span class="font-semibold text-slate-300">Dates:</span> ${formatDate(r.entryDate)} to ${formatDate(r.expiryDate)}</p>
+                <p><span class="font-semibold text-slate-300">Location:</span> ${r.location}</p>
+                ${r.notes ? `<p class="mt-1 pt-1 border-t border-slate-700"><span class="font-semibold text-slate-300">Notes:</span> ${r.notes}</p>` : ""}
             </div>
         `;
         return cardDiv.outerHTML;
     };
+
 
     const renderClearanceListForUser = (vehicleFilter = null) => {
         const listContainer = document.getElementById('user-clearance-list-container');
@@ -929,6 +938,7 @@
     };
 
     const renderUserDashboard = (user, vehicleFilter = null) => {
+        document.body.className = 'bg-gray-100 dark:bg-gray-900';
         appRoot.innerHTML = `
         <div class="w-full min-h-screen p-2 md:p-4 flex justify-center">
             <main class="w-full max-w-4xl">
@@ -966,6 +976,7 @@
     };
 
     const renderAdminDashboard = (adminUser) => {
+        document.body.className = 'bg-gray-100 dark:bg-gray-900';
         appRoot.innerHTML = `
         <div id="admin-dashboard-container">
             <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
@@ -1781,26 +1792,26 @@
                 if (!clrSnap.empty) {
                     const latestClearance = { id: clrSnap.docs[0].id, ...clrSnap.docs[0].data() };
                     const clearanceDiv = document.createElement('div');
-                    clearanceDiv.className = 'p-4 bg-white dark:bg-gray-800 rounded-2xl shadow space-y-2 text-left';
+                    clearanceDiv.className = 'p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2 text-left';
                     clearanceDiv.innerHTML = `
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Vehicle</p>
-                        <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${latestClearance.vehicleNumber}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">${latestClearance.vehicleType || "-"}</p>
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Status</p>
-                        <p class="font-semibold text-green-600">ACTIVE CLEARANCE</p>
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Owner</p>
-                        <p class="font-semibold">${latestClearance.ownerName}</p>
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Valid Until</p>
-                        <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(latestClearance.expiryDate)}</p>
+                        <p class="text-sm text-slate-400">Vehicle</p>
+                        <p class="font-mono text-xl font-bold text-blue-400">${latestClearance.vehicleNumber}</p>
+                        <p class="text-xs text-slate-400">${latestClearance.vehicleType || "-"}</p>
+                        <p class="mt-2 text-sm text-slate-400">Status</p>
+                        <p class="font-semibold text-green-400">ACTIVE CLEARANCE</p>
+                        <p class="mt-2 text-sm text-slate-400">Owner</p>
+                        <p class="font-semibold text-slate-200">${latestClearance.ownerName}</p>
+                        <p class="mt-2 text-sm text-slate-400">Valid Until</p>
+                        <p class="font-semibold text-slate-200">${formatDate(latestClearance.expiryDate)}</p>
                     `;
                     renderLandingPage({ vehicleNumber, trackingResult: clearanceDiv.outerHTML });
                 } else {
                      const notFoundDiv = document.createElement('div');
-                    notFoundDiv.className = 'p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-center';
+                    notFoundDiv.className = 'p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center';
                     notFoundDiv.innerHTML = `
-                        <div class="w-12 h-12 mx-auto text-red-500 mb-3">${icons.x}</div>
-                        <p class="font-semibold text-red-600 dark:text-red-400">No request or clearance found for ${vehicleNumber}</p>
-                        <p class="text-sm text-red-500 dark:text-red-400 mt-1">Please check the vehicle number and try again.</p>
+                        <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
+                        <p class="font-semibold text-red-400">No request or clearance found for ${vehicleNumber}</p>
+                        <p class="text-sm text-red-500 mt-1">Please check the vehicle number and try again.</p>
                     `;
                     renderLandingPage({ vehicleNumber, trackingResult: notFoundDiv.outerHTML });
                 }
