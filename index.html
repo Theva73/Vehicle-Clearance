@@ -80,6 +80,15 @@
         pointer-events: auto;
     }
 
+    .settings-tab-btn.active {
+        border-color: #3b82f6; /* blue-500 */
+        color: #2563eb; /* blue-600 */
+    }
+     .dark .settings-tab-btn.active {
+        border-color: #60a5fa; /* blue-400 */
+        color: #60a5fa; /* blue-400 */
+    }
+
   </style>
 
 </head>
@@ -999,35 +1008,57 @@
                         </div>
                         <div id="clearance-list" class="space-y-3"></div>
                     </section>
-                    <section id="vvip-management-section">
-                        <div class="flex items-center gap-4 mb-4">
-                             <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">VVIP Management</h2>
-                        </div>
-                        <div id="vvip-management-content" class="space-y-4"></div>
-                    </section>
                 </div>
             </main>
             <div id="modal-container"></div>
             <div id="settings-panel-container">
                 <div id="settings-backdrop" class="fixed inset-0 bg-black/0 -z-10"></div>
-                <div id="settings-panel" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white dark:bg-gray-800 shadow-xl transform translate-x-full z-40 p-6 flex flex-col">
-                    <div class="flex justify-between items-center mb-6">
+                <div id="settings-panel" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white dark:bg-gray-800 shadow-xl transform translate-x-full z-40 flex flex-col">
+                    <div class="flex-shrink-0 flex justify-between items-center p-4 border-b dark:border-gray-700">
                         <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Settings</h2>
                         <button id="close-settings-panel-btn" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white rounded-full">
                             ${icons.x}
                         </button>
                     </div>
-                    <div class="flex-grow">
-                        <form id="user-password-form" class="space-y-4">
-                            <div>
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">User Access Password</label>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">This password is required for non-admin users to view the daily clearance list.</p>
-                                <input name="password" type="text" class="mt-1 block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" value="${userPasswordConfig?.password || ''}" required />
+                    <div class="flex-shrink-0 px-4">
+                        <div class="border-b border-gray-200 dark:border-gray-700">
+                            <nav id="settings-tabs" class="flex gap-4 -mb-px">
+                                <button data-tab="general" class="settings-tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">General</button>
+                                <button data-tab="vvip" class="settings-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">VVIPs</button>
+                            </nav>
+                        </div>
+                    </div>
+                    <div class="flex-grow p-6 overflow-y-auto">
+                        <div id="general-settings-pane" class="settings-pane space-y-4">
+                            <form id="user-password-form" class="space-y-4">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">User Access Password</label>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">This password is required for non-admin users to view the daily clearance list.</p>
+                                    <input name="password" type="text" class="mt-1 block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" value="${userPasswordConfig?.password || ''}" required />
+                                </div>
+                                <div class="text-right pt-4">
+                                    <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 w-full">Save Password</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="vvip-settings-pane" class="settings-pane hidden space-y-4">
+                           <form id="add-vvip-form" class="space-y-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Add New VVIP</h3>
+                                <div class="w-full">
+                                    <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Vehicle Number</label>
+                                    <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="w-full mt-1 p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg" required>
+                                </div>
+                                <div class="w-full">
+                                    <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Designation</label>
+                                    <input name="designation" class="w-full mt-1 p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg" required>
+                                </div>
+                                <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex-shrink-0">Add VVIP</button>
+                            </form>
+                            <div class="mt-6">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Current VVIPs</h3>
+                                <div id="vvip-list-container-settings" class="mt-2 space-y-2"></div>
                             </div>
-                            <div class="text-right pt-4">
-                                <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 w-full">Save Password</button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1047,7 +1078,7 @@
             }
         });
         
-        renderVVIPManagement(); // Initial render for VVIP section
+        renderVVIPListForSettings(); // Initial render for VVIP list in settings
     };
             
     const renderRequestsList = () => {
@@ -1129,14 +1160,14 @@
             </details>`).join("");
     };
 
-    const renderVVIPManagement = () => {
-        const container = document.getElementById('vvip-management-content');
+    const renderVVIPListForSettings = () => {
+        const container = document.getElementById('vvip-list-container-settings');
         if (!container) return;
 
         const vvipListHTML = vvips.map(v => `
-            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg animate-fade-in">
+            <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg animate-fade-in border dark:border-gray-700">
                 <div>
-                    <p class="font-mono font-bold text-blue-500">${v.vehicleNumber.toUpperCase()}</p>
+                    <p class="font-mono font-bold text-blue-600 dark:text-blue-400">${v.vehicleNumber.toUpperCase()}</p>
                     <p class="text-sm text-gray-600 dark:text-gray-300">${v.designation}</p>
                 </div>
                 <button class="delete-vvip-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-600 rounded-full" data-id="${v.id}" title="Delete VVIP">
@@ -1145,27 +1176,7 @@
             </div>
         `).join('');
 
-        container.innerHTML = `
-            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-lg">
-                <form id="add-vvip-form" class="flex flex-col md:flex-row gap-3 items-end">
-                    <div class="w-full">
-                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Vehicle Number</label>
-                        <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded-lg" required>
-                    </div>
-                    <div class="w-full">
-                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Designation</label>
-                        <input name="designation" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded-lg" required>
-                    </div>
-                    <button type="submit" class="w-full md:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex-shrink-0">Add VVIP</button>
-                </form>
-                <div class="mt-6 space-y-2">
-                    <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Current VVIPs</h3>
-                    <div id="vvip-list-container" class="space-y-2">
-                        ${vvips.length > 0 ? vvipListHTML : '<p class="text-gray-500 dark:text-gray-400 text-sm py-4">No VVIPs added yet.</p>'}
-                    </div>
-                </div>
-            </div>
-        `;
+        container.innerHTML = vvips.length > 0 ? vvipListHTML : '<p class="text-gray-500 dark:text-gray-400 text-sm py-4 text-center">No VVIPs added yet.</p>';
     };
 
     const renderVVIPModal = () => {
@@ -1388,8 +1399,8 @@
                 if (adminDoc.exists()) {
                     unsubVVIPs = onSnapshot(query(collection(db, "vvips"), orderBy("vehicleNumber")), snap => {
                         vvips = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                        if (document.getElementById('vvip-management-section')) {
-                             renderVVIPManagement();
+                        if (document.getElementById('vvip-list-container-settings')) {
+                             renderVVIPListForSettings();
                         }
                     });
                     const configRef = doc(db, "publicConfig", "userAccess");
@@ -1442,6 +1453,23 @@
             if (button.id === 'close-settings-panel-btn') { e.preventDefault(); toggleSettingsPanel(false); return; }
             if (button.id === 'show-vvip-btn') { renderVVIPModal(); return; }
             if (button.id === 'close-vvip-modal-btn') { button.closest('#modal-container').innerHTML = ''; return; }
+
+            if (button.classList.contains('settings-tab-btn')) {
+                 e.preventDefault();
+                const tab = button.dataset.tab;
+                document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-200');
+                });
+                button.classList.add('active');
+                button.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-200');
+
+                document.querySelectorAll('.settings-pane').forEach(pane => {
+                    pane.classList.add('hidden');
+                });
+                document.getElementById(`${tab}-settings-pane`).classList.remove('hidden');
+                return;
+            }
 
             if (button.classList.contains('voice-search-btn')) {
                 e.preventDefault();
