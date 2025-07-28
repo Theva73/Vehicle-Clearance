@@ -401,7 +401,12 @@
     
     // — Icon Library —
     const icons = {
-        car: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-1.5"></path><path d="M20 10h-5.41l-1.42-2.84a1 1 0 0 0-.84-.55H10a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"></path><circle cx="7" cy="16.5" r="2.5"></circle><circle cx="17" cy="16.5" r="2.5"></circle></svg>`,
+        car: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2,16H46" />
+            <path d="M6,16 C6,16 6,12 10,8 C14,4 18,4 24,4 C30,4 34,4 38,8 C42,12 42,16 42,16" />
+            <path d="M8 20a2 2 0 100-4 2 2 0 000 4z" />
+            <path d="M40 20a2 2 0 100-4 2 2 0 000 4z" />
+        </svg>`,
         logout: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`,
         plus: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
         edit: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`,
@@ -689,7 +694,7 @@
             <div class="w-full max-w-md bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-8 space-y-8 text-center animate-fade-in">
                 
                 <header class="space-y-4">
-                    <div class="w-20 h-20 mx-auto text-blue-400 opacity-90">${icons.car}</div>
+                    <div class="w-24 h-24 mx-auto text-blue-400 opacity-90">${icons.car}</div>
                     <div>
                         <h1 class="text-4xl font-bold tracking-tight text-white">Vehicle Clearance</h1>
                         <p class="text-slate-400 mt-2">Your gateway to seamless access.</p>
@@ -805,6 +810,9 @@
                         <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
                         <div class="flex gap-2">
                             <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 flex-1 p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                            <button type="button" class="voice-search-btn mt-1 flex items-center gap-1 px-3 py-3 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search">
+                                <span class="w-4 h-4">${icons.mic}</span>
+                            </button>
                         </div>
                     </div>
                     <div>
