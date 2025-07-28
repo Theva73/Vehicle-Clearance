@@ -401,7 +401,7 @@
         x: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`,
         chevronRight: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`,
         download: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
-        settings: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`
+        settings: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`
     };
 
     // --- Voice Search Modal ---
@@ -1168,7 +1168,7 @@
                     </div>
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
-                        <button type="submit" class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Approve</button>
+                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" data-id="${request.id}">Approve</button>
                     </div>
                 </form>
             </div>
@@ -1192,7 +1192,6 @@
                 </button>
                 <form id="clearance-form" class="space-y-4">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${isEdit ? 'Edit' : 'Add'} Clearance</h2>
-                    <input type="hidden" name="id" value="${edit?.id || ''}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label>
@@ -1234,7 +1233,7 @@
                     </div>
                     <div class="flex justify-end space-x-3 pt-4">
                         <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
-                        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">${isEdit ? 'Update' : 'Save'}</button>
+                        <button type="button" class="save-clearance-btn px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700" data-id="${edit?.id || ''}">${isEdit ? 'Update' : 'Save'}</button>
                     </div>
                 </form>
             </div>
@@ -1423,6 +1422,112 @@
                 return;
             }
 
+            // --- FIXED: Approve Button Handler ---
+            if (button.classList.contains("approve-request-btn")) {
+                e.preventDefault();
+                const modal = button.closest('#review-modal-backdrop');
+                const form = modal?.querySelector('#review-form');
+                if (!form || !button.dataset.id) {
+                    showNotification("Critical error: Cannot find form or request ID.", "error");
+                    return;
+                }
+
+                button.disabled = true;
+
+                try {
+                    const data = getFormObj(form);
+                    const entryDate = parseLocalDate(data.entryDate);
+                    const expiryDate = parseLocalDate(data.expiryDate);
+
+                    if (!entryDate || !expiryDate || !form.checkValidity()) {
+                        form.reportValidity();
+                        showNotification("Please fill all required fields with valid dates.", "error");
+                        button.disabled = false;
+                        return;
+                    }
+
+                    const clearancePayload = {
+                        ownerName: data.ownerName,
+                        vehicleNumber: data.vehicleNumber.toUpperCase(),
+                        vehicleType: data.vehicleType,
+                        location: data.location,
+                        entryDate: Timestamp.fromDate(entryDate),
+                        expiryDate: Timestamp.fromDate(expiryDate),
+                        escortRequired: !!data.escortRequired,
+                        notes: data.notes || "",
+                        createdAt: Timestamp.now(),
+                        approvedBy: auth.currentUser?.uid
+                    };
+
+                    await addDoc(collection(db, "vehicleClearances"), clearancePayload);
+                    await updateDoc(doc(db, "clearanceRequests", button.dataset.id), { status: 'approved' });
+                    
+                    showNotification("Request approved and clearance created.");
+                    document.getElementById("modal-container").innerHTML = "";
+
+                } catch (error) {
+                    console.error("Approval error:", error);
+                    showNotification("Failed to approve request.", "error");
+                    button.disabled = false;
+                }
+                return;
+            }
+
+            // --- FIXED: Save/Update Button Handler ---
+            if (button.classList.contains("save-clearance-btn")) {
+                e.preventDefault();
+                const modal = button.closest('#form-modal-backdrop');
+                const form = modal?.querySelector('#clearance-form');
+                if (!form) {
+                    showNotification("Critical error: Cannot find clearance form.", "error");
+                    return;
+                }
+
+                button.disabled = true;
+
+                try {
+                    const data = getFormObj(form);
+                    const entryDate = parseLocalDate(data.entryDate);
+                    const expiryDate = parseLocalDate(data.expiryDate);
+
+                    if (!entryDate || !expiryDate || !form.checkValidity()) {
+                        form.reportValidity();
+                        showNotification("Please fill all required fields with valid dates.", "error");
+                        button.disabled = false;
+                        return;
+                    }
+
+                    const payload = {
+                        ownerName: data.ownerName,
+                        vehicleNumber: data.vehicleNumber.toUpperCase(),
+                        vehicleType: data.vehicleType,
+                        location: data.location,
+                        entryDate: Timestamp.fromDate(entryDate),
+                        expiryDate: Timestamp.fromDate(expiryDate),
+                        escortRequired: !!data.escortRequired,
+                        notes: data.notes || ""
+                    };
+                    
+                    const editingId = button.dataset.id;
+
+                    if (editingId) {
+                        await updateDoc(doc(db, "vehicleClearances", editingId), payload);
+                        showNotification("Clearance updated successfully.");
+                    } else {
+                        await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now(), createdBy: auth.currentUser?.uid });
+                        showNotification("Clearance saved successfully.");
+                    }
+                    document.getElementById("modal-container").innerHTML = "";
+
+                } catch (error) {
+                    console.error("Save/Update error:", error);
+                    showNotification("Failed to save clearance.", "error");
+                    button.disabled = false;
+                }
+                return;
+            }
+
+
             if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
                 e.preventDefault();
                 button.closest("#modal-container").innerHTML = "";
@@ -1537,52 +1642,6 @@
                     `;
                     renderLandingPage({ vehicleNumber, trackingResult: notFoundDiv.outerHTML });
                 }
-            } else if (form.id === "review-form") {
-                const data = getFormObj(form);
-                const entryDate = parseLocalDate(data.entryDate);
-                const expiryDate = parseLocalDate(data.expiryDate);
-
-                if(!entryDate || !expiryDate || !form.checkValidity()) {
-                    form.reportValidity();
-                    showNotification("Please fill all required fields with valid dates.", "error");
-                    return;
-                }
-
-                const clearancePayload = {
-                    ownerName: data.ownerName, vehicleNumber: data.vehicleNumber.toUpperCase(), vehicleType: data.vehicleType,
-                    location: data.location, entryDate: Timestamp.fromDate(entryDate), expiryDate: Timestamp.fromDate(expiryDate),
-                    escortRequired: !!data.escortRequired, notes: data.notes || "", createdAt: Timestamp.now()
-                };
-
-                await addDoc(collection(db, "vehicleClearances"), clearancePayload);
-                await updateDoc(doc(db, "clearanceRequests", data.id), { status: 'approved' });
-                
-                showNotification("Request approved and clearance created.");
-                document.getElementById("modal-container").innerHTML = "";
-            } else if (form.id === "clearance-form") {
-                const data = getFormObj(form);
-                const entryDate = parseLocalDate(data.entryDate);
-                const expiryDate = parseLocalDate(data.expiryDate);
-
-                if(!entryDate || !expiryDate) {
-                    showNotification("Valid entry and expiry dates are required.", "error");
-                    return;
-                }
-
-                const payload = {
-                    ownerName: data.ownerName, vehicleNumber: data.vehicleNumber.toUpperCase(), vehicleType: data.vehicleType,
-                    location: data.location, entryDate: Timestamp.fromDate(entryDate), expiryDate: Timestamp.fromDate(expiryDate),
-                    escortRequired: !!data.escortRequired, notes: data.notes || ""
-                };
-
-                if (data.id) {
-                    await updateDoc(doc(db, "vehicleClearances", data.id), payload);
-                    showNotification("Clearance updated successfully.");
-                } else {
-                    await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now() });
-                    showNotification("Clearance saved successfully.");
-                }
-                document.getElementById("modal-container").innerHTML = "";
             } else if (form.id === "request-form") {
                 const data = getFormObj(form);
                 let currentUser = auth.currentUser;
