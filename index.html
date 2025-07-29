@@ -107,7 +107,8 @@
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
       getFirestore, collection, doc, addDoc, setDoc, deleteDoc,
-      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy
+      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy,
+      writeBatch
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     // --- Configuration ---
@@ -423,6 +424,167 @@
         settings: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
         star: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`
     };
+
+    // === AMENDMENT: DATABASE MANAGEMENT FUNCTIONS (Updated Logic) ===
+    
+    // This function is for the "Complete Database Wipe" button
+    const clearAllDatabaseData = async (button) => {
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>';
+
+        try {
+            showNotification("Starting database cleanup...", "success");
+            
+            // AMENDMENT: Only clearing clearances and requests. VVIPs are no longer included.
+            const collections = ['vehicleClearances', 'clearanceRequests'];
+            let totalDeleted = 0;
+
+            for (const collectionName of collections) {
+                console.log(`🗑️ Clearing collection: ${collectionName}`);
+                const collectionRef = collection(db, collectionName);
+                const snapshot = await getDocs(collectionRef);
+                console.log(`Found ${snapshot.size} documents in ${collectionName}`);
+                
+                if (snapshot.size > 0) {
+                    const batch = writeBatch(db);
+                    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+                    await batch.commit();
+                    totalDeleted += snapshot.size;
+                    showNotification(`✅ Cleared ${snapshot.size} documents from ${collectionName}`, "success");
+                }
+            }
+
+            showNotification(`🎉 Cleanup complete! Deleted ${totalDeleted} total documents.`, "success");
+            
+            // We refresh the stats in the panel after deletion
+            updateDatabaseStats();
+
+        } catch (error) {
+            console.error("Error clearing database:", error);
+            showNotification(`❌ Error clearing database: ${error.message}`, "error");
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        }
+    };
+    
+    // This function is for the "Reset to Default State" button
+    const resetToDefaultState = async (button) => {
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>';
+
+        try {
+            showNotification("Resetting database...", "success");
+
+            // AMENDMENT: Only clearing clearances and requests. VVIPs are no longer included.
+            const userCollections = ['vehicleClearances', 'clearanceRequests'];
+            let totalDeleted = 0;
+            
+            for (const collectionName of userCollections) {
+                const collectionRef = collection(db, collectionName);
+                const snapshot = await getDocs(collectionRef);
+                
+                if (snapshot.size > 0) {
+                    const batch = writeBatch(db);
+                    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+                    await batch.commit();
+                    totalDeleted += snapshot.size;
+                    console.log(`✅ Cleared ${snapshot.size} documents from ${collectionName}`);
+                }
+            }
+            
+            // AMENDMENT: Password reset functionality has been removed from this function.
+            // await setDoc(doc(db, "publicConfig", "userAccess"), { password: DEFAULT_USER_PASSWORD });
+
+            showNotification(`✅ Database reset complete! Removed ${totalDeleted} records.`, "success");
+            
+            // We refresh the stats in the panel after deletion
+             updateDatabaseStats();
+
+        } catch (error) {
+            console.error("Reset error:", error);
+            showNotification(`❌ Reset failed: ${error.message}`, "error");
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        }
+    };
+
+    const exportDatabaseData = async (button) => {
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>';
+
+        try {
+            showNotification("Exporting database data...", "success");
+            const exportData = { exportDate: new Date().toISOString(), collections: {} };
+            const collections = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins', 'publicConfig'];
+
+            for (const collectionName of collections) {
+                const collectionRef = collection(db, collectionName);
+                const snapshot = await getDocs(collectionRef);
+                exportData.collections[collectionName] = [];
+                snapshot.docs.forEach((doc) => {
+                    const data = doc.data();
+                    Object.keys(data).forEach(key => {
+                        if (data[key] && typeof data[key].toDate === 'function') {
+                            data[key] = data[key].toDate().toISOString();
+                        }
+                    });
+                    exportData.collections[collectionName].push({ id: doc.id, ...data });
+                });
+                console.log(`✅ Exported ${snapshot.size} documents from ${collectionName}`);
+            }
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = `vehicle_clearance_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+
+            showNotification("✅ Database exported successfully!", "success");
+
+        } catch (error) {
+            console.error("Export error:", error);
+            showNotification(`❌ Export failed: ${error.message}`, "error");
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        }
+    };
+
+    const updateDatabaseStats = async () => {
+        const statsContainer = document.getElementById('db-stats');
+        if (!statsContainer) return;
+        statsContainer.innerHTML = '<div>Loading statistics...</div>';
+
+        try {
+            const collections = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins'];
+            const stats = {};
+            for (const collectionName of collections) {
+                const snapshot = await getDocs(collection(db, collectionName));
+                stats[collectionName] = snapshot.size;
+            }
+            statsContainer.innerHTML = `
+                <div>Active Clearances: <strong>${stats.vehicleClearances || 0}</strong></div>
+                <div>Pending Requests: <strong>${stats.clearanceRequests || 0}</strong></div>
+                <div>VVIPs: <strong>${stats.vvips || 0}</strong></div>
+                <div>Admin Accounts: <strong>${stats.admins || 0}</strong></div>
+                <div class="text-xs text-gray-500 mt-2">Last updated: ${new Date().toLocaleTimeString()}</div>
+            `;
+        } catch (error) {
+            console.error('Error loading database stats:', error);
+            statsContainer.innerHTML = '<div class="text-red-500">Error loading statistics</div>';
+        }
+    };
+    // === END DATABASE MANAGEMENT FUNCTIONS ===
 
     // --- Voice Search Modal ---
     const showVoiceSearchModal = () => {
@@ -1060,6 +1222,7 @@
                             <nav id="settings-tabs" class="flex gap-4 -mb-px">
                                 <button data-tab="general" class="settings-tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">General</button>
                                 <button data-tab="vvip" class="settings-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">VVIPs</button>
+                                <button data-tab="database" class="settings-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">Database</button>
                             </nav>
                         </div>
                     </div>
@@ -1092,6 +1255,47 @@
                             <div class="mt-6">
                                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Current VVIPs</h3>
                                 <div id="vvip-list-container-settings" class="mt-2 space-y-2"></div>
+                            </div>
+                        </div>
+                        <!-- AMENDMENT: Database Management Pane with updated text -->
+                        <div id="database-settings-pane" class="settings-pane hidden space-y-6">
+                            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                                <h3 class="text-sm font-semibold text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
+                                    <span>⚠️</span> Database Management
+                                </h3>
+                                <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                    These operations affect your database. Use with caution!
+                                </p>
+                            </div>
+                            <div class="space-y-3">
+                                <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100">Backup & Export</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Download a complete backup of your database as a JSON file.</p>
+                                <button id="export-database-btn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+                                    <span class="w-4 h-4">${icons.download}</span>
+                                    Export Database Backup
+                                </button>
+                            </div>
+                            <div class="space-y-3">
+                                <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100">Reset Data</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Clear all clearances and requests. Keeps VVIPs, admin accounts, and password.</p>
+                                <button id="reset-database-btn" class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center justify-center gap-2">
+                                    <span class="w-4 h-4">${icons.x}</span>
+                                    Reset Clearance Data
+                                </button>
+                            </div>
+                            <div class="space-y-3">
+                                <h4 class="text-md font-semibold text-red-700 dark:text-red-400">⚠️ Danger Zone</h4>
+                                <p class="text-sm text-red-600 dark:text-red-400">Permanently delete ALL clearances and requests. This cannot be undone!</p>
+                                <button id="clear-database-btn" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2">
+                                    <span class="w-4 h-4">${icons.trash}</span>
+                                    Wipe Clearance Data
+                                </button>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">Database Statistics</h4>
+                                <div id="db-stats" class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                    <div>Loading statistics...</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1485,6 +1689,32 @@
 
         try {
 
+            // === AMENDMENT: Updated Database Management Handlers ===
+            if (button.id === 'export-database-btn') {
+                e.preventDefault();
+                exportDatabaseData(button);
+                return;
+            }
+            if (button.id === 'reset-database-btn') {
+                e.preventDefault();
+                renderConfirmationModal(
+                    'Reset Clearance Data',
+                    'This will remove all clearances and requests. VVIPs, user password, and Admin accounts will be preserved. This action cannot be undone.',
+                    () => resetToDefaultState(button)
+                );
+                return;
+            }
+            if (button.id === 'clear-database-btn') {
+                e.preventDefault();
+                renderConfirmationModal(
+                    'Wipe Clearance Data',
+                    'This will permanently delete ALL clearances and requests. VVIPs, Admin accounts, and settings will be preserved. This action cannot be undone.',
+                    () => clearAllDatabaseData(button)
+                );
+                return;
+            }
+            // === END AMENDMENT ===
+
             if (button.id === "clear-tracking-btn") {
                 e.preventDefault();
                 renderLandingPage({ vehicleNumber: "", trackingResultHTML: "" });
@@ -1497,7 +1727,7 @@
             if (button.id === 'close-vvip-modal-btn') { button.closest('#modal-container').innerHTML = ''; return; }
 
             if (button.classList.contains('settings-tab-btn')) {
-                 e.preventDefault();
+                e.preventDefault();
                 const tab = button.dataset.tab;
                 document.querySelectorAll('.settings-tab-btn').forEach(btn => {
                     btn.classList.remove('active');
@@ -1510,6 +1740,10 @@
                     pane.classList.add('hidden');
                 });
                 document.getElementById(`${tab}-settings-pane`).classList.remove('hidden');
+
+                if (tab === 'database') {
+                    setTimeout(updateDatabaseStats, 100);
+                }
                 return;
             }
 
@@ -1794,9 +2028,6 @@
                 } else {
                     showNotification("Password must be at least 6 characters long.", "error");
                 }
-            // =============================================================================
-            // UPDATED 'track-request-form' handler
-            // =============================================================================
             } else if (form.id === "track-request-form") {
                 const vehicleNumber = document.getElementById("track-id-input").value.trim().toUpperCase();
                 console.log("🔍 DEBUG: Starting search for:", vehicleNumber);
@@ -1808,7 +2039,6 @@
                     return;
                 }
 
-                // Show loading state
                 const loadingHTML = `
                     <div class="mt-6 space-y-4">
                         <h3 class="text-sm font-medium text-slate-300">Tracking Result:</h3>
@@ -1824,268 +2054,88 @@
                 });
 
                 try {
-                    // Ensure we have anonymous access for tracking
                     if (!auth.currentUser) {
-                        console.log("🔐 DEBUG: Signing in anonymously...");
                         await signInAnonymously(auth);
                     }
-                    console.log("✅ DEBUG: User authenticated:", auth.currentUser?.uid);
 
                     const now = new Date();
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-
-                    // ==================================================================
-                    // PHASE 1: ACTIVE CLEARANCES (HIGHEST PRIORITY)
-                    // ==================================================================
-                    console.log("📋 Phase 1: Checking for active clearances...");
                     
                     const clearanceQuery = query(
                         collection(db, "vehicleClearances"), 
                         where("vehicleNumber", "==", vehicleNumber)
                     );
                     const clearanceSnap = await getDocs(clearanceQuery);
-                    console.log(`✅ Found ${clearanceSnap.size} clearance record(s)`);
-
+                    
                     let activeClearances = [];
                     let expiredClearances = [];
 
                     clearanceSnap.forEach(docSnap => {
                         const data = { id: docSnap.id, ...docSnap.data() };
-                        console.log("📄 DEBUG: Clearance data:", data);
-                        
                         if (data.expiryDate) {
                             const expiryDate = data.expiryDate.toDate();
                             expiryDate.setHours(23, 59, 59, 999);
-                            
-                            // *** CRITICAL FIX: Use 'now' instead of 'today' for real-time comparison ***
                             if (expiryDate >= now) {
-                                console.log("🟢 ACTIVE clearance found:", data.vehicleNumber, "expires:", formatDate(data.expiryDate));
-                                activeClearances.push({
-                                    ...data,
-                                    status: "active"
-                                });
+                                activeClearances.push({ ...data, status: "active" });
                             } else {
-                                console.log("🔴 EXPIRED clearance found:", data.vehicleNumber, "expired:", formatDate(data.expiryDate));
-                                expiredClearances.push({
-                                    ...data,
-                                    status: "expired"
-                                });
+                                expiredClearances.push({ ...data, status: "expired" });
                             }
                         }
                     });
 
-                    // If we found active clearances, show the most recent one
                     if (activeClearances.length > 0) {
-                        const mostRecentActive = activeClearances.sort((a, b) => {
-                            const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                            const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                            return bTime - aTime;
-                        })[0];
-                        
-                        console.log("🎯 Showing ACTIVE clearance as current status");
+                        const mostRecentActive = activeClearances.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
                         const trackingHTML = createStatusCard(mostRecentActive);
-                        renderLandingPage({
-                            trackingResultHTML: trackingHTML,
-                            vehicleNumber: vehicleNumber
-                        });
+                        renderLandingPage({ trackingResultHTML, vehicleNumber });
                         return;
                     }
-
-                    // ==================================================================
-                    // PHASE 2: PENDING REQUESTS (SECOND PRIORITY)
-                    // ==================================================================
-                    console.log("📝 Phase 2: Checking for pending requests...");
                     
                     const requestQuery = query(
                         collection(db, "clearanceRequests"), 
-                        where("vehicleNumber", "==", vehicleNumber),
-                        where("status", "==", "pending") // Only get pending requests
+                        where("vehicleNumber", "==", vehicleNumber)
                     );
                     const requestSnap = await getDocs(requestQuery);
-                    console.log(`✅ Found ${requestSnap.size} pending request record(s)`);
 
-                    let validPendingRequests = [];
+                    let pendingRequests = [];
+                    let approvedRequests = [];
+                    let rejectedRequests = [];
 
                     requestSnap.forEach(docSnap => {
                         const data = { id: docSnap.id, ...docSnap.data() };
-                        console.log("📄 DEBUG: Pending request data:", data);
-                        
-                        // *** CRITICAL FIX: Check if the request is still valid (not expired) ***
-                        if (data.expiryDate) {
-                            const requestExpiryDate = data.expiryDate.toDate();
-                            requestExpiryDate.setHours(23, 59, 59, 999);
-                            
-                            if (requestExpiryDate >= now) {
-                                console.log("🟡 VALID pending request found:", data.vehicleNumber);
-                                validPendingRequests.push(data);
-                            } else {
-                                console.log("⚠️ EXPIRED pending request found (ignoring):", data.vehicleNumber);
-                            }
-                        }
+                        if(data.expiryDate && data.expiryDate.toDate() < now) return; 
+
+                        if(data.status === 'pending') pendingRequests.push(data);
+                        else if(data.status === 'approved') approvedRequests.push(data);
+                        else if(data.status === 'rejected') rejectedRequests.push(data);
                     });
 
-                    if (validPendingRequests.length > 0) {
-                        const mostRecentPending = validPendingRequests.sort((a, b) => {
-                            const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                            const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                            return bTime - aTime;
-                        })[0];
-                        
-                        console.log("🎯 Showing PENDING request as current status");
+                    if (pendingRequests.length > 0) {
+                        const mostRecentPending = pendingRequests.sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
                         const trackingHTML = createStatusCard(mostRecentPending);
-                        renderLandingPage({
-                            trackingResultHTML: trackingHTML,
-                            vehicleNumber: vehicleNumber
-                        });
+                        renderLandingPage({ trackingResultHTML, vehicleNumber });
                         return;
                     }
-
-                    // ==================================================================
-                    // PHASE 3: APPROVED REQUESTS THAT HAVEN'T BECOME CLEARANCES YET
-                    // ==================================================================
-                    console.log("📝 Phase 3: Checking for recent approved requests...");
                     
-                    const approvedRequestQuery = query(
-                        collection(db, "clearanceRequests"), 
-                        where("vehicleNumber", "==", vehicleNumber),
-                        where("status", "==", "approved")
-                    );
-                    const approvedRequestSnap = await getDocs(approvedRequestQuery);
-                    console.log(`✅ Found ${approvedRequestSnap.size} approved request record(s)`);
-
-                    let validApprovedRequests = [];
-
-                    approvedRequestSnap.forEach(docSnap => {
-                        const data = { id: docSnap.id, ...docSnap.data() };
-                        console.log("📄 DEBUG: Approved request data:", data);
-                        
-                        // Check if this approved request is still valid and hasn't been converted to clearance
-                        if (data.expiryDate) {
-                            const requestExpiryDate = data.expiryDate.toDate();
-                            requestExpiryDate.setHours(23, 59, 59, 999);
-                            
-                            if (requestExpiryDate >= now) {
-                                console.log("🟢 VALID approved request found:", data.vehicleNumber);
-                                validApprovedRequests.push(data);
-                            } else {
-                                console.log("⚠️ EXPIRED approved request found (ignoring):", data.vehicleNumber);
-                            }
-                        }
-                    });
-
-                    if (validApprovedRequests.length > 0) {
-                        const mostRecentApproved = validApprovedRequests.sort((a, b) => {
-                            const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                            const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                            return bTime - aTime;
-                        })[0];
-                        
-                        console.log("🎯 Showing APPROVED request as current status");
+                    if (approvedRequests.length > 0) {
+                        const mostRecentApproved = approvedRequests.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
                         const trackingHTML = createStatusCard(mostRecentApproved);
-                        renderLandingPage({
-                            trackingResultHTML: trackingHTML,
-                            vehicleNumber: vehicleNumber
-                        });
+                        renderLandingPage({ trackingResultHTML, vehicleNumber });
                         return;
                     }
 
-                    // ==================================================================
-                    // PHASE 4: RECENT REJECTIONS (FOURTH PRIORITY)
-                    // ==================================================================
-                    console.log("📝 Phase 4: Checking for recent rejections...");
-                    
-                    const rejectedRequestQuery = query(
-                        collection(db, "clearanceRequests"), 
-                        where("vehicleNumber", "==", vehicleNumber),
-                        where("status", "==", "rejected")
-                    );
-                    const rejectedRequestSnap = await getDocs(rejectedRequestQuery);
-                    
-                    let recentRejections = [];
-                    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-
-                    rejectedRequestSnap.forEach(docSnap => {
-                        const data = { id: docSnap.id, ...docSnap.data() };
-                        
-                        if (data.createdAt) {
-                            const createdDate = data.createdAt.toDate();
-                            if (createdDate >= sevenDaysAgo) {
-                                console.log("🔴 RECENT rejection found:", data.vehicleNumber);
-                                recentRejections.push(data);
-                            }
-                        }
-                    });
-
-                    if (recentRejections.length > 0) {
-                        const mostRecentRejected = recentRejections.sort((a, b) => {
-                            const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                            const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                            return bTime - aTime;
-                        })[0];
-                        
-                        console.log("🎯 Showing RECENT REJECTION as current status");
+                    if (rejectedRequests.length > 0) {
+                         const mostRecentRejected = rejectedRequests.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
                         const trackingHTML = createStatusCard(mostRecentRejected);
-                        renderLandingPage({
-                            trackingResultHTML: trackingHTML,
-                            vehicleNumber: vehicleNumber
-                        });
+                        renderLandingPage({ trackingResultHTML, vehicleNumber });
                         return;
                     }
 
-                    // ==================================================================
-                    // PHASE 5: EXPIRED CLEARANCES (LOWEST PRIORITY)
-                    // ==================================================================
                     if (expiredClearances.length > 0) {
-                        const mostRecentExpired = expiredClearances.sort((a, b) => {
-                            const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                            const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                            return bTime - aTime;
-                        })[0];
-                        
-                        console.log("🎯 Showing EXPIRED clearance as historical status");
-                        
-                        // *** CRITICAL FIX: Show as EXPIRED, not APPROVED ***
-                        const expiredHTML = `
-                        <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl border text-left animate-fade-in">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <p class="text-sm text-slate-400">Vehicle</p>
-                                    <p class="font-mono text-xl font-bold text-blue-400">${mostRecentExpired.vehicleNumber}</p>
-                                    <p class="text-xs text-slate-400">${mostRecentExpired.vehicleType || "Car"}</p>
-                                </div>
-                                <span class="px-2 py-1 rounded-full text-xs font-medium text-red-400 bg-red-500/10 border border-red-500/20">
-                                    EXPIRED
-                                </span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3 text-sm">
-                                <div>
-                                    <p class="text-xs text-slate-400">Owner</p>
-                                    <p class="font-semibold text-slate-200">${mostRecentExpired.ownerName}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-slate-400">Location</p>
-                                    <p class="font-semibold text-slate-200">${mostRecentExpired.location}</p>
-                                </div>
-                                <div class="col-span-2">
-                                    <p class="text-xs text-slate-400">Expired On</p>
-                                    <p class="font-semibold text-red-400">${formatDate(mostRecentExpired.expiryDate)}</p>
-                                </div>
-                            </div>
-                            ${mostRecentExpired.notes ? `<div class="mt-3 pt-3 border-t border-slate-600"><p class="text-xs text-slate-400">Notes</p><p class="text-sm text-slate-300">${mostRecentExpired.notes}</p></div>` : ""}
-                        </div>`;
-                        
-                        renderLandingPage({
-                            trackingResultHTML: expiredHTML,
-                            vehicleNumber: vehicleNumber
-                        });
+                        const mostRecentExpired = expiredClearances.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
+                        const trackingHTML = createStatusCard(mostRecentExpired);
+                        renderLandingPage({ trackingResultHTML, vehicleNumber });
                         return;
                     }
 
-                    // ==================================================================
-                    // PHASE 6: NO RECORDS FOUND
-                    // ==================================================================
-                    console.log("❌ No records found for:", vehicleNumber);
                     const notFoundHTML = `
                     <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in">
                         <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
@@ -2107,7 +2157,7 @@
                     <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in">
                         <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
                         <p class="font-semibold text-red-400">Search failed</p>
-                        <p class="text-sm text-red-500 mt-1">Error: ${error.message}</p>
+                        <p class="text-sm text-red-500 mt-1">An error occurred while searching.</p>
                         <div class="mt-3 text-xs text-red-400">Please check your internet connection and try again.</div>
                     </div>`;
                     
