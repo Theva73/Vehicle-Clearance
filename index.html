@@ -674,20 +674,12 @@
     };
     
     // — Render Functions —
+    // =============================================================================
+    // FIX 1: This function has been updated as per the instructions.
+    // =============================================================================
     const renderLandingPage = (options = {}) => {
-        const { vehicleNumber = "", trackingResult = null } = options;
+        const { trackingResultHTML = "", vehicleNumber = "" } = options;
         document.body.className = 'dark-theme-bg';
-
-        let trackingHTML = '';
-        if (trackingResult) {
-            trackingHTML = `
-                <div class="mt-6 space-y-4">
-                    <h3 class="text-sm font-medium text-slate-300">Tracking Result:</h3>
-                    ${trackingResult}
-                    <button id="clear-tracking-btn" class="w-full px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded-lg hover:bg-slate-700">Clear Result</button>
-                </div>
-            `;
-        }
 
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
@@ -729,7 +721,7 @@
                             </button>
                         </div>
                     </form>
-                    <div id="tracking-result">${trackingHTML}</div>
+                    <div id="tracking-result">${trackingResultHTML}</div>
                 </footer>
             </div>
         </div>
@@ -853,31 +845,13 @@
         </div>`;
     };
 
+    // =============================================================================
+    // FIX 2: This function has been updated as per the instructions.
+    // =============================================================================
     const createStatusCard = (r) => {
-        const statusConfig = {
-            approved: { text: "APPROVED", color: "text-green-300", bg: "bg-green-500/10", border: "border-green-500/20" },
-            rejected: { text: "REJECTED", color: "text-red-300", bg: "bg-red-500/10", border: "border-red-500/20" },
-            pending: { text: "PENDING", color: "text-yellow-300", bg: "bg-yellow-500/10", border: "border-yellow-500/20" }
-        };
-        const config = statusConfig[r.status] || statusConfig.pending;
-
-        const cardDiv = document.createElement('div');
-        cardDiv.className = `p-4 ${config.bg} ${config.border} rounded-xl space-y-3 text-left border`;
-        cardDiv.innerHTML = `
-            <div class="flex justify-between items-start">
-                <p class="font-mono text-2xl font-bold text-slate-100">${r.vehicleNumber}</p>
-                <p class="font-bold px-2.5 py-1 rounded-full text-xs ${config.color} ${config.bg}">${config.text}</p>
-            </div>
-            <div class="text-sm text-slate-400">
-                <p>${r.vehicleType || "-"} &bull; Requested by ${r.requesterName}</p>
-                <p class="mt-2"><span class="font-semibold text-slate-300">Dates:</span> ${formatDate(r.entryDate)} to ${formatDate(r.expiryDate)}</p>
-                <p><span class="font-semibold text-slate-300">Location:</span> ${r.location}</p>
-                ${r.notes ? `<p class="mt-1 pt-1 border-t border-slate-700"><span class="font-semibold text-slate-300">Notes:</span> ${r.notes}</p>` : ""}
-            </div>
-        `;
-        return cardDiv.outerHTML;
+        const color = r.status === "approved" ? "text-green-600" : r.status === "rejected" ? "text-red-600" : "text-yellow-600";
+        return `<div class="p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2 text-left animate-fade-in"> <p class="text-sm text-slate-400">Vehicle</p> <p class="font-mono text-xl font-bold text-blue-400">${r.vehicleNumber}</p> <p class="text-xs text-slate-400">${r.vehicleType || "-"}</p> <p class="mt-2 text-sm text-slate-400">Status</p> <p class="font-semibold ${color}">${r.status.toUpperCase()}</p> <p class="mt-2 text-sm text-slate-400">Dates</p> <p class="font-semibold text-slate-200">${formatDate(r.entryDate)} - ${formatDate(r.expiryDate)}</p> <p class="mt-2 text-sm text-slate-400">Location</p> <p class="font-semibold text-slate-200">${r.location}</p> ${r.notes ? `<p class="mt-2 text-sm text-slate-400">Notes</p><p class="font-semibold text-slate-200">${r.notes}</p>` : ""} </div>`;
     };
-
 
     const renderClearanceListForUser = (vehicleFilter = null) => {
         const listContainer = document.getElementById('user-clearance-list-container');
@@ -1769,76 +1743,97 @@
                 } else {
                     showNotification("Password must be at least 6 characters long.", "error");
                 }
+            // =============================================================================
+            // FIX 3: This block has been replaced as per the instructions.
+            // =============================================================================
             } else if (form.id === "track-request-form") {
                 const vehicleNumber = document.getElementById("track-id-input").value.trim().toUpperCase();
+                const resultDiv = document.getElementById("tracking-result");
                 if (!vehicleNumber) {
-                    showNotification("Please enter a vehicle number.", "error");
+                    if (resultDiv) resultDiv.innerHTML = "";
                     if (button) button.disabled = false;
                     return;
                 }
+                if(resultDiv) resultDiv.innerHTML = `<div class="text-slate-400 text-center p-4">Searching...</div>`;
 
-                if (!auth.currentUser || !auth.currentUser.isAnonymous) {
-                    await signInAnonymously(auth);
-                }
-
-                // 1. Prioritize checking for an ACTIVE or UPCOMING clearance.
-                const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber), orderBy("createdAt", "desc"));
-                const clrSnap = await getDocs(clrQuery);
-                let activeClearance = null;
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                if (!clrSnap.empty) {
-                    for (const doc of clrSnap.docs) {
-                        const c = { id: doc.id, ...doc.data() };
-                        const expiryDate = c.expiryDate.toDate();
-                        expiryDate.setHours(23, 59, 59, 999);
-                        if (expiryDate >= today) { // Check if expiry is today or in the future
-                            activeClearance = c;
-                            break; // Found the most recent, valid clearance
-                        }
+                try {
+                    if (!auth.currentUser) {
+                        await signInAnonymously(auth);
                     }
-                }
 
-                if (activeClearance) {
-                    // If an active/upcoming clearance is found, display it and stop.
-                    const clearanceDiv = document.createElement('div');
-                    clearanceDiv.className = 'p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2 text-left animate-fade-in';
-                    clearanceDiv.innerHTML = `
-                        <p class="text-sm text-slate-400">Vehicle</p>
-                        <p class="font-mono text-xl font-bold text-blue-400">${activeClearance.vehicleNumber}</p>
-                        <p class="text-xs text-slate-400">${activeClearance.vehicleType || "-"}</p>
-                        <p class="mt-2 text-sm text-slate-400">Status</p>
-                        <p class="font-semibold text-green-400">ACTIVE CLEARANCE</p>
-                        <p class="mt-2 text-sm text-slate-400">Owner</p>
-                        <p class="font-semibold text-slate-200">${activeClearance.ownerName}</p>
-                        <p class="mt-2 text-sm text-slate-400">Valid Until</p>
-                        <p class="font-semibold text-slate-200">${formatDate(activeClearance.expiryDate)}</p>
-                    `;
-                    renderLandingPage({ vehicleNumber, trackingResult: clearanceDiv.outerHTML });
-                    if (button) button.disabled = false;
-                    return; // Exit
-                }
+                    const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
+                    const reqSnap = await getDocs(reqQuery);
 
-                // 2. If no active clearance, check for the latest request.
-                const reqQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber), orderBy("createdAt", "desc"));
-                const reqSnap = await getDocs(reqQuery);
+                    if (!reqSnap.empty) {
+                        const sortedDocs = reqSnap.docs.sort((a, b) => b.data().createdAt.toMillis() - a.data().createdAt.toMillis());
+                        const latestRequest = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
+                        
+                        const trackingHTML = createStatusCard(latestRequest);
+                        renderLandingPage({
+                            trackingResultHTML: trackingHTML,
+                            vehicleNumber: vehicleNumber
+                        });
+                        if (button) button.disabled = false;
+                        return;
+                    }
 
-                if (!reqSnap.empty) {
-                    const latestRequest = { id: reqSnap.docs[0].id, ...reqSnap.docs[0].data() };
-                    renderLandingPage({ vehicleNumber, trackingResult: createStatusCard(latestRequest) });
-                } else {
-                    // 3. If no clearance and no request found.
-                    const notFoundDiv = document.createElement('div');
-                    notFoundDiv.className = 'p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in';
-                    notFoundDiv.innerHTML = `
+                    const clrQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
+                    const clrSnap = await getDocs(clrQuery);
+
+                    if (!clrSnap.empty) {
+                        const sortedDocs = clrSnap.docs.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
+                        const latestClearance = { id: sortedDocs[0].id, ...sortedDocs[0].data() };
+                        
+                        const clearanceStatusCard = `
+                        <div class="p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2 text-left animate-fade-in">
+                            <p class="text-sm text-slate-400">Vehicle</p>
+                            <p class="font-mono text-xl font-bold text-blue-400">${latestClearance.vehicleNumber}</p>
+                            <p class="text-xs text-slate-400">${latestClearance.vehicleType || "-"}</p>
+                            <p class="mt-2 text-sm text-slate-400">Status</p>
+                            <p class="font-semibold text-green-400">ACTIVE CLEARANCE</p>
+                            <p class="mt-2 text-sm text-slate-400">Owner</p>
+                            <p class="font-semibold text-slate-200">${latestClearance.ownerName}</p>
+                            <p class="mt-2 text-sm text-slate-400">Valid Until</p>
+                            <p class="font-semibold text-slate-200">${formatDate(latestClearance.expiryDate)}</p>
+                        </div>`;
+                        
+                        renderLandingPage({
+                            trackingResultHTML: clearanceStatusCard,
+                            vehicleNumber: vehicleNumber
+                        });
+                        if (button) button.disabled = false;
+                        return;
+                    }
+
+                    const notFoundHTML = `
+                    <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in">
                         <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
                         <p class="font-semibold text-red-400">No request or clearance found for ${vehicleNumber}</p>
                         <p class="text-sm text-red-500 mt-1">Please check the vehicle number and try again.</p>
-                    `;
-                    renderLandingPage({ vehicleNumber, trackingResult: notFoundDiv.outerHTML });
-                }
+                    </div>`;
+                    
+                    renderLandingPage({
+                        trackingResultHTML: notFoundHTML,
+                        vehicleNumber: vehicleNumber
+                    });
 
+                } catch (error) {
+                    console.error("Tracking error:", error);
+                    const errorHTML = `
+                    <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in">
+                        <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
+                        <p class="font-semibold text-red-400">Error occurred while tracking</p>
+                        <p class="text-sm text-red-500 mt-1">Please try again later.</p>
+                    </div>`;
+                    
+                    renderLandingPage({
+                        trackingResultHTML: errorHTML,
+                        vehicleNumber: vehicleNumber
+                    });
+                }
+            // =============================================================================
+            // FIX 4: This block has been updated as per the instructions.
+            // =============================================================================
             } else if (form.id === "request-form") {
                 const data = getFormObj(form);
                 let currentUser = auth.currentUser;
@@ -1850,22 +1845,40 @@
 
                 if(!entryDate || !expiryDate) {
                     showNotification("Valid entry and expiry dates are required.", "error");
+                    if (button) button.disabled = false;
                     return;
                 }
 
                 const payload = {
-                    requesterName: data.requesterName, requesterId: currentUser.uid, vehicleNumber: data.vehicleNumber.toUpperCase(),
-                    vehicleType: data.vehicleType, location: data.location, entryDate: Timestamp.fromDate(entryDate),
-                    expiryDate: Timestamp.fromDate(expiryDate), escortRequired: !!data.escortRequired, notes: data.notes || "",
-                    status: "pending", createdAt: Timestamp.now()
+                    requesterName: data.requesterName,
+                    requesterId: currentUser.uid,
+                    vehicleNumber: data.vehicleNumber.toUpperCase(),
+                    vehicleType: data.vehicleType,
+                    location: data.location,
+                    entryDate: Timestamp.fromDate(entryDate),
+                    expiryDate: Timestamp.fromDate(expiryDate),
+                    escortRequired: !!data.escortRequired,
+                    notes: data.notes || "",
+                    status: "pending",
+                    createdAt: Timestamp.now()
                 };
-
-                const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
-                showNotification("Request submitted successfully!");
-
-                const newRequestData = { id: docRef.id, ...payload };
-                const trackingHTML = createStatusCard(newRequestData);
-                renderLandingPage({ vehicleNumber: newRequestData.vehicleNumber, trackingResult: trackingHTML });
+                
+                try {
+                    const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
+                    showNotification("Request submitted successfully!");
+                    
+                    const newRequestData = { id: docRef.id, ...payload };
+                    const trackingHTML = createStatusCard(newRequestData);
+                    
+                    renderLandingPage({
+                        trackingResultHTML: trackingHTML,
+                        vehicleNumber: newRequestData.vehicleNumber
+                    });
+                
+                } catch (error) {
+                    console.error("Request submission error:", error);
+                    showNotification("Failed to submit request. Please try again.", "error");
+                }
             }
         } catch (error) {
             console.error("Form submission error:", error);
