@@ -675,11 +675,22 @@
     
     // — Render Functions —
     // =============================================================================
-    // FIX 1: This function has been updated as per the instructions.
+    // FIX 1: This function has been updated to include the "Clear Result" button.
     // =============================================================================
     const renderLandingPage = (options = {}) => {
         const { trackingResultHTML = "", vehicleNumber = "" } = options;
         document.body.className = 'dark-theme-bg';
+
+        let trackingSection = '';
+        if (trackingResultHTML) {
+            trackingSection = `
+                <div class="mt-6 space-y-4">
+                    <h3 class="text-sm font-medium text-slate-300">Tracking Result:</h3>
+                    ${trackingResultHTML}
+                    <button id="clear-tracking-btn" class="w-full px-4 py-2 text-sm bg-slate-700/50 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors">Clear Result</button>
+                </div>
+            `;
+        }
 
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
@@ -721,7 +732,7 @@
                             </button>
                         </div>
                     </form>
-                    <div id="tracking-result">${trackingResultHTML}</div>
+                    <div id="tracking-result">${trackingSection}</div>
                 </footer>
             </div>
         </div>
@@ -845,9 +856,6 @@
         </div>`;
     };
 
-    // =============================================================================
-    // FIX 2: This function has been updated as per the instructions.
-    // =============================================================================
     const createStatusCard = (r) => {
         const color = r.status === "approved" ? "text-green-600" : r.status === "rejected" ? "text-red-600" : "text-yellow-600";
         return `<div class="p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2 text-left animate-fade-in"> <p class="text-sm text-slate-400">Vehicle</p> <p class="font-mono text-xl font-bold text-blue-400">${r.vehicleNumber}</p> <p class="text-xs text-slate-400">${r.vehicleType || "-"}</p> <p class="mt-2 text-sm text-slate-400">Status</p> <p class="font-semibold ${color}">${r.status.toUpperCase()}</p> <p class="mt-2 text-sm text-slate-400">Dates</p> <p class="font-semibold text-slate-200">${formatDate(r.entryDate)} - ${formatDate(r.expiryDate)}</p> <p class="mt-2 text-sm text-slate-400">Location</p> <p class="font-semibold text-slate-200">${r.location}</p> ${r.notes ? `<p class="mt-2 text-sm text-slate-400">Notes</p><p class="font-semibold text-slate-200">${r.notes}</p>` : ""} </div>`;
@@ -1439,6 +1447,15 @@
         }
 
         try {
+            // =============================================================================
+            // FIX 2: This handler for the "Clear Result" button has been added.
+            // =============================================================================
+            if (button.id === "clear-tracking-btn") {
+                e.preventDefault();
+                renderLandingPage({ vehicleNumber: "", trackingResultHTML: "" });
+                return;
+            }
+
             if (button.id === 'settings-btn') { e.preventDefault(); toggleSettingsPanel(true); return; }
             if (button.id === 'close-settings-panel-btn') { e.preventDefault(); toggleSettingsPanel(false); return; }
             if (button.id === 'show-vvip-btn') { renderVVIPModal(); return; }
@@ -1475,7 +1492,6 @@
             if (button.id === "user-btn") { routeHistory.push(() => renderLandingPage()); renderUserLogin(); return; }
             if (button.id === "back-btn") { e.preventDefault(); goBack(); return; }
             if (button.id === "logout-button") { e.preventDefault(); await signOut(auth); return; }
-            if (button.id === "clear-tracking-btn") { e.preventDefault(); renderLandingPage(); return; }
             if (button.id === "download-report-btn") { e.preventDefault(); generatePDFReport(button); return; }
             if (button.id === "add-clearance-btn") { e.preventDefault(); renderModal(); return; }
 
@@ -1743,9 +1759,6 @@
                 } else {
                     showNotification("Password must be at least 6 characters long.", "error");
                 }
-            // =============================================================================
-            // FIX 3: This block has been replaced as per the instructions.
-            // =============================================================================
             } else if (form.id === "track-request-form") {
                 const vehicleNumber = document.getElementById("track-id-input").value.trim().toUpperCase();
                 const resultDiv = document.getElementById("tracking-result");
@@ -1831,9 +1844,6 @@
                         vehicleNumber: vehicleNumber
                     });
                 }
-            // =============================================================================
-            // FIX 4: This block has been updated as per the instructions.
-            // =============================================================================
             } else if (form.id === "request-form") {
                 const data = getFormObj(form);
                 let currentUser = auth.currentUser;
