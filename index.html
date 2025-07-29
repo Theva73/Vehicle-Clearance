@@ -1795,7 +1795,7 @@
                     showNotification("Password must be at least 6 characters long.", "error");
                 }
             // =============================================================================
-            // LATEST FIX APPLIED: "track-request-form" handler from fixes_13.txt
+            // UPDATED 'track-request-form' handler
             // =============================================================================
             } else if (form.id === "track-request-form") {
                 const vehicleNumber = document.getElementById("track-id-input").value.trim().toUpperCase();
@@ -1831,6 +1831,7 @@
                     }
                     console.log("✅ DEBUG: User authenticated:", auth.currentUser?.uid);
 
+                    const now = new Date();
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
 
@@ -1857,7 +1858,8 @@
                             const expiryDate = data.expiryDate.toDate();
                             expiryDate.setHours(23, 59, 59, 999);
                             
-                            if (expiryDate >= today) {
+                            // *** CRITICAL FIX: Use 'now' instead of 'today' for real-time comparison ***
+                            if (expiryDate >= now) {
                                 console.log("🟢 ACTIVE clearance found:", data.vehicleNumber, "expires:", formatDate(data.expiryDate));
                                 activeClearances.push({
                                     ...data,
@@ -1891,50 +1893,40 @@
                     }
 
                     // ==================================================================
-                    // PHASE 2: PENDING/APPROVED REQUESTS (SECOND PRIORITY)
+                    // PHASE 2: PENDING REQUESTS (SECOND PRIORITY)
                     // ==================================================================
-                    console.log("📝 Phase 2: Checking for pending/approved requests...");
+                    console.log("📝 Phase 2: Checking for pending requests...");
                     
                     const requestQuery = query(
                         collection(db, "clearanceRequests"), 
-                        where("vehicleNumber", "==", vehicleNumber)
+                        where("vehicleNumber", "==", vehicleNumber),
+                        where("status", "==", "pending") // Only get pending requests
                     );
                     const requestSnap = await getDocs(requestQuery);
-                    console.log(`✅ Found ${requestSnap.size} request record(s)`);
+                    console.log(`✅ Found ${requestSnap.size} pending request record(s)`);
 
-                    let pendingRequests = [];
-                    let approvedRequests = [];
-                    let rejectedRequests = [];
+                    let validPendingRequests = [];
 
                     requestSnap.forEach(docSnap => {
                         const data = { id: docSnap.id, ...docSnap.data() };
-                        console.log("📄 DEBUG: Request data:", data);
+                        console.log("📄 DEBUG: Pending request data:", data);
                         
-                        const requestAge = Date.now() - (data.createdAt ? data.createdAt.toMillis() : 0);
-                        const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
-                        
-                        switch(data.status) {
-                            case "pending":
-                                console.log("🟡 PENDING request found:", data.vehicleNumber);
-                                pendingRequests.push(data);
-                                break;
-                                
-                            case "approved":
-                                console.log("🟢 APPROVED request found:", data.vehicleNumber);
-                                approvedRequests.push(data);
-                                break;
-                                
-                            case "rejected":
-                                if (requestAge < sevenDaysInMs) {
-                                    console.log("🔴 RECENT rejection found:", data.vehicleNumber);
-                                    rejectedRequests.push(data);
-                                }
-                                break;
+                        // *** CRITICAL FIX: Check if the request is still valid (not expired) ***
+                        if (data.expiryDate) {
+                            const requestExpiryDate = data.expiryDate.toDate();
+                            requestExpiryDate.setHours(23, 59, 59, 999);
+                            
+                            if (requestExpiryDate >= now) {
+                                console.log("🟡 VALID pending request found:", data.vehicleNumber);
+                                validPendingRequests.push(data);
+                            } else {
+                                console.log("⚠️ EXPIRED pending request found (ignoring):", data.vehicleNumber);
+                            }
                         }
                     });
 
-                    if (pendingRequests.length > 0) {
-                        const mostRecentPending = pendingRequests.sort((a, b) => {
+                    if (validPendingRequests.length > 0) {
+                        const mostRecentPending = validPendingRequests.sort((a, b) => {
                             const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
                             const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
                             return bTime - aTime;
@@ -1949,8 +1941,41 @@
                         return;
                     }
 
-                    if (approvedRequests.length > 0) {
-                        const mostRecentApproved = approvedRequests.sort((a, b) => {
+                    // ==================================================================
+                    // PHASE 3: APPROVED REQUESTS THAT HAVEN'T BECOME CLEARANCES YET
+                    // ==================================================================
+                    console.log("📝 Phase 3: Checking for recent approved requests...");
+                    
+                    const approvedRequestQuery = query(
+                        collection(db, "clearanceRequests"), 
+                        where("vehicleNumber", "==", vehicleNumber),
+                        where("status", "==", "approved")
+                    );
+                    const approvedRequestSnap = await getDocs(approvedRequestQuery);
+                    console.log(`✅ Found ${approvedRequestSnap.size} approved request record(s)`);
+
+                    let validApprovedRequests = [];
+
+                    approvedRequestSnap.forEach(docSnap => {
+                        const data = { id: docSnap.id, ...docSnap.data() };
+                        console.log("📄 DEBUG: Approved request data:", data);
+                        
+                        // Check if this approved request is still valid and hasn't been converted to clearance
+                        if (data.expiryDate) {
+                            const requestExpiryDate = data.expiryDate.toDate();
+                            requestExpiryDate.setHours(23, 59, 59, 999);
+                            
+                            if (requestExpiryDate >= now) {
+                                console.log("🟢 VALID approved request found:", data.vehicleNumber);
+                                validApprovedRequests.push(data);
+                            } else {
+                                console.log("⚠️ EXPIRED approved request found (ignoring):", data.vehicleNumber);
+                            }
+                        }
+                    });
+
+                    if (validApprovedRequests.length > 0) {
+                        const mostRecentApproved = validApprovedRequests.sort((a, b) => {
                             const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
                             const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
                             return bTime - aTime;
@@ -1966,10 +1991,34 @@
                     }
 
                     // ==================================================================
-                    // PHASE 3: RECENT REJECTIONS (THIRD PRIORITY)
+                    // PHASE 4: RECENT REJECTIONS (FOURTH PRIORITY)
                     // ==================================================================
-                    if (rejectedRequests.length > 0) {
-                        const mostRecentRejected = rejectedRequests.sort((a, b) => {
+                    console.log("📝 Phase 4: Checking for recent rejections...");
+                    
+                    const rejectedRequestQuery = query(
+                        collection(db, "clearanceRequests"), 
+                        where("vehicleNumber", "==", vehicleNumber),
+                        where("status", "==", "rejected")
+                    );
+                    const rejectedRequestSnap = await getDocs(rejectedRequestQuery);
+                    
+                    let recentRejections = [];
+                    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+
+                    rejectedRequestSnap.forEach(docSnap => {
+                        const data = { id: docSnap.id, ...docSnap.data() };
+                        
+                        if (data.createdAt) {
+                            const createdDate = data.createdAt.toDate();
+                            if (createdDate >= sevenDaysAgo) {
+                                console.log("🔴 RECENT rejection found:", data.vehicleNumber);
+                                recentRejections.push(data);
+                            }
+                        }
+                    });
+
+                    if (recentRejections.length > 0) {
+                        const mostRecentRejected = recentRejections.sort((a, b) => {
                             const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
                             const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
                             return bTime - aTime;
@@ -1985,7 +2034,7 @@
                     }
 
                     // ==================================================================
-                    // PHASE 4: EXPIRED CLEARANCES (LOWEST PRIORITY)
+                    // PHASE 5: EXPIRED CLEARANCES (LOWEST PRIORITY)
                     // ==================================================================
                     if (expiredClearances.length > 0) {
                         const mostRecentExpired = expiredClearances.sort((a, b) => {
@@ -1996,23 +2045,34 @@
                         
                         console.log("🎯 Showing EXPIRED clearance as historical status");
                         
+                        // *** CRITICAL FIX: Show as EXPIRED, not APPROVED ***
                         const expiredHTML = `
-                        <div class="p-4 bg-gray-500/10 border border-gray-500/20 rounded-xl border text-left animate-fade-in">
+                        <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl border text-left animate-fade-in">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
                                     <p class="text-sm text-slate-400">Vehicle</p>
                                     <p class="font-mono text-xl font-bold text-blue-400">${mostRecentExpired.vehicleNumber}</p>
                                     <p class="text-xs text-slate-400">${mostRecentExpired.vehicleType || "Car"}</p>
                                 </div>
-                                <span class="px-2 py-1 rounded-full text-xs font-medium text-gray-400 bg-gray-500/10 border border-gray-500/20">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium text-red-400 bg-red-500/10 border border-red-500/20">
                                     EXPIRED
                                 </span>
                             </div>
-                            <div class="text-sm text-slate-400">
-                                <p><strong>Owner:</strong> ${mostRecentExpired.ownerName}</p>
-                                <p><strong>Location:</strong> ${mostRecentExpired.location}</p>
-                                <p><strong>Expired on:</strong> ${formatDate(mostRecentExpired.expiryDate)}</p>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <p class="text-xs text-slate-400">Owner</p>
+                                    <p class="font-semibold text-slate-200">${mostRecentExpired.ownerName}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400">Location</p>
+                                    <p class="font-semibold text-slate-200">${mostRecentExpired.location}</p>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-xs text-slate-400">Expired On</p>
+                                    <p class="font-semibold text-red-400">${formatDate(mostRecentExpired.expiryDate)}</p>
+                                </div>
                             </div>
+                            ${mostRecentExpired.notes ? `<div class="mt-3 pt-3 border-t border-slate-600"><p class="text-xs text-slate-400">Notes</p><p class="text-sm text-slate-300">${mostRecentExpired.notes}</p></div>` : ""}
                         </div>`;
                         
                         renderLandingPage({
@@ -2023,7 +2083,7 @@
                     }
 
                     // ==================================================================
-                    // PHASE 5: NO RECORDS FOUND
+                    // PHASE 6: NO RECORDS FOUND
                     // ==================================================================
                     console.log("❌ No records found for:", vehicleNumber);
                     const notFoundHTML = `
