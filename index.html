@@ -92,7 +92,13 @@
         border-color: #60a5fa; /* blue-400 */
         color: #60a5fa; /* blue-400 */
     }
-
+    .spinner {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
   </style>
 
 </head>
@@ -107,13 +113,15 @@
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
       getFirestore, collection, doc, addDoc, setDoc, deleteDoc,
-      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy,
-      writeBatch
+      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     // --- Configuration ---
     const ADMIN_INVITE_CODE = "ADMIN2025";
     const DEFAULT_USER_PASSWORD = "123456";
+    const GEMINI_API_KEY = ""; // Kept empty as per instructions
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+
     const firebaseConfig = {
       apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
       authDomain: "vehicle-clearance.firebaseapp.com",
@@ -150,6 +158,44 @@
     let isVoiceSearchActive = false;
     let voiceSearchTimeout = null;
     let currentVoiceInput = null;
+
+    // --- Gemini API Helper ---
+    const callGeminiApi = async (prompt, maxRetries = 3) => {
+        let attempts = 0;
+        while (attempts < maxRetries) {
+            try {
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: prompt }] }],
+                };
+                const response = await fetch(GEMINI_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                     throw new Error("Invalid response structure from Gemini API.");
+                }
+
+            } catch (error) {
+                attempts++;
+                console.error(`Gemini API call attempt ${attempts} failed:`, error);
+                if (attempts >= maxRetries) {
+                    throw error;
+                }
+                const delay = Math.pow(2, attempts) * 1000;
+                await new Promise(res => setTimeout(res, delay));
+            }
+        }
+    };
+
 
     // — Voice Recognition Setup —
     const initializeVoiceRecognition = () => {
@@ -422,137 +468,9 @@
         chevronRight: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`,
         download: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
         settings: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
-        star: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`
+        star: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`,
+        sparkles: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L9.5 8.5L4 11L9.5 13.5L12 19L14.5 13.5L20 11L14.5 8.5L12 3z"/><path d="M5 3v4h4"/><path d="M19 17v4h-4"/></svg>`
     };
-
-    // === DATABASE MANAGEMENT FUNCTIONS (Amended Logic) ===
-    const clearAllDatabaseData = async (button) => {
-        const originalHTML = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>';
-        try {
-            showNotification("Starting database cleanup...", "success");
-            const collections = ['vehicleClearances', 'clearanceRequests'];
-            let totalDeleted = 0;
-            for (const collectionName of collections) {
-                const collectionRef = collection(db, collectionName);
-                const snapshot = await getDocs(collectionRef);
-                if (snapshot.size > 0) {
-                    const batch = writeBatch(db);
-                    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-                    await batch.commit();
-                    totalDeleted += snapshot.size;
-                    showNotification(`✅ Cleared ${snapshot.size} documents from ${collectionName}`, "success");
-                }
-            }
-            showNotification(`🎉 Cleanup complete! Deleted ${totalDeleted} total documents.`, "success");
-            updateDatabaseStats();
-        } catch (error) {
-            console.error("Error clearing database:", error);
-            showNotification(`❌ Error clearing database: ${error.message}`, "error");
-        } finally {
-            button.disabled = false;
-            button.innerHTML = originalHTML;
-        }
-    };
-    
-    const resetToDefaultState = async (button) => {
-        const originalHTML = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>';
-        try {
-            showNotification("Resetting database...", "success");
-            const userCollections = ['vehicleClearances', 'clearanceRequests'];
-            let totalDeleted = 0;
-            for (const collectionName of userCollections) {
-                const collectionRef = collection(db, collectionName);
-                const snapshot = await getDocs(collectionRef);
-                if (snapshot.size > 0) {
-                    const batch = writeBatch(db);
-                    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-                    await batch.commit();
-                    totalDeleted += snapshot.size;
-                    console.log(`✅ Cleared ${snapshot.size} documents from ${collectionName}`);
-                }
-            }
-            showNotification(`✅ Database reset complete! Removed ${totalDeleted} records.`, "success");
-            updateDatabaseStats();
-        } catch (error) {
-            console.error("Reset error:", error);
-            showNotification(`❌ Reset failed: ${error.message}`, "error");
-        } finally {
-            button.disabled = false;
-            button.innerHTML = originalHTML;
-        }
-    };
-
-    const exportDatabaseData = async (button) => {
-        const originalHTML = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>';
-        try {
-            showNotification("Exporting database data...", "success");
-            const exportData = { exportDate: new Date().toISOString(), collections: {} };
-            const collections = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins', 'publicConfig'];
-            for (const collectionName of collections) {
-                const collectionRef = collection(db, collectionName);
-                const snapshot = await getDocs(collectionRef);
-                exportData.collections[collectionName] = [];
-                snapshot.docs.forEach((doc) => {
-                    const data = doc.data();
-                    Object.keys(data).forEach(key => {
-                        if (data[key] && typeof data[key].toDate === 'function') {
-                            data[key] = data[key].toDate().toISOString();
-                        }
-                    });
-                    exportData.collections[collectionName].push({ id: doc.id, ...data });
-                });
-                console.log(`✅ Exported ${snapshot.size} documents from ${collectionName}`);
-            }
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = url;
-            downloadLink.download = `vehicle_clearance_backup_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(url);
-            showNotification("✅ Database exported successfully!", "success");
-        } catch (error) {
-            console.error("Export error:", error);
-            showNotification(`❌ Export failed: ${error.message}`, "error");
-        } finally {
-            button.disabled = false;
-            button.innerHTML = originalHTML;
-        }
-    };
-
-    const updateDatabaseStats = async () => {
-        const statsContainer = document.getElementById('db-stats');
-        if (!statsContainer) return;
-        statsContainer.innerHTML = '<div>Loading statistics...</div>';
-        try {
-            const collections = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins'];
-            const stats = {};
-            for (const collectionName of collections) {
-                const snapshot = await getDocs(collection(db, collectionName));
-                stats[collectionName] = snapshot.size;
-            }
-            statsContainer.innerHTML = `
-                <div>Active Clearances: <strong>${stats.vehicleClearances || 0}</strong></div>
-                <div>Pending Requests: <strong>${stats.clearanceRequests || 0}</strong></div>
-                <div>VVIPs: <strong>${stats.vvips || 0}</strong></div>
-                <div>Admin Accounts: <strong>${stats.admins || 0}</strong></div>
-                <div class="text-xs text-gray-500 mt-2">Last updated: ${new Date().toLocaleTimeString()}</div>
-            `;
-        } catch (error) {
-            console.error('Error loading database stats:', error);
-            statsContainer.innerHTML = '<div class="text-red-500">Error loading statistics</div>';
-        }
-    };
-    // === END DATABASE MANAGEMENT FUNCTIONS ===
 
     // --- Voice Search Modal ---
     const showVoiceSearchModal = () => {
@@ -566,32 +484,49 @@
                 </div>
                 <h2 class="text-2xl font-bold mb-4">Voice Search Active</h2>
                 <p id="voice-status" class="mb-6 text-blue-100">Initializing...</p>
+                
                 <div class="mb-4">
                     <div class="text-sm text-blue-200 mb-2">Heard:</div>
-                    <div id="heard-text" class="bg-white/20 rounded-lg p-3 min-h-[50px] text-lg font-mono">Listening...</div>
+                    <div id="heard-text" class="bg-white/20 rounded-lg p-3 min-h-[50px] text-lg font-mono">
+                        Listening...
+                    </div>
                 </div>
+                
                 <div class="mb-6">
                     <div class="text-sm text-blue-200 mb-2">Detected:</div>
-                    <div id="detected-text" class="text-2xl font-bold text-green-400 mb-2">---</div>
+                    <div id="detected-text" class="text-2xl font-bold text-green-400 mb-2">
+                        ---
+                    </div>
                 </div>
+                
                 <div class="mb-6">
                     <div class="bg-white/20 rounded-full h-2 mb-2">
                         <div id="progress-bar" class="bg-green-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                     <div id="accuracy-indicator" class="text-sm text-blue-200">Accuracy: --</div>
                 </div>
+                
                 <div class="flex gap-4 justify-center">
-                    <button id="cancel-voice-btn" class="px-6 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">Cancel</button>
-                    <button id="use-result-btn" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors" disabled>Use Result</button>
+                    <button id="cancel-voice-btn" class="px-6 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button id="use-result-btn" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors" disabled>
+                        Use Result
+                    </button>
                 </div>
             </div>
         `;
+        
         document.body.appendChild(modal);
+        
         modal.querySelector('#cancel-voice-btn').onclick = stopVoiceSearch;
         modal.querySelector('#use-result-btn').onclick = () => {
             const detected = modal.querySelector('#detected-text').textContent;
-            if (detected && detected !== '---') completeVoiceSearch(detected);
+            if (detected && detected !== '---') {
+                completeVoiceSearch(detected);
+            }
         };
+        
         const observer = new MutationObserver(() => {
             const detectedText = modal.querySelector('#detected-text').textContent;
             const useBtn = modal.querySelector('#use-result-btn');
@@ -602,13 +537,18 @@
                     : 'px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors';
             }
         });
+        
         const detectedElement = modal.querySelector('#detected-text');
-        if (detectedElement) observer.observe(detectedElement, { childList: true, subtree: true });
+        if (detectedElement) {
+            observer.observe(detectedElement, { childList: true, subtree: true });
+        }
     };
 
     const hideVoiceSearchModal = () => {
         const modal = document.getElementById('voice-search-modal');
-        if (modal) modal.remove();
+        if (modal) {
+            modal.remove();
+        }
         currentVoiceInput = null;
     };
 
@@ -630,39 +570,84 @@
     const generatePDFReport = async (button) => {
         button.disabled = true;
         const originalHTML = button.innerHTML;
-        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Generating...';
+        button.innerHTML = '<div class="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Generating...';
+
         try {
-            if (typeof window.jspdf === 'undefined') throw new Error('jsPDF library not loaded');
+            if (typeof window.jspdf === 'undefined') {
+                throw new Error('jsPDF library not loaded');
+            }
+
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+            const doc = new jsPDF({ 
+                orientation: "portrait", 
+                unit: "mm", 
+                format: "a4" 
+            });
+            
             const now = new Date();
             const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            
             let reportData = [];
+            const processedVehicleNumbers = new Set();
 
-            // AMENDMENT: Removed orderBy to prevent index error
-            const clearancesQuery = query(collection(db, "vehicleClearances"));
+            // 1. Process active clearances first
+            const clearancesQuery = query(
+                collection(db, "vehicleClearances"),
+                orderBy("createdAt", "desc")
+            );
             const clearanceSnap = await getDocs(clearancesQuery);
-            const validClearances = clearanceSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.expiryDate.toDate() >= twentyFourHoursAgo);
+            
+            const validClearances = clearanceSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(c => c.expiryDate.toDate() >= twentyFourHoursAgo);
+
             validClearances.forEach(c => {
                 const status = now <= c.expiryDate.toDate() ? 'ACTIVE' : 'EXPIRED';
-                reportData.push([formatVehicleNumber(c.vehicleNumber), c.vehicleType, formatDate(c.expiryDate), c.location, status]);
+                 reportData.push([
+                    formatVehicleNumber(c.vehicleNumber || 'N/A'),
+                    c.vehicleType || 'N/A',
+                    formatDate(c.expiryDate),
+                    c.location || 'N/A',
+                    status
+                ]);
+                processedVehicleNumbers.add(c.vehicleNumber);
             });
 
-            // AMENDMENT: Removed orderBy to prevent index error
-            const requestsQuery = query(collection(db, "clearanceRequests"), where("createdAt", ">=", Timestamp.fromDate(twentyFourHoursAgo)));
+            // 2. Process recent requests, avoiding duplicates
+            const requestsQuery = query(
+                collection(db, "clearanceRequests"),
+                where("createdAt", ">=", Timestamp.fromDate(twentyFourHoursAgo)),
+                orderBy("createdAt", "desc")
+            );
             const requestSnap = await getDocs(requestsQuery);
-            const recentRequests = requestSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => r.status !== 'rejected'); 
+            const recentRequests = requestSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(r => r.status !== 'rejected'); 
+
             recentRequests.forEach(r => {
-                 reportData.push([formatVehicleNumber(r.vehicleNumber), r.vehicleType, formatDate(r.expiryDate), r.location, r.status?.toUpperCase() || 'PENDING']);
+                 // Only add if this vehicle number hasn't been added from the active clearances
+                 if (!processedVehicleNumbers.has(r.vehicleNumber)) {
+                     reportData.push([
+                        formatVehicleNumber(r.vehicleNumber || 'N/A'),
+                        r.vehicleType || 'N/A',
+                        formatDate(r.expiryDate),
+                        r.location || 'N/A',
+                        r.status?.toUpperCase() || 'PENDING'
+                     ]);
+                     processedVehicleNumbers.add(r.vehicleNumber);
+                 }
             });
+
             doc.setFontSize(20);
             doc.setFont(undefined, 'bold');
             doc.text("Vehicle Clearance Report", 14, 20);
+            
             doc.setFontSize(12);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(100);
             doc.text(`Report Period: 24-Hour`, 14, 30);
             doc.text(`Generated: ${formatDateLongForm(now)} at ${now.toLocaleTimeString()}`, 14, 36);
+            
             if (reportData.length === 0) {
                 doc.setFontSize(14);
                 doc.setTextColor(150);
@@ -673,28 +658,54 @@
                     body: reportData,
                     startY: 45,
                     theme: 'grid',
-                    headStyles: { fillColor: [45, 55, 72], textColor: 255, fontSize: 10, fontStyle: 'bold' },
-                    styles: { fontSize: 8, cellPadding: 3, halign: 'center', valign: 'middle', overflow: 'linebreak' },
-                    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 3: { halign: 'left' }, 4: { halign: 'center', fontStyle: 'bold' } },
+                    headStyles: { 
+                        fillColor: [45, 55, 72], 
+                        textColor: 255,
+                        fontSize: 10,
+                        fontStyle: 'bold'
+                    },
+                    styles: { 
+                        fontSize: 8, 
+                        cellPadding: 3, 
+                        halign: 'center', 
+                        valign: 'middle',
+                        overflow: 'linebreak'
+                    },
+                    columnStyles: {
+                        0: { halign: 'left', fontStyle: 'bold' }, 
+                        1: { halign: 'center' }, 
+                        2: { halign: 'center' }, 
+                        3: { halign: 'left' }, 
+                        4: { halign: 'center', fontStyle: 'bold' } 
+                    },
                     didParseCell: (data) => {
                         if (data.section === 'body' && data.column.index === 4) { 
                             const status = data.cell.raw;
                             switch(status) {
-                                case 'ACTIVE': case 'APPROVED': data.cell.styles.textColor = [22, 163, 74]; break;
-                                case 'PENDING': data.cell.styles.textColor = [245, 158, 11]; break;
-                                case 'EXPIRED': data.cell.styles.textColor = [239, 68, 68]; break;
-                                case 'UPCOMING': data.cell.styles.textColor = [59, 130, 246]; break;
-                                default: data.cell.styles.textColor = [107, 114, 128];
+                                case 'ACTIVE':
+                                case 'APPROVED':
+                                    data.cell.styles.textColor = [22, 163, 74]; break;
+                                case 'PENDING':
+                                    data.cell.styles.textColor = [245, 158, 11]; break;
+                                case 'EXPIRED':
+                                    data.cell.styles.textColor = [239, 68, 68]; break;
+                                case 'UPCOMING':
+                                    data.cell.styles.textColor = [59, 130, 246]; break;
+                                default:
+                                    data.cell.styles.textColor = [107, 114, 128];
                             }
                         }
                     }
                 });
             }
+
             const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 65;
+            
             doc.setFontSize(14);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(0);
             doc.text("Summary", 14, finalY);
+            
             doc.setFontSize(10);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(100);
@@ -704,8 +715,10 @@
             doc.text(`Total Records: ${totalRecords}`, 14, finalY + 8);
             doc.text(`Active Clearances: ${activeClearances}`, 14, finalY + 16);
             doc.text(`Pending Requests: ${pendingRequests}`, 14, finalY + 24);
+
             const fileName = `Vehicle_Clearance_Report_${now.toISOString().split('T')[0]}_${now.getHours()}${now.getMinutes()}.pdf`;
             doc.save(fileName);
+            
             showNotification("PDF report generated successfully!");
         } catch (error) {
             console.error("PDF Generation Error:", error);
@@ -720,6 +733,7 @@
     const renderLandingPage = (options = {}) => {
         const { trackingResultHTML = "", vehicleNumber = "" } = options;
         document.body.className = 'dark-theme-bg';
+
         let trackingSection = '';
         if (trackingResultHTML) {
             trackingSection = `
@@ -730,9 +744,11 @@
                 </div>
             `;
         }
+
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
             <div class="w-full max-w-md bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-8 space-y-8 text-center animate-fade-in">
+                
                 <header class="space-y-4">
                     <div class="w-24 h-24 mx-auto text-blue-400 opacity-90">${icons.car}</div>
                     <div>
@@ -740,11 +756,13 @@
                         <p class="text-slate-400 mt-2">Your gateway to seamless access.</p>
                     </div>
                 </header>
+
                 <main class="space-y-4">
                     <button id="request-btn" class="w-full flex items-center justify-center gap-3 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-600/20">
                         <div class="w-6 h-6">${icons.request}</div>
                         <span class="font-semibold text-lg">Request Clearance</span>
                     </button>
+                    
                     <div class="grid grid-cols-2 gap-4">
                         <button id="admin-btn" class="flex flex-col items-center justify-center p-4 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors duration-300">
                             <div class="w-8 h-8 text-blue-400">${icons.shield}</div>
@@ -756,6 +774,7 @@
                         </button>
                     </div>
                 </main>
+
                 <footer class="pt-8">
                     <form id="track-request-form" class="space-y-3">
                         <label class="text-sm font-medium text-slate-400">Or, track an existing request.</label>
@@ -896,7 +915,7 @@
             rejected: { text: "REJECTED", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" },
             pending: { text: "PENDING", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
             active: { text: "ACTIVE CLEARANCE", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" },
-            expired: { text: "EXPIRED", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" }
+            expired: { text: "EXPIRED", color: "text-gray-400", bg: "bg-gray-500/10", border: "border-gray-500/20" }
         };
 
         const config = statusConfig[r.status] || statusConfig.pending;
@@ -906,7 +925,7 @@
             <div class="flex justify-between items-start mb-3">
                 <div>
                     <p class="text-sm text-slate-400">Vehicle</p>
-                    <p class="font-mono text-xl font-bold text-blue-400">${r.vehicleNumber}</p>
+                    <p class="font-mono text-xl font-bold text-blue-400">${formatVehicleNumber(r.vehicleNumber)}</p>
                     <p class="text-xs text-slate-400">${r.vehicleType || "Car"}</p>
                 </div>
                 <span class="px-2 py-1 rounded-full text-xs font-medium ${config.color} ${config.bg} border ${config.border}">
@@ -933,14 +952,110 @@
                 </div>
             </div>
             ${r.notes ? `<div class="mt-3 pt-3 border-t border-slate-600"><p class="text-xs text-slate-400">Notes</p><p class="text-sm text-slate-300">${r.notes}</p></div>` : ""}
+            ${r.rejectionReason ? `<div class="mt-3 pt-3 border-t border-red-500/20"><p class="text-xs text-red-400">Rejection Reason</p><p class="text-sm text-red-300">${r.rejectionReason}</p></div>` : ""}
         </div>`;
+    };
+    
+    // Fixed tracking function
+    const findCurrentVehicleStatus = async (vehicleNumber) => {
+        console.log("🔍 Starting vehicle status check for:", vehicleNumber);
+        const now = new Date();
+
+        try {
+            // Get ALL clearances for this vehicle, ordered by creation date (most recent first)
+            const clearanceQuery = query(
+                collection(db, "vehicleClearances"),
+                where("vehicleNumber", "==", vehicleNumber),
+                orderBy("createdAt", "desc")
+            );
+            const clearanceSnap = await getDocs(clearanceQuery);
+
+            // Get ALL requests for this vehicle, ordered by creation date (most recent first)
+            const requestQuery = query(
+                collection(db, "clearanceRequests"),
+                where("vehicleNumber", "==", vehicleNumber),
+                orderBy("createdAt", "desc")
+            );
+            const requestSnap = await getDocs(requestQuery);
+
+            console.log(`Found ${clearanceSnap.size} clearances and ${requestSnap.size} requests`);
+
+            // STEP 1: Find the most recent ACTIVE clearance (not expired)
+            let activeClearance = null;
+            let mostRecentExpired = null;
+
+            clearanceSnap.forEach(docSnap => {
+                const data = { id: docSnap.id, ...docSnap.data() };
+                const expiryDate = data.expiryDate.toDate();
+
+                // Check if clearance is currently active (expiry date is in the future)
+                if (expiryDate >= now) {
+                    if (!activeClearance ||
+                        (data.createdAt && data.createdAt.toMillis() > activeClearance.createdAt.toMillis())) {
+                        activeClearance = { ...data, status: "active" };
+                        console.log("🟢 Found active clearance expires:", formatDate(data.expiryDate));
+                    }
+                } else {
+                    // Track most recent expired for fallback
+                    if (!mostRecentExpired ||
+                        (data.createdAt && data.createdAt.toMillis() > mostRecentExpired.createdAt.toMillis())) {
+                        mostRecentExpired = { ...data, status: "expired" };
+                    }
+                }
+            });
+
+            // If we have an active clearance, that's the definitive current status
+            if (activeClearance) {
+                console.log("✅ Returning ACTIVE clearance as current status");
+                return activeClearance;
+            }
+
+            // STEP 2: If no active clearance, check for pending/approved requests
+            let mostRecentRequest = null;
+            const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+
+            requestSnap.forEach(docSnap => {
+                const data = { id: docSnap.id, ...docSnap.data() };
+                const createdAt = data.createdAt ? data.createdAt.toDate() : new Date(0);
+
+                // Only consider recent requests or non-rejected ones
+                if (data.status !== 'rejected' || createdAt >= sevenDaysAgo) {
+                    if (!mostRecentRequest ||
+                        createdAt > (mostRecentRequest.createdAt ? mostRecentRequest.createdAt.toDate() : new Date(0))) {
+                        mostRecentRequest = data;
+                        console.log(`🟡 Found ${data.status} request`);
+                    }
+                }
+            });
+
+            if (mostRecentRequest) {
+                console.log("✅ Returning most recent request as current status");
+                return mostRecentRequest;
+            }
+
+            // STEP 3: Fallback to most recent expired clearance
+            if (mostRecentExpired) {
+                console.log("✅ Returning expired clearance as historical status");
+                return mostRecentExpired;
+            }
+
+            // No records found
+            console.log("❌ No records found");
+            return null;
+
+        } catch (error) {
+            console.error("Error in tracking:", error);
+            throw error;
+        }
     };
 
     const renderClearanceListForUser = (vehicleFilter = null) => {
         const listContainer = document.getElementById('user-clearance-list-container');
         if (!listContainer) return;
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        
         let dailyClearances = clearances.filter(c => {
             const entryDate = c.entryDate.toDate();
             entryDate.setHours(0, 0, 0, 0);
@@ -948,9 +1063,11 @@
             expiryDate.setHours(23, 59, 59, 999);
             return today >= entryDate && today <= expiryDate;
         });
+
         if (vehicleFilter) {
             dailyClearances = dailyClearances.filter(c => c.vehicleNumber.includes(vehicleFilter));
         }
+
         let listHTML = '';
         if (dailyClearances.length > 0) {
             listHTML = dailyClearances.map(c => `
@@ -964,10 +1081,22 @@
                     </summary>
                     <div class="px-5 pb-5 border-t border-gray-200 dark:border-gray-700">
                         <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
-                             <div><p class="text-xs text-gray-500 dark:text-gray-400">Owner</p><p class="font-semibold text-gray-800 dark:text-gray-200">${c.ownerName}</p></div>
-                            <div><p class="text-xs text-gray-500 dark:text-gray-400">Location</p><p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p></div>
-                            <div><p class="text-xs text-gray-500 dark:text-gray-400">Escort</p><p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p></div>
-                             <div><p class="text-xs text-gray-500 dark:text-gray-400">Valid Until</p><p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p></div>
+                             <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Owner</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${c.ownerName}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Location</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Escort</p>
+                                <p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
+                            </div>
+                             <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Valid Until</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
+                            </div>
                             ${c.notes ? `<div class="col-span-2"><p class="text-xs text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-wrap">${c.notes}</p></div>` : ""}
                         </div>
                     </div>
@@ -1000,10 +1129,13 @@
                         <span class="w-4 h-4">${icons.logout}</span> Logout
                     </button>
                 </div>
+                
                 <div class="mb-6">
                     <form id="daily-clearance-search-form" class="flex gap-2">
                         <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
-                        <button type="button" class="voice-search-btn px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search"><span class="w-4 h-4">${icons.mic}</span></button>
+                        <button type="button" class="voice-search-btn px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700" title="Voice Search">
+                            <span class="w-4 h-4">${icons.mic}</span>
+                        </button>
                         <button type="reset" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
                     </form>
                 </div>
@@ -1014,6 +1146,7 @@
             </button>
             <div id="modal-container"></div>
         </div>`;
+        
         renderClearanceListForUser(vehicleFilter);
     };
 
@@ -1023,11 +1156,18 @@
         <div id="admin-dashboard-container">
             <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
                 <nav class="w-full max-w-7xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
-                    <div class="flex items-center gap-3"><span class="text-blue-500 w-8 h-8">${icons.shield}</span><span class="text-xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</span></div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-blue-500 w-8 h-8">${icons.shield}</span>
+                        <span class="text-xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</span>
+                    </div>
                     <div class="flex items-center gap-4">
                         <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">${adminUser.email}</span>
-                        <button id="settings-btn" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">${icons.settings}</button>
-                        <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600"><span class="w-4 h-4">${icons.logout}</span> Logout</button>
+                        <button id="settings-btn" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                            ${icons.settings}
+                        </button>
+                        <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
+                            <span class="w-4 h-4">${icons.logout}</span> Logout
+                        </button>
                     </div>
                 </nav>
             </header>
@@ -1044,8 +1184,12 @@
                         <div class="flex flex-wrap gap-4 justify-between items-center mb-6">
                             <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Manage Clearances</h2>
                             <div class="flex gap-2">
-                               <button id="download-report-btn" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"><span class="w-5 h-5">${icons.download}</span> Download Report</button>
-                                <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><span class="w-5 h-5">${icons.plus}</span> Add Clearance</button>
+                               <button id="download-report-btn" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                    <span class="w-5 h-5">${icons.download}</span> Download Report
+                                </button>
+                                <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    <span class="w-5 h-5">${icons.plus}</span> Add Clearance
+                                </button>
                             </div>
                         </div>
                         <div id="clearance-list" class="space-y-3"></div>
@@ -1058,14 +1202,15 @@
                 <div id="settings-panel" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white dark:bg-gray-800 shadow-xl transform translate-x-full z-40 flex flex-col">
                     <div class="flex-shrink-0 flex justify-between items-center p-4 border-b dark:border-gray-700">
                         <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Settings</h2>
-                        <button id="close-settings-panel-btn" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white rounded-full">${icons.x}</button>
+                        <button id="close-settings-panel-btn" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white rounded-full">
+                            ${icons.x}
+                        </button>
                     </div>
                     <div class="flex-shrink-0 px-4">
                         <div class="border-b border-gray-200 dark:border-gray-700">
                             <nav id="settings-tabs" class="flex gap-4 -mb-px">
                                 <button data-tab="general" class="settings-tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">General</button>
                                 <button data-tab="vvip" class="settings-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">VVIPs</button>
-                                <button data-tab="database" class="settings-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">Database</button>
                             </nav>
                         </div>
                     </div>
@@ -1077,7 +1222,9 @@
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">This password is required for non-admin users to view the daily clearance list.</p>
                                     <input name="password" type="text" class="mt-1 block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" value="${userPasswordConfig?.password || ''}" required />
                                 </div>
-                                <div class="text-right pt-4"><button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 w-full">Save Password</button></div>
+                                <div class="text-right pt-4">
+                                    <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 w-full">Save Password</button>
+                                </div>
                             </form>
                         </div>
                         <div id="vvip-settings-pane" class="settings-pane hidden space-y-4">
@@ -1098,35 +1245,11 @@
                                 <div id="vvip-list-container-settings" class="mt-2 space-y-2"></div>
                             </div>
                         </div>
-                        <div id="database-settings-pane" class="settings-pane hidden space-y-6">
-                            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                                <h3 class="text-sm font-semibold text-yellow-800 dark:text-yellow-200 flex items-center gap-2"><span>⚠️</span> Database Management</h3>
-                                <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">These operations affect your database. Use with caution!</p>
-                            </div>
-                            <div class="space-y-3">
-                                <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100">Backup & Export</h4>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Download a complete backup of your database as a JSON file.</p>
-                                <button id="export-database-btn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"><span class="w-4 h-4">${icons.download}</span> Export Database Backup</button>
-                            </div>
-                            <div class="space-y-3">
-                                <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100">Reset Data</h4>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Clear all clearances and requests. Keeps VVIPs, admin accounts, and password.</p>
-                                <button id="reset-database-btn" class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center justify-center gap-2"><span class="w-4 h-4">${icons.x}</span> Reset Clearance Data</button>
-                            </div>
-                            <div class="space-y-3">
-                                <h4 class="text-md font-semibold text-red-700 dark:text-red-400">⚠️ Danger Zone</h4>
-                                <p class="text-sm text-red-600 dark:text-red-400">Permanently delete ALL clearances and requests. This cannot be undone!</p>
-                                <button id="clear-database-btn" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"><span class="w-4 h-4">${icons.trash}</span> Wipe Clearance Data</button>
-                            </div>
-                            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">Database Statistics</h4>
-                                <div id="db-stats" class="text-xs text-gray-600 dark:text-gray-400 space-y-1"><div>Loading statistics...</div></div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>`;
+        
         unsubClearances = onSnapshot(query(collection(db, "vehicleClearances"), orderBy("entryDate", "desc")), snap => {
             clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             renderClearancesList();
@@ -1140,7 +1263,8 @@
                 badge.classList.toggle('hidden', clearanceRequests.length === 0);
             }
         });
-        renderVVIPListForSettings();
+        
+        renderVVIPListForSettings(); // Initial render for VVIP list in settings
     };
             
     const renderRequestsList = () => {
@@ -1150,6 +1274,7 @@
             list.innerHTML = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-gray-700">No pending requests.</div>`;
             return;
         }
+
         list.innerHTML = clearanceRequests.map(r => `
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 animate-fade-in border border-transparent hover:border-blue-500 transition-colors">
                 <div class="flex justify-between items-start gap-4">
@@ -1158,7 +1283,9 @@
                         <p class="font-semibold text-gray-800 dark:text-gray-100">${r.requesterName}</p>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${r.vehicleType || '-'} • Requested on ${formatDate(r.createdAt)}</p>
                     </div>
-                    <button class="review-btn flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transform hover:scale-105 transition-transform" data-id="${r.id}">Review</button>
+                    <button class="review-btn flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transform hover:scale-105 transition-transform" data-id="${r.id}">
+                        Review
+                    </button>
                 </div>
             </div>`).join("");
     };
@@ -1166,10 +1293,12 @@
     const renderClearancesList = () => {
         const list = document.getElementById("clearance-list");
         if (!list) return;
+        
         if (clearances.length === 0) {
             list.innerHTML = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-gray-700">No clearances found. Add one to get started!</div>`;
             return;
         }
+
         list.innerHTML = clearances.map(c => `
             <details class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group animate-fade-in border border-gray-200 dark:border-gray-700">
                 <summary class="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
@@ -1181,17 +1310,36 @@
                         </div>
                     </div>
                     <div class="action-buttons flex items-center gap-1 flex-shrink-0">
-                        <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full transition-colors" data-id="${c.id}" title="Edit Clearance">${icons.edit}</button>
-                        <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full transition-colors" data-id="${c.id}" title="Delete Clearance">${icons.trash}</button>
+                        <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full transition-colors" data-id="${c.id}" title="Edit Clearance">
+                            ${icons.edit}
+                        </button>
+                        <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full transition-colors" data-id="${c.id}" title="Delete Clearance">
+                            ${icons.trash}
+                        </button>
                     </div>
                 </summary>
                 <div class="px-5 pb-5 border-t border-gray-200 dark:border-gray-700">
                      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5 text-sm">
-                        <div><p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Owner</p><p class="font-medium text-gray-800 dark:text-gray-200">${c.ownerName}</p></div>
-                        <div><p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Location</p><p class="font-medium text-gray-800 dark:text-gray-200">${c.location}</p></div>
-                         <div><p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Vehicle Type</p><p class="font-medium text-gray-800 dark:text-gray-200">${c.vehicleType}</p></div>
-                        <div><p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Validity</p><p class="font-medium text-gray-800 dark:text-gray-200">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p></div>
-                        <div><p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Escort</p><p class="font-medium ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p></div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Owner</p>
+                            <p class="font-medium text-gray-800 dark:text-gray-200">${c.ownerName}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Location</p>
+                            <p class="font-medium text-gray-800 dark:text-gray-200">${c.location}</p>
+                        </div>
+                         <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Vehicle Type</p>
+                            <p class="font-medium text-gray-800 dark:text-gray-200">${c.vehicleType}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Validity</p>
+                            <p class="font-medium text-gray-800 dark:text-gray-200">${formatDate(c.entryDate)} - ${formatDate(c.expiryDate)}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Escort</p>
+                            <p class="font-medium ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
+                        </div>
                         ${c.notes ? `<div class="col-span-full"><p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Notes</p><p class="font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap">${c.notes}</p></div>` : ""}
                     </div>
                 </div>
@@ -1201,36 +1349,49 @@
     const renderVVIPListForSettings = () => {
         const container = document.getElementById('vvip-list-container-settings');
         if (!container) return;
+
         const vvipListHTML = vvips.map(v => `
             <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg animate-fade-in border dark:border-gray-700">
                 <div>
                     <p class="font-mono font-bold text-blue-600 dark:text-blue-400">${v.vehicleNumber.toUpperCase()}</p>
                     <p class="text-sm text-gray-600 dark:text-gray-300">${v.designation}</p>
                 </div>
-                <button class="delete-vvip-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-600 rounded-full" data-id="${v.id}" title="Delete VVIP">${icons.trash}</button>
+                <button class="delete-vvip-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-600 rounded-full" data-id="${v.id}" title="Delete VVIP">
+                    ${icons.trash}
+                </button>
             </div>
         `).join('');
+
         container.innerHTML = vvips.length > 0 ? vvipListHTML : '<p class="text-gray-500 dark:text-gray-400 text-sm py-4 text-center">No VVIPs added yet.</p>';
     };
 
     const renderVVIPModal = () => {
         const modalContainer = document.getElementById("modal-container");
         if (!modalContainer) return;
+
         const listHTML = vvips.length > 0 ? vvips.map(v => `
             <li class="flex justify-between items-center py-3 px-4 odd:bg-gray-50 dark:odd:bg-gray-700/50">
                 <span class="font-mono font-semibold text-blue-600 dark:text-blue-400">${v.vehicleNumber.toUpperCase()}</span>
                 <span class="text-gray-700 dark:text-gray-300 text-right">${v.designation}</span>
             </li>
         `).join('') : '<li class="p-8 text-center text-gray-500">No VVIPs configured.</li>';
+
         modalContainer.innerHTML = `
         <div id="vvip-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg relative animate-fade-in flex flex-col" style="max-height: 80vh;">
                 <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center flex-shrink-0">
-                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><span class="w-6 h-6 text-yellow-400">${icons.star}</span> VVIP List</h2>
+                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                        <span class="w-6 h-6 text-yellow-400">${icons.star}</span>
+                        VVIP List
+                    </h2>
                     <button id="close-vvip-modal-btn" class="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 rounded-full">${icons.x}</button>
                 </div>
-                <ul class="overflow-y-auto">${listHTML}</ul>
-                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 text-center text-xs text-gray-500 border-t dark:border-gray-700 flex-shrink-0">This list is for reference only.</div>
+                <ul class="overflow-y-auto">
+                    ${listHTML}
+                </ul>
+                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 text-center text-xs text-gray-500 border-t dark:border-gray-700 flex-shrink-0">
+                    This list is for reference only.
+                </div>
             </div>
         </div>`;
     };
@@ -1238,24 +1399,71 @@
     const renderReviewModal = (request) => {
         const modalContainer = document.getElementById("modal-container");
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
-        const optionsHTML = vehicleTypeOptions.map(vType => `<option value="${vType}" ${request.vehicleType === vType ? 'selected' : ''}>${vType}</option>`).join('');
+        
+        const optionsHTML = vehicleTypeOptions.map(vType => {
+            const selected = request.vehicleType === vType ? 'selected' : '';
+            return `<option value="${vType}" ${selected}>${vType}</option>`;
+        }).join('');
+
         modalContainer.innerHTML = `
-        <div id="review-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
-                <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">${icons.x}</button>
+        <div id="review-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-start p-4 overflow-y-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-2xl relative animate-fade-in my-8">
+                <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">
+                    ${icons.x}
+                </button>
                 <form id="review-form" class="space-y-4">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Review Request</h2>
                     <input type="hidden" name="id" value="${request.id}">
-                    <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Name</label><input name="ownerName" value="${request.requesterName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                    <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label><input name="vehicleNumber" value="${request.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                    <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label><select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required><option value="">Select type...</option>${optionsHTML}</select></div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label><input type="date" name="entryDate" value="${toISODate(request.entryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                        <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label><input type="date" name="expiryDate" value="${toISODate(request.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Name</label>
+                        <input name="ownerName" value="${request.requesterName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                     </div>
-                    <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label><input name="location" value="${request.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                    <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label><textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${request.notes || ''}</textarea></div>
-                    <div class="flex items-center"><input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${request.escortRequired ? 'checked' : ''}/><label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label></div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
+                        <input name="vehicleNumber" value="${request.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
+                        <select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                            <option value="">Select type...</option>
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
+                            <input type="date" name="entryDate" value="${toISODate(request.entryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
+                            <input type="date" name="expiryDate" value="${toISODate(request.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                        <input name="location" value="${request.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                            <button type="button" class="generate-notes-btn text-xs flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline">
+                                <span class="w-3 h-3">${icons.sparkles}</span> Generate Notes
+                            </button>
+                        </div>
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${request.notes || ''}</textarea>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${request.escortRequired ? 'checked' : ''}/>
+                        <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
+                    </div>
+
+                     <div id="ai-risk-assessment-section" class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button type="button" id="assess-risk-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 mb-3">
+                           <span class="w-5 h-5">${icons.sparkles}</span> Assess Risk
+                        </button>
+                        <div id="risk-assessment-result" class="hidden p-3 rounded-lg bg-gray-100 dark:bg-gray-900/50"></div>
+                    </div>
+
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
                         <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" data-id="${request.id}">Approve</button>
@@ -1269,25 +1477,63 @@
         const modalContainer = document.getElementById("modal-container");
         const isEdit = edit ? true : false;
         const vehicleTypeOptions = ["Car", "Motorcycle", "Van", "Tow Truck", "Lorry", "Bus", "Others"];
-        const optionsHTML = vehicleTypeOptions.map(vType => `<option value="${vType}" ${edit?.vehicleType === vType ? 'selected' : ''}>${vType}</option>`).join('');
+        const optionsHTML = vehicleTypeOptions.map(vType => {
+            const selected = edit?.vehicleType === vType ? 'selected' : '';
+            return `<option value="${vType}" ${selected}>${vType}</option>`;
+        }).join('');
+        
         modalContainer.innerHTML = `
         <div id="form-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
-                <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">${icons.x}</button>
+                <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">
+                    ${icons.x}
+                </button>
                 <form id="clearance-form" class="space-y-4">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${isEdit ? 'Edit' : 'Add'} Clearance</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label><input name="ownerName" value="${edit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                        <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label><input name="vehicleNumber" value="${edit?.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label>
+                            <input name="ownerName" value="${edit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
+                            <input name="vehicleNumber" value="${edit?.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
                     </div>
-                    <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label><select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required><option value="">Select type...</option>${optionsHTML}</select></div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
+                        <select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                            <option value="">Select type...</option>
+                            ${optionsHTML}
+                        </select>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label><input type="date" name="entryDate" value="${toISODate(edit?.entryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                        <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label><input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
+                            <input type="date" name="entryDate" value="${toISODate(edit?.entryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
+                            <input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
                     </div>
-                    <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label><input name="location" value="${edit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required /></div>
-                    <div><label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label><textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${edit?.notes || ''}</textarea></div>
-                    <div class="flex items-center"><input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${edit?.escortRequired ? 'checked' : ''}/><label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label></div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                        <input name="location" value="${edit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center">
+                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                             <button type="button" class="generate-notes-btn text-xs flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline">
+                                <span class="w-3 h-3">${icons.sparkles}</span> Generate Notes
+                            </button>
+                        </div>
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${edit?.notes || ''}</textarea>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${edit?.escortRequired ? 'checked' : ''}/>
+                        <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
+                    </div>
                     <div class="flex justify-end space-x-3 pt-4">
                         <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
                         <button type="button" class="save-clearance-btn px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700" data-id="${edit?.id || ''}">${isEdit ? 'Update' : 'Save'}</button>
@@ -1309,11 +1555,18 @@
                     <button id="confirm-action-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Confirm</button>
                 </div>
             </div>
-        </div>`;
-        document.getElementById('confirm-action-btn').onclick = () => { onConfirm(); modalContainer.innerHTML = ''; };
+        </div>
+        `;
+
+        document.getElementById('confirm-action-btn').onclick = () => {
+            onConfirm();
+            modalContainer.innerHTML = '';
+        };
         const closeModal = () => modalContainer.innerHTML = '';
         document.getElementById('cancel-confirm-btn').onclick = closeModal;
-        document.getElementById('confirm-modal-backdrop').onclick = (e) => { if (e.target.id === 'confirm-modal-backdrop') closeModal(); };
+        document.getElementById('confirm-modal-backdrop').onclick = (e) => {
+            if (e.target.id === 'confirm-modal-backdrop') closeModal();
+        };
     };
 
     const toggleSettingsPanel = (show) => {
@@ -1342,6 +1595,7 @@
         unsubRequests?.();
         unsubConfig?.();
         unsubVVIPs?.();
+
         if (user && !user.isAnonymous) { // Admin user
             appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
             try {
@@ -1349,7 +1603,9 @@
                 if (adminDoc.exists()) {
                     unsubVVIPs = onSnapshot(query(collection(db, "vvips"), orderBy("vehicleNumber")), snap => {
                         vvips = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                        if (document.getElementById('vvip-list-container-settings')) renderVVIPListForSettings();
+                        if (document.getElementById('vvip-list-container-settings')) {
+                             renderVVIPListForSettings();
+                        }
                     });
                     const configRef = doc(db, "publicConfig", "userAccess");
                     unsubConfig = onSnapshot(configRef, async (snap) => {
@@ -1361,7 +1617,9 @@
                         }
                         renderAdminDashboard(user);
                     });
+
                 } else {
+                    console.log("User not found in admins collection");
                     await signOut(auth);
                 }
             } catch (error) {
@@ -1381,26 +1639,133 @@
     document.body.addEventListener("click", async (e) => {
         const target = e.target;
         const button = target.closest('button');
+        
         if (target.id === 'settings-backdrop') toggleSettingsPanel(false);
         if (target.id === 'form-modal-backdrop') target.closest('#modal-container').innerHTML = '';
-        if (target.id === 'review-modal-backdrop') target.closest('#modal-container').innerHTML = '';
+        if (target.id === 'review-modal-backdrop' && e.target.id === 'review-modal-backdrop') {
+             target.closest('#modal-container').innerHTML = '';
+        }
         if (target.id === 'vvip-modal-backdrop') target.closest('#modal-container').innerHTML = '';
+        
         if (!button) return;
+
         if (button.classList.contains('edit-btn') || button.classList.contains('delete-btn')) {
             e.preventDefault();
             e.stopPropagation();
         }
+
         try {
-            if (button.id === 'export-database-btn') { e.preventDefault(); exportDatabaseData(button); return; }
-            if (button.id === 'reset-database-btn') { e.preventDefault(); renderConfirmationModal('Reset Clearance Data', 'This will remove all clearances and requests. VVIPs, user password, and Admin accounts will be preserved. This action cannot be undone.', () => resetToDefaultState(button)); return; }
-            if (button.id === 'clear-database-btn') { e.preventDefault(); renderConfirmationModal('Wipe Clearance Data', 'This will permanently delete ALL clearances and requests. VVIPs, Admin accounts, and settings will be preserved. This action cannot be undone.', () => clearAllDatabaseData(button)); return; }
-            if (button.id === "clear-tracking-btn") { e.preventDefault(); renderLandingPage({ vehicleNumber: "", trackingResultHTML: "" }); return; }
+            if (button.classList.contains("generate-notes-btn")) {
+                const form = button.closest('form');
+                if (!form) return;
+                
+                const originalText = button.innerHTML;
+                button.innerHTML = `<span class="w-4 h-4 spinner border-2 border-indigo-400 border-t-transparent rounded-full"></span> Generating...`;
+                button.disabled = true;
+
+                try {
+                    const data = getFormObj(form);
+                    const prompt = `Based on the following vehicle clearance data, write a concise, one-sentence summary note:
+                    - Owner/Requester: ${data.ownerName || data.requesterName}
+                    - Vehicle Number: ${data.vehicleNumber}
+                    - Vehicle Type: ${data.vehicleType}
+                    - Location: ${data.location}
+                    - Entry Date: ${data.entryDate}
+                    - Expiry Date: ${data.expiryDate}
+                    - Escort Required: ${data.escortRequired ? 'Yes' : 'No'}`;
+                    
+                    const generatedNotes = await callGeminiApi(prompt);
+                    const notesTextarea = form.querySelector('textarea[name="notes"]');
+                    if(notesTextarea) notesTextarea.value = generatedNotes;
+                    
+                } catch(err) {
+                     showNotification("Failed to generate notes.", "error");
+                } finally {
+                     button.innerHTML = originalText;
+                     button.disabled = false;
+                }
+                return;
+            }
+
+            if (button.id === "assess-risk-btn") {
+                const form = button.closest('form');
+                if (!form) return;
+
+                const resultDiv = document.getElementById('risk-assessment-result');
+                if (!resultDiv) return;
+
+                const originalText = button.innerHTML;
+                button.innerHTML = `<span class="w-4 h-4 spinner border-2 border-white border-t-transparent rounded-full"></span> Assessing...`;
+                button.disabled = true;
+                resultDiv.innerHTML = `<p class="text-sm text-center text-gray-500 dark:text-gray-400">Analyzing request data...</p>`;
+                resultDiv.classList.remove('hidden');
+
+                try {
+                    const data = getFormObj(form);
+                    const vvipMatch = vvips.find(v => v.vehicleNumber === data.vehicleNumber);
+
+                    const prompt = `Act as a security analyst. Assess the risk level for the following vehicle clearance request. 
+                    Provide a risk level (Low, Medium, High) and a brief, one-sentence justification.
+                    Consider these factors:
+                    - Unusual vehicle types for the location (e.g., Lorry in an admin area is higher risk).
+                    - Extended duration of clearance.
+                    - Late-night access times.
+                    - VVIP status is a low-risk factor.
+                    
+                    Request Details:
+                    - Requester: ${data.ownerName}
+                    - Vehicle Number: ${data.vehicleNumber}
+                    - Vehicle Type: ${data.vehicleType}
+                    - Location: ${data.location}
+                    - Entry Date: ${data.entryDate}
+                    - Expiry Date: ${data.expiryDate}
+                    - Escort Required: ${data.escortRequired ? 'Yes' : 'No'}
+                    - VVIP Status: ${vvipMatch ? `Yes (${vvipMatch.designation})` : 'No'}
+                    
+                    Format your response as: "Risk Level: [level] - Justification: [text]"`;
+
+                    const assessment = await callGeminiApi(prompt);
+                    
+                    let riskLevel = "unknown";
+                    let justification = assessment;
+
+                    if (assessment.toLowerCase().includes("risk level: low")) riskLevel = "low";
+                    else if (assessment.toLowerCase().includes("risk level: medium")) riskLevel = "medium";
+                    else if (assessment.toLowerCase().includes("risk level: high")) riskLevel = "high";
+                    
+                    const riskColorClasses = {
+                        low: "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300",
+                        medium: "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300",
+                        high: "bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300",
+                        unknown: "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
+                    };
+
+                    resultDiv.className = `p-3 rounded-lg ${riskColorClasses[riskLevel]}`;
+                    resultDiv.innerHTML = `<p class="font-bold text-sm">${assessment}</p>`;
+
+                } catch(err) {
+                    resultDiv.className = `p-3 rounded-lg bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300`;
+                    resultDiv.innerHTML = `<p class="font-bold text-sm">Error: Could not assess risk. ${err.message}</p>`;
+                } finally {
+                     button.innerHTML = originalText;
+                     button.disabled = false;
+                }
+                return;
+            }
+
+            if (button.id === "clear-tracking-btn") {
+                e.preventDefault();
+                renderLandingPage({ vehicleNumber: "", trackingResultHTML: "" });
+                return;
+            }
+
             if (button.id === 'settings-btn') { e.preventDefault(); toggleSettingsPanel(true); return; }
             if (button.id === 'close-settings-panel-btn') { e.preventDefault(); toggleSettingsPanel(false); return; }
             if (button.id === 'show-vvip-btn') { renderVVIPModal(); return; }
             if (button.id === 'close-vvip-modal-btn') { button.closest('#modal-container').innerHTML = ''; return; }
+
             if (button.classList.contains('settings-tab-btn')) {
-                e.preventDefault();
+                 e.preventDefault();
                 const tab = button.dataset.tab;
                 document.querySelectorAll('.settings-tab-btn').forEach(btn => {
                     btn.classList.remove('active');
@@ -1408,17 +1773,23 @@
                 });
                 button.classList.add('active');
                 button.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-200');
-                document.querySelectorAll('.settings-pane').forEach(pane => pane.classList.add('hidden'));
+
+                document.querySelectorAll('.settings-pane').forEach(pane => {
+                    pane.classList.add('hidden');
+                });
                 document.getElementById(`${tab}-settings-pane`).classList.remove('hidden');
-                if (tab === 'database') setTimeout(updateDatabaseStats, 100);
                 return;
             }
+
             if (button.classList.contains('voice-search-btn')) {
                 e.preventDefault();
-                const input = button.closest('form')?.querySelector('input[name="vehicleNumber"]') || button.closest('.flex')?.querySelector('input') || document.getElementById('daily-clearance-search-input');
+                const input = button.closest('form')?.querySelector('input[name="vehicleNumber"]') 
+                      || button.closest('.flex')?.querySelector('input') 
+                      || document.getElementById('daily-clearance-search-input');
                 if (input) startVoiceSearch(input);
                 return;
             }
+
             if (button.id === "request-btn") { routeHistory.push(() => renderLandingPage()); renderRequestForm(); return; }
             if (button.id === "admin-btn") { routeHistory.push(() => renderLandingPage()); renderAdminLogin(); return; }
             if (button.id === "user-btn") { routeHistory.push(() => renderLandingPage()); renderUserLogin(); return; }
@@ -1426,31 +1797,56 @@
             if (button.id === "logout-button") { e.preventDefault(); await signOut(auth); return; }
             if (button.id === "download-report-btn") { e.preventDefault(); generatePDFReport(button); return; }
             if (button.id === "add-clearance-btn") { e.preventDefault(); renderModal(); return; }
+
             if (button.classList.contains("edit-btn")) {
                 e.preventDefault();
                 const clearanceToEdit = clearances.find(c => c.id === button.dataset.id);
                 if (clearanceToEdit) renderModal(clearanceToEdit);
-                else showNotification("Error: Clearance not found", "error");
+                else {
+                    console.error("Clearance not found for editing:", button.dataset.id);
+                    showNotification("Error: Clearance not found", "error");
+                }
                 return;
             }
+            
             if (button.classList.contains("delete-btn")) {
                 e.preventDefault();
                 const id = button.dataset.id;
-                renderConfirmationModal('Delete Clearance', 'Are you sure you want to delete this clearance? This action cannot be undone.', async () => {
-                    try { await deleteDoc(doc(db, "vehicleClearances", id)); showNotification("Clearance deleted successfully."); } 
-                    catch(err) { console.error("Delete error:", err); showNotification("Error deleting clearance.", "error"); }
-                });
+                renderConfirmationModal(
+                    'Delete Clearance',
+                    'Are you sure you want to delete this clearance? This action cannot be undone.',
+                    async () => {
+                        try {
+                            await deleteDoc(doc(db, "vehicleClearances", id));
+                            showNotification("Clearance deleted successfully.");
+                        } catch(err) {
+                            console.error("Delete error:", err);
+                            showNotification("Error deleting clearance.", "error");
+                        }
+                    }
+                );
                 return;
             }
+
             if (button.classList.contains("delete-vvip-btn")) {
                 e.preventDefault();
                 const id = button.dataset.id;
-                renderConfirmationModal('Delete VVIP', 'Are you sure you want to remove this VVIP entry?', async () => {
-                    try { await deleteDoc(doc(db, "vvips", id)); showNotification("VVIP entry removed."); } 
-                    catch(err) { console.error("Delete VVIP error:", err); showNotification("Error removing VVIP entry.", "error"); }
-                });
+                renderConfirmationModal(
+                    'Delete VVIP',
+                    'Are you sure you want to remove this VVIP entry?',
+                    async () => {
+                        try {
+                            await deleteDoc(doc(db, "vvips", id));
+                            showNotification("VVIP entry removed.");
+                        } catch(err) {
+                            console.error("Delete VVIP error:", err);
+                            showNotification("Error removing VVIP entry.", "error");
+                        }
+                    }
+                );
                 return;
             }
+            
             if (button.classList.contains("review-btn")) {
                 e.preventDefault();
                 const requestToReview = clearanceRequests.find(r => r.id === button.dataset.id);
@@ -1458,32 +1854,52 @@
                 else showNotification("Error: Request not found", "error");
                 return;
             }
+            
             if (button.classList.contains("reject-request-btn")) {
                 e.preventDefault();
                 const requestId = button.dataset.id;
-                renderConfirmationModal('Reject Request', 'Are you sure you want to reject this request?', async () => {
-                     try { await updateDoc(doc(db, "clearanceRequests", requestId), { status: 'rejected' }); showNotification("Request rejected."); document.getElementById("modal-container").innerHTML = ""; } 
-                     catch (err) { console.error("Reject error:", err); showNotification("Error rejecting request.", "error"); }
-                });
+                renderConfirmationModal(
+                    'Reject Request',
+                    'Are you sure you want to reject this request?',
+                    async () => {
+                         try {
+                            await updateDoc(doc(db, "clearanceRequests", requestId), { status: 'rejected' });
+                            showNotification("Request rejected.");
+                            document.getElementById("modal-container").innerHTML = "";
+                        } catch (err) {
+                            console.error("Reject error:", err);
+                            showNotification("Error rejecting request.", "error");
+                        }
+                    }
+                );
                 return;
             }
+
             if (button.classList.contains("approve-request-btn")) {
                 e.preventDefault();
                 const modal = button.closest('#review-modal-backdrop');
                 const form = modal?.querySelector('#review-form');
                 const requestId = button.dataset.id;
-                if (!form || !requestId) { showNotification("Critical error: Cannot find form or request ID.", "error"); return; }
+                
+                if (!form || !requestId) {
+                    showNotification("Critical error: Cannot find form or request ID.", "error");
+                    return;
+                }
+
                 button.disabled = true;
+
                 try {
                     const data = getFormObj(form);
                     const entryDate = parseLocalDate(data.entryDate);
                     const expiryDate = parseLocalDate(data.expiryDate);
+
                     if (!entryDate || !expiryDate || !form.checkValidity()) {
                         form.reportValidity();
                         showNotification("Please fill all required fields with valid dates.", "error");
                         button.disabled = false;
                         return;
                     }
+
                     const clearancePayload = {
                         ownerName: data.ownerName,
                         vehicleNumber: data.vehicleNumber.toUpperCase(),
@@ -1496,10 +1912,13 @@
                         createdAt: Timestamp.now(),
                         approvedBy: auth.currentUser?.uid
                     };
+
                     await addDoc(collection(db, "vehicleClearances"), clearancePayload);
                     await updateDoc(doc(db, "clearanceRequests", requestId), { status: 'approved' });
+                    
                     showNotification("Request approved and clearance created.");
                     document.getElementById("modal-container").innerHTML = "";
+                    
                     clearanceRequests = clearanceRequests.filter(req => req.id !== requestId);
                     renderRequestsList();
                     const badge = document.getElementById('requests-count-badge');
@@ -1507,6 +1926,7 @@
                         badge.textContent = clearanceRequests.length;
                         badge.classList.toggle('hidden', clearanceRequests.length === 0);
                     }
+
                 } catch (error) {
                     console.error("Approval error:", error);
                     showNotification("Failed to approve request.", "error");
@@ -1514,22 +1934,30 @@
                 }
                 return;
             }
+
             if (button.classList.contains("save-clearance-btn")) {
                 e.preventDefault();
                 const modal = button.closest('#form-modal-backdrop');
                 const form = modal?.querySelector('#clearance-form');
-                if (!form) { showNotification("Critical error: Cannot find clearance form.", "error"); return; }
+                if (!form) {
+                    showNotification("Critical error: Cannot find clearance form.", "error");
+                    return;
+                }
+
                 button.disabled = true;
+
                 try {
                     const data = getFormObj(form);
                     const entryDate = parseLocalDate(data.entryDate);
                     const expiryDate = parseLocalDate(data.expiryDate);
+
                     if (!entryDate || !expiryDate || !form.checkValidity()) {
                         form.reportValidity();
                         showNotification("Please fill all required fields with valid dates.", "error");
                         button.disabled = false;
                         return;
                     }
+
                     const payload = {
                         ownerName: data.ownerName,
                         vehicleNumber: data.vehicleNumber.toUpperCase(),
@@ -1540,7 +1968,9 @@
                         escortRequired: !!data.escortRequired,
                         notes: data.notes || ""
                     };
+                    
                     const editingId = button.dataset.id;
+
                     if (editingId) {
                         await updateDoc(doc(db, "vehicleClearances", editingId), payload);
                         showNotification("Clearance updated successfully.");
@@ -1549,6 +1979,7 @@
                         showNotification("Clearance saved successfully.");
                     }
                     document.getElementById("modal-container").innerHTML = "";
+
                 } catch (error) {
                     console.error("Save/Update error:", error);
                     showNotification("Failed to save clearance.", "error");
@@ -1556,8 +1987,20 @@
                 }
                 return;
             }
-            if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") { e.preventDefault(); button.closest("#modal-container").innerHTML = ""; return; }
-            if (button.id === "auth-toggle-button") { e.preventDefault(); authMode = authMode === "login" ? "signup" : "login"; renderAdminLogin(); return; }
+
+
+            if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
+                e.preventDefault();
+                button.closest("#modal-container").innerHTML = "";
+                return;
+            }
+            
+            if (button.id === "auth-toggle-button") {
+                e.preventDefault();
+                authMode = authMode === "login" ? "signup" : "login";
+                renderAdminLogin();
+                return;
+            }
         } catch (error) {
             console.error("Click handler error:", error);
             showNotification("An error occurred. Please try again.", "error");
@@ -1575,7 +2018,10 @@
             if (form.id === "add-vvip-form") {
                 const data = getFormObj(form);
                 if (data.vehicleNumber && data.designation) {
-                    await addDoc(collection(db, "vvips"), { vehicleNumber: data.vehicleNumber.toUpperCase(), designation: data.designation });
+                    await addDoc(collection(db, "vvips"), {
+                        vehicleNumber: data.vehicleNumber.toUpperCase(),
+                        designation: data.designation
+                    });
                     showNotification("VVIP added successfully.");
                     form.reset();
                 }
@@ -1584,10 +2030,14 @@
                 const configRef = doc(db, "publicConfig", "userAccess");
                 const configSnap = await getDoc(configRef);
                 const correctPassword = configSnap.exists() ? configSnap.data().password : DEFAULT_USER_PASSWORD;
+
                 if (password === correctPassword) {
                     sessionStorage.setItem('isDashboardLogin', 'true');
-                    if (auth.currentUser && auth.currentUser.isAnonymous) showUserDashboard(auth.currentUser);
-                    else await signInAnonymously(auth);
+                    if (auth.currentUser && auth.currentUser.isAnonymous) {
+                        showUserDashboard(auth.currentUser);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 } else {
                     showNotification("Incorrect password.", "error");
                 }
@@ -1596,7 +2046,10 @@
                 if (authMode === "login") {
                     await signInWithEmailAndPassword(auth, email, password);
                 } else {
-                    if (inviteCode !== ADMIN_INVITE_CODE) { showNotification("Invalid admin invite code.", "error"); return; }
+                    if (inviteCode !== ADMIN_INVITE_CODE) {
+                        showNotification("Invalid admin invite code.", "error");
+                        return;
+                    }
                     const cred = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "admins", cred.user.uid), { email, createdAt: Timestamp.now() });
                     showNotification("Admin account created successfully!");
@@ -1609,95 +2062,97 @@
                 } else {
                     showNotification("Password must be at least 6 characters long.", "error");
                 }
+            
             } else if (form.id === "track-request-form") {
                 const vehicleNumber = document.getElementById("track-id-input").value.trim().toUpperCase();
-                if (!vehicleNumber) return;
+                console.log("🔍 Starting search for:", vehicleNumber);
 
-                const loadingHTML = `<div class="mt-6 space-y-4"><h3 class="text-sm font-medium text-slate-300">Tracking Result:</h3><div class="p-4 bg-slate-900/50 border border-slate-700 rounded-xl text-center animate-fade-in"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div><p class="text-slate-400 text-sm">Searching for current status...</p></div></div>`;
-                renderLandingPage({ trackingResultHTML: loadingHTML, vehicleNumber: vehicleNumber });
+                if (!vehicleNumber) {
+                    const resultDiv = document.getElementById("tracking-result");
+                    if (resultDiv) resultDiv.innerHTML = "";
+                    return;
+                }
+
+                // Show loading state
+                const loadingHTML = `
+                    <div class="mt-6 space-y-4">
+                        <h3 class="text-sm font-medium text-slate-300">Tracking Result:</h3>
+                        <div class="p-4 bg-slate-900/50 border border-slate-700 rounded-xl text-center animate-fade-in">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
+                            <p class="text-slate-400 text-sm">Searching for current status...</p>
+                        </div>
+                    </div>
+                `;
+                renderLandingPage({
+                    trackingResultHTML: loadingHTML,
+                    vehicleNumber: vehicleNumber
+                });
 
                 try {
-                    if (!auth.currentUser) await signInAnonymously(auth);
+                    // Ensure anonymous access for tracking
+                    if (!auth.currentUser) {
+                        await signInAnonymously(auth);
+                    }
+
+                    // Use the new fixed tracking function
+                    const currentStatus = await findCurrentVehicleStatus(vehicleNumber);
                     
-                    const now = new Date();
-                    
-                    // Phase 1: Active Clearances
-                    const clearanceQuery = query(collection(db, "vehicleClearances"), where("vehicleNumber", "==", vehicleNumber));
-                    const clearanceSnap = await getDocs(clearanceQuery);
-                    let activeClearances = [];
-                    let expiredClearances = [];
-                    clearanceSnap.forEach(docSnap => {
-                        const data = { id: docSnap.id, ...docSnap.data() };
-                        if (data.expiryDate && data.expiryDate.toDate() >= now) activeClearances.push({ ...data, status: "active" });
-                        else expiredClearances.push({ ...data, status: "expired" });
-                    });
-
-                    if (activeClearances.length > 0) {
-                        const mostRecentActive = activeClearances.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
-                        renderLandingPage({ trackingResultHTML: createStatusCard(mostRecentActive), vehicleNumber });
-                        return;
+                    if (currentStatus) {
+                        console.log("🎯 Displaying current status:", currentStatus.status);
+                        const trackingHTML = createStatusCard(currentStatus);
+                        renderLandingPage({
+                            trackingResultHTML: trackingHTML,
+                            vehicleNumber: vehicleNumber
+                        });
+                    } else {
+                        // No records found
+                        const notFoundHTML = `
+                        <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in">
+                            <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
+                            <p class="font-semibold text-red-400">No records found for ${vehicleNumber}</p>
+                            <p class="text-sm text-red-500 mt-1">This vehicle has no clearance history.</p>
+                            <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                                <p class="text-xs text-blue-400">💡 Tip: Make sure the vehicle number is correct, or submit a new clearance request.</p>
+                            </div>
+                        </div>`;
+                        
+                        renderLandingPage({
+                            trackingResultHTML: notFoundHTML,
+                            vehicleNumber: vehicleNumber
+                        });
                     }
-
-                    // Phase 2: Pending Requests
-                    const requestQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber), where("status", "==", "pending"));
-                    const requestSnap = await getDocs(requestQuery);
-                    let validPendingRequests = requestSnap.docs.map(d => ({id: d.id, ...d.data()})).filter(d => d.expiryDate.toDate() >= now);
-                    if (validPendingRequests.length > 0) {
-                        const mostRecentPending = validPendingRequests.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
-                        renderLandingPage({ trackingResultHTML: createStatusCard(mostRecentPending), vehicleNumber });
-                        return;
-                    }
-
-                    // Phase 3 & 4: Approved & Rejected Requests
-                    const otherRequestQuery = query(collection(db, "clearanceRequests"), where("vehicleNumber", "==", vehicleNumber));
-                    const otherRequestSnap = await getDocs(otherRequestQuery);
-                    let approvedRequests = [];
-                    let rejectedRequests = [];
-                    otherRequestSnap.forEach(docSnap => {
-                        const data = {id: docSnap.id, ...docSnap.data()};
-                        if (data.status === 'approved') approvedRequests.push(data);
-                        else if (data.status === 'rejected') rejectedRequests.push(data);
-                    });
-
-                    if(approvedRequests.length > 0) {
-                        const mostRecentApproved = approvedRequests.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
-                        renderLandingPage({ trackingResultHTML: createStatusCard(mostRecentApproved), vehicleNumber });
-                        return;
-                    }
-
-                    if(rejectedRequests.length > 0) {
-                        const mostRecentRejected = rejectedRequests.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
-                        renderLandingPage({ trackingResultHTML: createStatusCard(mostRecentRejected), vehicleNumber });
-                        return;
-                    }
-
-                    // Phase 5: Expired Clearances
-                    if (expiredClearances.length > 0) {
-                        const mostRecentExpired = expiredClearances.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())[0];
-                        renderLandingPage({ trackingResultHTML: createStatusCard(mostRecentExpired), vehicleNumber });
-                        return;
-                    }
-
-                    // Phase 6: No Records Found
-                    const notFoundHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in"><div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div><p class="font-semibold text-red-400">No records found for ${vehicleNumber}</p><p class="text-sm text-red-500 mt-1">This vehicle has no clearance history.</p><div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg"><p class="text-xs text-blue-400">💡 Tip: Make sure the vehicle number is correct, or submit a new clearance request.</p></div></div>`;
-                    renderLandingPage({ trackingResultHTML: notFoundHTML, vehicleNumber });
 
                 } catch (error) {
                     console.error("❌ Tracking error:", error);
-                    const errorHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in"><div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div><p class="font-semibold text-red-400">Search failed</p><p class="text-sm text-red-500 mt-1">${error.message.includes("firestore/failed-precondition") ? `The query requires an index. You can create it here: <a href="https://console.firebase.google.com/..." class="underline">Create Index</a>` : "An error occurred."}</p></div>`;
-                    renderLandingPage({ trackingResultHTML: errorHTML, vehicleNumber });
+                    const errorHTML = `
+                    <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in">
+                        <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
+                        <p class="font-semibold text-red-400">Search failed</p>
+                        <p class="text-sm text-red-500 mt-1">Error: ${error.message}</p>
+                        <div class="mt-3 text-xs text-red-400">Please check your internet connection and try again.</div>
+                    </div>`;
+                    
+                    renderLandingPage({
+                        trackingResultHTML: errorHTML,
+                        vehicleNumber: vehicleNumber
+                    });
                 }
+
             } else if (form.id === "request-form") {
                 const data = getFormObj(form);
                 let currentUser = auth.currentUser;
-                if (!currentUser) currentUser = (await signInAnonymously(auth)).user;
+                if (!currentUser) {
+                    currentUser = (await signInAnonymously(auth)).user;
+                }
                 const entryDate = parseLocalDate(data.entryDate);
                 const expiryDate = parseLocalDate(data.expiryDate);
+
                 if(!entryDate || !expiryDate) {
                     showNotification("Valid entry and expiry dates are required.", "error");
                     if (button) button.disabled = false;
                     return;
                 }
+
                 const payload = {
                     requesterName: data.requesterName,
                     requesterId: currentUser.uid,
@@ -1711,11 +2166,19 @@
                     status: "pending",
                     createdAt: Timestamp.now()
                 };
+                
                 try {
                     const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
                     showNotification("Request submitted successfully!");
+                    
                     const newRequestData = { id: docRef.id, ...payload };
-                    renderLandingPage({ trackingResultHTML: createStatusCard(newRequestData), vehicleNumber: newRequestData.vehicleNumber });
+                    const trackingHTML = createStatusCard(newRequestData);
+                    
+                    renderLandingPage({
+                        trackingResultHTML: trackingHTML,
+                        vehicleNumber: newRequestData.vehicleNumber
+                    });
+                
                 } catch (error) {
                     console.error("Request submission error:", error);
                     showNotification("Failed to submit request. Please try again.", "error");
@@ -1731,14 +2194,21 @@
 
     // Input and reset event listeners
     document.body.addEventListener("input", e => {
-        if (e.target.id === 'daily-clearance-search-input') renderClearanceListForUser(e.target.value.toUpperCase());
+        if (e.target.id === 'daily-clearance-search-input') {
+            renderClearanceListForUser(e.target.value.toUpperCase());
+        }
     });
+
     document.body.addEventListener("reset", e => {
-        if (e.target.id === "daily-clearance-search-form") setTimeout(() => renderClearanceListForUser(null), 0);
+        if (e.target.id === "daily-clearance-search-form") {
+            setTimeout(() => renderClearanceListForUser(null), 0);
+        }
     });
+
     window.addEventListener('load', () => {
         initializeVoiceRecognition();
     });
+
     renderLandingPage();
   </script>
 </body>
