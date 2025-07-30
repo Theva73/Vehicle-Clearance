@@ -113,7 +113,7 @@
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
       getFirestore, collection, doc, addDoc, setDoc, deleteDoc,
-      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy
+      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy, writeBatch
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     // --- Configuration ---
@@ -424,7 +424,6 @@
         return vehicleNumber.toUpperCase();
     };
     
-    // --- START: FIX FOR "N/A" ISSUE ---
     const formatApprovalString = (clearance) => {
         if (clearance.approvedAt && clearance.approvedByUsername) {
             const date = formatDate(clearance.approvedAt);
@@ -435,9 +434,8 @@
             });
             return `Approved by ${clearance.approvedByUsername} (${clearance.approvedByDesignation || 'Admin'}) on ${date} at ${time}hrs`;
         }
-        return null; // Return null if no approval data
+        return null;
     }
-    // --- END: FIX FOR "N/A" ISSUE ---
 
     const formatUpdateString = (clearance) => {
         if (clearance.lastUpdatedAt && clearance.lastUpdatedByUsername) {
@@ -494,12 +492,7 @@
     
     // — Icon Library —
     const icons = {
-        car: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2,16H46" />
-            <path d="M6,16 C6,16 6,12 10,8 C14,4 18,4 24,4 C30,4 34,4 38,8 C42,12 42,16 42,16" />
-            <path d="M8 20a2 2 0 100-4 2 2 0 000 4z" />
-            <path d="M40 20a2 2 0 100-4 2 2 0 000 4z" />
-        </svg>`,
+        car: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2,16H46" /><path d="M6,16 C6,16 6,12 10,8 C14,4 18,4 24,4 C30,4 34,4 38,8 C42,12 42,16 42,16" /><path d="M8 20a2 2 0 100-4 2 2 0 000 4z" /><path d="M40 20a2 2 0 100-4 2 2 0 000 4z" /></svg>`,
         logout: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`,
         plus: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
         edit: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`,
@@ -515,7 +508,8 @@
         download: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
         settings: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
         star: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`,
-        sparkles: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L9.5 8.5L4 11L9.5 13.5L12 19L14.5 13.5L20 11L14.5 8.5L12 3z"/><path d="M5 3v4h4"/><path d="M19 17v4h-4"/></svg>`
+        sparkles: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L9.5 8.5L4 11L9.5 13.5L12 19L14.5 13.5L20 11L14.5 8.5L12 3z"/><path d="M5 3v4h4"/><path d="M19 17v4h-4"/></svg>`,
+        database: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>`
     };
 
     // --- Voice Search Modal ---
@@ -774,6 +768,166 @@
             button.innerHTML = originalHTML;
         }
     };
+
+    // --- START: NEW DATABASE MANAGEMENT FUNCTIONS ---
+
+    // Complete database wipe - removes all clearances and requests
+    const clearAllDatabaseData = async (button) => {
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<div class="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Wiping...';
+
+        try {
+            showNotification("Starting database cleanup…", "success");
+            
+            // Only clearing clearances and requests. VVIPs and Admins are preserved.
+            const collectionsToWipe = ['vehicleClearances', 'clearanceRequests'];
+            let totalDeleted = 0;
+
+            for (const collectionName of collectionsToWipe) {
+                console.log(`🗑️ Clearing collection: ${collectionName}`);
+                const collectionRef = collection(db, collectionName);
+                const snapshot = await getDocs(collectionRef);
+                console.log(`Found ${snapshot.size} documents in ${collectionName}`);
+                
+                if (snapshot.size > 0) {
+                    const batch = writeBatch(db);
+                    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+                    await batch.commit();
+                    totalDeleted += snapshot.size;
+                    showNotification(`✅ Cleared ${snapshot.size} documents from ${collectionName}`, "success");
+                }
+            }
+
+            showNotification(`🎉 Cleanup complete! Deleted ${totalDeleted} total documents.`, "success");
+            updateDatabaseStats();
+
+        } catch (error) {
+            console.error("Error clearing database:", error);
+            showNotification(`❌ Error clearing database: ${error.message}`, "error");
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        }
+    };
+
+    // Reset to default state - clears clearances and requests only
+    const resetToDefaultState = async (button) => {
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<div class="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Resetting...';
+
+        try {
+            showNotification("Resetting database…", "success");
+            
+            // This function is functionally the same as clearAllDatabaseData for this app's context
+            // It only clears user-generated content, preserving settings and admin accounts.
+            const userCollections = ['vehicleClearances', 'clearanceRequests'];
+            let totalDeleted = 0;
+
+            for (const collectionName of userCollections) {
+                const collectionRef = collection(db, collectionName);
+                const snapshot = await getDocs(collectionRef);
+                
+                if (snapshot.size > 0) {
+                    const batch = writeBatch(db);
+                    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+                    await batch.commit();
+                    totalDeleted += snapshot.size;
+                    console.log(`✅ Cleared ${snapshot.size} documents from ${collectionName}`);
+                }
+            }
+
+            showNotification(`✅ Database reset complete! Removed ${totalDeleted} records.`, "success");
+            updateDatabaseStats();
+
+        } catch (error) {
+            console.error("Reset error:", error);
+            showNotification(`❌ Reset failed: ${error.message}`, "error");
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        }
+    };
+
+    // Export database data as JSON backup
+    const exportDatabaseData = async (button) => {
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<div class="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Exporting...';
+
+        try {
+            showNotification("Exporting database data…", "success");
+            const exportData = { exportDate: new Date().toISOString(), collections: {} };
+            const collectionsToExport = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins', 'publicConfig'];
+
+            for (const collectionName of collectionsToExport) {
+                const collectionRef = collection(db, collectionName);
+                const snapshot = await getDocs(collectionRef);
+                exportData.collections[collectionName] = [];
+                snapshot.docs.forEach((doc) => {
+                    const data = doc.data();
+                    // Convert Firestore timestamps to ISO strings for JSON compatibility
+                    Object.keys(data).forEach(key => {
+                        if (data[key] && typeof data[key].toDate === 'function') {
+                            data[key] = data[key].toDate().toISOString();
+                        }
+                    });
+                    exportData.collections[collectionName].push({ id: doc.id, ...data });
+                });
+                console.log(`✅ Exported ${snapshot.size} documents from ${collectionName}`);
+            }
+
+            // Create and download JSON file
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = `vehicle_clearance_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+
+            showNotification("✅ Database exported successfully!", "success");
+
+        } catch (error) {
+            console.error("Export error:", error);
+            showNotification(`❌ Export failed: ${error.message}`, "error");
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        }
+    };
+
+    // Update database statistics display
+    const updateDatabaseStats = async () => {
+        const statsContainer = document.getElementById('db-stats');
+        if (!statsContainer) return;
+        statsContainer.innerHTML = '<div class="col-span-2 text-center p-4">Loading statistics...</div>';
+
+        try {
+            const collectionsToCount = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins'];
+            const stats = {};
+            for (const collectionName of collectionsToCount) {
+                const snapshot = await getDocs(collection(db, collectionName));
+                stats[collectionName] = snapshot.size;
+            }
+            statsContainer.innerHTML = `
+                <div>Active Clearances: <strong class="text-blue-500">${stats.vehicleClearances || 0}</strong></div>
+                <div>Pending Requests: <strong class="text-yellow-500">${stats.clearanceRequests || 0}</strong></div>
+                <div>VVIPs: <strong class="text-indigo-500">${stats.vvips || 0}</strong></div>
+                <div>Admin Accounts: <strong class="text-green-500">${stats.admins || 0}</strong></div>
+                <div class="col-span-2 text-xs text-gray-500 dark:text-gray-400 mt-2">Last updated: ${new Date().toLocaleTimeString()}</div>
+            `;
+        } catch (error) {
+            console.error('Error loading database stats:', error);
+            statsContainer.innerHTML = '<div class="col-span-2 text-red-500 text-center p-4">Error loading statistics</div>';
+        }
+    };
+
+    // --- END: NEW DATABASE MANAGEMENT FUNCTIONS ---
     
     // — Render Functions —
     const renderLandingPage = (options = {}) => {
@@ -1005,13 +1159,11 @@
         </div>`;
     };
     
-    // Fixed tracking function
     const findCurrentVehicleStatus = async (vehicleNumber) => {
         console.log("🔍 Starting vehicle status check for:", vehicleNumber);
         const now = new Date();
 
         try {
-            // Get ALL clearances for this vehicle, ordered by creation date (most recent first)
             const clearanceQuery = query(
                 collection(db, "vehicleClearances"),
                 where("vehicleNumber", "==", vehicleNumber),
@@ -1019,7 +1171,6 @@
             );
             const clearanceSnap = await getDocs(clearanceQuery);
 
-            // Get ALL requests for this vehicle, ordered by creation date (most recent first)
             const requestQuery = query(
                 collection(db, "clearanceRequests"),
                 where("vehicleNumber", "==", vehicleNumber),
@@ -1029,7 +1180,6 @@
 
             console.log(`Found ${clearanceSnap.size} clearances and ${requestSnap.size} requests`);
 
-            // STEP 1: Find the most recent ACTIVE clearance (not expired)
             let activeClearance = null;
             let mostRecentExpired = null;
 
@@ -1037,7 +1187,6 @@
                 const data = { id: docSnap.id, ...docSnap.data() };
                 const expiryDate = data.expiryDate.toDate();
 
-                // Check if clearance is currently active (expiry date is in the future)
                 if (expiryDate >= now) {
                     if (!activeClearance ||
                         (data.createdAt && data.createdAt.toMillis() > activeClearance.createdAt.toMillis())) {
@@ -1045,7 +1194,6 @@
                         console.log("🟢 Found active clearance expires:", formatDate(data.expiryDate));
                     }
                 } else {
-                    // Track most recent expired for fallback
                     if (!mostRecentExpired ||
                         (data.createdAt && data.createdAt.toMillis() > mostRecentExpired.createdAt.toMillis())) {
                         mostRecentExpired = { ...data, status: "expired" };
@@ -1053,13 +1201,11 @@
                 }
             });
 
-            // If we have an active clearance, that's the definitive current status
             if (activeClearance) {
                 console.log("✅ Returning ACTIVE clearance as current status");
                 return activeClearance;
             }
 
-            // STEP 2: If no active clearance, check for pending/approved requests
             let mostRecentRequest = null;
             const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
@@ -1067,7 +1213,6 @@
                 const data = { id: docSnap.id, ...docSnap.data() };
                 const createdAt = data.createdAt ? data.createdAt.toDate() : new Date(0);
 
-                // Only consider recent requests or non-rejected ones
                 if (data.status !== 'rejected' || createdAt >= sevenDaysAgo) {
                     if (!mostRecentRequest ||
                         createdAt > (mostRecentRequest.createdAt ? mostRecentRequest.createdAt.toDate() : new Date(0))) {
@@ -1082,13 +1227,11 @@
                 return mostRecentRequest;
             }
 
-            // STEP 3: Fallback to most recent expired clearance
             if (mostRecentExpired) {
                 console.log("✅ Returning expired clearance as historical status");
                 return mostRecentExpired;
             }
 
-            // No records found
             console.log("❌ No records found");
             return null;
 
@@ -1260,6 +1403,7 @@
                             <nav id="settings-tabs" class="flex gap-4 -mb-px">
                                 <button data-tab="general" class="settings-tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">General</button>
                                 <button data-tab="vvip" class="settings-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">VVIPs</button>
+                                <button data-tab="database" class="settings-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">Database</button>
                             </nav>
                         </div>
                     </div>
@@ -1292,6 +1436,32 @@
                             <div class="mt-6">
                                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Current VVIPs</h3>
                                 <div id="vvip-list-container-settings" class="mt-2 space-y-2"></div>
+                            </div>
+                        </div>
+                        <div id="database-settings-pane" class="settings-pane hidden space-y-6">
+                            <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700/50">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2">${icons.database} Database Statistics</h3>
+                                <div id="db-stats" class="grid grid-cols-2 gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                    <!-- Stats will be loaded here -->
+                                </div>
+                            </div>
+                             <div class="space-y-4">
+                                <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700/50">
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">Actions</h3>
+                                    <div class="space-y-3">
+                                        <button id="export-database-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                            <span class="w-5 h-5">${icons.download}</span> Export Backup
+                                        </button>
+                                        <button id="reset-database-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
+                                            <span class="w-5 h-5">${icons.trash}</span> Reset Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
+                                <h3 class="text-lg font-semibold text-red-500 mb-2">Danger Zone</h3>
+                                <p class="text-sm text-red-600 dark:text-red-300 mb-3">This action is irreversible and will permanently delete data.</p>
+                                <button id="clear-database-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Wipe Clearance Data</button>
                             </div>
                         </div>
                     </div>
@@ -1354,10 +1524,8 @@
         }
 
         list.innerHTML = clearances.map(c => {
-            // --- START: FIX FOR "N/A" ISSUE ---
             const approvalInfo = formatApprovalString(c);
             const updateInfo = formatUpdateString(c);
-            // --- END: FIX FOR "N/A" ISSUE ---
 
             return `
             <details class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group animate-fade-in border border-gray-200 dark:border-gray-700">
@@ -1728,6 +1896,32 @@
                 renderLandingPage({ vehicleNumber: "", trackingResultHTML: "" });
                 return;
             }
+            
+            // --- START: NEW DATABASE MANAGEMENT BUTTON HANDLERS ---
+            if (button.id === 'export-database-btn') {
+                e.preventDefault();
+                exportDatabaseData(button);
+                return;
+            }
+            if (button.id === 'reset-database-btn') {
+                e.preventDefault();
+                renderConfirmationModal(
+                    'Reset Clearance Data',
+                    'This will remove ALL clearances and requests. VVIPs, user password, and Admin accounts will be preserved. This action cannot be undone.',
+                    () => resetToDefaultState(button)
+                );
+                return;
+            }
+            if (button.id === 'clear-database-btn') {
+                e.preventDefault();
+                renderConfirmationModal(
+                    'Wipe Clearance Data',
+                    'This will permanently delete ALL clearances and requests. VVIPs, Admin accounts, and settings will be preserved. This action cannot be undone.',
+                    () => clearAllDatabaseData(button)
+                );
+                return;
+            }
+            // --- END: NEW DATABASE MANAGEMENT BUTTON HANDLERS ---
 
             if (button.id === 'settings-btn') { e.preventDefault(); toggleSettingsPanel(true); return; }
             if (button.id === 'close-settings-panel-btn') { e.preventDefault(); toggleSettingsPanel(false); return; }
@@ -1735,7 +1929,7 @@
             if (button.id === 'close-vvip-modal-btn') { button.closest('#modal-container').innerHTML = ''; return; }
 
             if (button.classList.contains('settings-tab-btn')) {
-                 e.preventDefault();
+                e.preventDefault();
                 const tab = button.dataset.tab;
                 document.querySelectorAll('.settings-tab-btn').forEach(btn => {
                     btn.classList.remove('active');
@@ -1748,6 +1942,11 @@
                     pane.classList.add('hidden');
                 });
                 document.getElementById(`${tab}-settings-pane`).classList.remove('hidden');
+
+                // Load stats when database tab is opened
+                if (tab === 'database') {
+                    updateDatabaseStats();
+                }
                 return;
             }
 
@@ -2160,7 +2359,6 @@
                         await signInAnonymously(auth);
                     }
 
-                    // Use the new fixed tracking function
                     const currentStatus = await findCurrentVehicleStatus(vehicleNumber);
                     
                     if (currentStatus) {
