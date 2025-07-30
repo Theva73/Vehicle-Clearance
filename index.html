@@ -424,7 +424,7 @@
         return vehicleNumber.toUpperCase();
     };
     
-    // --- START: FIX 4 - ENHANCED DISPLAY FUNCTIONS ---
+    // --- START: FIX FOR "N/A" ISSUE ---
     const formatApprovalString = (clearance) => {
         if (clearance.approvedAt && clearance.approvedByUsername) {
             const date = formatDate(clearance.approvedAt);
@@ -435,8 +435,9 @@
             });
             return `Approved by ${clearance.approvedByUsername} (${clearance.approvedByDesignation || 'Admin'}) on ${date} at ${time}hrs`;
         }
-        return 'Approval information not available';
+        return null; // Return null if no approval data
     }
+    // --- END: FIX FOR "N/A" ISSUE ---
 
     const formatUpdateString = (clearance) => {
         if (clearance.lastUpdatedAt && clearance.lastUpdatedByUsername) {
@@ -467,7 +468,6 @@
             return `${actionText} by ${entry.byUsername} (${entry.byDesignation}) on ${date} at ${time}hrs`;
         }).join('<br>');
     }
-    // --- END: FIX 4 ---
 
     const toISODate = d => d ? new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split("T")[0] : "";
     const getFormObj = form => Object.fromEntries(new FormData(form).entries());
@@ -1354,6 +1354,11 @@
         }
 
         list.innerHTML = clearances.map(c => {
+            // --- START: FIX FOR "N/A" ISSUE ---
+            const approvalInfo = formatApprovalString(c);
+            const updateInfo = formatUpdateString(c);
+            // --- END: FIX FOR "N/A" ISSUE ---
+
             return `
             <details class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group animate-fade-in border border-gray-200 dark:border-gray-700">
                 <summary class="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
@@ -1398,15 +1403,17 @@
                         ${c.notes ? `<div class="col-span-full"><p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Notes</p><p class="font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap">${c.notes}</p></div>` : ""}
                     </div>
                     
-                    <!-- START: FIX 5 - ENHANCED CLEARANCE DISPLAY -->
                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 space-y-2">
+                        ${approvalInfo ? `
                         <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                            <p class="font-semibold text-green-700 dark:text-green-300">✓ ${formatApprovalString(c)}</p>
-                        </div>
-                        ${formatUpdateString(c) ? `
-                        <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
-                            <p class="font-semibold text-yellow-700 dark:text-yellow-300">⚡ ${formatUpdateString(c)}</p>
+                            <p class="font-semibold text-green-700 dark:text-green-300">✓ ${approvalInfo}</p>
                         </div>` : ''}
+                        
+                        ${updateInfo ? `
+                        <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
+                            <p class="font-semibold text-yellow-700 dark:text-yellow-300">⚡ ${updateInfo}</p>
+                        </div>` : ''}
+
                         ${c.approvalHistory && c.approvalHistory.length > 1 ? `
                         <details class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
                             <summary class="cursor-pointer font-semibold text-gray-600 dark:text-gray-300">📋 Full History (${c.approvalHistory.length} entries)</summary>
@@ -1415,7 +1422,6 @@
                             </div>
                         </details>` : ''}
                     </div>
-                    <!-- END: FIX 5 -->
 
                 </div>
             </details>
@@ -1527,8 +1533,6 @@
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${request.escortRequired ? 'checked' : ''}/>
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
-
-                    <!-- AI Risk Assessment Section Removed as per Fix #1 -->
 
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
@@ -1718,7 +1722,6 @@
         }
 
         try {
-            // AI Risk Assessment button handler removed as per Fix #1
 
             if (button.id === "clear-tracking-btn") {
                 e.preventDefault();
@@ -1842,7 +1845,6 @@
                 return;
             }
 
-            // --- START: FIX 2 - ENHANCED APPROVAL TRACKING ---
             if (button.classList.contains("approve-request-btn")) {
                 e.preventDefault();
                 const modal = button.closest('#review-modal-backdrop');
@@ -1874,7 +1876,6 @@
                         return;
                     }
 
-                    // Enhanced approval tracking
                     const approvalTimestamp = Timestamp.now();
                     const clearancePayload = {
                         ownerName: data.ownerName,
@@ -1887,7 +1888,6 @@
                         notes: data.notes || "",
                         createdAt: approvalTimestamp,
                         
-                        // Enhanced approval tracking fields
                         approvedByUsername: currentAdminProfile.username,
                         approvedByDesignation: currentAdminProfile.designation,
                         approvedByUid: auth.currentUser?.uid,
@@ -1904,7 +1904,6 @@
 
                     await addDoc(collection(db, "vehicleClearances"), clearancePayload);
                     
-                    // Update the request with approval details
                     await updateDoc(doc(db, "clearanceRequests", requestId), { 
                         status: 'approved',
                         approvedBy: `${currentAdminProfile.username} (${currentAdminProfile.designation})`,
@@ -1930,9 +1929,7 @@
                 }
                 return;
             }
-            // --- END: FIX 2 ---
 
-            // --- START: FIX 3 - ENHANCED UPDATE TRACKING ---
             if (button.classList.contains("save-clearance-btn")) {
                 e.preventDefault();
                 const modal = button.closest('#form-modal-backdrop');
@@ -1977,19 +1974,16 @@
                     const editingId = button.dataset.id;
 
                     if (editingId) {
-                        // Enhanced update tracking
                         payload.lastUpdatedByUsername = currentAdminProfile.username;
                         payload.lastUpdatedByDesignation = currentAdminProfile.designation;
                         payload.lastUpdatedByUid = auth.currentUser?.uid;
                         payload.lastUpdatedAt = currentTimestamp;
                         
-                        // Get existing document to preserve approval history
                         const existingDoc = await getDoc(doc(db, "vehicleClearances", editingId));
                         if (existingDoc.exists()) {
                             const existingData = existingDoc.data();
                             payload.approvalHistory = existingData.approvalHistory || [];
                             
-                            // Add update to history
                             payload.approvalHistory.push({
                                 action: 'updated',
                                 byUsername: currentAdminProfile.username,
@@ -2003,7 +1997,6 @@
                         await updateDoc(doc(db, "vehicleClearances", editingId), payload);
                         showNotification(`Clearance updated by ${currentAdminProfile.username} (${currentAdminProfile.designation})`);
                     } else {
-                        // Enhanced creation tracking
                         payload.createdAt = currentTimestamp;
                         payload.createdByUid = auth.currentUser?.uid;
                         payload.approvedByUsername = currentAdminProfile.username;
@@ -2011,7 +2004,6 @@
                         payload.approvedByUid = auth.currentUser?.uid;
                         payload.approvedAt = currentTimestamp;
                         
-                        // Initialize approval history
                         payload.approvalHistory = [{
                             action: 'created',
                             byUsername: currentAdminProfile.username,
@@ -2033,7 +2025,6 @@
                 }
                 return;
             }
-            // --- END: FIX 3 ---
 
             if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
                 e.preventDefault();
