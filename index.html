@@ -642,7 +642,9 @@
                 .filter(c => c.expiryDate.toDate() >= twentyFourHoursAgo);
 
             validClearances.forEach(c => {
-                const status = now <= c.expiryDate.toDate() ? 'ACTIVE' : 'EXPIRED';
+                const expiry = c.expiryDate.toDate();
+                expiry.setHours(23, 59, 59, 999); // Set to end of day for accurate comparison
+                const status = now <= expiry ? 'ACTIVE' : 'EXPIRED';
                  reportData.push([
                     formatVehicleNumber(c.vehicleNumber || 'N/A'),
                     c.vehicleType || 'N/A',
@@ -768,166 +770,6 @@
             button.innerHTML = originalHTML;
         }
     };
-
-    // --- START: DATABASE MANAGEMENT FUNCTIONS ---
-
-    // Complete database wipe - removes all clearances and requests
-    const clearAllDatabaseData = async (button) => {
-        const originalHTML = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<div class="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Wiping...';
-
-        try {
-            showNotification("Starting database cleanup…", "success");
-            
-            // Only clearing clearances and requests. VVIPs and Admins are preserved.
-            const collectionsToWipe = ['vehicleClearances', 'clearanceRequests'];
-            let totalDeleted = 0;
-
-            for (const collectionName of collectionsToWipe) {
-                console.log(`🗑️ Clearing collection: ${collectionName}`);
-                const collectionRef = collection(db, collectionName);
-                const snapshot = await getDocs(collectionRef);
-                console.log(`Found ${snapshot.size} documents in ${collectionName}`);
-                
-                if (snapshot.size > 0) {
-                    const batch = writeBatch(db);
-                    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-                    await batch.commit();
-                    totalDeleted += snapshot.size;
-                    showNotification(`✅ Cleared ${snapshot.size} documents from ${collectionName}`, "success");
-                }
-            }
-
-            showNotification(`🎉 Cleanup complete! Deleted ${totalDeleted} total documents.`, "success");
-            updateDatabaseStats();
-
-        } catch (error) {
-            console.error("Error clearing database:", error);
-            showNotification(`❌ Error clearing database: ${error.message}`, "error");
-        } finally {
-            button.disabled = false;
-            button.innerHTML = originalHTML;
-        }
-    };
-
-    // Reset to default state - clears clearances and requests only
-    const resetToDefaultState = async (button) => {
-        const originalHTML = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<div class="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Resetting...';
-
-        try {
-            showNotification("Resetting database…", "success");
-            
-            // This function is functionally the same as clearAllDatabaseData for this app's context
-            // It only clears user-generated content, preserving settings and admin accounts.
-            const userCollections = ['vehicleClearances', 'clearanceRequests'];
-            let totalDeleted = 0;
-
-            for (const collectionName of userCollections) {
-                const collectionRef = collection(db, collectionName);
-                const snapshot = await getDocs(collectionRef);
-                
-                if (snapshot.size > 0) {
-                    const batch = writeBatch(db);
-                    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-                    await batch.commit();
-                    totalDeleted += snapshot.size;
-                    console.log(`✅ Cleared ${snapshot.size} documents from ${collectionName}`);
-                }
-            }
-
-            showNotification(`✅ Database reset complete! Removed ${totalDeleted} records.`, "success");
-            updateDatabaseStats();
-
-        } catch (error) {
-            console.error("Reset error:", error);
-            showNotification(`❌ Reset failed: ${error.message}`, "error");
-        } finally {
-            button.disabled = false;
-            button.innerHTML = originalHTML;
-        }
-    };
-
-    // Export database data as JSON backup
-    const exportDatabaseData = async (button) => {
-        const originalHTML = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<div class="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Exporting...';
-
-        try {
-            showNotification("Exporting database data…", "success");
-            const exportData = { exportDate: new Date().toISOString(), collections: {} };
-            const collectionsToExport = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins', 'publicConfig'];
-
-            for (const collectionName of collectionsToExport) {
-                const collectionRef = collection(db, collectionName);
-                const snapshot = await getDocs(collectionRef);
-                exportData.collections[collectionName] = [];
-                snapshot.docs.forEach((doc) => {
-                    const data = doc.data();
-                    // Convert Firestore timestamps to ISO strings for JSON compatibility
-                    Object.keys(data).forEach(key => {
-                        if (data[key] && typeof data[key].toDate === 'function') {
-                            data[key] = data[key].toDate().toISOString();
-                        }
-                    });
-                    exportData.collections[collectionName].push({ id: doc.id, ...data });
-                });
-                console.log(`✅ Exported ${snapshot.size} documents from ${collectionName}`);
-            }
-
-            // Create and download JSON file
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = url;
-            downloadLink.download = `vehicle_clearance_backup_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(url);
-
-            showNotification("✅ Database exported successfully!", "success");
-
-        } catch (error) {
-            console.error("Export error:", error);
-            showNotification(`❌ Export failed: ${error.message}`, "error");
-        } finally {
-            button.disabled = false;
-            button.innerHTML = originalHTML;
-        }
-    };
-
-    // Update database statistics display
-    const updateDatabaseStats = async () => {
-        const statsContainer = document.getElementById('db-stats');
-        if (!statsContainer) return;
-        statsContainer.innerHTML = '<div class="col-span-2 text-center p-4">Loading statistics...</div>';
-
-        try {
-            const collectionsToCount = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins'];
-            const stats = {};
-            for (const collectionName of collectionsToCount) {
-                const snapshot = await getDocs(collection(db, collectionName));
-                stats[collectionName] = snapshot.size;
-            }
-            statsContainer.innerHTML = `
-                <div>Active Clearances: <strong class="text-blue-500">${stats.vehicleClearances || 0}</strong></div>
-                <div>Pending Requests: <strong class="text-yellow-500">${stats.clearanceRequests || 0}</strong></div>
-                <div>VVIPs: <strong class="text-indigo-500">${stats.vvips || 0}</strong></div>
-                <div>Admin Accounts: <strong class="text-green-500">${stats.admins || 0}</strong></div>
-                <div class="col-span-2 text-xs text-gray-500 dark:text-gray-400 mt-2">Last updated: ${new Date().toLocaleTimeString()}</div>
-            `;
-        } catch (error) {
-            console.error('Error loading database stats:', error);
-            statsContainer.innerHTML = '<div class="col-span-2 text-red-500 text-center p-4">Error loading statistics</div>';
-        }
-    };
-
-    // --- END: DATABASE MANAGEMENT FUNCTIONS ---
     
     // — Render Functions —
     const renderLandingPage = (options = {}) => {
@@ -1159,20 +1001,17 @@
         </div>`;
     };
     
-    // --- FIX: This function is updated to remove the `orderBy` clause that causes index errors ---
     const findCurrentVehicleStatus = async (vehicleNumber) => {
         console.log("🔍 Starting vehicle status check for:", vehicleNumber);
         const now = new Date();
 
         try {
-            // Query for clearances without ordering to avoid index requirements
             const clearanceQuery = query(
                 collection(db, "vehicleClearances"),
                 where("vehicleNumber", "==", vehicleNumber)
             );
             const clearanceSnap = await getDocs(clearanceQuery);
 
-            // Query for requests without ordering
             const requestQuery = query(
                 collection(db, "clearanceRequests"),
                 where("vehicleNumber", "==", vehicleNumber)
@@ -1181,7 +1020,6 @@
             
             console.log(`Found ${clearanceSnap.size} clearances and ${requestSnap.size} requests`);
 
-            // Manually sort results in JavaScript by creation date, descending
             const allClearances = clearanceSnap.docs
                 .map(doc => ({ id: doc.id, ...doc.data() }))
                 .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
@@ -1190,9 +1028,9 @@
                 .map(doc => ({ id: doc.id, ...doc.data() }))
                 .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
-            // STEP 1: Find the most recent ACTIVE clearance (not expired)
             const activeClearance = allClearances.find(data => {
                 const expiryDate = data.expiryDate.toDate();
+                expiryDate.setHours(23, 59, 59, 999); // FIX: Set to end of day for timezone fix
                 return expiryDate >= now;
             });
 
@@ -1201,11 +1039,9 @@
                 return { ...activeClearance, status: "active" };
             }
 
-            // STEP 2: If no active clearance, check for the most recent non-rejected request
             const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
             const mostRecentRequest = allRequests.find(data => {
                 const createdAt = data.createdAt ? data.createdAt.toDate() : new Date(0);
-                // Consider recent requests or any non-rejected ones
                 return data.status !== 'rejected' || createdAt >= sevenDaysAgo;
             });
 
@@ -1214,19 +1050,16 @@
                 return mostRecentRequest;
             }
 
-            // STEP 3: Fallback to the most recent expired clearance
             if (allClearances.length > 0) {
                 console.log("✅ Returning most recent expired clearance as historical status");
                 return { ...allClearances[0], status: "expired" };
             }
 
-            // No records found
             console.log("❌ No records found");
             return null;
 
         } catch (error) {
             console.error("Error in tracking:", error);
-            // Re-throw the error so it can be caught by the form handler and displayed to the user
             throw error;
         }
     };
@@ -1464,6 +1297,7 @@
             renderClearancesList();
         });
 
+        // FIX: Changed query to fetch all and filter client-side to avoid index issues
         const requestsQuery = query(collection(db, "clearanceRequests"), orderBy("createdAt", "desc"));
         unsubRequests = onSnapshot(requestsQuery, snap => {
             clearanceRequests = snap.docs
@@ -1691,7 +1525,6 @@
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${request.escortRequired ? 'checked' : ''}/>
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
-
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
                         <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" data-id="${request.id}">Approve</button>
