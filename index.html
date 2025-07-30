@@ -769,7 +769,7 @@
         }
     };
 
-    // --- START: NEW DATABASE MANAGEMENT FUNCTIONS ---
+    // --- START: DATABASE MANAGEMENT FUNCTIONS ---
 
     // Complete database wipe - removes all clearances and requests
     const clearAllDatabaseData = async (button) => {
@@ -927,7 +927,7 @@
         }
     };
 
-    // --- END: NEW DATABASE MANAGEMENT FUNCTIONS ---
+    // --- END: DATABASE MANAGEMENT FUNCTIONS ---
     
     // — Render Functions —
     const renderLandingPage = (options = {}) => {
@@ -1159,67 +1159,54 @@
         </div>`;
     };
     
+    // --- FIX: This function is updated to remove the `orderBy` clause that causes index errors ---
     const findCurrentVehicleStatus = async (vehicleNumber) => {
         console.log("🔍 Starting vehicle status check for:", vehicleNumber);
         const now = new Date();
 
         try {
+            // Query for clearances without ordering to avoid index requirements
             const clearanceQuery = query(
                 collection(db, "vehicleClearances"),
-                where("vehicleNumber", "==", vehicleNumber),
-                orderBy("createdAt", "desc")
+                where("vehicleNumber", "==", vehicleNumber)
             );
             const clearanceSnap = await getDocs(clearanceQuery);
 
+            // Query for requests without ordering
             const requestQuery = query(
                 collection(db, "clearanceRequests"),
-                where("vehicleNumber", "==", vehicleNumber),
-                orderBy("createdAt", "desc")
+                where("vehicleNumber", "==", vehicleNumber)
             );
             const requestSnap = await getDocs(requestQuery);
-
+            
             console.log(`Found ${clearanceSnap.size} clearances and ${requestSnap.size} requests`);
 
-            let activeClearance = null;
-            let mostRecentExpired = null;
+            // Manually sort results in JavaScript by creation date, descending
+            const allClearances = clearanceSnap.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
-            clearanceSnap.forEach(docSnap => {
-                const data = { id: docSnap.id, ...docSnap.data() };
+            const allRequests = requestSnap.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+            // STEP 1: Find the most recent ACTIVE clearance (not expired)
+            const activeClearance = allClearances.find(data => {
                 const expiryDate = data.expiryDate.toDate();
-
-                if (expiryDate >= now) {
-                    if (!activeClearance ||
-                        (data.createdAt && data.createdAt.toMillis() > activeClearance.createdAt.toMillis())) {
-                        activeClearance = { ...data, status: "active" };
-                        console.log("🟢 Found active clearance expires:", formatDate(data.expiryDate));
-                    }
-                } else {
-                    if (!mostRecentExpired ||
-                        (data.createdAt && data.createdAt.toMillis() > mostRecentExpired.createdAt.toMillis())) {
-                        mostRecentExpired = { ...data, status: "expired" };
-                    }
-                }
+                return expiryDate >= now;
             });
 
             if (activeClearance) {
                 console.log("✅ Returning ACTIVE clearance as current status");
-                return activeClearance;
+                return { ...activeClearance, status: "active" };
             }
 
-            let mostRecentRequest = null;
+            // STEP 2: If no active clearance, check for the most recent non-rejected request
             const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-
-            requestSnap.forEach(docSnap => {
-                const data = { id: docSnap.id, ...docSnap.data() };
+            const mostRecentRequest = allRequests.find(data => {
                 const createdAt = data.createdAt ? data.createdAt.toDate() : new Date(0);
-
-                if (data.status !== 'rejected' || createdAt >= sevenDaysAgo) {
-                    if (!mostRecentRequest ||
-                        createdAt > (mostRecentRequest.createdAt ? mostRecentRequest.createdAt.toDate() : new Date(0))) {
-                        mostRecentRequest = data;
-                        console.log(`🟡 Found ${data.status} request`);
-                    }
-                }
+                // Consider recent requests or any non-rejected ones
+                return data.status !== 'rejected' || createdAt >= sevenDaysAgo;
             });
 
             if (mostRecentRequest) {
@@ -1227,16 +1214,19 @@
                 return mostRecentRequest;
             }
 
-            if (mostRecentExpired) {
-                console.log("✅ Returning expired clearance as historical status");
-                return mostRecentExpired;
+            // STEP 3: Fallback to the most recent expired clearance
+            if (allClearances.length > 0) {
+                console.log("✅ Returning most recent expired clearance as historical status");
+                return { ...allClearances[0], status: "expired" };
             }
 
+            // No records found
             console.log("❌ No records found");
             return null;
 
         } catch (error) {
             console.error("Error in tracking:", error);
+            // Re-throw the error so it can be caught by the form handler and displayed to the user
             throw error;
         }
     };
@@ -1897,7 +1887,7 @@
                 return;
             }
             
-            // --- START: NEW DATABASE MANAGEMENT BUTTON HANDLERS ---
+            // --- START: DATABASE MANAGEMENT BUTTON HANDLERS ---
             if (button.id === 'export-database-btn') {
                 e.preventDefault();
                 exportDatabaseData(button);
@@ -1921,7 +1911,7 @@
                 );
                 return;
             }
-            // --- END: NEW DATABASE MANAGEMENT BUTTON HANDLERS ---
+            // --- END: DATABASE MANAGEMENT BUTTON HANDLERS ---
 
             if (button.id === 'settings-btn') { e.preventDefault(); toggleSettingsPanel(true); return; }
             if (button.id === 'close-settings-panel-btn') { e.preventDefault(); toggleSettingsPanel(false); return; }
