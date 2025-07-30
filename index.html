@@ -149,7 +149,6 @@
     let clearanceRequests = [];
     let vvips = [];
     let userPasswordConfig = null;
-    let currentAdminProfile = null; // To store logged-in admin's details
     let unsubClearances = null, unsubRequests = null, unsubConfig = null, unsubVVIPs = null;
     let authMode = "login";
     let routeHistory = [];
@@ -423,24 +422,6 @@
         if (!vehicleNumber) return 'N/A';
         return vehicleNumber.toUpperCase();
     };
-    
-    const formatApprovalString = (clearance) => {
-        if (clearance.approvedAt && clearance.approvedByUsername) {
-            const date = formatDate(clearance.approvedAt);
-            const time = clearance.approvedAt.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-            return `Approved by ${clearance.approvedByUsername} (${clearance.approvedByDesignation || 'Admin'}) on ${date} at ${time}hrs`;
-        }
-        return 'N/A';
-    }
-
-    const formatUpdateString = (clearance) => {
-        if (clearance.lastUpdatedAt && clearance.lastUpdatedByUsername) {
-            const date = formatDate(clearance.lastUpdatedAt);
-            const time = clearance.lastUpdatedAt.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-            return `Updated by ${clearance.lastUpdatedByUsername} (${clearance.lastUpdatedByDesignation || 'Admin'}) on ${date} at ${time}hrs`;
-        }
-        return null; // Return null if no update info
-    }
 
     const toISODate = d => d ? new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split("T")[0] : "";
     const getFormObj = form => Object.fromEntries(new FormData(form).entries());
@@ -823,22 +804,14 @@
                     <h1 class="text-3xl font-bold text-white mt-4">Admin Access</h1>
                     <p class="text-slate-400">${isSignup ? "Create an admin account" : "Sign in to manage clearances"}</p>
                 </div>
-                <form id="auth-form" class="space-y-4">
+                <form id="auth-form" class="space-y-6">
                     <div class="${isSignup ? '' : 'hidden'}">
                         <label class="text-sm font-medium text-slate-300">Admin Invite Code</label>
                         <input type="text" name="inviteCode" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter the secret code" />
                     </div>
-                     <div class="${isSignup ? '' : 'hidden'}">
-                        <label class="text-sm font-medium text-slate-300">Email</label>
-                        <input type="email" name="email" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="admin@example.com" ${isSignup ? 'required' : ''} />
-                    </div>
                     <div>
-                        <label class="text-sm font-medium text-slate-300">Username</label>
-                        <input type="text" name="username" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="e.g., steve" required />
-                    </div>
-                    <div class="${isSignup ? '' : 'hidden'}">
-                        <label class="text-sm font-medium text-slate-300">Designation</label>
-                        <input type="text" name="designation" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="e.g., Manager" ${isSignup ? 'required' : ''} />
+                        <label class="text-sm font-medium text-slate-300">Email</label>
+                        <input type="email" name="email" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="admin@example.com" required />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-300">Password</label>
@@ -1183,7 +1156,7 @@
                         <span class="text-xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</span>
                     </div>
                     <div class="flex items-center gap-4">
-                        <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">${adminUser.username} (${adminUser.designation})</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">${adminUser.email}</span>
                         <button id="settings-btn" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
                             ${icons.settings}
                         </button>
@@ -1277,6 +1250,7 @@
             renderClearancesList();
         });
 
+        // FIX: Changed query to fetch all and filter client-side to avoid index issues
         const requestsQuery = query(collection(db, "clearanceRequests"), orderBy("createdAt", "desc"));
         unsubRequests = onSnapshot(requestsQuery, snap => {
             clearanceRequests = snap.docs
@@ -1291,7 +1265,7 @@
             }
         });
         
-        renderVVIPListForSettings(); 
+        renderVVIPListForSettings(); // Initial render for VVIP list in settings
     };
             
     const renderRequestsList = () => {
@@ -1326,9 +1300,7 @@
             return;
         }
 
-        list.innerHTML = clearances.map(c => {
-            const updateInfo = formatUpdateString(c);
-            return `
+        list.innerHTML = clearances.map(c => `
             <details class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group animate-fade-in border border-gray-200 dark:border-gray-700">
                 <summary class="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                     <div class="flex items-center gap-3">
@@ -1371,13 +1343,8 @@
                         </div>
                         ${c.notes ? `<div class="col-span-full"><p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Notes</p><p class="font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap">${c.notes}</p></div>` : ""}
                     </div>
-                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                        <p>${formatApprovalString(c)}</p>
-                        ${updateInfo ? `<p class="text-yellow-600 dark:text-yellow-400">${updateInfo}</p>` : ''}
-                    </div>
                 </div>
-            </details>
-        `}).join("");
+            </details>`).join("");
     };
 
     const renderVVIPListForSettings = () => {
@@ -1619,14 +1586,12 @@
         unsubRequests?.();
         unsubConfig?.();
         unsubVVIPs?.();
-        currentAdminProfile = null; // Reset profile on auth change
 
         if (user && !user.isAnonymous) { // Admin user
             appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
             try {
                 const adminDoc = await getDoc(doc(db, "admins", user.uid));
                 if (adminDoc.exists()) {
-                    currentAdminProfile = { uid: user.uid, ...adminDoc.data() };
                     unsubVVIPs = onSnapshot(query(collection(db, "vvips"), orderBy("vehicleNumber")), snap => {
                         vvips = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                         if (document.getElementById('vvip-list-container-settings')) {
@@ -1641,11 +1606,11 @@
                         } else {
                             userPasswordConfig = snap.data();
                         }
-                        renderAdminDashboard(currentAdminProfile);
+                        renderAdminDashboard(user);
                     });
 
                 } else {
-                    console.log("User not found in admins collection, signing out.");
+                    console.log("User not found in admins collection");
                     await signOut(auth);
                 }
             } catch (error) {
@@ -1925,12 +1890,6 @@
                         button.disabled = false;
                         return;
                     }
-                    
-                    if (!currentAdminProfile) {
-                        showNotification("Error: Admin profile not loaded. Cannot approve.", "error");
-                        button.disabled = false;
-                        return;
-                    }
 
                     const clearancePayload = {
                         ownerName: data.ownerName,
@@ -1942,17 +1901,11 @@
                         escortRequired: !!data.escortRequired,
                         notes: data.notes || "",
                         createdAt: Timestamp.now(),
-                        approvedByUsername: currentAdminProfile.username,
-                        approvedByDesignation: currentAdminProfile.designation,
-                        approvedAt: Timestamp.now(),
-                        approvedByUid: auth.currentUser?.uid
+                        approvedBy: auth.currentUser?.uid
                     };
 
                     await addDoc(collection(db, "vehicleClearances"), clearancePayload);
-                    await updateDoc(doc(db, "clearanceRequests", requestId), { 
-                        status: 'approved',
-                        approvedBy: `${currentAdminProfile.username} (${currentAdminProfile.designation})`
-                    });
+                    await updateDoc(doc(db, "clearanceRequests", requestId), { status: 'approved' });
                     
                     showNotification("Request approved and clearance created.");
                     document.getElementById("modal-container").innerHTML = "";
@@ -1995,12 +1948,6 @@
                         button.disabled = false;
                         return;
                     }
-                    
-                    if (!currentAdminProfile) {
-                        showNotification("Error: Admin profile not loaded. Cannot save.", "error");
-                        button.disabled = false;
-                        return;
-                    }
 
                     const payload = {
                         ownerName: data.ownerName,
@@ -2016,18 +1963,10 @@
                     const editingId = button.dataset.id;
 
                     if (editingId) {
-                        payload.lastUpdatedByUsername = currentAdminProfile.username;
-                        payload.lastUpdatedByDesignation = currentAdminProfile.designation;
-                        payload.lastUpdatedAt = Timestamp.now();
                         await updateDoc(doc(db, "vehicleClearances", editingId), payload);
                         showNotification("Clearance updated successfully.");
                     } else {
-                        payload.createdAt = Timestamp.now();
-                        payload.createdByUid = auth.currentUser?.uid;
-                        payload.approvedByUsername = currentAdminProfile.username;
-                        payload.approvedByDesignation = currentAdminProfile.designation;
-                        payload.approvedAt = Timestamp.now();
-                        await addDoc(collection(db, "vehicleClearances"), payload);
+                        await addDoc(collection(db, "vehicleClearances"), { ...payload, createdAt: Timestamp.now(), createdBy: auth.currentUser?.uid });
                         showNotification("Clearance saved successfully.");
                     }
                     document.getElementById("modal-container").innerHTML = "";
@@ -2094,45 +2033,16 @@
                     showNotification("Incorrect password.", "error");
                 }
             } else if (form.id === "auth-form") {
-                const { email, password, inviteCode, username, designation } = getFormObj(form);
+                const { email, password, inviteCode } = getFormObj(form);
                 if (authMode === "login") {
-                    const q = query(collection(db, "admins"), where("username", "==", username));
-                    const querySnapshot = await getDocs(q);
-                    
-                    if (querySnapshot.empty) {
-                        showNotification("Invalid username or password.", "error");
-                        return;
-                    }
-                    
-                    const adminData = querySnapshot.docs[0].data();
-                    const userEmail = adminData.email;
-
-                    if (!userEmail) {
-                        showNotification("Login error: Account is missing an email.", "error");
-                        return;
-                    }
-
-                    await signInWithEmailAndPassword(auth, userEmail, password);
-
-                } else { // signup
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
                     if (inviteCode !== ADMIN_INVITE_CODE) {
                         showNotification("Invalid admin invite code.", "error");
                         return;
                     }
-                    const q = query(collection(db, "admins"), where("username", "==", username));
-                    const querySnapshot = await getDocs(q);
-                    if (!querySnapshot.empty) {
-                        showNotification("Username is already taken.", "error");
-                        return;
-                    }
-
                     const cred = await createUserWithEmailAndPassword(auth, email, password);
-                    await setDoc(doc(db, "admins", cred.user.uid), { 
-                        email, 
-                        username,
-                        designation,
-                        createdAt: Timestamp.now() 
-                    });
+                    await setDoc(doc(db, "admins", cred.user.uid), { email, createdAt: Timestamp.now() });
                     showNotification("Admin account created successfully!");
                 }
             } else if (form.id === "user-password-form") {
