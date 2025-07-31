@@ -914,7 +914,13 @@
             const stats = {};
             for (const collectionName of collectionsToCount) {
                 try {
-                    const snapshot = await getDocs(collection(db, collectionName));
+                    let snapshot;
+                    if (collectionName === 'clearanceRequests') {
+                        const q = query(collection(db, collectionName), where("status", "==", "pending"));
+                        snapshot = await getDocs(q);
+                    } else {
+                        snapshot = await getDocs(collection(db, collectionName));
+                    }
                     stats[collectionName] = snapshot.size;
                 } catch (err) {
                     console.error(`Could not count collection '${collectionName}':`, err);
@@ -929,7 +935,6 @@
                 <div class="col-span-2 text-xs text-gray-500 dark:text-gray-400 mt-2">Last updated: ${new Date().toLocaleTimeString()}</div>
             `;
         } catch (error) {
-            // This outer catch should ideally not be hit now, but as a fallback.
             console.error('Error loading database stats:', error);
             statsContainer.innerHTML = '<div class="col-span-2 text-red-500 text-center p-4">Error loading statistics</div>';
         }
@@ -2237,7 +2242,11 @@
             }
         } catch (error) {
             console.error("Click handler error:", error);
-            showNotification("An error occurred. Please try again.", "error");
+            if (error.message.includes("Missing or insufficient permissions")) {
+                 showNotification("Error: Insufficient permissions for this action.", "error");
+            } else {
+                 showNotification("An error occurred. Please try again.", "error");
+            }
         }
     });
 
