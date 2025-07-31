@@ -185,8 +185,18 @@
 
     // --- START: Direct Audio Search Implementation ---
     
-    // — Audio Context and Beep Player —
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    // — Audio Context and Beep Player (with deferred initialization) —
+    let audioContext = null;
+    const initializeAudioContext = () => {
+        if (!audioContext) {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.error("AudioContext could not be created:", e);
+            }
+        }
+    };
+
     const playBeep = (frequency = 440, duration = 100, type = 'sine') => {
         if (!audioContext) return;
         try {
@@ -323,6 +333,9 @@
 
     // — Voice Search Control Functions —
     const startVoiceSearch = (buttonElement) => {
+        // Initialize audio context on first user interaction
+        initializeAudioContext();
+
         if (!recognition) {
             if (!initializeVoiceRecognition()) {
                 showNotification("Voice search not supported on this device", "error");
