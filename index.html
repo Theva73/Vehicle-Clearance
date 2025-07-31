@@ -116,12 +116,15 @@
         100% { left: 100%; }
     }
 
+    /* --- START: ENHANCEMENT 2.0 - CHANGE 1 --- */
     .car-plate-text {
         font-family: 'Courier New', monospace;
         font-weight: 900;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         letter-spacing: 4px;
+        color: white !important;
     }
+    /* --- END: ENHANCEMENT 2.0 - CHANGE 1 --- */
 
     .search-highlight {
         background: linear-gradient(45deg, #fbbf24, #f59e0b);
@@ -1050,10 +1053,16 @@
                             <option>Car</option><option>Motorcycle</option><option>Van</option><option>Tow Truck</option><option>Lorry</option><option>Bus</option><option>Others</option>
                         </select>
                     </div>
+                    
+                    <!-- START: ENHANCEMENT 2.0 - CHANGE 2A -->
                     <div>
                         <label class="text-sm font-medium text-slate-300">Location</label>
-                        <input name="location" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                        <select name="location" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
+                            <option value="PCC" selected>PCC</option>
+                        </select>
                     </div>
+                    <!-- END: ENHANCEMENT 2.0 - CHANGE 2A -->
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-slate-300">Entry Date</label>
@@ -1536,13 +1545,22 @@
     const renderClearancesList = () => {
         const list = document.getElementById("clearance-list");
         if (!list) return;
+
+        // --- START: ENHANCEMENT 2.0 - CHANGE 3 ---
+        const now = new Date();
+        const activeClearances = clearances.filter(c => {
+            const expiryDate = c.expiryDate.toDate();
+            expiryDate.setHours(23, 59, 59, 999); // Set to end of day
+            return expiryDate >= now;
+        });
         
-        if (clearances.length === 0) {
-            list.innerHTML = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-gray-700">No clearances found. Add one to get started!</div>`;
+        if (activeClearances.length === 0) {
+            list.innerHTML = `<div class="text-center p-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-gray-700">No active clearances found. Add one to get started!</div>`;
             return;
         }
 
-        list.innerHTML = clearances.map(c => {
+        list.innerHTML = activeClearances.map(c => {
+        // --- END: ENHANCEMENT 2.0 - CHANGE 3 ---
             const approvalInfo = formatApprovalString(c);
             const updateInfo = formatUpdateString(c);
 
@@ -1708,10 +1726,25 @@
                             <input type="date" name="expiryDate" value="${toISODate(request.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                     </div>
+                    
+                    <!-- START: ENHANCEMENT 2.0 - CHANGE 2B -->
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <input name="location" value="${request.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        <select name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                            <option value="PCC" ${(request.location || '') === 'PCC' ? 'selected' : ''}>PCC</option>
+                            <option value="Foyer Parking" ${(request.location || '') === 'Foyer Parking' ? 'selected' : ''}>Foyer Parking</option>
+                            <option value="Basement 1" ${(request.location || '') === 'Basement 1' ? 'selected' : ''}>Basement 1</option>
+                            <option value="Basement 2" ${(request.location || '') === 'Basement 2' ? 'selected' : ''}>Basement 2</option>
+                            <option value="Basement 3" ${(request.location || '') === 'Basement 3' ? 'selected' : ''}>Basement 3</option>
+                            <option value="Basement 4" ${(request.location || '') === 'Basement 4' ? 'selected' : ''}>Basement 4</option>
+                            <option value="Courtyard" ${(request.location || '') === 'Courtyard' ? 'selected' : ''}>Courtyard</option>
+                            <option value="E3" ${(request.location || '') === 'E3' ? 'selected' : ''}>E3</option>
+                            <option value="Other" ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? 'selected' : ''}>Other (Free Text)</option>
+                        </select>
+                        <input name="customLocation" id="custom-location-review" class="mt-2 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? '' : 'hidden'}" placeholder="Enter custom location..." value="${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? (request.location || '') : ''}" />
                     </div>
+                    <!-- END: ENHANCEMENT 2.0 - CHANGE 2B -->
+
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
                         <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${request.notes || ''}</textarea>
@@ -1773,10 +1806,25 @@
                             <input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                     </div>
+                    
+                    <!-- START: ENHANCEMENT 2.0 - CHANGE 2C -->
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <input name="location" value="${edit?.location || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        <select name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                            <option value="PCC" ${(edit?.location || '') === 'PCC' ? 'selected' : ''}>PCC</option>
+                            <option value="Foyer Parking" ${(edit?.location || '') === 'Foyer Parking' ? 'selected' : ''}>Foyer Parking</option>
+                            <option value="Basement 1" ${(edit?.location || '') === 'Basement 1' ? 'selected' : ''}>Basement 1</option>
+                            <option value="Basement 2" ${(edit?.location || '') === 'Basement 2' ? 'selected' : ''}>Basement 2</option>
+                            <option value="Basement 3" ${(edit?.location || '') === 'Basement 3' ? 'selected' : ''}>Basement 3</option>
+                            <option value="Basement 4" ${(edit?.location || '') === 'Basement 4' ? 'selected' : ''}>Basement 4</option>
+                            <option value="Courtyard" ${(edit?.location || '') === 'Courtyard' ? 'selected' : ''}>Courtyard</option>
+                            <option value="E3" ${(edit?.location || '') === 'E3' ? 'selected' : ''}>E3</option>
+                            <option value="Other" ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? 'selected' : ''}>Other (Free Text)</option>
+                        </select>
+                        <input name="customLocation" id="custom-location-edit" class="mt-2 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? '' : 'hidden'}" placeholder="Enter custom location..." value="${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? (edit?.location || '') : ''}" />
                     </div>
+                    <!-- END: ENHANCEMENT 2.0 - CHANGE 2C -->
+
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
                         <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${edit?.notes || ''}</textarea>
@@ -2094,11 +2142,13 @@
                     }
 
                     const approvalTimestamp = Timestamp.now();
+                    
+                    // --- START: ENHANCEMENT 2.0 - CHANGE 2E ---
                     const clearancePayload = {
                         ownerName: data.ownerName,
                         vehicleNumber: data.vehicleNumber.toUpperCase(),
                         vehicleType: data.vehicleType,
-                        location: data.location,
+                        location: data.location === "Other" ? data.customLocation : data.location,
                         entryDate: Timestamp.fromDate(entryDate),
                         expiryDate: Timestamp.fromDate(expiryDate),
                         escortRequired: !!data.escortRequired,
@@ -2118,6 +2168,7 @@
                             notes: `Approved from request ID: ${requestId}`
                         }]
                     };
+                    // --- END: ENHANCEMENT 2.0 - CHANGE 2E ---
 
                     await addDoc(collection(db, "vehicleClearances"), clearancePayload);
                     
@@ -2177,16 +2228,19 @@
                     }
 
                     const currentTimestamp = Timestamp.now();
+                    
+                    // --- START: ENHANCEMENT 2.0 - CHANGE 2E ---
                     const payload = {
                         ownerName: data.ownerName,
                         vehicleNumber: data.vehicleNumber.toUpperCase(),
                         vehicleType: data.vehicleType,
-                        location: data.location,
+                        location: data.location === "Other" ? data.customLocation : data.location,
                         entryDate: Timestamp.fromDate(entryDate),
                         expiryDate: Timestamp.fromDate(expiryDate),
                         escortRequired: !!data.escortRequired,
                         notes: data.notes || ""
                     };
+                    // --- END: ENHANCEMENT 2.0 - CHANGE 2E ---
                     
                     const editingId = button.dataset.id;
 
@@ -2439,12 +2493,13 @@
                     return;
                 }
 
+                // --- START: ENHANCEMENT 2.0 - CHANGE 2E ---
                 const payload = {
                     requesterName: data.requesterName,
                     requesterId: currentUser.uid,
                     vehicleNumber: data.vehicleNumber.toUpperCase(),
                     vehicleType: data.vehicleType,
-                    location: data.location,
+                    location: data.location === "Other" ? data.customLocation : data.location,
                     entryDate: Timestamp.fromDate(entryDate),
                     expiryDate: Timestamp.fromDate(expiryDate),
                     escortRequired: !!data.escortRequired,
@@ -2452,6 +2507,7 @@
                     status: "pending",
                     createdAt: Timestamp.now()
                 };
+                // --- END: ENHANCEMENT 2.0 - CHANGE 2E ---
                 
                 try {
                     const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
@@ -2477,6 +2533,25 @@
             if (button) button.disabled = false;
         }
     });
+
+    // --- START: ENHANCEMENT 2.0 - CHANGE 2D ---
+    // Handle location dropdown changes
+    document.body.addEventListener("change", (e) => {
+        if (e.target.name === "location") {
+            const customInput = e.target.closest('form')?.querySelector('input[name="customLocation"]');
+            if (customInput) {
+                if (e.target.value === "Other") {
+                    customInput.classList.remove('hidden');
+                    customInput.required = true;
+                } else {
+                    customInput.classList.add('hidden');
+                    customInput.required = false;
+                    customInput.value = '';
+                }
+            }
+        }
+    });
+    // --- END: ENHANCEMENT 2.0 - CHANGE 2D ---
 
     // Input and reset event listeners
     document.body.addEventListener("input", e => {
