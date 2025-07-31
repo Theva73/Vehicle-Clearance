@@ -44,24 +44,28 @@
         transition: background-color 0.3s ease-in-out;
     }
 
-    /* --- START: Direct Audio Search CSS --- */
-    .voice-search-btn.listening {
+    /* --- START: Floating Draggable Mic CSS --- */
+    #floating-mic-btn {
+        position: fixed;
+        z-index: 50;
+        cursor: grab;
+        transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+    #floating-mic-btn.dragging {
+        cursor: grabbing;
+        transform: scale(1.1);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    #floating-mic-btn.listening {
         animation: pulse-ring 1.5s infinite;
         background-color: #ef4444; /* red-500 */
     }
-
     @keyframes pulse-ring {
-        0% {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-        }
-        70% {
-            box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-        }
-        100% {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-        }
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
-    /* --- END: Direct Audio Search CSS --- */
+    /* --- END: Floating Draggable Mic CSS --- */
 
     .action-buttons {
         position: relative;
@@ -205,7 +209,6 @@
     let recognition = null;
     let isVoiceSearchActive = false;
     let voiceSearchTimeout = null;
-    let currentVoiceInput = null;
     let currentVoiceButton = null;
 
     // — Voice Recognition Setup —
@@ -218,7 +221,7 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.continuous = false;
-        recognition.interimResults = false; // No need for interim with direct feedback
+        recognition.interimResults = false;
         recognition.lang = 'en-US';
         recognition.maxAlternatives = 3;
 
@@ -249,7 +252,7 @@
         recognition.onend = () => {
             console.log('🎤 Voice recognition ended');
             if (isVoiceSearchActive) {
-               stopVoiceSearch(); // Ensure cleanup if ended unexpectedly
+               stopVoiceSearch();
             }
         };
 
@@ -319,7 +322,7 @@
     };
 
     // — Voice Search Control Functions —
-    const startVoiceSearch = (inputElement, buttonElement) => {
+    const startVoiceSearch = (buttonElement) => {
         if (!recognition) {
             if (!initializeVoiceRecognition()) {
                 showNotification("Voice search not supported on this device", "error");
@@ -332,7 +335,6 @@
             return;
         }
 
-        currentVoiceInput = inputElement;
         currentVoiceButton = buttonElement;
         
         try {
@@ -364,20 +366,89 @@
             currentVoiceButton.classList.remove('listening');
         }
         isVoiceSearchActive = false;
-        currentVoiceInput = null;
         currentVoiceButton = null;
     };
 
     const completeVoiceSearch = (detectedNumber) => {
-        if (currentVoiceInput && detectedNumber) {
-            currentVoiceInput.value = detectedNumber;
-            currentVoiceInput.dispatchEvent(new Event('input', { bubbles: true }));
+        const inputElement = document.getElementById('daily-clearance-search-input');
+        if (inputElement && detectedNumber) {
+            inputElement.value = detectedNumber;
+            inputElement.dispatchEvent(new Event('input', { bubbles: true }));
             showNotification(`Vehicle number "${detectedNumber}" detected!`);
         }
         stopVoiceSearch();
     };
 
     // --- END: Direct Audio Search Implementation ---
+    
+    // --- START: Draggable Element Logic ---
+    const makeMicDraggable = (element) => {
+        let isDragging = false;
+        let wasDragged = false;
+        let offsetX, offsetY;
+        
+        const move = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            wasDragged = true;
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            let newX = clientX - offsetX;
+            let newY = clientY - offsetY;
+
+            // Constrain to viewport
+            const rect = element.getBoundingClientRect();
+            newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
+            newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+
+            element.style.left = `${newX}px`;
+            element.style.top = `${newY}px`;
+        };
+
+        const down = (e) => {
+            isDragging = true;
+            wasDragged = false;
+            element.classList.add('dragging');
+
+            const rect = element.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            offsetX = clientX - rect.left;
+            offsetY = clientY - rect.top;
+
+            document.addEventListener('mousemove', move);
+            document.addEventListener('touchmove', move, { passive: false });
+            document.addEventListener('mouseup', up);
+            document.addEventListener('touchend', up);
+        };
+
+        const up = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            element.classList.remove('dragging');
+
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('touchmove', move);
+            document.removeEventListener('mouseup', up);
+            document.removeEventListener('touchend', up);
+
+            // Save position if it was dragged
+            if (wasDragged) {
+                localStorage.setItem('micButtonPos', JSON.stringify({ top: element.style.top, left: element.style.left }));
+            } else {
+                // If not dragged, it's a click. Trigger voice search.
+                startVoiceSearch(element);
+            }
+        };
+
+        element.addEventListener('mousedown', down);
+        element.addEventListener('touchstart', down);
+    };
+    // --- END: Draggable Element Logic ---
+
 
     // --- Utility Functions ---
     const goBack = () => {
@@ -989,14 +1060,9 @@
                         <label class="text-sm font-medium text-slate-300">Your Name</label>
                         <input name="requesterName" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
-                    <div class="flex gap-2">
-                        <div class="w-full">
-                            <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
-                            <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
-                        </div>
-                        <button type="button" class="voice-search-btn self-end p-3 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors" title="Voice Search">
-                            <span class="w-6 h-6">${icons.mic}</span>
-                        </button>
+                    <div>
+                        <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
+                        <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Type</label>
@@ -1220,6 +1286,13 @@
 
     const renderUserDashboard = (user, vehicleFilter = null) => {
         document.body.className = 'bg-gray-100 dark:bg-gray-900';
+        
+        // Load mic button position from localStorage or set default
+        const savedPos = JSON.parse(localStorage.getItem('micButtonPos'));
+        const initialPosStyle = savedPos 
+            ? `top: ${savedPos.top}; left: ${savedPos.left};`
+            : `bottom: 1.5rem; right: 6rem;`; // Default position near VVIP button
+
         appRoot.innerHTML = `
         <div class="w-full min-h-screen p-2 md:p-4 flex justify-center">
             <main class="w-full max-w-4xl">
@@ -1239,14 +1312,17 @@
                 <div class="mb-6">
                     <form id="daily-clearance-search-form" class="flex gap-2">
                         <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
-                        <button type="button" class="voice-search-btn px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors" title="Voice Search">
-                            <span class="w-4 h-4">${icons.mic}</span>
-                        </button>
                         <button type="reset" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
                     </form>
                 </div>
                 <div id="user-clearance-list-container" class="space-y-4"></div>
             </main>
+            
+            <!-- Floating Mic Button -->
+            <button id="floating-mic-btn" class="w-16 h-16 bg-purple-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-purple-700" style="${initialPosStyle}" title="Voice Search (Drag to move)">
+                <span class="w-8 h-8">${icons.mic}</span>
+            </button>
+
             <button id="show-vvip-btn" class="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transform hover:scale-110 transition-transform z-40" title="Show VVIP List">
                 <span class="w-8 h-8 text-yellow-300">${icons.star}</span>
             </button>
@@ -1254,6 +1330,12 @@
         </div>`;
         
         renderClearanceListForUser(vehicleFilter);
+        
+        // Make the new button draggable
+        const micBtn = document.getElementById('floating-mic-btn');
+        if (micBtn) {
+            makeMicDraggable(micBtn);
+        }
     };
 
     const renderAdminDashboard = (adminUser) => {
@@ -1798,6 +1880,11 @@
         
         if (!button) return;
 
+        // Prevent draggable button from triggering other handlers
+        if (button.id === 'floating-mic-btn') {
+            return;
+        }
+
         if (button.classList.contains('edit-btn') || button.classList.contains('delete-btn')) {
             e.preventDefault();
             e.stopPropagation();
@@ -1860,15 +1947,6 @@
                 // Load stats when database tab is opened
                 if (tab === 'database') {
                     await updateDatabaseStats();
-                }
-                return;
-            }
-
-            if (button.classList.contains('voice-search-btn')) {
-                e.preventDefault();
-                const input = button.closest('form, .flex')?.querySelector('input');
-                if (input) {
-                    startVoiceSearch(input, button);
                 }
                 return;
             }
