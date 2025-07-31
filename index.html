@@ -88,7 +88,6 @@
         to { transform: rotate(360deg); }
     }
 
-    /* --- START: CHANGE 3A --- */
     /* Enhanced car plate display styles */
     .car-plate-display {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
@@ -136,7 +135,6 @@
         from { filter: drop-shadow(0 0 5px #fbbf24); }
         to { filter: drop-shadow(0 0 15px #f59e0b); }
     }
-    /* --- END: CHANGE 3A --- */
   </style>
 
 </head>
@@ -1040,12 +1038,10 @@
                         <input name="requesterName" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
                     
-                    <!-- START: CHANGE 1 -->
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
                         <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
-                    <!-- END: CHANGE 1 -->
 
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Type</label>
@@ -1204,13 +1200,14 @@
         }
     };
 
+    // --- START: MODIFIED FUNCTION ---
     const renderClearanceListForUser = (vehicleFilter = null) => {
         const listContainer = document.getElementById('user-clearance-list-container');
         if (!listContainer) return;
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         let dailyClearances = clearances.filter(c => {
             const entryDate = c.entryDate.toDate();
             entryDate.setHours(0, 0, 0, 0);
@@ -1224,63 +1221,68 @@
         }
 
         let listHTML = '';
+
         if (dailyClearances.length > 0) {
-            // --- START: CHANGE 3C ---
-            listHTML = dailyClearances.map(c => {
-                const isExactMatch = vehicleFilter && c.vehicleNumber === vehicleFilter;
+            // If there's a search filter and exactly one result, show the enhanced plate.
+            if (vehicleFilter && dailyClearances.length === 1) {
+                const c = dailyClearances[0];
+                listHTML += `
+                <!-- Enhanced Car Plate Display for Single Match -->
+                <div class="car-plate-display rounded-2xl p-6 text-center mb-4 animate-fade-in">
+                    <div class="car-plate-text text-3xl md:text-5xl text-white mb-2">
+                        <span class="search-highlight">${c.vehicleNumber}</span>
+                    </div>
+                    <div class="absolute top-2 right-2 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
+                            ✓ CLEARED
+                        </span>
+                    </div>
+                </div>
+                `;
+            }
+
+            // Always render the list of results
+            listHTML += dailyClearances.map(c => {
+                // Check if this item is the single search result to apply special styling
+                const isSingleSearchResult = vehicleFilter && dailyClearances.length === 1 && c.id === dailyClearances[0].id;
+                
                 return `
-                    ${isExactMatch ? `
-                    <!-- Enhanced Car Plate Display for Exact Match -->
-                    <div class="car-plate-display rounded-2xl p-6 text-center mb-4 animate-fade-in">
-                        <div class="car-plate-text text-3xl md:text-5xl text-white mb-2">
-                            <span class="search-highlight">${c.vehicleNumber}</span>
+                <details class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden group animate-fade-in ${isSingleSearchResult ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}" ${isSingleSearchResult ? 'open' : ''}>
+                    <summary class="flex justify-between items-center px-5 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                        <div class="flex items-center gap-4">
+                            <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90">${icons.chevronRight}</span>
+                            <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
                         </div>
-                        <div class="text-yellow-200 text-xs font-medium tracking-wider">SINGAPORE</div>
-                        <div class="absolute top-2 right-2 flex items-center gap-2">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
-                                ✓ CLEARED
-                            </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Cleared</span>
+                    </summary>
+                    <div class="px-5 pb-5 border-t border-gray-200 dark:border-gray-700">
+                        <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
+                             <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Owner</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${c.ownerName}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Location</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Escort</p>
+                                <p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
+                            </div>
+                             <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Valid Until</p>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
+                            </div>
+                            ${c.notes ? `<div class="col-span-2"><p class="text-xs text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-wrap">${c.notes}</p></div>` : ""}
                         </div>
                     </div>
-                    ` : ''}
-                    
-                    <details class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden group animate-fade-in ${isExactMatch ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}">
-                        <summary class="flex justify-between items-center px-5 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
-                            <div class="flex items-center gap-4">
-                                <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90">${icons.chevronRight}</span>
-                                <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400 ${isExactMatch ? 'text-2xl' : ''}">${c.vehicleNumber}</p>
-                            </div>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Cleared</span>
-                        </summary>
-                        <div class="px-5 pb-5 border-t border-gray-200 dark:border-gray-700">
-                            <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
-                                 <div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Owner</p>
-                                    <p class="font-semibold text-gray-800 dark:text-gray-200">${c.ownerName}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Location</p>
-                                    <p class="font-semibold text-gray-800 dark:text-gray-200">${c.location}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Escort</p>
-                                    <p class="font-semibold ${c.escortRequired ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${c.escortRequired ? 'Required' : 'Not Required'}</p>
-                                </div>
-                                 <div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Valid Until</p>
-                                    <p class="font-semibold text-gray-800 dark:text-gray-200">${formatDate(c.expiryDate)}</p>
-                                </div>
-                                ${c.notes ? `<div class="col-span-2"><p class="text-xs text-gray-500 dark:text-gray-400">Notes</p><p class="font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-wrap">${c.notes}</p></div>` : ""}
-                            </div>
-                        </div>
-                    </details>
-                `;
+                </details>
+            `;
             }).join("");
-            // --- END: CHANGE 3C ---
-        } else {
-            // --- START: CHANGE 3B ---
-            if (vehicleFilter && dailyClearances.length === 0) {
-                // Enhanced display when search yields no results but shows the searched term
+
+        } else { // No clearances found at all
+            if (vehicleFilter) {
+                // Enhanced display when search yields no results
                 listHTML = `
                     <div class="space-y-6 animate-fade-in">
                         <!-- Car Plate Display -->
@@ -1291,7 +1293,6 @@
                             <div class="car-plate-text text-4xl md:text-6xl text-white mb-2">
                                 <span class="search-highlight">${vehicleFilter}</span>
                             </div>
-                            <div class="text-yellow-200 text-sm font-medium tracking-wider">SINGAPORE</div>
                             <div class="absolute top-2 right-2 text-xs text-yellow-200 opacity-70">🔍 SEARCHED</div>
                         </div>
                         
@@ -1308,7 +1309,7 @@
                         </div>
                     </div>`;
             } else {
-                // Regular no clearances message
+                // Regular no clearances message for the day
                 listHTML = `
                     <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md animate-fade-in">
                         <div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div>
@@ -1316,10 +1317,10 @@
                         <p class="mt-1 text-gray-500 dark:text-gray-400">There are no vehicles with clearance for today.</p>
                     </div>`;
             }
-            // --- END: CHANGE 3B ---
         }
         listContainer.innerHTML = listHTML;
     };
+    // --- END: MODIFIED FUNCTION ---
 
     const renderUserDashboard = (user, vehicleFilter = null) => {
         document.body.className = 'bg-gray-100 dark:bg-gray-900';
@@ -1339,10 +1340,8 @@
                     </button>
                 </div>
                 
-                <!-- START: CHANGE 2 -->
                 <div class="mb-6 sticky top-0 bg-gray-100 dark:bg-gray-900 z-20 py-4 -mx-2 px-2 md:-mx-4 md:px-4">
                     <form id="daily-clearance-search-form" class="flex gap-2">
-                <!-- END: CHANGE 2 -->
                         <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
                         <button type="button" class="voice-search-btn px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors" title="Voice Search">
                             <span class="w-4 h-4">${icons.mic}</span>
@@ -2500,4 +2499,3 @@
   </script>
 </body>
 </html>
-
