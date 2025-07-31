@@ -607,13 +607,30 @@
                 const expiry = c.expiryDate.toDate();
                 expiry.setHours(23, 59, 59, 999); // Set to end of day for accurate comparison
                 const status = now <= expiry ? 'ACTIVE' : 'EXPIRED';
-                 reportData.push([
+                
+                // --- START: ENHANCEMENT 4.0 - CHANGE 6, STEP 1 ---
+                // Extract escort info from notes
+                let escortInfo = 'No';
+                if (c.escortRequired) {
+                    escortInfo = 'Yes';
+                    if (c.notes && c.notes.includes('[ Escorted by:')) {
+                        const match = c.notes.match(/\[\s*Escorted\s+by:\s*([^\]]*)\]/i);
+                        if (match && match[1].trim()) {
+                            escortInfo += `\n[ Escorted by: ${match[1].trim()} ]`;
+                        } else {
+                            escortInfo += '\n[ Escorted by:             ]';
+                        }
+                    }
+                }
+
+                reportData.push([
                     formatVehicleNumber(c.vehicleNumber || 'N/A'),
-                    c.vehicleType || 'N/A',
+                    escortInfo,
                     formatDate(c.expiryDate),
                     c.location || 'N/A',
                     status
                 ]);
+                // --- END: ENHANCEMENT 4.0 - CHANGE 6, STEP 1 ---
                 processedVehicleNumbers.add(c.vehicleNumber);
             });
 
@@ -631,13 +648,29 @@
             recentRequests.forEach(r => {
                  // Only add if this vehicle number hasn't been added from the active clearances
                  if (!processedVehicleNumbers.has(r.vehicleNumber)) {
+                    // --- START: ENHANCEMENT 4.0 - CHANGE 6, STEP 2 ---
+                    // Extract escort info from request notes
+                    let requestEscortInfo = 'No';
+                    if (r.escortRequired) {
+                        requestEscortInfo = 'Yes';
+                        if (r.notes && r.notes.includes('[ Escorted by:')) {
+                            const match = r.notes.match(/\[\s*Escorted\s+by:\s*([^\]]*)\]/i);
+                            if (match && match[1].trim()) {
+                                requestEscortInfo += `\n[ Escorted by: ${match[1].trim()} ]`;
+                            } else {
+                                requestEscortInfo += '\n[ Escorted by:             ]';
+                            }
+                        }
+                    }
+
                      reportData.push([
                         formatVehicleNumber(r.vehicleNumber || 'N/A'),
-                        r.vehicleType || 'N/A',
+                        requestEscortInfo,
                         formatDate(r.expiryDate),
                         r.location || 'N/A',
                         r.status?.toUpperCase() || 'PENDING'
                      ]);
+                     // --- END: ENHANCEMENT 4.0 - CHANGE 6, STEP 2 ---
                      processedVehicleNumbers.add(r.vehicleNumber);
                  }
             });
@@ -658,7 +691,9 @@
                 doc.text("No valid clearances or requests found.", 14, 55);
             } else {
                 doc.autoTable({
-                    head: [['Vehicle No.', 'Type', 'Expiry Date', 'Location', 'Status']], 
+                    // --- START: ENHANCEMENT 4.0 - CHANGE 6, STEP 3 ---
+                    head: [['Vehicle No.', 'Escort Required', 'Expiry Date', 'Location', 'Status']], 
+                    // --- END: ENHANCEMENT 4.0 - CHANGE 6, STEP 3 ---
                     body: reportData,
                     startY: 45,
                     theme: 'grid',
@@ -675,13 +710,15 @@
                         valign: 'middle',
                         overflow: 'linebreak'
                     },
+                    // --- START: ENHANCEMENT 4.0 - CHANGE 7 ---
                     columnStyles: {
                         0: { halign: 'left', fontStyle: 'bold' }, 
-                        1: { halign: 'center' }, 
+                        1: { halign: 'left', cellWidth: 30 }, 
                         2: { halign: 'center' }, 
                         3: { halign: 'left' }, 
                         4: { halign: 'center', fontStyle: 'bold' } 
                     },
+                    // --- END: ENHANCEMENT 4.0 - CHANGE 7 ---
                     didParseCell: (data) => {
                         if (data.section === 'body' && data.column.index === 4) { 
                             const status = data.cell.raw;
@@ -1076,14 +1113,14 @@
                             <input type="date" name="expiryDate" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                         </div>
                     </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" />
-                        <label class="ml-2 text-slate-300">Escort Required</label>
-                    </div>
+                    
+                    <!-- START: ENHANCEMENT 4.0 - CHANGE 2 -->
                     <div>
-                        <label class="text-sm font-medium text-slate-300">Notes (optional)</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white"></textarea>
+                        <label class="text-sm font-medium text-slate-300">Notes</label>
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Purpose of entry"></textarea>
                     </div>
+                    <!-- END: ENHANCEMENT 4.0 - CHANGE 2 -->
+
                     <div class="flex justify-between pt-4">
                         <button id="back-btn" type="button" class="px-6 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Back</button>
                         <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Submit</button>
@@ -1744,7 +1781,9 @@
 
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${request.notes || ''}</textarea>
+                        <!-- START: ENHANCEMENT 4.0 - CHANGE 3, STEP 1 -->
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" id="review-notes-textarea">${request.notes || ''}</textarea>
+                        <!-- END: ENHANCEMENT 4.0 - CHANGE 3, STEP 1 -->
                     </div>
                     <div class="flex items-center">
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${request.escortRequired ? 'checked' : ''}/>
@@ -1822,7 +1861,9 @@
 
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${edit?.notes || ''}</textarea>
+                        <!-- START: ENHANCEMENT 4.0 - CHANGE 3, STEP 2 -->
+                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" id="modal-notes-textarea">${edit?.notes || ''}</textarea>
+                        <!-- END: ENHANCEMENT 4.0 - CHANGE 3, STEP 2 -->
                     </div>
                     <div class="flex items-center">
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${edit?.escortRequired ? 'checked' : ''}/>
@@ -1930,6 +1971,28 @@
             renderLandingPage();
         }
     });
+
+    // --- START: ENHANCEMENT 4.0 - CHANGE 4 ---
+    // Auto-add escort text when checkbox is checked
+    const handleEscortCheckboxChange = (checkbox, textareaId) => {
+        const textarea = document.getElementById(textareaId);
+        if (!textarea) return;
+        
+        const escortText = "[ Escorted by:             ]";
+        
+        if (checkbox.checked) {
+            // Add escort text if not already present
+            if (!textarea.value.includes(escortText)) {
+                // If textarea has content, add a newline before escort text
+                const separator = textarea.value.trim() ? '\n\n' : '';
+                textarea.value = textarea.value + separator + escortText;
+            }
+        } else {
+            // Remove escort text when unchecked
+            textarea.value = textarea.value.replace(new RegExp(`\\s*${escortText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g'), '');
+        }
+    };
+    // --- END: ENHANCEMENT 4.0 - CHANGE 4 ---
 
     // --- Global Event Listener ---
     document.body.addEventListener("click", async (e) => {
@@ -2538,6 +2601,24 @@
                 }
             }
         }
+
+        // --- START: ENHANCEMENT 4.0 - CHANGE 5 ---
+        // Handle escort required checkbox changes
+        if (e.target.name === "escortRequired") {
+            const form = e.target.closest('form');
+            let textareaId = null;
+            
+            if (form && form.id === 'review-form') {
+                textareaId = 'review-notes-textarea';
+            } else if (form && form.id === 'clearance-form') {
+                textareaId = 'modal-notes-textarea';
+            }
+            
+            if (textareaId) {
+                handleEscortCheckboxChange(e.target, textareaId);
+            }
+        }
+        // --- END: ENHANCEMENT 4.0 - CHANGE 5 ---
     });
 
     // Input and reset event listeners
