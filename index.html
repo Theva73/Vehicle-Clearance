@@ -44,9 +44,9 @@
         transition: background-color 0.3s ease-in-out;
     }
 
-    /* Voice Search Improvements */
+    /* --- Injected CSS Fixes for Voice Search --- */
     .voice-modal {
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(12px); /* Increased blur */
         background: rgba(0, 0, 0, 0.6);
     }
     
@@ -54,8 +54,15 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 20px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        animation: breathe 2s ease-in-out infinite; /* Added breathing animation */
     }
     
+    @keyframes breathe {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    /* --- End of Injected CSS --- */
+
     .voice-icon {
         animation: pulse 2s infinite;
     }
@@ -154,12 +161,6 @@
     let authMode = "login";
     let routeHistory = [];
 
-    // --- Voice Recognition Variables ---
-    let recognition = null;
-    let isVoiceSearchActive = false;
-    let voiceSearchTimeout = null;
-    let currentVoiceInput = null;
-
     // --- Gemini API Helper ---
     const callGeminiApi = async (prompt, maxRetries = 3) => {
         let attempts = 0;
@@ -197,8 +198,15 @@
         }
     };
 
+    // --- START: INJECTED JAVASCRIPT AUDIO FIX ---
+    
+    // — Enhanced Voice Recognition Variables —
+    let recognition = null;
+    let isVoiceSearchActive = false;
+    let voiceSearchTimeout = null;
+    let currentVoiceInput = null;
 
-    // — Voice Recognition Setup —
+    // — Improved Voice Recognition Setup —
     const initializeVoiceRecognition = () => {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
             console.warn('Speech recognition not supported');
@@ -208,13 +216,14 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
 
+        // Enhanced configuration for better accuracy
         recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.interimResults = true; // Changed to true for better feedback
         recognition.lang = 'en-US';
-        recognition.maxAlternatives = 1;
+        recognition.maxAlternatives = 3; // Get multiple alternatives
 
         recognition.onstart = () => {
-            console.log('Voice recognition started');
+            console.log('🎤 Voice recognition started');
             isVoiceSearchActive = true;
             updateVoiceSearchUI('listening');
         };
@@ -224,13 +233,31 @@
         };
 
         recognition.onerror = (event) => {
-            console.error('Voice recognition error:', event.error);
-            updateVoiceSearchUI('error');
+            console.error('❌ Voice recognition error:', event.error);
+            let errorMessage = 'Error occurred';
+            
+            switch(event.error) {
+                case 'no-speech':
+                    errorMessage = 'No speech detected';
+                    updateVoiceSearchUI('no-speech');
+                    break;
+                case 'audio-capture':
+                    errorMessage = 'Microphone not accessible';
+                    break;
+                case 'not-allowed':
+                    errorMessage = 'Microphone permission denied';
+                    break;
+                default:
+                    errorMessage = 'Voice recognition failed';
+                    updateVoiceSearchUI('error');
+            }
+            
+            showNotification(errorMessage, "error");
             setTimeout(() => stopVoiceSearch(), 1500);
         };
 
         recognition.onend = () => {
-            console.log('Voice recognition ended');
+            console.log('🎤 Voice recognition ended');
             isVoiceSearchActive = false;
             if (voiceSearchTimeout) {
                 clearTimeout(voiceSearchTimeout);
@@ -240,110 +267,203 @@
         return true;
     };
 
-    // --- Vehicle Number Processing ---
+    // — COMPLETELY REWRITTEN Vehicle Number Processing —
     const processVehicleNumber = (spokenText) => {
-        console.log('Processing spoken text:', spokenText);
+        console.log('🗣️ Original spoken text:', spokenText);
+
+        // Clean the input
         let processed = spokenText.toLowerCase().trim();
 
+        // Remove common filler words and speech artifacts
+        const fillerWords = ['um', 'uh', 'the', 'number', 'is', 'vehicle', 'car', 'plate'];
+        fillerWords.forEach(word => {
+            const regex = new RegExp(`\\b${word}\\b`, 'gi');
+            processed = processed.replace(regex, ' ');
+        });
+
+        // SIMPLIFIED number word mapping - only the most common ones
         const numberMappings = [
-            ['zero', '0'], ['naught', '0'], ['oh', '0'], ['o', '0'],
-            ['one', '1'], ['won', '1'], ['wan', '1'], ['wun', '1'],
-            ['two', '2'], ['to', '2'], ['too', '2'], ['tu', '2'],
-            ['three', '3'], ['tree', '3'], ['free', '3'], ['thee', '3'],
-            ['four', '4'], ['for', '4'], ['fore', '4'], ['foe', '4'],
-            ['five', '5'], ['fife', '5'], ['fyve', '5'],
-            ['six', '6'], ['sex', '6'], ['sick', '6'], ['sicks', '6'],
-            ['seven', '7'], ['sven', '7'], ['sevn', '7'],
-            ['eight', '8'], ['ate', '8'], ['ait', '8'],
-            ['nine', '9'], ['nein', '9'], ['sign', '9'], ['sine', '9'],
-            ['ten', '1 0'], ['eleven', '1 1'], ['twelve', '1 2'],
-            ['thirteen', '1 3'], ['fourteen', '1 4'], ['fifteen', '1 5'],
-            ['sixteen', '1 6'], ['seventeen', '1 7'], ['eighteen', '1 8'], ['nineteen', '1 9'],
-            ['first', '1'], ['second', '2'], ['third', '3'], ['fourth', '4'], ['fifth', '5'],
-            ['sixth', '6'], ['seventh', '7'], ['eighth', '8'], ['ninth', '9'],
-            ['room', '2'], ['through', '3'], ['door', '4'], ['floor', '4'],
-            ['half', '5'], ['heaven', '7'], ['weight', '8'], ['line', '9']
+            // Basic digits
+            ['zero', '0'], ['oh', '0'], ['o', '0'],
+            ['one', '1'], ['won', '1'], 
+            ['two', '2'], ['to', '2'], ['too', '2'],
+            ['three', '3'], ['tree', '3'],
+            ['four', '4'], ['for', '4'], ['fore', '4'],
+            ['five', '5'], ['fife', '5'],
+            ['six', '6'], ['sex', '6'],
+            ['seven', '7'], ['sven', '7'],
+            ['eight', '8'], ['ate', '8'],
+            ['nine', '9'], ['nein', '9']
         ];
 
+        // Apply number mappings
         numberMappings.forEach(([word, digit]) => {
             const regex = new RegExp(`\\b${word}\\b`, 'gi');
             processed = processed.replace(regex, ` ${digit} `);
         });
 
-        const digits = processed.match(/[0-9]/g);
-        const result = digits ? digits.join('') : '';
+        // Extract all digits and numbers
+        const digitMatches = processed.match(/\d+/g);
+        let result = '';
 
-        console.log('Original:', spokenText, 'Processed:', processed, 'Digits found:', digits, 'Final result:', result);
+        if (digitMatches) {
+            // Join all found numbers
+            result = digitMatches.join('');
+        }
+
+        // Alternative: try to extract individual digit words
+        if (!result || result.length < 3) {
+            const words = processed.split(/\s+/);
+            const digits = [];
+            
+            words.forEach(word => {
+                if (/^\d+$/.test(word)) {
+                    digits.push(word);
+                }
+            });
+            
+            if (digits.length > 0) {
+                result = digits.join('');
+            }
+        }
+
+        console.log('✅ Processed result:', result);
         return result;
     };
 
+    // — Enhanced validation —
     const isValidVehicleNumber = (vehicleNumber) => {
-        return vehicleNumber && vehicleNumber.length > 0 && /^[0-9]+$/.test(vehicleNumber);
+        if (!vehicleNumber) return false;
+
+        // Must be between 3-8 digits (typical vehicle number range)
+        if (vehicleNumber.length < 3 || vehicleNumber.length > 8) return false;
+
+        // Must contain only digits
+        return /^\d+$/.test(vehicleNumber);
     };
 
+    // — Improved result handling —
     const handleVoiceResult = (event) => {
         let transcript = '';
+        let confidence = 0;
+        let alternatives = [];
 
+        // Process all results, including interim ones
         for (let i = event.resultIndex; i < event.results.length; i++) {
-            if (event.results[i].isFinal) {
-                transcript = event.results[i][0].transcript;
+            const result = event.results[i];
+            
+            if (result.isFinal) {
+                transcript = result[0].transcript;
+                confidence = result[0].confidence;
+                
+                // Get alternatives
+                for (let j = 0; j < Math.min(result.length, 3); j++) {
+                    alternatives.push({
+                        text: result[j].transcript,
+                        confidence: result[j].confidence
+                    });
+                }
                 break;
+            } else {
+                // Show interim results
+                transcript = result[0].transcript;
+                updateVoiceSearchUI('listening', transcript);
             }
         }
 
         if (transcript.trim()) {
-            console.log('Raw transcript:', transcript);
-            const detectedNumber = processVehicleNumber(transcript);
+            console.log('🎯 Final transcript:', transcript);
+            console.log('🎯 Confidence:', confidence);
+            console.log('🎯 Alternatives:', alternatives);
+            
+            // Try the main transcript first
+            let detectedNumber = processVehicleNumber(transcript);
+            
+            // If main transcript fails, try alternatives
+            if (!isValidVehicleNumber(detectedNumber) && alternatives.length > 1) {
+                console.log('🔄 Trying alternatives...');
+                for (let alt of alternatives.slice(1)) {
+                    const altNumber = processVehicleNumber(alt.text);
+                    if (isValidVehicleNumber(altNumber)) {
+                        detectedNumber = altNumber;
+                        console.log('✅ Found valid number in alternative:', altNumber);
+                        break;
+                    }
+                }
+            }
+            
             updateVoiceSearchUI('processing', transcript, detectedNumber);
             
-            if (detectedNumber && detectedNumber.length > 0) {
+            if (isValidVehicleNumber(detectedNumber)) {
                 setTimeout(() => {
                     completeVoiceSearch(detectedNumber);
                 }, 800);
+            } else {
+                // Show error after a delay
+                setTimeout(() => {
+                    updateVoiceSearchUI('no-match', transcript, detectedNumber);
+                    setTimeout(() => stopVoiceSearch(), 2000);
+                }, 1000);
             }
         }
     };
 
+    // — Enhanced UI updates —
     const updateVoiceSearchUI = (status, heard = '', detected = '') => {
         const modal = document.getElementById('voice-search-modal');
         if (!modal) return;
-        
+
         const heardElement = modal.querySelector('#heard-text');
         const detectedElement = modal.querySelector('#detected-text');
         const statusElement = modal.querySelector('#voice-status');
         const accuracyElement = modal.querySelector('#accuracy-indicator');
         const progressBar = modal.querySelector('#progress-bar');
-        
+
         if (heardElement) heardElement.textContent = heard || '';
+
         if (detectedElement) {
-            detectedElement.textContent = detected || '';
-            detectedElement.className = detected && isValidVehicleNumber(detected) 
+            detectedElement.textContent = detected || '---';
+            const isValid = detected && isValidVehicleNumber(detected);
+            detectedElement.className = isValid 
                 ? 'text-2xl font-bold text-green-400' 
                 : 'text-2xl font-bold text-yellow-400';
         }
-        
+
         switch (status) {
             case 'listening':
-                if (statusElement) statusElement.textContent = 'Say vehicle registration number clearly';
+                if (statusElement) statusElement.textContent = 'Listening... Say vehicle number clearly';
                 if (progressBar) progressBar.style.width = '30%';
                 if (accuracyElement) accuracyElement.textContent = 'Listening...';
                 break;
+                
             case 'processing':
-                if (statusElement) statusElement.textContent = 'Processing...';
+                if (statusElement) statusElement.textContent = 'Processing speech...';
                 if (progressBar) progressBar.style.width = '70%';
-                if (accuracyElement) accuracyElement.textContent = `Confidence: ${isValidVehicleNumber(detected) ? 'High' : 'Low'}`;
+                const confidence = isValidVehicleNumber(detected) ? 'High' : 'Low';
+                if (accuracyElement) accuracyElement.textContent = `Confidence: ${confidence}`;
                 break;
+                
             case 'no-speech':
-                if (statusElement) statusElement.textContent = 'No speech detected. Please try again.';
+                if (statusElement) statusElement.textContent = 'No speech detected. Try again.';
                 if (progressBar) progressBar.style.width = '0%';
+                if (accuracyElement) accuracyElement.textContent = 'No input detected';
                 break;
+                
+            case 'no-match':
+                if (statusElement) statusElement.textContent = 'Could not detect vehicle number. Try again.';
+                if (progressBar) progressBar.style.width = '100%';
+                if (accuracyElement) accuracyElement.textContent = 'No valid number found';
+                break;
+                
             case 'error':
                 if (statusElement) statusElement.textContent = 'Error occurred. Please try again.';
                 if (progressBar) progressBar.style.width = '0%';
+                if (accuracyElement) accuracyElement.textContent = 'Error';
                 break;
         }
     };
 
+    // — Enhanced start function —
     const startVoiceSearch = (inputElement) => {
         if (!recognition) {
             if (!initializeVoiceRecognition()) {
@@ -356,22 +476,30 @@
             stopVoiceSearch();
             return;
         }
-        
+
         currentVoiceInput = inputElement;
         showVoiceSearchModal();
-        
+
         try {
             recognition.start();
+            
+            // Set timeout for auto-stop
             voiceSearchTimeout = setTimeout(() => {
-                stopVoiceSearch();
-            }, 10000); 
+                console.log('⏰ Voice search timeout');
+                updateVoiceSearchUI('no-speech');
+                setTimeout(() => stopVoiceSearch(), 1500);
+            }, 8000); // Reduced from 10s to 8s
+            
         } catch (error) {
             console.error('Failed to start voice recognition:', error);
             hideVoiceSearchModal();
             showNotification("Failed to start voice search", "error");
         }
     };
+    
+    // --- END: INJECTED JAVASCRIPT AUDIO FIX ---
 
+    // --- Original functions to be kept ---
     const stopVoiceSearch = () => {
         if (recognition && isVoiceSearchActive) {
             recognition.stop();
