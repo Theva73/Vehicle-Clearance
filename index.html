@@ -116,23 +116,28 @@
         100% { left: 100%; }
     }
 
-    /* --- START: ENHANCEMENT 2.0 - CHANGE 1 --- */
+    /* --- START: ENHANCEMENT 3.0 - CHANGE 1, STEP 1 --- */
     .car-plate-text {
         font-family: 'Courier New', monospace;
         font-weight: 900;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         letter-spacing: 4px;
         color: white !important;
+        font-size: 1.2em; /* Makes font slightly bigger */
     }
-    /* --- END: ENHANCEMENT 2.0 - CHANGE 1 --- */
+    /* --- END: ENHANCEMENT 3.0 - CHANGE 1, STEP 1 --- */
 
+    /* --- START: ENHANCEMENT 3.0 - CHANGE 1, STEP 2 --- */
     .search-highlight {
-        background: linear-gradient(45deg, #fbbf24, #f59e0b);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: white !important;
+        background: none !important;
+        -webkit-background-clip: initial !important;
+        -webkit-text-fill-color: white !important;
+        background-clip: initial !important;
         animation: glow 2s ease-in-out infinite alternate;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
     }
+    /* --- END: ENHANCEMENT 3.0 - CHANGE 1, STEP 2 --- */
 
     @keyframes glow {
         from { filter: drop-shadow(0 0 5px #fbbf24); }
@@ -1054,14 +1059,12 @@
                         </select>
                     </div>
                     
-                    <!-- START: ENHANCEMENT 2.0 - CHANGE 2A -->
                     <div>
                         <label class="text-sm font-medium text-slate-300">Location</label>
                         <select name="location" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
                             <option value="PCC" selected>PCC</option>
                         </select>
                     </div>
-                    <!-- END: ENHANCEMENT 2.0 - CHANGE 2A -->
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -1209,7 +1212,6 @@
         }
     };
 
-    // --- START: MODIFIED FUNCTION ---
     const renderClearanceListForUser = (vehicleFilter = null) => {
         const listContainer = document.getElementById('user-clearance-list-container');
         if (!listContainer) return;
@@ -1238,7 +1240,7 @@
                 listHTML += `
                 <!-- Enhanced Car Plate Display for Single Match -->
                 <div class="car-plate-display rounded-2xl p-6 text-center mb-4 animate-fade-in">
-                    <div class="car-plate-text text-3xl md:text-5xl text-white mb-2">
+                    <div class="car-plate-text text-3xl md:text-5xl mb-2">
                         <span class="search-highlight">${c.vehicleNumber}</span>
                     </div>
                     <div class="absolute top-2 right-2 flex items-center gap-2">
@@ -1299,7 +1301,7 @@
                             <div class="mb-4">
                                 <div class="w-16 h-16 mx-auto text-yellow-300 opacity-90">${icons.car}</div>
                             </div>
-                            <div class="car-plate-text text-4xl md:text-6xl text-white mb-2">
+                            <div class="car-plate-text text-4xl md:text-6xl mb-2">
                                 <span class="search-highlight">${vehicleFilter}</span>
                             </div>
                             <div class="absolute top-2 right-2 text-xs text-yellow-200 opacity-70">🔍 SEARCHED</div>
@@ -1329,7 +1331,6 @@
         }
         listContainer.innerHTML = listHTML;
     };
-    // --- END: MODIFIED FUNCTION ---
 
     const renderUserDashboard = (user, vehicleFilter = null) => {
         document.body.className = 'bg-gray-100 dark:bg-gray-900';
@@ -1546,7 +1547,6 @@
         const list = document.getElementById("clearance-list");
         if (!list) return;
 
-        // --- START: ENHANCEMENT 2.0 - CHANGE 3 ---
         const now = new Date();
         const activeClearances = clearances.filter(c => {
             const expiryDate = c.expiryDate.toDate();
@@ -1560,7 +1560,6 @@
         }
 
         list.innerHTML = activeClearances.map(c => {
-        // --- END: ENHANCEMENT 2.0 - CHANGE 3 ---
             const approvalInfo = formatApprovalString(c);
             const updateInfo = formatUpdateString(c);
 
@@ -1727,7 +1726,6 @@
                         </div>
                     </div>
                     
-                    <!-- START: ENHANCEMENT 2.0 - CHANGE 2B -->
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
                         <select name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
@@ -1743,7 +1741,6 @@
                         </select>
                         <input name="customLocation" id="custom-location-review" class="mt-2 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? '' : 'hidden'}" placeholder="Enter custom location..." value="${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? (request.location || '') : ''}" />
                     </div>
-                    <!-- END: ENHANCEMENT 2.0 - CHANGE 2B -->
 
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
@@ -1807,7 +1804,6 @@
                         </div>
                     </div>
                     
-                    <!-- START: ENHANCEMENT 2.0 - CHANGE 2C -->
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
                         <select name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
@@ -1823,7 +1819,6 @@
                         </select>
                         <input name="customLocation" id="custom-location-edit" class="mt-2 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? '' : 'hidden'}" placeholder="Enter custom location..." value="${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? (edit?.location || '') : ''}" />
                     </div>
-                    <!-- END: ENHANCEMENT 2.0 - CHANGE 2C -->
 
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
@@ -2143,7 +2138,6 @@
 
                     const approvalTimestamp = Timestamp.now();
                     
-                    // --- START: ENHANCEMENT 2.0 - CHANGE 2E ---
                     const clearancePayload = {
                         ownerName: data.ownerName,
                         vehicleNumber: data.vehicleNumber.toUpperCase(),
@@ -2168,7 +2162,6 @@
                             notes: `Approved from request ID: ${requestId}`
                         }]
                     };
-                    // --- END: ENHANCEMENT 2.0 - CHANGE 2E ---
 
                     await addDoc(collection(db, "vehicleClearances"), clearancePayload);
                     
@@ -2229,7 +2222,6 @@
 
                     const currentTimestamp = Timestamp.now();
                     
-                    // --- START: ENHANCEMENT 2.0 - CHANGE 2E ---
                     const payload = {
                         ownerName: data.ownerName,
                         vehicleNumber: data.vehicleNumber.toUpperCase(),
@@ -2240,7 +2232,6 @@
                         escortRequired: !!data.escortRequired,
                         notes: data.notes || ""
                     };
-                    // --- END: ENHANCEMENT 2.0 - CHANGE 2E ---
                     
                     const editingId = button.dataset.id;
 
@@ -2493,7 +2484,6 @@
                     return;
                 }
 
-                // --- START: ENHANCEMENT 2.0 - CHANGE 2E ---
                 const payload = {
                     requesterName: data.requesterName,
                     requesterId: currentUser.uid,
@@ -2507,7 +2497,6 @@
                     status: "pending",
                     createdAt: Timestamp.now()
                 };
-                // --- END: ENHANCEMENT 2.0 - CHANGE 2E ---
                 
                 try {
                     const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
@@ -2534,7 +2523,6 @@
         }
     });
 
-    // --- START: ENHANCEMENT 2.0 - CHANGE 2D ---
     // Handle location dropdown changes
     document.body.addEventListener("change", (e) => {
         if (e.target.name === "location") {
@@ -2551,7 +2539,6 @@
             }
         }
     });
-    // --- END: ENHANCEMENT 2.0 - CHANGE 2D ---
 
     // Input and reset event listeners
     document.body.addEventListener("input", e => {
