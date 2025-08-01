@@ -2613,7 +2613,7 @@
         }
     });
 
-    // Handle location dropdown changes
+    // Handle dropdown and checkbox changes
     document.body.addEventListener("change", (e) => {
         if (e.target.name === "location") {
             const customInput = e.target.closest('form')?.querySelector('input[name="customLocation"]');
@@ -2629,35 +2629,33 @@
             }
         }
 
-        // --- START: ENHANCEMENT 5.0 - CHANGE 4 ---
-        // Handle escort required checkbox changes - Enhanced with debugging
+        // --- FIX: More robust logic for finding the correct modal context ---
         if (e.target.name === "escortRequired") {
             console.log('Escort checkbox changed:', e.target.checked);
-            
-            const form = e.target.closest('form');
+            const reviewModal = e.target.closest('#review-modal-backdrop');
+            const formModal = e.target.closest('#form-modal-backdrop');
             let textareaId = null;
-            
-            if (form && form.id === 'review-form') {
+
+            if (reviewModal) {
                 textareaId = 'review-notes-textarea';
-                console.log('Review form detected, using textarea ID:', textareaId);
-            } else if (form && form.id === 'clearance-form') {
+                console.log('Review modal detected, using textarea ID:', textareaId);
+            } else if (formModal) {
                 textareaId = 'modal-notes-textarea';
-                console.log('Clearance form detected, using textarea ID:', textareaId);
+                console.log('Form modal (add/edit) detected, using textarea ID:', textareaId);
             } else {
-                console.log('Form not identified:', form?.id);
+                console.error('Could not identify parent modal for escort checkbox.');
             }
             
             if (textareaId) {
                 const textarea = document.getElementById(textareaId);
                 if (textarea) {
-                    console.log('Textarea found, calling handler');
+                    console.log('Textarea found, calling handler.');
                     handleEscortCheckboxChange(e.target, textareaId);
                 } else {
-                    console.error('Textarea not found with ID:', textareaId);
+                    console.error('Textarea with ID "' + textareaId + '" not found in the DOM.');
                 }
             }
         }
-        // --- END: ENHANCEMENT 5.0 - CHANGE 4 ---
     });
 
     // Input and reset event listeners
