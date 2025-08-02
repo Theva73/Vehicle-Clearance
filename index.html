@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- MODIFIED: Updated viewport for better mobile control -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Vehicle Clearance System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -139,10 +140,140 @@
         from { filter: drop-shadow(0 0 5px #fbbf24); }
         to { filter: drop-shadow(0 0 15px #f59e0b); }
     }
+
+    /* ===== ADDED: MOBILE ALIGNMENT FIXES ===== */
+    /* Prevent horizontal scrolling on mobile */
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    /* Mobile container wrapper */
+    .mobile-safe-container {
+      width: 100%;
+      max-width: 100vw;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+    }
+
+    /* Mobile responsive text */
+    .mobile-text {
+      font-size: clamp(0.75rem, 3vw, 1rem);
+      line-height: 1.3;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+
+    /* Mobile vehicle number display */
+    .mobile-vehicle-number {
+      font-size: clamp(1rem, 5vw, 1.5rem);
+      letter-spacing: 0.05em;
+      word-break: break-all;
+    }
+
+    /* Mobile button fixes */
+    .mobile-button {
+      min-height: 44px; /* Apple's minimum touch target */
+      padding: 0.75rem 1rem;
+      font-size: clamp(0.875rem, 3.5vw, 1rem);
+    }
+
+    /* Mobile form inputs */
+    .mobile-input {
+      width: 100%;
+      max-width: 100%;
+      font-size: 16px; /* Prevents zoom on iOS */
+      padding: 0.75rem;
+      box-sizing: border-box;
+    }
+
+    /* Mobile grid fixes */
+    .mobile-grid-fix {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      width: 100%;
+    }
+
+    /* Mobile details/summary fixes */
+    .mobile-details {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .mobile-details summary {
+      padding: 0.75rem;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Mobile action buttons container */
+    .mobile-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      min-width: fit-content;
+    }
+
+    /* Mobile modal fixes */
+    .mobile-modal {
+      position: fixed;
+      inset: 0;
+      padding: 1rem;
+      max-height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 2rem;
+    }
+
+    .mobile-modal-content {
+      width: 100%;
+      max-width: 28rem;
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+      margin: 0 auto;
+    }
+
+    /* Responsive breakpoint adjustments */
+    @media (max-width: 640px) {
+      /* Force single column layout on small screens */
+      .responsive-grid {
+        grid-template-columns: 1fr !important;
+      }
+      
+      /* Reduce font sizes further on very small screens */
+      .ultra-mobile-text {
+        font-size: 0.875rem;
+      }
+      
+      /* Stack buttons vertically on very small screens */
+      .mobile-button-stack {
+        flex-direction: column;
+        width: 100%;
+        align-items: flex-start !important;
+      }
+      
+      .mobile-button-stack button {
+        width: 100%;
+      }
+    }
   </style>
 
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
+  <!-- MODIFIED: app-root is now just a placeholder, containers are handled in JS -->
   <div id="app-root"></div>
 
   <script type="module">
@@ -980,8 +1111,9 @@
         }
 
         appRoot.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="w-full max-w-md bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-8 space-y-8 text-center animate-fade-in">
+        <!-- MODIFIED: Applied mobile-safe-container and responsive padding -->
+        <div class="min-h-screen flex items-center justify-center p-3 sm:p-4">
+            <div class="w-full max-w-md mobile-safe-container bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-6 sm:p-8 space-y-6 sm:space-y-8 text-center animate-fade-in">
                 
                 <header class="space-y-4">
                     <div class="w-24 h-24 mx-auto text-blue-400 opacity-90">${icons.car}</div>
@@ -1013,7 +1145,7 @@
                     <form id="track-request-form" class="space-y-3">
                         <label class="text-sm font-medium text-slate-400">Or, track an existing request.</label>
                         <div class="flex gap-2">
-                            <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="block w-full px-4 py-2 bg-slate-900/70 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
+                            <input id="track-id-input" oninput="this.value=this.value.toUpperCase()" class="mobile-input block w-full px-4 py-2 bg-slate-900/70 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter Vehicle Number" value="${vehicleNumber}" />
                             <button type="submit" class="flex items-center justify-center px-4 py-2 rounded-lg text-white bg-slate-700 hover:bg-slate-600 transition-colors">
                                 <span class="w-5 h-5">${icons.search}</span>
                             </button>
@@ -1032,7 +1164,8 @@
         const isSignup = authMode === "signup";
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="w-full max-w-md bg-slate-800/80 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-8 space-y-6 animate-fade-in">
+            <!-- MODIFIED: Added mobile-safe-container -->
+            <div class="w-full max-w-md mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-8 space-y-6 animate-fade-in">
                 <div class="text-center">
                     <div class="w-12 h-12 mx-auto text-blue-400">${icons.shield}</div>
                     <h1 class="text-3xl font-bold text-white mt-4">Admin Access</h1>
@@ -1041,25 +1174,25 @@
                 <form id="auth-form" class="space-y-4">
                     <div class="${isSignup ? '' : 'hidden'}">
                         <label class="text-sm font-medium text-slate-300">Admin Invite Code</label>
-                        <input type="text" name="inviteCode" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter the secret code" />
+                        <input type="text" name="inviteCode" class="mobile-input mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter the secret code" />
                     </div>
                      <div class="${isSignup ? '' : 'hidden'}">
                         <label class="text-sm font-medium text-slate-300">Email</label>
-                        <input type="email" name="email" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="admin@example.com" ${isSignup ? 'required' : ''} />
+                        <input type="email" name="email" class="mobile-input mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="admin@example.com" ${isSignup ? 'required' : ''} />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-300">Username</label>
-                        <input type="text" name="username" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="e.g., steve" required />
+                        <input type="text" name="username" class="mobile-input mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="e.g., steve" required />
                     </div>
                     <div class="${isSignup ? '' : 'hidden'}">
                         <label class="text-sm font-medium text-slate-300">Designation</label>
-                        <input type="text" name="designation" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="e.g., Manager" ${isSignup ? 'required' : ''} />
+                        <input type="text" name="designation" class="mobile-input mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="e.g., Manager" ${isSignup ? 'required' : ''} />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-300">Password</label>
-                        <input type="password" name="password" class="mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="••••••••" required />
+                        <input type="password" name="password" class="mobile-input mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="••••••••" required />
                     </div>
-                    <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700">${isSignup ? "Sign Up" : "Login"}</button>
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700 mobile-button">${isSignup ? "Sign Up" : "Login"}</button>
                 </form>
                 <p class="text-center text-sm text-slate-400">
                     <span>${isSignup ? "Already have an account?" : "Need an admin account?"}</span>
@@ -1074,15 +1207,16 @@
         document.body.className = 'dark-theme-bg';
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="w-full max-w-md bg-slate-800/80 backdrop-blur-sm border border-green-500/20 rounded-2xl shadow-2xl shadow-green-900/20 p-8 space-y-6 animate-fade-in text-center">
+            <!-- MODIFIED: Added mobile-safe-container -->
+            <div class="w-full max-w-md mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-green-500/20 rounded-2xl shadow-2xl shadow-green-900/20 p-8 space-y-6 animate-fade-in text-center">
                 <div class="w-12 h-12 mx-auto text-green-400">${icons.greenlist}</div>
                 <h1 class="text-3xl font-bold text-white mt-4">Green List Access</h1>
                 <p class="text-slate-400">Enter the password to view today's clearances.</p>
                 <form id="user-login-form" class="space-y-4 pt-4">
                     <div>
-                        <input type="password" name="password" class="block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter Password" required />
+                        <input type="password" name="password" class="mobile-input block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter Password" required />
                     </div>
-                    <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700">Continue</button>
+                    <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700 mobile-button">Continue</button>
                 </form>
                 <button id="back-btn" class="mt-4 text-slate-400 hover:text-slate-200 underline text-sm">Back</button>
             </div>
@@ -1093,7 +1227,8 @@
         document.body.className = 'dark-theme-bg';
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="w-full max-w-lg bg-slate-800/80 backdrop-blur-sm border border-yellow-500/20 rounded-2xl shadow-2xl shadow-yellow-900/20 p-8 space-y-6 animate-fade-in">
+            <!-- MODIFIED: Added mobile-safe-container -->
+            <div class="w-full max-w-lg mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-yellow-500/20 rounded-2xl shadow-2xl shadow-yellow-900/20 p-8 space-y-6 animate-fade-in">
                 <div class="text-center">
                     <div class="w-12 h-12 mx-auto text-yellow-400">${icons.request}</div>
                     <h1 class="text-3xl font-bold text-white mt-4">Request Vehicle Clearance</h1>
@@ -1102,17 +1237,17 @@
                 <form id="request-form" class="space-y-4 text-left">
                     <div>
                         <label class="text-sm font-medium text-slate-300">Your Name</label>
-                        <input name="requesterName" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                        <input name="requesterName" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
                     
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
-                        <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                        <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
 
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Type</label>
-                        <select name="vehicleType" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
+                        <select name="vehicleType" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
                             <option value="">Select type...</option>
                             <option>Car</option><option>Motorcycle</option><option>Van</option><option>Tow Truck</option><option>Lorry</option><option>Bus</option><option>Others</option>
                         </select>
@@ -1120,30 +1255,30 @@
                     
                     <div>
                         <label class="text-sm font-medium text-slate-300">Location</label>
-                        <select name="location" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
+                        <select name="location" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
                             <option value="PCC" selected>PCC</option>
                         </select>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-slate-300">Entry Date</label>
-                            <input type="date" name="entryDate" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                            <input type="date" name="entryDate" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-slate-300">Expiry Date</label>
-                            <input type="date" name="expiryDate" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                            <input type="date" name="expiryDate" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                         </div>
                     </div>
                     
                     <div>
                         <label class="text-sm font-medium text-slate-300">Notes</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Purpose of entry"></textarea>
+                        <textarea name="notes" rows="3" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Purpose of entry"></textarea>
                     </div>
 
                     <div class="flex justify-between pt-4">
-                        <button id="back-btn" type="button" class="px-6 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Back</button>
-                        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Submit</button>
+                        <button id="back-btn" type="button" class="px-6 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 mobile-button">Back</button>
+                        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 mobile-button">Submit</button>
                     </div>
                 </form>
             </div>
@@ -1166,7 +1301,8 @@
             <div class="flex justify-between items-start mb-3">
                 <div>
                     <p class="text-sm text-slate-400">Vehicle</p>
-                    <p class="font-mono text-xl font-bold text-blue-400">${formatVehicleNumber(r.vehicleNumber)}</p>
+                    <!-- MODIFIED: Added mobile-vehicle-number class -->
+                    <p class="font-mono text-xl font-bold text-blue-400 mobile-vehicle-number">${formatVehicleNumber(r.vehicleNumber)}</p>
                     <p class="text-xs text-slate-400">${r.vehicleType || "Car"}</p>
                 </div>
                 <span class="px-2 py-1 rounded-full text-xs font-medium ${config.color} ${config.bg} border ${config.border}">
@@ -1319,12 +1455,13 @@
                     <summary class="flex justify-between items-center px-5 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                         <div class="flex items-center gap-4">
                             <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90">${icons.chevronRight}</span>
-                            <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400">${c.vehicleNumber}</p>
+                            <!-- MODIFIED: Added mobile-vehicle-number class -->
+                            <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400 mobile-vehicle-number">${c.vehicleNumber}</p>
                         </div>
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Cleared</span>
                     </summary>
                     <div class="px-5 pb-5 border-t border-gray-200 dark:border-gray-700">
-                        <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5 text-sm">
                              <div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Owner</p>
                                 <p class="font-semibold text-gray-800 dark:text-gray-200">${c.ownerName}</p>
@@ -1391,37 +1528,45 @@
 
     const renderUserDashboard = (user, vehicleFilter = null) => {
         document.body.className = 'bg-gray-100 dark:bg-gray-900';
+        // MODIFIED: Replaced this entire innerHTML with the mobile-fixed version
         appRoot.innerHTML = `
-        <div class="w-full min-h-screen p-2 md:p-4 flex justify-center">
-            <main class="w-full max-w-4xl">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center gap-4">
-                        <span class="text-yellow-500 w-8 h-8">${icons.sun}</span>
-                        <div>
-                            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Daily Vehicle Clearances</h1>
-                            <p class="text-gray-500 dark:text-gray-400">Showing vehicles cleared for today: ${formatDate(new Date())}</p>
-                        </div>
-                    </div>
-                    <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-                        <span class="w-4 h-4">${icons.logout}</span> Logout
-                    </button>
+        <div class="w-full min-h-screen mobile-safe-container flex justify-center">
+          <main class="w-full max-w-4xl">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <div class="flex items-center gap-4">
+                <span class="text-yellow-500 w-6 h-6 sm:w-8 sm:h-8">${icons.sun}</span>
+                <div>
+                  <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Daily Vehicle Clearances</h1>
+                  <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">Showing vehicles cleared for today: ${formatDate(new Date())}</p>
                 </div>
-                
-                <div class="mb-6 sticky top-0 bg-gray-100 dark:bg-gray-900 z-20 py-4 -mx-2 px-2 md:-mx-4 md:px-4">
-                    <form id="daily-clearance-search-form" class="flex gap-2">
-                        <input id="daily-clearance-search-input" name="search" class="block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Search by Vehicle Number..." oninput="this.value=this.value.toUpperCase()" value="${vehicleFilter || ''}">
-                        <button type="button" class="voice-search-btn px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors" title="Voice Search">
-                            <span class="w-4 h-4">${icons.mic}</span>
-                        </button>
-                        <button type="reset" class="px-4 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Clear</button>
-                    </form>
-                </div>
-                <div id="user-clearance-list-container" class="space-y-4"></div>
-            </main>
-            <button id="show-vvip-btn" class="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transform hover:scale-110 transition-transform z-40" title="Show VVIP List">
-                <span class="w-8 h-8 text-yellow-300">${icons.star}</span>
-            </button>
-            <div id="modal-container"></div>
+              </div>
+              <button id="logout-button" class="flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 mobile-button">
+                <span class="w-4 h-4">${icons.logout}</span> 
+                <span class="hidden sm:inline">Logout</span>
+              </button>
+            </div>
+            
+            <div class="mb-6 sticky top-0 bg-gray-100 dark:bg-gray-900 z-20 py-4">
+              <form id="daily-clearance-search-form" class="flex gap-2">
+                <input id="daily-clearance-search-input" name="search" 
+                       class="mobile-input block flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" 
+                       placeholder="Search Vehicle..." 
+                       oninput="this.value=this.value.toUpperCase()" 
+                       value="${vehicleFilter || ''}">
+                <button type="button" class="voice-search-btn mobile-button px-3 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors flex-shrink-0" title="Voice">
+                  <span class="w-4 h-4">${icons.mic}</span>
+                </button>
+                <button type="reset" class="mobile-button px-3 py-2 rounded-lg text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 flex-shrink-0">
+                  Clear
+                </button>
+              </form>
+            </div>
+            <div id="user-clearance-list-container" class="space-y-4"></div>
+          </main>
+          <button id="show-vvip-btn" class="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transform hover:scale-110 transition-transform z-40" title="Show VVIP List">
+              <span class="w-8 h-8 text-yellow-300">${icons.star}</span>
+          </button>
+          <div id="modal-container"></div>
         </div>`;
         
         renderClearanceListForUser(vehicleFilter);
@@ -1432,23 +1577,26 @@
         appRoot.innerHTML = `
         <div id="admin-dashboard-container">
             <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
-                <nav class="w-full max-w-7xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <span class="text-blue-500 w-8 h-8">${icons.shield}</span>
-                        <span class="text-xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</span>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">${adminUser.username} (${adminUser.designation})</span>
-                        <button id="settings-btn" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
-                            ${icons.settings}
-                        </button>
-                        <button id="logout-button" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">
-                            <span class="w-4 h-4">${icons.logout}</span> Logout
-                        </button>
-                    </div>
+                <!-- MODIFIED: Updated nav for mobile responsiveness -->
+                <nav class="w-full max-w-7xl mx-auto px-3 md:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div class="flex items-center gap-3 mobile-text">
+                    <span class="text-blue-500 w-6 h-6 sm:w-8 sm:h-8">${icons.shield}</span>
+                    <span class="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</span>
+                  </div>
+                  <div class="flex items-center gap-2 sm:gap-4 mobile-button-stack">
+                    <span class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hidden sm:block">${adminUser.username} (${adminUser.designation})</span>
+                    <button id="settings-btn" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full mobile-button">
+                      ${icons.settings}
+                    </button>
+                    <button id="logout-button" class="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 mobile-button">
+                      <span class="w-4 h-4">${icons.logout}</span> 
+                      <span class="hidden sm:inline">Logout</span>
+                    </button>
+                  </div>
                 </nav>
             </header>
-            <main class="w-full max-w-7xl mx-auto p-4 md:p-8">
+            <!-- MODIFIED: Added mobile-safe-container -->
+            <main class="w-full max-w-7xl mx-auto p-4 md:p-8 mobile-safe-container">
                 <div class="space-y-10">
                     <section>
                         <div class="flex items-center gap-4 mb-4">
@@ -1460,12 +1608,12 @@
                     <section>
                         <div class="flex flex-wrap gap-4 justify-between items-center mb-6">
                             <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Manage Clearances</h2>
-                            <div class="flex gap-2">
-                               <button id="download-report-btn" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                                    <span class="w-5 h-5">${icons.download}</span> Download Report
+                            <div class="flex gap-2 flex-wrap">
+                               <button id="download-report-btn" class="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 mobile-button">
+                                    <span class="w-5 h-5">${icons.download}</span><span class="hidden sm:inline">Download Report</span>
                                 </button>
-                                <button id="add-clearance-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                                    <span class="w-5 h-5">${icons.plus}</span> Add Clearance
+                                <button id="add-clearance-btn" class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mobile-button">
+                                    <span class="w-5 h-5">${icons.plus}</span><span class="hidden sm:inline">Add Clearance</span>
                                 </button>
                             </div>
                         </div>
@@ -1498,10 +1646,10 @@
                                 <div>
                                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">User Access Password</label>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">This password is required for non-admin users to view the daily clearance list.</p>
-                                    <input name="password" type="text" class="mt-1 block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" value="${userPasswordConfig?.password || ''}" required />
+                                    <input name="password" type="text" class="mobile-input mt-1 block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" value="${userPasswordConfig?.password || ''}" required />
                                 </div>
                                 <div class="text-right pt-4">
-                                    <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 w-full">Save Password</button>
+                                    <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 w-full mobile-button">Save Password</button>
                                 </div>
                             </form>
                         </div>
@@ -1510,13 +1658,13 @@
                                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Add New VVIP</h3>
                                 <div class="w-full">
                                     <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Vehicle Number</label>
-                                    <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="w-full mt-1 p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg" required>
+                                    <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mobile-input w-full mt-1 p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg" required>
                                 </div>
                                 <div class="w-full">
                                     <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Designation</label>
-                                    <input name="designation" class="w-full mt-1 p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg" required>
+                                    <input name="designation" class="mobile-input w-full mt-1 p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg" required>
                                 </div>
-                                <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex-shrink-0">Add VVIP</button>
+                                <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex-shrink-0 mobile-button">Add VVIP</button>
                             </form>
                             <div class="mt-6">
                                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Current VVIPs</h3>
@@ -1534,10 +1682,10 @@
                                 <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700/50">
                                     <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">Actions</h3>
                                     <div class="space-y-3">
-                                        <button id="export-database-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                        <button id="export-database-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mobile-button">
                                             <span class="w-5 h-5">${icons.download}</span> Export Backup
                                         </button>
-                                        <button id="reset-database-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
+                                        <button id="reset-database-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 mobile-button">
                                             <span class="w-5 h-5">${icons.trash}</span> Reset Data
                                         </button>
                                     </div>
@@ -1546,7 +1694,7 @@
                             <div class="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
                                 <h3 class="text-lg font-semibold text-red-500 mb-2">Danger Zone</h3>
                                 <p class="text-sm text-red-600 dark:text-red-300 mb-3">This action is irreversible and will permanently delete data.</p>
-                                <button id="clear-database-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Wipe Clearance Data</button>
+                                <button id="clear-database-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 mobile-button">Wipe Clearance Data</button>
                             </div>
                         </div>
                     </div>
@@ -1587,13 +1735,13 @@
 
         list.innerHTML = clearanceRequests.map(r => `
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 animate-fade-in border border-transparent hover:border-blue-500 transition-colors">
-                <div class="flex justify-between items-start gap-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div>
-                        <p class="font-mono text-xl font-bold text-blue-600 dark:text-blue-400">${r.vehicleNumber}</p>
+                        <p class="font-mono text-xl font-bold text-blue-600 dark:text-blue-400 mobile-vehicle-number">${r.vehicleNumber}</p>
                         <p class="font-semibold text-gray-800 dark:text-gray-100">${r.requesterName}</p>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${r.vehicleType || '-'} • Requested on ${formatDate(r.createdAt)}</p>
                     </div>
-                    <button class="review-btn flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transform hover:scale-105 transition-transform" data-id="${r.id}">
+                    <button class="review-btn flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transform hover:scale-105 transition-transform mobile-button w-full sm:w-auto" data-id="${r.id}">
                         Review
                     </button>
                 </div>
@@ -1621,23 +1769,25 @@
             const updateInfo = formatUpdateString(c);
 
             return `
-            <details class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group animate-fade-in border border-gray-200 dark:border-gray-700">
-                <summary class="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
-                    <div class="flex items-center gap-3">
-                        <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90">${icons.chevronRight}</span>
-                        <div>
-                             <p class="font-mono text-lg font-bold text-blue-600 dark:text-blue-400">${c.vehicleNumber}</p>
-                             <p class="text-sm text-gray-500 dark:text-gray-400">Entry: ${formatDate(c.entryDate)}</p>
-                        </div>
+            <!-- MODIFIED: Applied mobile-details class -->
+            <details class="mobile-details bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group animate-fade-in border border-gray-200 dark:border-gray-700">
+                <!-- MODIFIED: Replaced summary with mobile-friendly version -->
+                <summary class="summary px-3 sm:px-5 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                  <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90 flex-shrink-0">${icons.chevronRight}</span>
+                    <div class="min-w-0 flex-1">
+                      <p class="font-mono text-base sm:text-lg font-bold text-blue-600 dark:text-blue-400 mobile-vehicle-number truncate">${c.vehicleNumber}</p>
+                      <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Entry: ${formatDate(c.entryDate)}</p>
                     </div>
-                    <div class="action-buttons flex items-center gap-1 flex-shrink-0">
-                        <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full transition-colors" data-id="${c.id}" title="Edit Clearance">
-                            ${icons.edit}
-                        </button>
-                        <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full transition-colors" data-id="${c.id}" title="Delete Clearance">
-                            ${icons.trash}
-                        </button>
-                    </div>
+                  </div>
+                  <div class="mobile-actions">
+                    <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full transition-colors mobile-button" data-id="${c.id}" title="Edit">
+                      ${icons.edit}
+                    </button>
+                    <button class="delete-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-700 rounded-full transition-colors mobile-button" data-id="${c.id}" title="Delete">
+                      ${icons.trash}
+                    </button>
+                  </div>
                 </summary>
                 <div class="px-5 pb-5 border-t border-gray-200 dark:border-gray-700">
                      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5 text-sm">
@@ -1720,8 +1870,9 @@
         `).join('') : '<li class="p-8 text-center text-gray-500">No VVIPs configured.</li>';
 
         modalContainer.innerHTML = `
-        <div id="vvip-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg relative animate-fade-in flex flex-col" style="max-height: 80vh;">
+        <!-- MODIFIED: Applied mobile-modal classes -->
+        <div id="vvip-modal-backdrop" class="mobile-modal bg-black bg-opacity-60 z-50">
+            <div class="mobile-modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg relative animate-fade-in flex flex-col" style="max-height: 80vh;">
                 <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center flex-shrink-0">
                     <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                         <span class="w-6 h-6 text-yellow-400">${icons.star}</span>
@@ -1749,8 +1900,9 @@
         }).join('');
 
         modalContainer.innerHTML = `
-        <div id="review-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-start p-4 overflow-y-auto">
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-2xl relative animate-fade-in my-8">
+        <!-- MODIFIED: Applied mobile-modal classes -->
+        <div id="review-modal-backdrop" class="mobile-modal bg-black bg-opacity-60 z-50">
+            <div class="mobile-modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 w-full max-w-2xl relative animate-fade-in">
                 <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">
                     ${icons.x}
                 </button>
@@ -1759,15 +1911,15 @@
                     <input type="hidden" name="id" value="${request.id}">
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Name</label>
-                        <input name="ownerName" value="${request.requesterName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        <input name="ownerName" value="${request.requesterName || ''}" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
-                        <input name="vehicleNumber" value="${request.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        <input name="vehicleNumber" value="${request.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
-                        <select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                        <select name="vehicleType" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
                             <option value="">Select type...</option>
                             ${optionsHTML}
                         </select>
@@ -1775,17 +1927,17 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
-                            <input type="date" name="entryDate" value="${toISODate(request.entryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input type="date" name="entryDate" value="${toISODate(request.entryDate?.toDate?.())}" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
-                            <input type="date" name="expiryDate" value="${toISODate(request.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input type="date" name="expiryDate" value="${toISODate(request.expiryDate?.toDate?.())}" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                     </div>
                     
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <select name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                        <select name="location" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
                             <option value="PCC" ${(request.location || '') === 'PCC' ? 'selected' : ''}>PCC</option>
                             <option value="Foyer Parking" ${(request.location || '') === 'Foyer Parking' ? 'selected' : ''}>Foyer Parking</option>
                             <option value="Basement 1" ${(request.location || '') === 'Basement 1' ? 'selected' : ''}>Basement 1</option>
@@ -1796,20 +1948,20 @@
                             <option value="E3" ${(request.location || '') === 'E3' ? 'selected' : ''}>E3</option>
                             <option value="Other" ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? 'selected' : ''}>Other (Free Text)</option>
                         </select>
-                        <input name="customLocation" id="custom-location-review" class="mt-2 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? '' : 'hidden'}" placeholder="Enter custom location..." value="${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? (request.location || '') : ''}" />
+                        <input name="customLocation" id="custom-location-review" class="mobile-input mt-2 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? '' : 'hidden'}" placeholder="Enter custom location..." value="${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(request.location || '') ? (request.location || '') : ''}" />
                     </div>
 
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" id="review-notes-textarea">${request.notes || ''}</textarea>
+                        <textarea name="notes" rows="3" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" id="review-notes-textarea">${request.notes || ''}</textarea>
                     </div>
                     <div class="flex items-center">
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${request.escortRequired ? 'checked' : ''}/>
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
-                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" data-id="${request.id}">Reject</button>
-                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" data-id="${request.id}">Approve</button>
+                    <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button type="button" class="reject-request-btn px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 mobile-button" data-id="${request.id}">Reject</button>
+                        <button type="button" class="approve-request-btn px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 mobile-button" data-id="${request.id}">Approve</button>
                     </div>
                 </form>
             </div>
@@ -1826,8 +1978,9 @@
         }).join('');
         
         modalContainer.innerHTML = `
-        <div id="form-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative animate-fade-in">
+        <!-- MODIFIED: Applied mobile-modal classes -->
+        <div id="form-modal-backdrop" class="mobile-modal bg-black bg-opacity-60 z-50">
+            <div class="mobile-modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 relative animate-fade-in">
                 <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">
                     ${icons.x}
                 </button>
@@ -1836,16 +1989,16 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label>
-                            <input name="ownerName" value="${edit?.ownerName || ''}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input name="ownerName" value="${edit?.ownerName || ''}" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
-                            <input name="vehicleNumber" value="${edit?.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input name="vehicleNumber" value="${edit?.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Type</label>
-                        <select name="vehicleType" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                        <select name="vehicleType" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
                             <option value="">Select type...</option>
                             ${optionsHTML}
                         </select>
@@ -1853,17 +2006,17 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
-                            <input type="date" name="entryDate" value="${toISODate(edit?.entryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input type="date" name="entryDate" value="${toISODate(edit?.entryDate?.toDate?.())}" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
-                            <input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate?.toDate?.())}" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                            <input type="date" name="expiryDate" value="${toISODate(edit?.expiryDate?.toDate?.())}" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                         </div>
                     </div>
                     
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <select name="location" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                        <select name="location" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
                             <option value="PCC" ${(edit?.location || '') === 'PCC' ? 'selected' : ''}>PCC</option>
                             <option value="Foyer Parking" ${(edit?.location || '') === 'Foyer Parking' ? 'selected' : ''}>Foyer Parking</option>
                             <option value="Basement 1" ${(edit?.location || '') === 'Basement 1' ? 'selected' : ''}>Basement 1</option>
@@ -1874,20 +2027,20 @@
                             <option value="E3" ${(edit?.location || '') === 'E3' ? 'selected' : ''}>E3</option>
                             <option value="Other" ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? 'selected' : ''}>Other (Free Text)</option>
                         </select>
-                        <input name="customLocation" id="custom-location-edit" class="mt-2 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? '' : 'hidden'}" placeholder="Enter custom location..." value="${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? (edit?.location || '') : ''}" />
+                        <input name="customLocation" id="custom-location-edit" class="mobile-input mt-2 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? '' : 'hidden'}" placeholder="Enter custom location..." value="${!['PCC', 'Foyer Parking', 'Basement 1', 'Basement 2', 'Basement 3', 'Basement 4', 'Courtyard', 'E3'].includes(edit?.location || '') ? (edit?.location || '') : ''}" />
                     </div>
 
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
-                        <textarea name="notes" rows="3" class="mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" id="modal-notes-textarea">${edit?.notes || ''}</textarea>
+                        <textarea name="notes" rows="3" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" id="modal-notes-textarea">${edit?.notes || ''}</textarea>
                     </div>
                     <div class="flex items-center">
                         <input type="checkbox" name="escortRequired" class="h-5 w-5 rounded text-blue-600" ${edit?.escortRequired ? 'checked' : ''}/>
                         <label class="ml-2 text-gray-700 dark:text-gray-300">Escort Required</label>
                     </div>
-                    <div class="flex justify-end space-x-3 pt-4">
-                        <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
-                        <button type="button" class="save-clearance-btn px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700" data-id="${edit?.id || ''}">${isEdit ? 'Update' : 'Save'}</button>
+                    <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
+                        <button type="button" id="cancel-modal-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 mobile-button">Cancel</button>
+                        <button type="button" class="save-clearance-btn px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 mobile-button" data-id="${edit?.id || ''}">${isEdit ? 'Update' : 'Save'}</button>
                     </div>
                 </form>
             </div>
@@ -1897,13 +2050,14 @@
     const renderConfirmationModal = (title, message, onConfirm) => {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
-        <div id="confirm-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-[60] flex justify-center items-center p-4">
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm relative animate-fade-in">
+        <!-- MODIFIED: Applied mobile-modal classes -->
+        <div id="confirm-modal-backdrop" class="mobile-modal bg-black bg-opacity-60 z-[60]">
+            <div class="mobile-modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm relative animate-fade-in">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">${title}</h2>
                 <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${message}</p>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button id="cancel-confirm-btn" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
-                    <button id="confirm-action-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Confirm</button>
+                <div class="mt-6 flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                    <button id="cancel-confirm-btn" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 mobile-button">Cancel</button>
+                    <button id="confirm-action-btn" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 mobile-button">Confirm</button>
                 </div>
             </div>
         </div>
