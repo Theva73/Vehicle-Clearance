@@ -1,17 +1,17 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Vehicle Clearance System</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Vehicle Clearance System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+<style>
     body {
       font-family: 'Inter', sans-serif;
       -webkit-font-smoothing: antialiased;
@@ -223,12 +223,10 @@
       }
     }
   </style>
-
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
-  <div id="app-root"></div>
-
-  <script type="module">
+<div id="app-root"></div>
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import {
       getAuth, onAuthStateChanged, signInWithEmailAndPassword,
@@ -1203,7 +1201,13 @@
             <div class="w-full max-w-md mobile-safe-container bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-6 sm:p-8 space-y-6 sm:space-y-8 text-center animate-fade-in">
                 
                 <header class="space-y-4">
-                    <div class="w-24 h-24 mx-auto text-blue-400 opacity-90">${icons.car}</div>
+  <div class="flex justify-between items-center">
+    <a href="https://theva73.github.io/Vehicle-Clearance/userguide.html" target="_blank" title="User Guide" class="text-sm text-blue-300 hover:text-white">
+      📘 Guide
+    </a>
+    <div class="w-24 h-24 mx-auto text-blue-400 opacity-90">${icons.car}</div>
+    <div class="w-6"></div>
+  </div>
                     <div>
                         <h1 class="text-4xl font-bold tracking-tight text-white">Vehicle Clearance</h1>
                         <p class="text-slate-400 mt-2">Your gateway to seamless access.</p>
