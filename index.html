@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- MODIFIED: Updated viewport for better mobile control -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Vehicle Clearance System</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -45,24 +44,16 @@
         transition: background-color 0.3s ease-in-out;
     }
 
-    /* --- START: Direct Audio Search CSS --- */
     .voice-search-btn.listening {
         animation: pulse-ring 1.5s infinite;
         background-color: #ef4444; /* red-500 */
     }
 
     @keyframes pulse-ring {
-        0% {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-        }
-        70% {
-            box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-        }
-        100% {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-        }
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
-    /* --- END: Direct Audio Search CSS --- */
 
     .action-buttons {
         position: relative;
@@ -88,8 +79,6 @@
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
-
-    /* Enhanced car plate display styles */
     .car-plate-display {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
         border: 4px solid #fbbf24;
@@ -100,7 +89,6 @@
         position: relative;
         overflow: hidden;
     }
-
     .car-plate-display::before {
         content: '';
         position: absolute;
@@ -111,21 +99,18 @@
         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
         animation: shine 3s infinite;
     }
-
     @keyframes shine {
         0% { left: -100%; }
         100% { left: 100%; }
     }
-
     .car-plate-text {
         font-family: 'Courier New', monospace;
         font-weight: 900;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         letter-spacing: 4px;
         color: white !important;
-        font-size: 1.2em; /* Makes font slightly bigger */
+        font-size: 1.2em;
     }
-
     .search-highlight {
         color: white !important;
         background: none !important;
@@ -135,21 +120,15 @@
         animation: glow 2s ease-in-out infinite alternate;
         text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
     }
-
     @keyframes glow {
         from { filter: drop-shadow(0 0 5px #fbbf24); }
         to { filter: drop-shadow(0 0 15px #f59e0b); }
     }
-
-    /* ===== ADDED: MOBILE ALIGNMENT FIXES ===== */
-    /* Prevent horizontal scrolling on mobile */
     html, body {
       overflow-x: hidden;
       width: 100%;
       max-width: 100vw;
     }
-
-    /* Mobile container wrapper */
     .mobile-safe-container {
       width: 100%;
       max-width: 100vw;
@@ -159,8 +138,6 @@
       margin-right: auto;
       box-sizing: border-box;
     }
-
-    /* Mobile responsive text */
     .mobile-text {
       font-size: clamp(0.75rem, 3vw, 1rem);
       line-height: 1.3;
@@ -168,45 +145,34 @@
       overflow-wrap: break-word;
       hyphens: auto;
     }
-
-    /* Mobile vehicle number display */
     .mobile-vehicle-number {
       font-size: clamp(1rem, 5vw, 1.5rem);
       letter-spacing: 0.05em;
       word-break: break-all;
     }
-
-    /* Mobile button fixes */
     .mobile-button {
-      min-height: 44px; /* Apple's minimum touch target */
+      min-height: 44px;
       padding: 0.75rem 1rem;
       font-size: clamp(0.875rem, 3.5vw, 1rem);
     }
-
-    /* Mobile form inputs */
     .mobile-input {
       width: 100%;
       max-width: 100%;
-      font-size: 16px; /* Prevents zoom on iOS */
+      font-size: 16px;
       padding: 0.75rem;
       box-sizing: border-box;
     }
-
-    /* Mobile grid fixes */
     .mobile-grid-fix {
       display: grid;
       grid-template-columns: 1fr;
       gap: 0.75rem;
       width: 100%;
     }
-
-    /* Mobile details/summary fixes */
     .mobile-details {
       width: 100%;
       max-width: 100%;
       overflow: hidden;
     }
-
     .mobile-details summary {
       padding: 0.75rem;
       min-height: 44px;
@@ -216,16 +182,12 @@
       width: 100%;
       box-sizing: border-box;
     }
-
-    /* Mobile action buttons container */
     .mobile-actions {
       display: flex;
       gap: 0.5rem;
       flex-shrink: 0;
       min-width: fit-content;
     }
-
-    /* Mobile modal fixes */
     .mobile-modal {
       position: fixed;
       inset: 0;
@@ -237,7 +199,6 @@
       justify-content: center;
       padding-top: 2rem;
     }
-
     .mobile-modal-content {
       width: 100%;
       max-width: 28rem;
@@ -245,26 +206,18 @@
       overflow-y: auto;
       margin: 0 auto;
     }
-
-    /* Responsive breakpoint adjustments */
     @media (max-width: 640px) {
-      /* Force single column layout on small screens */
       .responsive-grid {
         grid-template-columns: 1fr !important;
       }
-      
-      /* Reduce font sizes further on very small screens */
       .ultra-mobile-text {
         font-size: 0.875rem;
       }
-      
-      /* Stack buttons vertically on very small screens */
       .mobile-button-stack {
         flex-direction: column;
         width: 100%;
         align-items: flex-start !important;
       }
-      
       .mobile-button-stack button {
         width: 100%;
       }
@@ -273,7 +226,6 @@
 
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
-  <!-- MODIFIED: app-root is now just a placeholder, containers are handled in JS -->
   <div id="app-root"></div>
 
   <script type="module">
@@ -284,7 +236,7 @@
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
       getFirestore, collection, doc, addDoc, setDoc, deleteDoc,
-      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy, writeBatch
+      onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy, writeBatch, limit
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     // --- Configuration ---
@@ -320,7 +272,7 @@
     let clearanceRequests = [];
     let vvips = [];
     let userPasswordConfig = null;
-    let currentAdminProfile = null; // To store logged-in admin's details
+    let currentAdminProfile = null;
     let unsubClearances = null, unsubRequests = null, unsubConfig = null, unsubVVIPs = null;
     let authMode = "login";
     let routeHistory = [];
@@ -362,9 +314,7 @@
         }
     };
 
-    // --- START: Direct Audio Search Implementation ---
-    
-    // — Audio Context and Beep Player —
+    // --- Voice Search Implementation ---
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const playBeep = (frequency = 440, duration = 100, type = 'sine') => {
         if (!audioContext) return;
@@ -375,7 +325,7 @@
             gainNode.connect(audioContext.destination);
             oscillator.type = type;
             oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Lowered volume
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration / 1000);
             oscillator.start();
             oscillator.stop(audioContext.currentTime + duration / 1000);
@@ -384,14 +334,12 @@
         }
     };
 
-    // — Voice Recognition Variables —
     let recognition = null;
     let isVoiceSearchActive = false;
     let voiceSearchTimeout = null;
     let currentVoiceInput = null;
     let currentVoiceButton = null;
 
-    // — Voice Recognition Setup —
     const initializeVoiceRecognition = () => {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
             console.warn('Speech recognition not supported');
@@ -401,16 +349,13 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.continuous = false;
-        recognition.interimResults = false; // No need for interim with direct feedback
+        recognition.interimResults = false;
         recognition.lang = 'en-US';
         recognition.maxAlternatives = 3;
 
         recognition.onstart = () => {
-            console.log('🎤 Voice recognition started');
             isVoiceSearchActive = true;
-            if (currentVoiceButton) {
-                currentVoiceButton.classList.add('listening');
-            }
+            if (currentVoiceButton) currentVoiceButton.classList.add('listening');
         };
 
         recognition.onresult = (event) => {
@@ -418,30 +363,21 @@
         };
 
         recognition.onerror = (event) => {
-            console.error('❌ Voice recognition error:', event.error);
             let errorMessage = 'An error occurred during voice recognition.';
-            if (event.error === 'no-speech') {
-                errorMessage = 'No speech detected. Please try again.';
-            } else if (event.error === 'not-allowed') {
-                errorMessage = 'Microphone permission denied.';
-            }
+            if (event.error === 'no-speech') errorMessage = 'No speech detected. Please try again.';
+            else if (event.error === 'not-allowed') errorMessage = 'Microphone permission denied.';
             showNotification(errorMessage, "error");
             stopVoiceSearch();
         };
 
         recognition.onend = () => {
-            console.log('🎤 Voice recognition ended');
-            if (isVoiceSearchActive) {
-               stopVoiceSearch(); // Ensure cleanup if ended unexpectedly
-            }
+            if (isVoiceSearchActive) stopVoiceSearch();
         };
 
         return true;
     };
 
-    // — Vehicle Number Processing —
     const processVehicleNumber = (spokenText) => {
-        console.log('🗣️ Original spoken text:', spokenText);
         let processed = spokenText.toLowerCase().trim();
         const fillerWords = ['um', 'uh', 'the', 'number', 'is', 'vehicle', 'car', 'plate'];
         fillerWords.forEach(word => {
@@ -460,34 +396,25 @@
         });
 
         const digitMatches = processed.match(/\d+/g);
-        let result = digitMatches ? digitMatches.join('') : '';
-
-        console.log('✅ Processed result:', result);
-        return result;
+        return digitMatches ? digitMatches.join('') : '';
     };
 
-    // — Vehicle Number Validation —
     const isValidVehicleNumber = (vehicleNumber) => {
         if (!vehicleNumber) return false;
         if (vehicleNumber.length < 3 || vehicleNumber.length > 8) return false;
         return /^\d+$/.test(vehicleNumber);
     };
 
-    // — Voice Result Handling —
     const handleVoiceResult = (event) => {
         let transcript = event.results[0][0].transcript;
-        console.log('🎯 Final transcript:', transcript);
-        
         let detectedNumber = processVehicleNumber(transcript);
         
         if (!isValidVehicleNumber(detectedNumber) && event.results[0].length > 1) {
-            console.log('🔄 Trying alternatives...');
             for (let i = 1; i < event.results[0].length; i++) {
                 const altTranscript = event.results[0][i].transcript;
                 const altNumber = processVehicleNumber(altTranscript);
                 if (isValidVehicleNumber(altNumber)) {
                     detectedNumber = altNumber;
-                    console.log('✅ Found valid number in alternative:', altNumber);
                     break;
                 }
             }
@@ -501,7 +428,6 @@
         }
     };
 
-    // — Voice Search Control Functions —
     const startVoiceSearch = (inputElement, buttonElement) => {
         if (!recognition) {
             if (!initializeVoiceRecognition()) {
@@ -519,36 +445,27 @@
         currentVoiceButton = buttonElement;
         
         try {
-            playBeep(523, 150); // Start beep
+            playBeep(523, 150);
             recognition.start();
             voiceSearchTimeout = setTimeout(() => {
-                console.log('⏰ Voice search timeout');
                 showNotification("Voice search timed out.", "error");
                 stopVoiceSearch();
             }, 8000);
         } catch (error) {
-            console.error('Failed to start voice recognition:', error);
             showNotification("Failed to start voice search", "error");
         }
     };
 
     const stopVoiceSearch = () => {
         if (!isVoiceSearchActive) return;
-
-        playBeep(392, 150); // Stop beep
-        if (recognition) {
-            recognition.stop();
-        }
-        if (voiceSearchTimeout) {
-            clearTimeout(voiceSearchTimeout);
-            voiceSearchTimeout = null;
-        }
-        if (currentVoiceButton) {
-            currentVoiceButton.classList.remove('listening');
-        }
+        playBeep(392, 150);
+        if (recognition) recognition.stop();
+        if (voiceSearchTimeout) clearTimeout(voiceSearchTimeout);
+        if (currentVoiceButton) currentVoiceButton.classList.remove('listening');
         isVoiceSearchActive = false;
         currentVoiceInput = null;
         currentVoiceButton = null;
+        voiceSearchTimeout = null;
     };
 
     const completeVoiceSearch = (detectedNumber) => {
@@ -560,7 +477,180 @@
         stopVoiceSearch();
     };
 
-    // --- END: Direct Audio Search Implementation ---
+    // --- NEW DATABASE FUNCTIONS ---
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371e3; // Earth’s radius in meters
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lon2-lon1) * Math.PI/180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c; // Distance in meters
+    };
+
+    const getCurrentLocation = () => {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error("Geolocation not supported by this browser"));
+                return;
+            }
+
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 300000 // 5 minutes
+            };
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    });
+                },
+                (error) => {
+                    let errorMessage;
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = "Location permission denied. Please enable location access.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = "Location information unavailable.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = "Location request timed out.";
+                            break;
+                        default:
+                            errorMessage = "An unknown error occurred while getting location.";
+                            break;
+                    }
+                    reject(new Error(errorMessage));
+                },
+                options
+            );
+        });
+    };
+
+    const validateUserID = async (userID) => {
+        try {
+            const q = query(collection(db, "authorizedUsers"), where("userId", "==", userID), where("isActive", "==", true));
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.empty ? null : { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+        } catch (error) {
+            console.error("Error validating user ID:", error);
+            return null;
+        }
+    };
+
+    const getAllowedLocations = async () => {
+        try {
+            const q = query(collection(db, "allowedLocations"), where("isActive", "==", true));
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Error getting allowed locations:", error);
+            return [];
+        }
+    };
+
+    const checkLocationAccess = async (userLocation, allowedLocations) => {
+        if (!userLocation || !allowedLocations.length) {
+            return { allowed: false, reason: "No valid locations configured" };
+        }
+
+        for (const location of allowedLocations) {
+            const distance = calculateDistance(
+                userLocation.latitude, userLocation.longitude,
+                location.latitude, location.longitude
+            );
+
+            let effectiveRadius = location.radiusMeters;
+            if (userLocation.accuracy > 50) {
+                effectiveRadius += Math.min(userLocation.accuracy * 0.5, 100);
+            }
+
+            if (distance <= effectiveRadius) {
+                return { 
+                    allowed: true, 
+                    locationName: location.name,
+                    distance: Math.round(distance),
+                    method: 'gps'
+                };
+            }
+        }
+
+        return { 
+            allowed: false, 
+            reason: "You are not within an authorized location",
+            nearestLocation: findNearestLocation(userLocation, allowedLocations)
+        };
+    };
+
+    const findNearestLocation = (userLocation, allowedLocations) => {
+        if (!allowedLocations.length) return null;
+
+        let nearest = allowedLocations[0];
+        let minDistance = calculateDistance(
+            userLocation.latitude, userLocation.longitude,
+            nearest.latitude, nearest.longitude
+        );
+
+        for (const location of allowedLocations.slice(1)) {
+            const distance = calculateDistance(
+                userLocation.latitude, userLocation.longitude,
+                location.latitude, location.longitude
+            );
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearest = location;
+            }
+        }
+
+        return { name: nearest.name, distance: Math.round(minDistance) };
+    };
+
+    const logAccessAttempt = async (userID, userLocation, accessGranted, reason) => {
+        try {
+            const logData = {
+                userId: userID,
+                location: userLocation,
+                locationName: null,
+                accessGranted,
+                reason,
+                timestamp: Timestamp.now(),
+                userAgent: navigator.userAgent,
+                ipAddress: null
+            };
+
+            if (accessGranted && userLocation) {
+                const allowedLocations = await getAllowedLocations();
+                const locationCheck = await checkLocationAccess(userLocation, allowedLocations);
+                if (locationCheck.allowed) {
+                    logData.locationName = locationCheck.locationName;
+                }
+            }
+
+            await addDoc(collection(db, "accessLogs"), logData);
+        } catch (error) {
+            console.error("Error logging access attempt:", error);
+        }
+    };
+
+    const updateLastUsed = async (authorizedUserId) => {
+        try {
+            await updateDoc(doc(db, "authorizedUsers", authorizedUserId), {
+                lastUsed: Timestamp.now()
+            });
+        } catch (error) {
+            console.error("Error updating last used:", error);
+        }
+    };
 
     // --- Utility Functions ---
     const goBack = () => {
@@ -641,9 +731,10 @@
 
     const showNotification = (message, type = "success") => {
       const notification = document.createElement("div");
-      const bgColor = type === "success" ? "bg-green-500" : "bg-red-500";
-      notification.className = `fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white flex items-center animate-fade-in z-[100] ${bgColor}`;
-      notification.innerHTML = `<span class="mr-3">${type === "success" ? "✓" : "✗"}</span><span>${message}</span>`;
+      const bgColor = type === "success" ? "bg-green-500" : type === "error" ? "bg-red-500" : "bg-blue-500";
+      notification.className = `fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white flex items-center animate-fade-in z-[100] ${bgColor} max-w-sm`;
+      const icon = type === "success" ? "✓" : type === "error" ? "✗" : "ℹ";
+      notification.innerHTML = `<span class="mr-3 text-lg">${icon}</span><span>${message}</span>`;
       document.body.appendChild(notification);
       setTimeout(() => notification.remove(), 4000);
     };
@@ -657,6 +748,28 @@
         const day = parseInt(parts[2], 10);
         if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
         return new Date(year, month, day);
+    };
+
+    const performSecureLogout = async () => {
+        try {
+            const currentUserID = sessionStorage.getItem('currentUserID');
+            if (currentUserID) {
+                await logAccessAttempt(currentUserID, null, true, "User logged out");
+            }
+            sessionStorage.removeItem('isDashboardLogin');
+            sessionStorage.removeItem('currentUserID');
+            sessionStorage.removeItem('accessLocation');
+            await signOut(auth);
+            showNotification("Logged out successfully");
+        } catch (error) {
+            console.error("Logout error:", error);
+            showNotification("Logout completed", "success");
+        }
+    };
+    
+    const isValidSecureSession = () => {
+        return sessionStorage.getItem('isDashboardLogin') === 'true' &&
+        sessionStorage.getItem('currentUserID') !== null;
     };
     
     // — Icon Library —
@@ -719,8 +832,6 @@
             let reportData = [];
             const processedVehicleNumbers = new Set();
 
-            // --- START: CORRECTED PDF FIX ---
-            // Helper function to get escort information text
             const getEscortInfo = (entry) => {
                 let escortInfo = 'No';
                 if (entry.escortRequired) {
@@ -742,7 +853,6 @@
                 return escortInfo;
             };
 
-            // 1. Process active clearances first
             const clearancesQuery = query(
                 collection(db, "vehicleClearances"),
                 orderBy("createdAt", "desc")
@@ -770,7 +880,6 @@
                 processedVehicleNumbers.add(c.vehicleNumber);
             });
 
-            // 2. Process recent requests, avoiding duplicates
             const requestsQuery = query(
                 collection(db, "clearanceRequests"),
                 where("createdAt", ">=", Timestamp.fromDate(twentyFourHoursAgo)),
@@ -795,7 +904,6 @@
                     processedVehicleNumbers.add(r.vehicleNumber);
                 }
             });
-            // --- END: CORRECTED PDF FIX ---
 
             doc.setFontSize(20);
             doc.setFont(undefined, 'bold');
@@ -839,11 +947,10 @@
                         3: { halign: 'center', cellWidth: 25 },
                         4: { halign: 'center', fontStyle: 'bold', cellWidth: 20 }
                     },
-                    // --- START: CORRECTED PDF FIX ---
                     didParseCell: (data) => {
                         if (data.section !== 'body') return;
 
-                        if (data.column.index === 4) { // Status column
+                        if (data.column.index === 4) {
                             const status = data.cell.raw;
                             switch(status) {
                                 case 'ACTIVE': case 'APPROVED': data.cell.styles.textColor = [22, 163, 74]; break;
@@ -853,7 +960,7 @@
                             }
                         }
 
-                        if (data.column.index === 1) { // Location column
+                        if (data.column.index === 1) {
                             if (data.cell.raw === 'Lobby Parking') {
                                 data.cell.styles.fontStyle = 'bold';
                                 data.cell.styles.fontSize = 9;
@@ -861,7 +968,7 @@
                             }
                         }
 
-                        if (data.column.index === 2) { // Escort Required column
+                        if (data.column.index === 2) {
                             const text = data.cell.raw.toString();
                             
                             if (text.includes('\n')) {
@@ -869,10 +976,6 @@
                                 data.cell.styles.cellPadding = 2;
                                 data.cell.styles.valign = 'top';
                                 data.cell.styles.overflow = 'linebreak';
-                                
-                                // Note: We cannot color individual lines easily without manual drawing.
-                                // The best approach is to let the library handle it and apply a single style.
-                                // We will bold the cell if escort is required.
                                 if (text.startsWith('Yes')) {
                                     data.cell.styles.fontStyle = 'bold';
                                     data.cell.styles.textColor = [22, 163, 74];
@@ -889,7 +992,6 @@
                             }
                         }
                     }
-                    // --- END: CORRECTED PDF FIX ---
                 });
             }
 
@@ -923,9 +1025,7 @@
         }
     };
 
-    // --- START: DATABASE MANAGEMENT FUNCTIONS ---
-
-    // Complete database wipe - removes all clearances and requests
+    // --- DATABASE MANAGEMENT FUNCTIONS ---
     const clearAllDatabaseData = async (button) => {
         const originalHTML = button.innerHTML;
         button.disabled = true;
@@ -933,16 +1033,12 @@
 
         try {
             showNotification("Starting database cleanup…", "success");
-            
-            // Only clearing clearances and requests. VVIPs and Admins are preserved.
             const collectionsToWipe = ['vehicleClearances', 'clearanceRequests'];
             let totalDeleted = 0;
 
             for (const collectionName of collectionsToWipe) {
-                console.log(`🗑️ Clearing collection: ${collectionName}`);
                 const collectionRef = collection(db, collectionName);
                 const snapshot = await getDocs(collectionRef);
-                console.log(`Found ${snapshot.size} documents in ${collectionName}`);
                 
                 if (snapshot.size > 0) {
                     const batch = writeBatch(db);
@@ -965,7 +1061,6 @@
         }
     };
 
-    // Reset to default state - clears clearances and requests only
     const resetToDefaultState = async (button) => {
         const originalHTML = button.innerHTML;
         button.disabled = true;
@@ -973,9 +1068,6 @@
 
         try {
             showNotification("Resetting database…", "success");
-            
-            // This function is functionally the same as clearAllDatabaseData for this app's context
-            // It only clears user-generated content, preserving settings and admin accounts.
             const userCollections = ['vehicleClearances', 'clearanceRequests'];
             let totalDeleted = 0;
 
@@ -988,7 +1080,6 @@
                     snapshot.docs.forEach((doc) => batch.delete(doc.ref));
                     await batch.commit();
                     totalDeleted += snapshot.size;
-                    console.log(`✅ Cleared ${snapshot.size} documents from ${collectionName}`);
                 }
             }
 
@@ -1004,7 +1095,6 @@
         }
     };
 
-    // Export database data as JSON backup
     const exportDatabaseData = async (button) => {
         const originalHTML = button.innerHTML;
         button.disabled = true;
@@ -1013,7 +1103,7 @@
         try {
             showNotification("Exporting database data…", "success");
             const exportData = { exportDate: new Date().toISOString(), collections: {} };
-            const collectionsToExport = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins', 'publicConfig'];
+            const collectionsToExport = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins', 'publicConfig', 'authorizedUsers', 'allowedLocations', 'accessLogs'];
 
             for (const collectionName of collectionsToExport) {
                 const collectionRef = collection(db, collectionName);
@@ -1021,7 +1111,6 @@
                 exportData.collections[collectionName] = [];
                 snapshot.docs.forEach((doc) => {
                     const data = doc.data();
-                    // Convert Firestore timestamps to ISO strings for JSON compatibility
                     Object.keys(data).forEach(key => {
                         if (data[key] && typeof data[key].toDate === 'function') {
                             data[key] = data[key].toDate().toISOString();
@@ -1029,10 +1118,8 @@
                     });
                     exportData.collections[collectionName].push({ id: doc.id, ...data });
                 });
-                console.log(`✅ Exported ${snapshot.size} documents from ${collectionName}`);
             }
 
-            // Create and download JSON file
             const dataStr = JSON.stringify(exportData, null, 2);
             const dataBlob = new Blob([dataStr], {type: 'application/json'});
             const url = URL.createObjectURL(dataBlob);
@@ -1055,14 +1142,13 @@
         }
     };
 
-    // Update database statistics display
     const updateDatabaseStats = async () => {
         const statsContainer = document.getElementById('db-stats');
         if (!statsContainer) return;
-        statsContainer.innerHTML = '<div class="col-span-2 text-center p-4">Loading statistics...</div>';
+        statsContainer.innerHTML = '<div class="col-span-2 text-center p-4">Loading statistics…</div>';
 
         try {
-            const collectionsToCount = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins'];
+            const collectionsToCount = ['vehicleClearances', 'clearanceRequests', 'vvips', 'admins', 'authorizedUsers', 'allowedLocations'];
             const stats = {};
             for (const collectionName of collectionsToCount) {
                 try {
@@ -1070,13 +1156,15 @@
                     if (collectionName === 'clearanceRequests') {
                         const q = query(collection(db, collectionName), where("status", "==", "pending"));
                         snapshot = await getDocs(q);
+                    } else if (collectionName === 'authorizedUsers' || collectionName === 'allowedLocations') {
+                        const q = query(collection(db, collectionName), where("isActive", "==", true));
+                        snapshot = await getDocs(q);
                     } else {
                         snapshot = await getDocs(collection(db, collectionName));
                     }
                     stats[collectionName] = snapshot.size;
                 } catch (err) {
-                    console.error(`Could not count collection '${collectionName}':`, err);
-                    stats[collectionName] = 'N/A'; // Mark as not available on error
+                    stats[collectionName] = 'N/A';
                 }
             }
             statsContainer.innerHTML = `
@@ -1084,6 +1172,8 @@
                 <div>Pending Requests: <strong class="text-yellow-500">${stats.clearanceRequests}</strong></div>
                 <div>VVIPs: <strong class="text-indigo-500">${stats.vvips}</strong></div>
                 <div>Admin Accounts: <strong class="text-green-500">${stats.admins}</strong></div>
+                <div>Active User IDs: <strong class="text-blue-500">${stats.authorizedUsers}</strong></div>
+                <div>Active Locations: <strong class="text-green-500">${stats.allowedLocations}</strong></div>
                 <div class="col-span-2 text-xs text-gray-500 dark:text-gray-400 mt-2">Last updated: ${new Date().toLocaleTimeString()}</div>
             `;
         } catch (error) {
@@ -1091,8 +1181,6 @@
             statsContainer.innerHTML = '<div class="col-span-2 text-red-500 text-center p-4">Error loading statistics</div>';
         }
     };
-
-    // --- END: DATABASE MANAGEMENT FUNCTIONS ---
     
     // — Render Functions —
     const renderLandingPage = (options = {}) => {
@@ -1111,7 +1199,6 @@
         }
 
         appRoot.innerHTML = `
-        <!-- MODIFIED: Applied mobile-safe-container and responsive padding -->
         <div class="min-h-screen flex items-center justify-center p-3 sm:p-4">
             <div class="w-full max-w-md mobile-safe-container bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-6 sm:p-8 space-y-6 sm:space-y-8 text-center animate-fade-in">
                 
@@ -1164,7 +1251,6 @@
         const isSignup = authMode === "signup";
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
-            <!-- MODIFIED: Added mobile-safe-container -->
             <div class="w-full max-w-md mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-8 space-y-6 animate-fade-in">
                 <div class="text-center">
                     <div class="w-12 h-12 mx-auto text-blue-400">${icons.shield}</div>
@@ -1207,17 +1293,42 @@
         document.body.className = 'dark-theme-bg';
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
-            <!-- MODIFIED: Added mobile-safe-container -->
             <div class="w-full max-w-md mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-green-500/20 rounded-2xl shadow-2xl shadow-green-900/20 p-8 space-y-6 animate-fade-in text-center">
                 <div class="w-12 h-12 mx-auto text-green-400">${icons.greenlist}</div>
-                <h1 class="text-3xl font-bold text-white mt-4">Green List Access</h1>
-                <p class="text-slate-400">Enter the password to view today's clearances.</p>
-                <form id="user-login-form" class="space-y-4 pt-4">
+                <h1 class="text-3xl font-bold text-white mt-4">Secure Access</h1>
+                <p class="text-slate-400">Enter your User ID and verify location</p>
+
+                <form id="secure-user-login-form" class="space-y-4 pt-4">
                     <div>
-                        <input type="password" name="password" class="mobile-input block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter Password" required />
+                        <label class="text-sm font-medium text-slate-300">User ID</label>
+                        <input type="text" name="userID" class="mobile-input block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter your User ID" oninput="this.value=this.value.toUpperCase()" required />
                     </div>
-                    <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700 mobile-button">Continue</button>
+                    
+                    <div id="location-status" class="hidden p-3 rounded-lg border border-blue-500/30 bg-blue-500/10">
+                        <div class="flex items-center gap-2 justify-center">
+                            <div class="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full"></div>
+                            <span class="text-sm text-blue-300">Verifying your location...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="location-help" class="hidden p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
+                        <div class="text-xs text-yellow-300">
+                            <p class="font-semibold mb-1">📍 Location Access Required</p>
+                            <p>This system requires location verification for security. Please enable location permissions when prompted.</p>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700 mobile-button">
+                        🔍 Verify Access
+                    </button>
                 </form>
+                
+                <div class="text-xs text-slate-500 space-y-1">
+                    <p>🔒 Secure access requires:</p>
+                    <p>• Valid User ID</p>
+                    <p>• Physical presence at authorized location</p>
+                </div>
+                
                 <button id="back-btn" class="mt-4 text-slate-400 hover:text-slate-200 underline text-sm">Back</button>
             </div>
         </div>`;
@@ -1227,7 +1338,6 @@
         document.body.className = 'dark-theme-bg';
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
-            <!-- MODIFIED: Added mobile-safe-container -->
             <div class="w-full max-w-lg mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-yellow-500/20 rounded-2xl shadow-2xl shadow-yellow-900/20 p-8 space-y-6 animate-fade-in">
                 <div class="text-center">
                     <div class="w-12 h-12 mx-auto text-yellow-400">${icons.request}</div>
@@ -1301,7 +1411,6 @@
             <div class="flex justify-between items-start mb-3">
                 <div>
                     <p class="text-sm text-slate-400">Vehicle</p>
-                    <!-- MODIFIED: Added mobile-vehicle-number class -->
                     <p class="font-mono text-xl font-bold text-blue-400 mobile-vehicle-number">${formatVehicleNumber(r.vehicleNumber)}</p>
                     <p class="text-xs text-slate-400">${r.vehicleType || "Car"}</p>
                 </div>
@@ -1333,29 +1442,21 @@
         </div>`;
     };
     
-    // Fixed tracking function
     const findCurrentVehicleStatus = async (vehicleNumber) => {
-        console.log("🔍 Starting vehicle status check for:", vehicleNumber);
         const now = new Date();
-
         try {
-            // Get ALL clearances for this vehicle
             const clearanceQuery = query(
                 collection(db, "vehicleClearances"),
                 where("vehicleNumber", "==", vehicleNumber)
             );
             const clearanceSnap = await getDocs(clearanceQuery);
 
-            // Get ALL requests for this vehicle
             const requestQuery = query(
                 collection(db, "clearanceRequests"),
                 where("vehicleNumber", "==", vehicleNumber)
             );
             const requestSnap = await getDocs(requestQuery);
             
-            console.log(`Found ${clearanceSnap.size} clearances and ${requestSnap.size} requests`);
-
-            // Manually sort results in JavaScript by creation date, descending
             const allClearances = clearanceSnap.docs
                 .map(doc => ({ id: doc.id, ...doc.data() }))
                 .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
@@ -1364,39 +1465,30 @@
                 .map(doc => ({ id: doc.id, ...doc.data() }))
                 .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
-            // STEP 1: Find the most recent ACTIVE clearance (not expired)
             const activeClearance = allClearances.find(data => {
                 const expiryDate = data.expiryDate.toDate();
-                expiryDate.setHours(23, 59, 59, 999); // FIX: Set to end of day for timezone fix
+                expiryDate.setHours(23, 59, 59, 999);
                 return expiryDate >= now;
             });
 
             if (activeClearance) {
-                console.log("✅ Returning ACTIVE clearance as current status");
                 return { ...activeClearance, status: "active" };
             }
 
-            // STEP 2: If no active clearance, check for the most recent non-rejected request
             const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
             const mostRecentRequest = allRequests.find(data => {
                 const createdAt = data.createdAt ? data.createdAt.toDate() : new Date(0);
-                // Consider recent requests or any non-rejected ones
                 return data.status !== 'rejected' || createdAt >= sevenDaysAgo;
             });
 
             if (mostRecentRequest) {
-                console.log("✅ Returning most recent request as current status");
                 return mostRecentRequest;
             }
 
-            // STEP 3: Fallback to the most recent expired clearance
             if (allClearances.length > 0) {
-                console.log("✅ Returning most recent expired clearance as historical status");
                 return { ...allClearances[0], status: "expired" };
             }
 
-            // No records found
-            console.log("❌ No records found");
             return null;
 
         } catch (error) {
@@ -1427,11 +1519,9 @@
         let listHTML = '';
 
         if (dailyClearances.length > 0) {
-            // If there's a search filter and exactly one result, show the enhanced plate.
             if (vehicleFilter && dailyClearances.length === 1) {
                 const c = dailyClearances[0];
                 listHTML += `
-                <!-- Enhanced Car Plate Display for Single Match -->
                 <div class="car-plate-display rounded-2xl p-6 text-center mb-4 animate-fade-in">
                     <div class="car-plate-text text-3xl md:text-5xl mb-2">
                         <span class="search-highlight">${c.vehicleNumber}</span>
@@ -1445,9 +1535,7 @@
                 `;
             }
 
-            // Always render the list of results
             listHTML += dailyClearances.map(c => {
-                // Check if this item is the single search result to apply special styling
                 const isSingleSearchResult = vehicleFilter && dailyClearances.length === 1 && c.id === dailyClearances[0].id;
                 
                 return `
@@ -1455,7 +1543,6 @@
                     <summary class="flex justify-between items-center px-5 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                         <div class="flex items-center gap-4">
                             <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90">${icons.chevronRight}</span>
-                            <!-- MODIFIED: Added mobile-vehicle-number class -->
                             <p class="font-mono text-xl font-bold text-blue-500 dark:text-blue-400 mobile-vehicle-number">${c.vehicleNumber}</p>
                         </div>
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Cleared</span>
@@ -1485,12 +1572,10 @@
             `;
             }).join("");
 
-        } else { // No clearances found at all
+        } else {
             if (vehicleFilter) {
-                // Enhanced display when search yields no results
                 listHTML = `
                     <div class="space-y-6 animate-fade-in">
-                        <!-- Car Plate Display -->
                         <div class="car-plate-display rounded-2xl p-8 text-center relative">
                             <div class="mb-4">
                                 <div class="w-16 h-16 mx-auto text-yellow-300 opacity-90">${icons.car}</div>
@@ -1501,7 +1586,6 @@
                             <div class="absolute top-2 right-2 text-xs text-yellow-200 opacity-70">🔍 SEARCHED</div>
                         </div>
                         
-                        <!-- No Results Message -->
                         <div class="text-center py-8 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
                             <div class="w-12 h-12 mx-auto text-red-400 mb-4">${icons.x}</div>
                             <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">No Active Clearance Found</h3>
@@ -1514,7 +1598,6 @@
                         </div>
                     </div>`;
             } else {
-                // Regular no clearances message for the day
                 listHTML = `
                     <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-md animate-fade-in">
                         <div class="w-12 h-12 mx-auto text-gray-400">${icons.car}</div>
@@ -1528,7 +1611,18 @@
 
     const renderUserDashboard = (user, vehicleFilter = null) => {
         document.body.className = 'bg-gray-100 dark:bg-gray-900';
-        // MODIFIED: Replaced this entire innerHTML with the mobile-fixed version
+        const currentUserID = sessionStorage.getItem('currentUserID');
+        const accessLocation = sessionStorage.getItem('accessLocation');
+        const accessInfoHTML = currentUserID ? `
+            <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-green-600 dark:text-green-400">🔒 Secure Access:</span>
+                    <span class="font-mono font-semibold text-green-700 dark:text-green-300">${currentUserID}</span>
+                    ${accessLocation ? `<span class="text-green-600 dark:text-green-400">@ ${accessLocation}</span>` : ''}
+                </div>
+            </div>
+        ` : '';
+
         appRoot.innerHTML = `
         <div class="w-full min-h-screen mobile-safe-container flex justify-center">
           <main class="w-full max-w-4xl">
@@ -1545,6 +1639,8 @@
                 <span class="hidden sm:inline">Logout</span>
               </button>
             </div>
+            
+            ${accessInfoHTML}
             
             <div class="mb-6 sticky top-0 bg-gray-100 dark:bg-gray-900 z-20 py-4">
               <form id="daily-clearance-search-form" class="flex gap-2">
@@ -1577,7 +1673,6 @@
         appRoot.innerHTML = `
         <div id="admin-dashboard-container">
             <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
-                <!-- MODIFIED: Updated nav for mobile responsiveness -->
                 <nav class="w-full max-w-7xl mx-auto px-3 md:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div class="flex items-center gap-3 mobile-text">
                     <span class="text-blue-500 w-6 h-6 sm:w-8 sm:h-8">${icons.shield}</span>
@@ -1595,7 +1690,6 @@
                   </div>
                 </nav>
             </header>
-            <!-- MODIFIED: Added mobile-safe-container -->
             <main class="w-full max-w-7xl mx-auto p-4 md:p-8 mobile-safe-container">
                 <div class="space-y-10">
                     <section>
@@ -1633,10 +1727,11 @@
                     </div>
                     <div class="flex-shrink-0 px-4">
                         <div class="border-b border-gray-200 dark:border-gray-700">
-                            <nav id="settings-tabs" class="flex gap-4 -mb-px">
-                                <button data-tab="general" class="settings-tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">General</button>
-                                <button data-tab="vvip" class="settings-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">VVIPs</button>
-                                <button data-tab="database" class="settings-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">Database</button>
+                            <nav id="settings-tabs" class="flex gap-2 -mb-px overflow-x-auto">
+                                <button data-tab="general" class="settings-tab-btn active whitespace-nowrap py-3 px-2 border-b-2 font-medium text-xs">General</button>
+                                <button data-tab="vvip" class="settings-tab-btn whitespace-nowrap py-3 px-2 border-b-2 font-medium text-xs border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">VVIPs</button>
+                                <button data-tab="access" class="settings-tab-btn whitespace-nowrap py-3 px-2 border-b-2 font-medium text-xs border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">Access Control</button>
+                                <button data-tab="database" class="settings-tab-btn whitespace-nowrap py-3 px-2 border-b-2 font-medium text-xs border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200">Database</button>
                             </nav>
                         </div>
                     </div>
@@ -1644,8 +1739,8 @@
                         <div id="general-settings-pane" class="settings-pane space-y-4">
                             <form id="user-password-form" class="space-y-4">
                                 <div>
-                                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">User Access Password</label>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">This password is required for non-admin users to view the daily clearance list.</p>
+                                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">User Access Password (Legacy)</label>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">⚠️ This is now legacy. Use Access Control tab for secure User ID management.</p>
                                     <input name="password" type="text" class="mobile-input mt-1 block w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" value="${userPasswordConfig?.password || ''}" required />
                                 </div>
                                 <div class="text-right pt-4">
@@ -1671,12 +1766,72 @@
                                 <div id="vvip-list-container-settings" class="mt-2 space-y-2"></div>
                             </div>
                         </div>
+                        
+                        <div id="access-settings-pane" class="settings-pane hidden space-y-6">
+                            <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700/50">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+                                    👥 Authorized User IDs
+                                </h3>
+                                <form id="add-user-id-form" class="space-y-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded border">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">User ID</label>
+                                            <input name="userId" oninput="this.value=this.value.toUpperCase()" class="mobile-input w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded text-sm" placeholder="GUARD001" required>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Description</label>
+                                            <input name="description" class="mobile-input w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded text-sm" placeholder="Security Guard" required>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm mobile-button">Add User ID</button>
+                                </form>
+                                <div id="authorized-users-list" class="space-y-2"></div>
+                            </div>
+                            
+                            <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700/50">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+                                    📍 Allowed Locations
+                                </h3>
+                                <form id="add-location-form" class="space-y-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded border">
+                                    <div>
+                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Location Name</label>
+                                        <input name="locationName" class="mobile-input w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded text-sm" placeholder="Main Office Building" required>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Latitude</label>
+                                            <input name="latitude" type="number" step="any" class="mobile-input w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded text-sm" placeholder="3.1390" required>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Longitude</label>
+                                            <input name="longitude" type="number" step="any" class="mobile-input w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded text-sm" placeholder="101.6869" required>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Radius (meters)</label>
+                                        <input name="radiusMeters" type="number" min="10" max="1000" class="mobile-input w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded text-sm" placeholder="100" required>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button type="button" id="get-current-location-btn" class="flex-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm mobile-button">📍 Use Current Location</button>
+                                        <button type="submit" class="flex-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm mobile-button">Add Location</button>
+                                    </div>
+                                </form>
+                                <div id="allowed-locations-list" class="space-y-2"></div>
+                            </div>
+                            
+                            <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700/50">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+                                    📊 Recent Access Logs
+                                </h3>
+                                <div id="access-logs-list" class="space-y-1 max-h-40 overflow-y-auto"></div>
+                                <button id="refresh-logs-btn" class="w-full mt-3 px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm mobile-button">🔄 Refresh Logs</button>
+                            </div>
+                        </div>
+                        
                         <div id="database-settings-pane" class="settings-pane hidden space-y-6">
                             <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700/50">
                                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2">${icons.database} Database Statistics</h3>
-                                <div id="db-stats" class="grid grid-cols-2 gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                    <!-- Stats will be loaded here -->
-                                </div>
+                                <div id="db-stats" class="grid grid-cols-2 gap-2 text-sm text-gray-700 dark:text-gray-300"></div>
                             </div>
                              <div class="space-y-4">
                                 <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700/50">
@@ -1707,7 +1862,6 @@
             renderClearancesList();
         });
 
-        // FIX: Changed query to fetch all and filter client-side to avoid index issues
         const requestsQuery = query(collection(db, "clearanceRequests"), orderBy("createdAt", "desc"));
         unsubRequests = onSnapshot(requestsQuery, snap => {
             clearanceRequests = snap.docs
@@ -1722,9 +1876,12 @@
             }
         });
         
-        renderVVIPListForSettings(); 
+        renderVVIPListForSettings();
+        renderAuthorizedUsersList();
+        renderAllowedLocationsList();
+        renderAccessLogsList();
     };
-            
+
     const renderRequestsList = () => {
         const list = document.getElementById("requests-list");
         if (!list) return;
@@ -1755,7 +1912,7 @@
         const now = new Date();
         const activeClearances = clearances.filter(c => {
             const expiryDate = c.expiryDate.toDate();
-            expiryDate.setHours(23, 59, 59, 999); // Set to end of day
+            expiryDate.setHours(23, 59, 59, 999);
             return expiryDate >= now;
         });
         
@@ -1769,9 +1926,7 @@
             const updateInfo = formatUpdateString(c);
 
             return `
-            <!-- MODIFIED: Applied mobile-details class -->
             <details class="mobile-details bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group animate-fade-in border border-gray-200 dark:border-gray-700">
-                <!-- MODIFIED: Replaced summary with mobile-friendly version -->
                 <summary class="summary px-3 sm:px-5 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                   <div class="flex items-center gap-3 min-w-0 flex-1">
                     <span class="text-gray-400 transform transition-transform duration-300 group-open:rotate-90 flex-shrink-0">${icons.chevronRight}</span>
@@ -1870,7 +2025,6 @@
         `).join('') : '<li class="p-8 text-center text-gray-500">No VVIPs configured.</li>';
 
         modalContainer.innerHTML = `
-        <!-- MODIFIED: Applied mobile-modal classes -->
         <div id="vvip-modal-backdrop" class="mobile-modal bg-black bg-opacity-60 z-50">
             <div class="mobile-modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg relative animate-fade-in flex flex-col" style="max-height: 80vh;">
                 <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center flex-shrink-0">
@@ -1900,7 +2054,6 @@
         }).join('');
 
         modalContainer.innerHTML = `
-        <!-- MODIFIED: Applied mobile-modal classes -->
         <div id="review-modal-backdrop" class="mobile-modal bg-black bg-opacity-60 z-50">
             <div class="mobile-modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 w-full max-w-2xl relative animate-fade-in">
                 <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">
@@ -1978,7 +2131,6 @@
         }).join('');
         
         modalContainer.innerHTML = `
-        <!-- MODIFIED: Applied mobile-modal classes -->
         <div id="form-modal-backdrop" class="mobile-modal bg-black bg-opacity-60 z-50">
             <div class="mobile-modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 relative animate-fade-in">
                 <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100">
@@ -2050,7 +2202,6 @@
     const renderConfirmationModal = (title, message, onConfirm) => {
         const modalContainer = document.getElementById('modal-container');
         modalContainer.innerHTML = `
-        <!-- MODIFIED: Applied mobile-modal classes -->
         <div id="confirm-modal-backdrop" class="mobile-modal bg-black bg-opacity-60 z-[60]">
             <div class="mobile-modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm relative animate-fade-in">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">${title}</h2>
@@ -2094,15 +2245,196 @@
         }
     };
 
+    const renderAuthorizedUsersList = async () => {
+        const container = document.getElementById('authorized-users-list');
+        if (!container) return;
+
+        try {
+            const q = query(collection(db, "authorizedUsers"), orderBy("userId"));
+            const snapshot = await getDocs(q);
+            
+            if (snapshot.empty) {
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm py-2 text-center">No authorized users yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = snapshot.docs.map(doc => {
+                const user = doc.data();
+                const lastUsedText = user.lastUsed ? formatDate(user.lastUsed) : 'Never';
+                const statusColor = user.isActive ? 'text-green-600' : 'text-red-600';
+                const statusText = user.isActive ? 'Active' : 'Inactive';
+                
+                return `
+                    <div class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border text-xs">
+                        <div>
+                            <p class="font-mono font-bold text-blue-600 dark:text-blue-400">${user.userId}</p>
+                            <p class="text-gray-600 dark:text-gray-300">${user.description}</p>
+                            <p class="text-gray-500">Last used: ${lastUsedText}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-1 rounded text-xs ${statusColor} bg-gray-100 dark:bg-gray-700">${statusText}</span>
+                            <button class="toggle-user-btn p-1 text-gray-500 hover:text-blue-600" data-id="${doc.id}" data-active="${user.isActive}" title="Toggle Status">
+                                ${user.isActive ? '🔒' : '🔓'}
+                            </button>
+                            <button class="delete-user-id-btn p-1 text-red-500 hover:text-red-700" data-id="${doc.id}" title="Delete User">
+                                ${icons.trash}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            container.innerHTML = '<p class="text-red-500 text-sm py-2 text-center">Error loading users</p>';
+        }
+    };
+
+    const renderAllowedLocationsList = async () => {
+        const container = document.getElementById('allowed-locations-list');
+        if (!container) return;
+
+        try {
+            const q = query(collection(db, "allowedLocations"), orderBy("name"));
+            const snapshot = await getDocs(q);
+            
+            if (snapshot.empty) {
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm py-2 text-center">No locations configured yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = snapshot.docs.map(doc => {
+                const location = doc.data();
+                const statusColor = location.isActive ? 'text-green-600' : 'text-red-600';
+                const statusText = location.isActive ? 'Active' : 'Inactive';
+                
+                return `
+                    <div class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border text-xs">
+                        <div>
+                            <p class="font-semibold text-gray-800 dark:text-gray-200">${location.name}</p>
+                            <p class="text-gray-600 dark:text-gray-300">📍 ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
+                            <p class="text-gray-500">📏 ${location.radiusMeters}m radius</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-1 rounded text-xs ${statusColor} bg-gray-100 dark:bg-gray-700">${statusText}</span>
+                            <button class="toggle-location-btn p-1 text-gray-500 hover:text-blue-600" data-id="${doc.id}" data-active="${location.isActive}" title="Toggle Status">
+                                ${location.isActive ? '🔒' : '🔓'}
+                            </button>
+                            <button class="delete-location-btn p-1 text-red-500 hover:text-red-700" data-id="${doc.id}" title="Delete Location">
+                                ${icons.trash}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            container.innerHTML = '<p class="text-red-500 text-sm py-2 text-center">Error loading locations</p>';
+        }
+    };
+
+    const renderAccessLogsList = async () => {
+        const container = document.getElementById('access-logs-list');
+        if (!container) return;
+
+        try {
+            const q = query(collection(db, "accessLogs"), orderBy("timestamp", "desc"), limit(20));
+            const snapshot = await getDocs(q);
+            
+            if (snapshot.empty) {
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-xs py-2 text-center">No access logs yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = snapshot.docs.map(doc => {
+                const log = doc.data();
+                const statusIcon = log.accessGranted ? '✅' : '❌';
+                const statusColor = log.accessGranted ? 'text-green-600' : 'text-red-600';
+                const timeStr = log.timestamp.toDate().toLocaleString();
+                const locationStr = log.locationName || 'Unknown location';
+                
+                return `
+                    <div class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border text-xs">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-mono font-semibold ${statusColor}">${statusIcon} ${log.userId}</p>
+                            <p class="text-gray-600 dark:text-gray-300 truncate">${log.reason}</p>
+                            <p class="text-gray-500">${timeStr}</p>
+                        </div>
+                        <div class="text-right text-xs text-gray-500">
+                            <p>${locationStr}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            container.innerHTML = '<p class="text-red-500 text-xs py-2 text-center">Error loading logs</p>';
+        }
+    };
+
+    const handleSecureUserLogin = async (enteredUserID) => {
+        const locationStatus = document.getElementById('location-status');
+        const locationHelp = document.getElementById('location-help');
+
+        try {
+            if (locationHelp) locationHelp.classList.remove('hidden');
+            
+            showNotification("Validating User ID...", "info");
+            const authorizedUser = await validateUserID(enteredUserID);
+            if (!authorizedUser) {
+                await logAccessAttempt(enteredUserID, null, false, "Invalid User ID");
+                throw new Error("Invalid User ID. Please check and try again.");
+            }
+
+            if (locationStatus) locationStatus.classList.remove('hidden');
+            
+            showNotification("Checking your location...", "info");
+            const userLocation = await getCurrentLocation();
+            
+            const allowedLocations = await getAllowedLocations();
+            if (allowedLocations.length === 0) {
+                await logAccessAttempt(enteredUserID, userLocation, false, "No allowed locations configured");
+                throw new Error("System configuration error. Please contact administrator.");
+            }
+            
+            const locationCheck = await checkLocationAccess(userLocation, allowedLocations);
+            
+            if (!locationCheck.allowed) {
+                let errorMessage = locationCheck.reason;
+                if (locationCheck.nearestLocation) {
+                    errorMessage += ` (Nearest: ${locationCheck.nearestLocation.name}, ${locationCheck.nearestLocation.distance}m away)`;
+                }
+                await logAccessAttempt(enteredUserID, userLocation, false, errorMessage);
+                throw new Error(errorMessage);
+            }
+
+            await logAccessAttempt(enteredUserID, userLocation, true, `Access granted from ${locationCheck.locationName} (${locationCheck.distance}m away)`);
+            await updateLastUsed(authorizedUser.id);
+            
+            if (!auth.currentUser) {
+                await signInAnonymously(auth);
+            }
+            sessionStorage.setItem('isDashboardLogin', 'true');
+            sessionStorage.setItem('currentUserID', enteredUserID);
+            sessionStorage.setItem('accessLocation', locationCheck.locationName);
+            
+            showNotification(`Welcome! Access granted from ${locationCheck.locationName}`, "success");
+            showUserDashboard(auth.currentUser);
+            
+        } catch (error) {
+            console.error("Secure login error:", error);
+            showNotification(error.message, "error");
+            
+            if (locationStatus) locationStatus.classList.add('hidden');
+            if (locationHelp) locationHelp.classList.add('hidden');
+        }
+    };
+
     // — Auth State Listener —
     onAuthStateChanged(auth, async (user) => {
         unsubClearances?.();
         unsubRequests?.();
         unsubConfig?.();
         unsubVVIPs?.();
-        currentAdminProfile = null; // Reset profile on auth change
+        currentAdminProfile = null;
 
-        if (user && !user.isAnonymous) { // Admin user
+        if (user && !user.isAnonymous) {
             appRoot.innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>';
             try {
                 const adminDoc = await getDoc(doc(db, "admins", user.uid));
@@ -2126,66 +2458,47 @@
                     });
 
                 } else {
-                    console.log("User not found in admins collection, signing out.");
                     await signOut(auth);
                 }
             } catch (error) {
-                console.error("Error checking admin status:", error);
                 showNotification("Error verifying admin status", "error");
                 await signOut(auth);
             }
-        } else if (user && user.isAnonymous && sessionStorage.getItem('isDashboardLogin') === 'true') {
+        } else if (user && user.isAnonymous && isValidSecureSession()) {
             showUserDashboard(user);
-        } else { // No user / logged out
+        } else {
             sessionStorage.removeItem('isDashboardLogin');
+            sessionStorage.removeItem('currentUserID');
+            sessionStorage.removeItem('accessLocation');
             renderLandingPage();
         }
     });
 
-    // Auto-add escort text when checkbox is checked - Enhanced version
     const handleEscortCheckboxChange = (checkbox, textareaId) => {
         const textarea = document.getElementById(textareaId);
-        if (!textarea) {
-            console.error('Textarea not found:', textareaId);
-            return;
-        }
+        if (!textarea) return;
         
         const escortText = "[ Escorted by:             ]";
         
         if (checkbox.checked) {
-            // Add escort text if not already present
             if (!textarea.value.includes("Escorted by:")) {
-                // If textarea has content, add appropriate spacing
-                let separator = '';
-                if (textarea.value.trim()) {
-                    // If there's existing content, add spacing
-                    separator = textarea.value.trim().endsWith('\n') ? '\n' : '\n\n';
-                }
+                let separator = textarea.value.trim() ? (textarea.value.trim().endsWith('\n') ? '\n' : '\n\n') : '';
                 textarea.value = textarea.value + separator + escortText;
-                
-                // Focus on the textarea and position cursor after "Escorted by:"
                 textarea.focus();
                 const position = textarea.value.indexOf('Escorted by:') + 'Escorted by:'.length;
                 textarea.setSelectionRange(position, position);
             }
         } else {
-            // Remove escort text when unchecked
-            // More robust removal that handles various spacing scenarios
             const patterns = [
                 /\n\n\[\s*Escorted\s+by:\s*[^\]]*\]/gi,
                 /\n\[\s*Escorted\s+by:\s*[^\]]*\]/gi,
                 /\[\s*Escorted\s+by:\s*[^\]]*\]/gi
             ];
-            
             patterns.forEach(pattern => {
                 textarea.value = textarea.value.replace(pattern, '');
             });
-            
-            // Clean up any extra line breaks
             textarea.value = textarea.value.replace(/\n{3,}/g, '\n\n').trim();
         }
-        
-        // Trigger input event to ensure any other listeners are notified
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
     };
 
@@ -2196,9 +2509,7 @@
         
         if (target.id === 'settings-backdrop') toggleSettingsPanel(false);
         if (target.id === 'form-modal-backdrop') target.closest('#modal-container').innerHTML = '';
-        if (target.id === 'review-modal-backdrop' && e.target.id === 'review-modal-backdrop') {
-             target.closest('#modal-container').innerHTML = '';
-        }
+        if (target.id === 'review-modal-backdrop' && e.target.id === 'review-modal-backdrop') target.closest('#modal-container').innerHTML = '';
         if (target.id === 'vvip-modal-backdrop') target.closest('#modal-container').innerHTML = '';
         
         if (!button) return;
@@ -2209,39 +2520,18 @@
         }
 
         try {
-
-            if (button.id === "clear-tracking-btn") {
-                e.preventDefault();
-                renderLandingPage({ vehicleNumber: "", trackingResultHTML: "" });
-                return;
-            }
-            
-            // --- START: DATABASE MANAGEMENT BUTTON HANDLERS ---
-            if (button.id === 'export-database-btn') {
-                e.preventDefault();
-                exportDatabaseData(button);
-                return;
-            }
+            if (button.id === "clear-tracking-btn") { e.preventDefault(); renderLandingPage({ vehicleNumber: "", trackingResultHTML: "" }); return; }
+            if (button.id === 'export-database-btn') { e.preventDefault(); exportDatabaseData(button); return; }
             if (button.id === 'reset-database-btn') {
                 e.preventDefault();
-                renderConfirmationModal(
-                    'Reset Clearance Data',
-                    'This will remove ALL clearances and requests. VVIPs, user password, and Admin accounts will be preserved. This action cannot be undone.',
-                    () => resetToDefaultState(button)
-                );
+                renderConfirmationModal( 'Reset Clearance Data', 'This will remove ALL clearances and requests. VVIPs, user password, and Admin accounts will be preserved. This action cannot be undone.', () => resetToDefaultState(button) );
                 return;
             }
             if (button.id === 'clear-database-btn') {
                 e.preventDefault();
-                renderConfirmationModal(
-                    'Wipe Clearance Data',
-                    'This will permanently delete ALL clearances and requests. VVIPs, Admin accounts, and settings will be preserved. This action cannot be undone.',
-                    () => clearAllDatabaseData(button)
-                );
+                renderConfirmationModal( 'Wipe Clearance Data', 'This will permanently delete ALL clearances and requests. VVIPs, Admin accounts, and settings will be preserved. This action cannot be undone.', () => clearAllDatabaseData(button) );
                 return;
             }
-            // --- END: DATABASE MANAGEMENT BUTTON HANDLERS ---
-
             if (button.id === 'settings-btn') { e.preventDefault(); toggleSettingsPanel(true); return; }
             if (button.id === 'close-settings-panel-btn') { e.preventDefault(); toggleSettingsPanel(false); return; }
             if (button.id === 'show-vvip-btn') { renderVVIPModal(); return; }
@@ -2250,31 +2540,18 @@
             if (button.classList.contains('settings-tab-btn')) {
                 e.preventDefault();
                 const tab = button.dataset.tab;
-                document.querySelectorAll('.settings-tab-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-200');
-                });
+                document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                button.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-200');
-
-                document.querySelectorAll('.settings-pane').forEach(pane => {
-                    pane.classList.add('hidden');
-                });
+                document.querySelectorAll('.settings-pane').forEach(pane => pane.classList.add('hidden'));
                 document.getElementById(`${tab}-settings-pane`).classList.remove('hidden');
-
-                // Load stats when database tab is opened
-                if (tab === 'database') {
-                    await updateDatabaseStats();
-                }
+                if (tab === 'database') await updateDatabaseStats();
                 return;
             }
 
             if (button.classList.contains('voice-search-btn')) {
                 e.preventDefault();
                 const input = button.closest('form, .flex')?.querySelector('input');
-                if (input) {
-                    startVoiceSearch(input, button);
-                }
+                if (input) startVoiceSearch(input, button);
                 return;
             }
 
@@ -2282,7 +2559,7 @@
             if (button.id === "admin-btn") { routeHistory.push(() => renderLandingPage()); renderAdminLogin(); return; }
             if (button.id === "user-btn") { routeHistory.push(() => renderLandingPage()); renderUserLogin(); return; }
             if (button.id === "back-btn") { e.preventDefault(); goBack(); return; }
-            if (button.id === "logout-button") { e.preventDefault(); await signOut(auth); return; }
+            if (button.id === "logout-button") { e.preventDefault(); await performSecureLogout(); return; }
             if (button.id === "download-report-btn") { e.preventDefault(); generatePDFReport(button); return; }
             if (button.id === "add-clearance-btn") { e.preventDefault(); renderModal(); return; }
 
@@ -2290,25 +2567,19 @@
                 e.preventDefault();
                 const clearanceToEdit = clearances.find(c => c.id === button.dataset.id);
                 if (clearanceToEdit) renderModal(clearanceToEdit);
-                else {
-                    console.error("Clearance not found for editing:", button.dataset.id);
-                    showNotification("Error: Clearance not found", "error");
-                }
+                else showNotification("Error: Clearance not found", "error");
                 return;
             }
             
             if (button.classList.contains("delete-btn")) {
                 e.preventDefault();
                 const id = button.dataset.id;
-                renderConfirmationModal(
-                    'Delete Clearance',
-                    'Are you sure you want to delete this clearance? This action cannot be undone.',
+                renderConfirmationModal( 'Delete Clearance', 'Are you sure you want to delete this clearance? This action cannot be undone.',
                     async () => {
                         try {
                             await deleteDoc(doc(db, "vehicleClearances", id));
                             showNotification("Clearance deleted successfully.");
                         } catch(err) {
-                            console.error("Delete error:", err);
                             showNotification("Error deleting clearance.", "error");
                         }
                     }
@@ -2319,15 +2590,12 @@
             if (button.classList.contains("delete-vvip-btn")) {
                 e.preventDefault();
                 const id = button.dataset.id;
-                renderConfirmationModal(
-                    'Delete VVIP',
-                    'Are you sure you want to remove this VVIP entry?',
+                renderConfirmationModal( 'Delete VVIP', 'Are you sure you want to remove this VVIP entry?',
                     async () => {
                         try {
                             await deleteDoc(doc(db, "vvips", id));
                             showNotification("VVIP entry removed.");
                         } catch(err) {
-                            console.error("Delete VVIP error:", err);
                             showNotification("Error removing VVIP entry.", "error");
                         }
                     }
@@ -2346,16 +2614,13 @@
             if (button.classList.contains("reject-request-btn")) {
                 e.preventDefault();
                 const requestId = button.dataset.id;
-                renderConfirmationModal(
-                    'Reject Request',
-                    'Are you sure you want to reject this request?',
+                renderConfirmationModal( 'Reject Request', 'Are you sure you want to reject this request?',
                     async () => {
                          try {
                             await updateDoc(doc(db, "clearanceRequests", requestId), { status: 'rejected' });
                             showNotification("Request rejected.");
                             document.getElementById("modal-container").innerHTML = "";
                         } catch (err) {
-                            console.error("Reject error:", err);
                             showNotification("Error rejecting request.", "error");
                         }
                     }
@@ -2369,11 +2634,7 @@
                 const form = modal?.querySelector('#review-form');
                 const requestId = button.dataset.id;
                 
-                if (!form || !requestId) {
-                    showNotification("Critical error: Cannot find form or request ID.", "error");
-                    return;
-                }
-
+                if (!form || !requestId) { showNotification("Critical error: Cannot find form or request ID.", "error"); return; }
                 button.disabled = true;
 
                 try {
@@ -2384,50 +2645,29 @@
                     if (!entryDate || !expiryDate || !form.checkValidity()) {
                         form.reportValidity();
                         showNotification("Please fill all required fields with valid dates.", "error");
-                        button.disabled = false;
-                        return;
+                        button.disabled = false; return;
                     }
                     
-                    if (!currentAdminProfile) {
-                        showNotification("Error: Admin profile not loaded. Cannot approve.", "error");
-                        button.disabled = false;
-                        return;
-                    }
+                    if (!currentAdminProfile) { showNotification("Error: Admin profile not loaded. Cannot approve.", "error"); button.disabled = false; return; }
 
                     const approvalTimestamp = Timestamp.now();
-                    
                     const clearancePayload = {
-                        ownerName: data.ownerName,
-                        vehicleNumber: data.vehicleNumber.toUpperCase(),
-                        vehicleType: data.vehicleType,
+                        ownerName: data.ownerName, vehicleNumber: data.vehicleNumber.toUpperCase(), vehicleType: data.vehicleType,
                         location: data.location === "Other" ? data.customLocation : data.location,
-                        entryDate: Timestamp.fromDate(entryDate),
-                        expiryDate: Timestamp.fromDate(expiryDate),
-                        escortRequired: !!data.escortRequired,
-                        notes: data.notes || "",
-                        createdAt: approvalTimestamp,
-                        
-                        approvedByUsername: currentAdminProfile.username,
-                        approvedByDesignation: currentAdminProfile.designation,
-                        approvedByUid: auth.currentUser?.uid,
-                        approvedAt: approvalTimestamp,
+                        entryDate: Timestamp.fromDate(entryDate), expiryDate: Timestamp.fromDate(expiryDate),
+                        escortRequired: !!data.escortRequired, notes: data.notes || "", createdAt: approvalTimestamp,
+                        approvedByUsername: currentAdminProfile.username, approvedByDesignation: currentAdminProfile.designation,
+                        approvedByUid: auth.currentUser?.uid, approvedAt: approvalTimestamp,
                         approvalHistory: [{
-                            action: 'approved',
-                            byUsername: currentAdminProfile.username,
-                            byDesignation: currentAdminProfile.designation,
-                            byUid: auth.currentUser?.uid,
-                            timestamp: approvalTimestamp,
-                            notes: `Approved from request ID: ${requestId}`
+                            action: 'approved', byUsername: currentAdminProfile.username, byDesignation: currentAdminProfile.designation,
+                            byUid: auth.currentUser?.uid, timestamp: approvalTimestamp, notes: `Approved from request ID: ${requestId}`
                         }]
                     };
 
                     await addDoc(collection(db, "vehicleClearances"), clearancePayload);
-                    
                     await updateDoc(doc(db, "clearanceRequests", requestId), { 
-                        status: 'approved',
-                        approvedBy: `${currentAdminProfile.username} (${currentAdminProfile.designation})`,
-                        approvedAt: approvalTimestamp,
-                        approvedByUid: auth.currentUser?.uid
+                        status: 'approved', approvedBy: `${currentAdminProfile.username} (${currentAdminProfile.designation})`,
+                        approvedAt: approvalTimestamp, approvedByUid: auth.currentUser?.uid
                     });
                     
                     showNotification(`Request approved by ${currentAdminProfile.username} (${currentAdminProfile.designation})`);
@@ -2440,12 +2680,7 @@
                         badge.textContent = clearanceRequests.length;
                         badge.classList.toggle('hidden', clearanceRequests.length === 0);
                     }
-
-                } catch (error) {
-                    console.error("Approval error:", error);
-                    showNotification("Failed to approve request.", "error");
-                    button.disabled = false;
-                }
+                } catch (error) { showNotification("Failed to approve request.", "error"); button.disabled = false; }
                 return;
             }
 
@@ -2453,11 +2688,7 @@
                 e.preventDefault();
                 const modal = button.closest('#form-modal-backdrop');
                 const form = modal?.querySelector('#clearance-form');
-                if (!form) {
-                    showNotification("Critical error: Cannot find clearance form.", "error");
-                    return;
-                }
-
+                if (!form) { showNotification("Critical error: Cannot find clearance form.", "error"); return; }
                 button.disabled = true;
 
                 try {
@@ -2468,96 +2699,136 @@
                     if (!entryDate || !expiryDate || !form.checkValidity()) {
                         form.reportValidity();
                         showNotification("Please fill all required fields with valid dates.", "error");
-                        button.disabled = false;
-                        return;
+                        button.disabled = false; return;
                     }
-                    
-                    if (!currentAdminProfile) {
-                        showNotification("Error: Admin profile not loaded. Cannot save.", "error");
-                        button.disabled = false;
-                        return;
-                    }
+                    if (!currentAdminProfile) { showNotification("Error: Admin profile not loaded. Cannot save.", "error"); button.disabled = false; return; }
 
                     const currentTimestamp = Timestamp.now();
-                    
                     const payload = {
-                        ownerName: data.ownerName,
-                        vehicleNumber: data.vehicleNumber.toUpperCase(),
-                        vehicleType: data.vehicleType,
+                        ownerName: data.ownerName, vehicleNumber: data.vehicleNumber.toUpperCase(), vehicleType: data.vehicleType,
                         location: data.location === "Other" ? data.customLocation : data.location,
-                        entryDate: Timestamp.fromDate(entryDate),
-                        expiryDate: Timestamp.fromDate(expiryDate),
-                        escortRequired: !!data.escortRequired,
-                        notes: data.notes || ""
+                        entryDate: Timestamp.fromDate(entryDate), expiryDate: Timestamp.fromDate(expiryDate),
+                        escortRequired: !!data.escortRequired, notes: data.notes || ""
                     };
                     
                     const editingId = button.dataset.id;
-
                     if (editingId) {
                         payload.lastUpdatedByUsername = currentAdminProfile.username;
                         payload.lastUpdatedByDesignation = currentAdminProfile.designation;
                         payload.lastUpdatedByUid = auth.currentUser?.uid;
                         payload.lastUpdatedAt = currentTimestamp;
-                        
                         const existingDoc = await getDoc(doc(db, "vehicleClearances", editingId));
                         if (existingDoc.exists()) {
                             const existingData = existingDoc.data();
                             payload.approvalHistory = existingData.approvalHistory || [];
-                            
                             payload.approvalHistory.push({
-                                action: 'updated',
-                                byUsername: currentAdminProfile.username,
-                                byDesignation: currentAdminProfile.designation,
-                                byUid: auth.currentUser?.uid,
-                                timestamp: currentTimestamp,
-                                notes: 'Clearance details updated'
+                                action: 'updated', byUsername: currentAdminProfile.username, byDesignation: currentAdminProfile.designation,
+                                byUid: auth.currentUser?.uid, timestamp: currentTimestamp, notes: 'Clearance details updated'
                             });
                         }
-                        
                         await updateDoc(doc(db, "vehicleClearances", editingId), payload);
                         showNotification(`Clearance updated by ${currentAdminProfile.username} (${currentAdminProfile.designation})`);
                     } else {
-                        payload.createdAt = currentTimestamp;
-                        payload.createdByUid = auth.currentUser?.uid;
-                        payload.approvedByUsername = currentAdminProfile.username;
-                        payload.approvedByDesignation = currentAdminProfile.designation;
-                        payload.approvedByUid = auth.currentUser?.uid;
-                        payload.approvedAt = currentTimestamp;
-                        
+                        payload.createdAt = currentTimestamp; payload.createdByUid = auth.currentUser?.uid;
+                        payload.approvedByUsername = currentAdminProfile.username; payload.approvedByDesignation = currentAdminProfile.designation;
+                        payload.approvedByUid = auth.currentUser?.uid; payload.approvedAt = currentTimestamp;
                         payload.approvalHistory = [{
-                            action: 'created',
-                            byUsername: currentAdminProfile.username,
-                            byDesignation: currentAdminProfile.designation,
-                            byUid: auth.currentUser?.uid,
-                            timestamp: currentTimestamp,
-                            notes: 'Clearance created directly by admin'
+                            action: 'created', byUsername: currentAdminProfile.username, byDesignation: currentAdminProfile.designation,
+                            byUid: auth.currentUser?.uid, timestamp: currentTimestamp, notes: 'Clearance created directly by admin'
                         }];
-                        
                         await addDoc(collection(db, "vehicleClearances"), payload);
                         showNotification(`Clearance created by ${currentAdminProfile.username} (${currentAdminProfile.designation})`);
                     }
                     document.getElementById("modal-container").innerHTML = "";
+                } catch (error) { showNotification("Failed to save clearance.", "error"); button.disabled = false; }
+                return;
+            }
 
+            if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") { e.preventDefault(); button.closest("#modal-container").innerHTML = ""; return; }
+            if (button.id === "auth-toggle-button") { e.preventDefault(); authMode = authMode === "login" ? "signup" : "login"; renderAdminLogin(); return; }
+
+            // Access Control handlers
+            if (button.id === 'get-current-location-btn') {
+                e.preventDefault();
+                button.disabled = true;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>';
+                try {
+                    const location = await getCurrentLocation();
+                    const form = button.closest('form');
+                    form.latitude.value = location.latitude.toFixed(6);
+                    form.longitude.value = location.longitude.toFixed(6);
+                    showNotification(`Location captured! Accuracy: ±${Math.round(location.accuracy)}m`);
                 } catch (error) {
-                    console.error("Save/Update error:", error);
-                    showNotification("Failed to save clearance.", "error");
+                    showNotification(`Location error: ${error.message}`, "error");
+                } finally {
                     button.disabled = false;
+                    button.innerHTML = originalText;
                 }
                 return;
             }
 
-            if (button.id === "close-modal-btn" || button.id === "cancel-modal-btn") {
+            if (button.classList.contains('toggle-user-btn')) {
                 e.preventDefault();
-                button.closest("#modal-container").innerHTML = "";
+                const userId = button.dataset.id;
+                const currentStatus = button.dataset.active === 'true';
+                try {
+                    await updateDoc(doc(db, "authorizedUsers", userId), { isActive: !currentStatus });
+                    showNotification(`User ${!currentStatus ? 'activated' : 'deactivated'}`);
+                    renderAuthorizedUsersList();
+                } catch (error) { showNotification("Failed to update user status", "error"); }
                 return;
             }
-            
-            if (button.id === "auth-toggle-button") {
+
+            if (button.classList.contains('delete-user-id-btn')) {
                 e.preventDefault();
-                authMode = authMode === "login" ? "signup" : "login";
-                renderAdminLogin();
+                const userId = button.dataset.id;
+                renderConfirmationModal( 'Delete User ID', 'Are you sure you want to remove this authorized user?',
+                    async () => {
+                        try {
+                            await deleteDoc(doc(db, "authorizedUsers", userId));
+                            showNotification("User ID removed successfully");
+                            renderAuthorizedUsersList();
+                        } catch (error) { showNotification("Failed to delete user ID", "error"); }
+                    }
+                );
                 return;
             }
+
+            if (button.classList.contains('toggle-location-btn')) {
+                e.preventDefault();
+                const locationId = button.dataset.id;
+                const currentStatus = button.dataset.active === 'true';
+                try {
+                    await updateDoc(doc(db, "allowedLocations", locationId), { isActive: !currentStatus });
+                    showNotification(`Location ${!currentStatus ? 'activated' : 'deactivated'}`);
+                    renderAllowedLocationsList();
+                } catch (error) { showNotification("Failed to update location status", "error"); }
+                return;
+            }
+
+            if (button.classList.contains('delete-location-btn')) {
+                e.preventDefault();
+                const locationId = button.dataset.id;
+                renderConfirmationModal( 'Delete Location', 'Are you sure you want to remove this location?',
+                    async () => {
+                        try {
+                            await deleteDoc(doc(db, "allowedLocations", locationId));
+                            showNotification("Location removed successfully");
+                            renderAllowedLocationsList();
+                        } catch (error) { showNotification("Failed to delete location", "error"); }
+                    }
+                );
+                return;
+            }
+
+            if (button.id === 'refresh-logs-btn') {
+                e.preventDefault();
+                renderAccessLogsList();
+                showNotification("Access logs refreshed");
+                return;
+            }
+
         } catch (error) {
             console.error("Click handler error:", error);
             if (error.message.includes("Missing or insufficient permissions")) {
@@ -2576,7 +2847,51 @@
         if (button) button.disabled = true;
 
         try {
-            if (form.id === "add-vvip-form") {
+            if (form.id === "secure-user-login-form") {
+                const { userID } = getFormObj(form);
+                if (!userID.trim()) {
+                    showNotification("Please enter a User ID", "error");
+                } else {
+                    await handleSecureUserLogin(userID.trim());
+                }
+            } else if (form.id === "add-user-id-form") {
+                const data = getFormObj(form);
+                if (data.userId && data.description) {
+                    const existingUser = await validateUserID(data.userId);
+                    if (existingUser) {
+                        showNotification("User ID already exists", "error");
+                    } else {
+                        await addDoc(collection(db, "authorizedUsers"), {
+                            userId: data.userId.toUpperCase(), description: data.description, isActive: true,
+                            createdBy: auth.currentUser?.uid, createdAt: Timestamp.now(), lastUsed: null
+                        });
+                        showNotification("User ID added successfully");
+                        form.reset();
+                        renderAuthorizedUsersList();
+                    }
+                }
+            } else if (form.id === "add-location-form") {
+                const data = getFormObj(form);
+                const lat = parseFloat(data.latitude);
+                const lng = parseFloat(data.longitude);
+                const radius = parseInt(data.radiusMeters);
+                
+                if (!data.locationName || isNaN(lat) || isNaN(lng) || isNaN(radius)) {
+                    showNotification("Please fill all fields with valid values", "error");
+                } else if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    showNotification("Invalid coordinates", "error");
+                } else if (radius < 10 || radius > 1000) {
+                    showNotification("Radius must be between 10 and 1000 meters", "error");
+                } else {
+                    await addDoc(collection(db, "allowedLocations"), {
+                        name: data.locationName, latitude: lat, longitude: lng, radiusMeters: radius,
+                        isActive: true, createdBy: auth.currentUser?.uid, createdAt: Timestamp.now()
+                    });
+                    showNotification("Location added successfully");
+                    form.reset();
+                    renderAllowedLocationsList();
+                }
+            } else if (form.id === "add-vvip-form") {
                 const data = getFormObj(form);
                 if (data.vehicleNumber && data.designation) {
                     await addDoc(collection(db, "vvips"), {
@@ -2586,62 +2901,22 @@
                     showNotification("VVIP added successfully.");
                     form.reset();
                 }
-            } else if (form.id === "user-login-form") {
-                const { password } = getFormObj(form);
-                const configRef = doc(db, "publicConfig", "userAccess");
-                const configSnap = await getDoc(configRef);
-                const correctPassword = configSnap.exists() ? configSnap.data().password : DEFAULT_USER_PASSWORD;
-
-                if (password === correctPassword) {
-                    sessionStorage.setItem('isDashboardLogin', 'true');
-                    if (auth.currentUser && auth.currentUser.isAnonymous) {
-                        showUserDashboard(auth.currentUser);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } else {
-                    showNotification("Incorrect password.", "error");
-                }
             } else if (form.id === "auth-form") {
                 const { email, password, inviteCode, username, designation } = getFormObj(form);
                 if (authMode === "login") {
                     const q = query(collection(db, "admins"), where("username", "==", username));
                     const querySnapshot = await getDocs(q);
-                    
-                    if (querySnapshot.empty) {
-                        showNotification("Invalid username or password.", "error");
-                        return;
-                    }
-                    
+                    if (querySnapshot.empty) { showNotification("Invalid username or password.", "error"); return; }
                     const adminData = querySnapshot.docs[0].data();
-                    const userEmail = adminData.email;
-
-                    if (!userEmail) {
-                        showNotification("Login error: Account is missing an email.", "error");
-                        return;
-                    }
-
-                    await signInWithEmailAndPassword(auth, userEmail, password);
-
-                } else { // signup
-                    if (inviteCode !== ADMIN_INVITE_CODE) {
-                        showNotification("Invalid admin invite code.", "error");
-                        return;
-                    }
+                    if (!adminData.email) { showNotification("Login error: Account is missing an email.", "error"); return; }
+                    await signInWithEmailAndPassword(auth, adminData.email, password);
+                } else {
+                    if (inviteCode !== ADMIN_INVITE_CODE) { showNotification("Invalid admin invite code.", "error"); return; }
                     const q = query(collection(db, "admins"), where("username", "==", username));
                     const querySnapshot = await getDocs(q);
-                    if (!querySnapshot.empty) {
-                        showNotification("Username is already taken.", "error");
-                        return;
-                    }
-
+                    if (!querySnapshot.empty) { showNotification("Username is already taken.", "error"); return; }
                     const cred = await createUserWithEmailAndPassword(auth, email, password);
-                    await setDoc(doc(db, "admins", cred.user.uid), { 
-                        email, 
-                        username,
-                        designation,
-                        createdAt: Timestamp.now() 
-                    });
+                    await setDoc(doc(db, "admins", cred.user.uid), { email, username, designation, createdAt: Timestamp.now() });
                     showNotification("Admin account created successfully!");
                 }
             } else if (form.id === "user-password-form") {
@@ -2652,136 +2927,55 @@
                 } else {
                     showNotification("Password must be at least 6 characters long.", "error");
                 }
-            
             } else if (form.id === "track-request-form") {
                 const vehicleNumber = document.getElementById("track-id-input").value.trim().toUpperCase();
-                console.log("🔍 Starting search for:", vehicleNumber);
-
                 if (!vehicleNumber) {
                     const resultDiv = document.getElementById("tracking-result");
                     if (resultDiv) resultDiv.innerHTML = "";
                     return;
                 }
-
-                // Show loading state
-                const loadingHTML = `
-                    <div class="mt-6 space-y-4">
-                        <h3 class="text-sm font-medium text-slate-300">Tracking Result:</h3>
-                        <div class="p-4 bg-slate-900/50 border border-slate-700 rounded-xl text-center animate-fade-in">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
-                            <p class="text-slate-400 text-sm">Searching for current status...</p>
-                        </div>
-                    </div>
-                `;
-                renderLandingPage({
-                    trackingResultHTML: loadingHTML,
-                    vehicleNumber: vehicleNumber
-                });
-
+                const loadingHTML = `<div class="mt-6 space-y-4"><h3 class="text-sm font-medium text-slate-300">Tracking Result:</h3><div class="p-4 bg-slate-900/50 border border-slate-700 rounded-xl text-center animate-fade-in"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div><p class="text-slate-400 text-sm">Searching for current status...</p></div></div>`;
+                renderLandingPage({ trackingResultHTML: loadingHTML, vehicleNumber: vehicleNumber });
                 try {
-                    // Ensure anonymous access for tracking
-                    if (!auth.currentUser) {
-                        await signInAnonymously(auth);
-                    }
-
+                    if (!auth.currentUser) await signInAnonymously(auth);
                     const currentStatus = await findCurrentVehicleStatus(vehicleNumber);
-                    
                     if (currentStatus) {
-                        console.log("🎯 Displaying current status:", currentStatus.status);
-                        const trackingHTML = createStatusCard(currentStatus);
-                        renderLandingPage({
-                            trackingResultHTML: trackingHTML,
-                            vehicleNumber: vehicleNumber
-                        });
+                        renderLandingPage({ trackingResultHTML: createStatusCard(currentStatus), vehicleNumber: vehicleNumber });
                     } else {
-                        // No records found
-                        const notFoundHTML = `
-                        <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in">
-                            <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
-                            <p class="font-semibold text-red-400">No records found for ${vehicleNumber}</p>
-                            <p class="text-sm text-red-500 mt-1">This vehicle has no clearance history.</p>
-                            <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                                <p class="text-xs text-blue-400">💡 Tip: Make sure the vehicle number is correct, or submit a new clearance request.</p>
-                            </div>
-                        </div>`;
-                        
-                        renderLandingPage({
-                            trackingResultHTML: notFoundHTML,
-                            vehicleNumber: vehicleNumber
-                        });
+                        const notFoundHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in"><div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div><p class="font-semibold text-red-400">No records found for ${vehicleNumber}</p><p class="text-sm text-red-500 mt-1">This vehicle has no clearance history.</p><div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg"><p class="text-xs text-blue-400">💡 Tip: Make sure the vehicle number is correct, or submit a new clearance request.</p></div></div>`;
+                        renderLandingPage({ trackingResultHTML: notFoundHTML, vehicleNumber: vehicleNumber });
                     }
-
                 } catch (error) {
-                    console.error("❌ Tracking error:", error);
-                    const errorHTML = `
-                    <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in">
-                        <div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div>
-                        <p class="font-semibold text-red-400">Search failed</p>
-                        <p class="text-sm text-red-500 mt-1">Error: ${error.message}</p>
-                        <div class="mt-3 text-xs text-red-400">Please check your internet connection and try again.</div>
-                    </div>`;
-                    
-                    renderLandingPage({
-                        trackingResultHTML: errorHTML,
-                        vehicleNumber: vehicleNumber
-                    });
+                    const errorHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center animate-fade-in"><div class="w-12 h-12 mx-auto text-red-400 mb-3">${icons.x}</div><p class="font-semibold text-red-400">Search failed</p><p class="text-sm text-red-500 mt-1">Error: ${error.message}</p><div class="mt-3 text-xs text-red-400">Please check your internet connection and try again.</div></div>`;
+                    renderLandingPage({ trackingResultHTML: errorHTML, vehicleNumber: vehicleNumber });
                 }
-
             } else if (form.id === "request-form") {
                 const data = getFormObj(form);
                 let currentUser = auth.currentUser;
-                if (!currentUser) {
-                    currentUser = (await signInAnonymously(auth)).user;
-                }
+                if (!currentUser) currentUser = (await signInAnonymously(auth)).user;
                 const entryDate = parseLocalDate(data.entryDate);
                 const expiryDate = parseLocalDate(data.expiryDate);
-
-                if(!entryDate || !expiryDate) {
-                    showNotification("Valid entry and expiry dates are required.", "error");
-                    if (button) button.disabled = false;
-                    return;
-                }
-
+                if(!entryDate || !expiryDate) { showNotification("Valid entry and expiry dates are required.", "error"); if (button) button.disabled = false; return; }
                 const payload = {
-                    requesterName: data.requesterName,
-                    requesterId: currentUser.uid,
-                    vehicleNumber: data.vehicleNumber.toUpperCase(),
-                    vehicleType: data.vehicleType,
-                    location: data.location === "Other" ? data.customLocation : data.location,
-                    entryDate: Timestamp.fromDate(entryDate),
-                    expiryDate: Timestamp.fromDate(expiryDate),
-                    escortRequired: !!data.escortRequired,
-                    notes: data.notes || "",
-                    status: "pending",
-                    createdAt: Timestamp.now()
+                    requesterName: data.requesterName, requesterId: currentUser.uid, vehicleNumber: data.vehicleNumber.toUpperCase(),
+                    vehicleType: data.vehicleType, location: data.location === "Other" ? data.customLocation : data.location,
+                    entryDate: Timestamp.fromDate(entryDate), expiryDate: Timestamp.fromDate(expiryDate),
+                    escortRequired: !!data.escortRequired, notes: data.notes || "", status: "pending", createdAt: Timestamp.now()
                 };
-                
                 try {
                     const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
                     showNotification("Request submitted successfully!");
-                    
                     const newRequestData = { id: docRef.id, ...payload };
-                    const trackingHTML = createStatusCard(newRequestData);
-                    
-                    renderLandingPage({
-                        trackingResultHTML: trackingHTML,
-                        vehicleNumber: newRequestData.vehicleNumber
-                    });
-                
-                } catch (error) {
-                    console.error("Request submission error:", error);
-                    showNotification("Failed to submit request. Please try again.", "error");
-                }
+                    renderLandingPage({ trackingResultHTML: createStatusCard(newRequestData), vehicleNumber: newRequestData.vehicleNumber });
+                } catch (error) { showNotification("Failed to submit request. Please try again.", "error"); }
             }
         } catch (error) {
-            console.error("Form submission error:", error);
             showNotification(`Error: ${error.message}`, "error");
         } finally {
             if (button) button.disabled = false;
         }
     });
 
-    // Handle dropdown and checkbox changes
     document.body.addEventListener("change", (e) => {
         if (e.target.name === "location") {
             const customInput = e.target.closest('form')?.querySelector('input[name="customLocation"]');
@@ -2797,36 +2991,16 @@
             }
         }
 
-        // --- FIX: More robust logic for finding the correct modal context ---
         if (e.target.name === "escortRequired") {
-            console.log('Escort checkbox changed:', e.target.checked);
             const reviewModal = e.target.closest('#review-modal-backdrop');
             const formModal = e.target.closest('#form-modal-backdrop');
             let textareaId = null;
-
-            if (reviewModal) {
-                textareaId = 'review-notes-textarea';
-                console.log('Review modal detected, using textarea ID:', textareaId);
-            } else if (formModal) {
-                textareaId = 'modal-notes-textarea';
-                console.log('Form modal (add/edit) detected, using textarea ID:', textareaId);
-            } else {
-                console.error('Could not identify parent modal for escort checkbox.');
-            }
-            
-            if (textareaId) {
-                const textarea = document.getElementById(textareaId);
-                if (textarea) {
-                    console.log('Textarea found, calling handler.');
-                    handleEscortCheckboxChange(e.target, textareaId);
-                } else {
-                    console.error('Textarea with ID "' + textareaId + '" not found in the DOM.');
-                }
-            }
+            if (reviewModal) textareaId = 'review-notes-textarea';
+            else if (formModal) textareaId = 'modal-notes-textarea';
+            if (textareaId) handleEscortCheckboxChange(e.target, textareaId);
         }
     });
 
-    // Input and reset event listeners
     document.body.addEventListener("input", e => {
         if (e.target.id === 'daily-clearance-search-input') {
             renderClearanceListForUser(e.target.value.toUpperCase());
