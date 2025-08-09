@@ -2,6 +2,7 @@
 
 <html lang="en">
 <head>
+<meta name="theme-color" content="#132434">
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
 <title>Vehicle Clearance System</title>
@@ -246,9 +247,30 @@
   z-index: -1;
 }
 
+
+/* === Force full-page solid background everywhere === */
+:root { --logo-bg: #132434; color-scheme: dark; }
+html, body {
+  height: 100%;
+  min-height: 100vh;
+  background-color: var(--logo-bg) !important;
+}
+@supports (min-height: 100dvh) {
+  html, body { min-height: 100dvh; }
+}
+#app-root { min-height: 100vh; }
+@supports (min-height: 100dvh) {
+  #app-root { min-height: 100dvh; }
+}
+/* Make any Tailwind bg utilities inert */
+.bg-gray-100, .dark\:bg-gray-900, .dark-theme-bg { background-color: var(--logo-bg) !important; }
+/* Remove any blurred background layers if present */
+.landing-bg::before, .landing-bg::after { display: none !important; }
+/* New class to use on all routes (optional) */
+.page-bg { background-color: var(--logo-bg) !important; }
 </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900">
+<body class="">
 <div id="app-root"></div>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -819,8 +841,8 @@
     // — Dashboard Setup —
     const showUserDashboard = (user) => {
         appRoot.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>`;
-        document.body.classList.remove('dark-theme-bg');
-        document.body.classList.add('bg-gray-100', 'dark:bg-gray-900');
+        /* body bg class remove disabled */
+        /* body bg class add disabled */
         unsubClearances = onSnapshot(collection(db, "vehicleClearances"), snap => {
             clearances = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             renderUserDashboard(user);
@@ -1275,7 +1297,7 @@
     };
 
     const renderAdminLogin = () => {
-        document.body.className = 'dark-theme-bg';
+        document.body.className = 'page-bg';
         const isSignup = authMode === "signup";
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
@@ -1318,7 +1340,7 @@
     };
 
     const renderUserLogin = () => {
-        document.body.className = 'dark-theme-bg';
+        document.body.className = 'page-bg';
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
             <div class="w-full max-w-md mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-green-500/20 rounded-2xl shadow-2xl shadow-green-900/20 p-8 space-y-6 animate-fade-in text-center">
@@ -1363,7 +1385,7 @@
     };
 
     const renderRequestForm = () => {
-        document.body.className = 'dark-theme-bg';
+        document.body.className = 'page-bg';
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
             <div class="w-full max-w-lg mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-yellow-500/20 rounded-2xl shadow-2xl shadow-yellow-900/20 p-8 space-y-6 animate-fade-in">
