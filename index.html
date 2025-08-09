@@ -18,8 +18,7 @@
       -moz-osx-font-smoothing: grayscale;
     }
     .dark-theme-bg {
-        background-color: #0f172a;
-        background-image: radial-gradient(circle at top, #1e293b, #0f172a);
+        background-color: #1e293b; /* Dark Slate Blue */
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -222,7 +221,32 @@
         width: 100%;
       }
     }
-  </style>
+  
+
+/* === Landing page full-bleed background based on car_logo.jpg === */
+.landing-bg {
+  margin: 0; padding: 0;
+  position: relative;
+  overflow-x: hidden;
+}
+.landing-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url('https://raw.githubusercontent.com/Theva73/Vehicle-Clearance/main/car_logo.jpg') no-repeat center center fixed;
+  background-size: cover;
+  filter: blur(6px) brightness(0.6);
+  z-index: -2;
+}
+.landing-bg::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25); /* soft dark overlay for readability */
+  z-index: -1;
+}
+
+</style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
 <div id="app-root"></div>
@@ -1183,7 +1207,7 @@
     // — Render Functions —
     const renderLandingPage = (options = {}) => {
         const { trackingResultHTML = "", vehicleNumber = "" } = options;
-        document.body.className = 'dark-theme-bg';
+        document.body.className = 'landing-bg';
 
         let trackingSection = '';
         if (trackingResultHTML) {
@@ -1198,18 +1222,18 @@
 
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-3 sm:p-4">
-            <div class="w-full max-w-md mobile-safe-container bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-900/20 p-6 sm:p-8 space-y-6 sm:space-y-8 text-center animate-fade-in">
+            <div class="w-full max-w-md mobile-safe-container bg-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 sm:space-y-8 text-center animate-fade-in">
                 
                 <header class="space-y-4">
-  <div class="flex justify-between items-center">
-    <a href="https://theva73.github.io/Vehicle-Clearance/userguide.html" target="_blank" title="User Guide" class="text-sm text-blue-300 hover:text-white">
-      📘 Guide
-    </a>
-    <div class="w-24 h-24 mx-auto text-blue-400 opacity-90">${icons.car}</div>
-    <div class="w-6"></div>
-  </div>
+                  <div class="flex justify-between items-center">
+                    <a href="https://theva73.github.io/Vehicle-Clearance/userguide.html" target="_blank" title="User Guide" class="text-sm text-blue-300 hover:text-white">
+                      📘 Guide
+                    </a>
+                    <img src="https://raw.githubusercontent.com/Theva73/Vehicle-Clearance/main/car_logo.jpg" alt="Car Logo" class="w-48 h-auto mx-auto" onerror="this.onerror=null; this.src='https://placehold.co/192x108/1e293b/94a3b8?text=Logo';">
+                    <div class="w-12"></div>
+                  </div>
                     <div>
-                        <h1 class="text-4xl font-bold tracking-tight text-white">Vehicle Clearance</h1>
+                        <h1 class="text-4xl font-bold tracking-tight text-white mt-4">Vehicle Clearance</h1>
                         <p class="text-slate-400 mt-2">Your gateway to seamless access.</p>
                     </div>
                 </header>
@@ -2632,7 +2656,9 @@
                 return;
             }
 
-            if (button.classList.contains("approve-request-btn")) {
+            if
+					
+						(button.classList.contains("approve-request-btn")) {
                 e.preventDefault();
                 const modal = button.closest('#review-modal-backdrop');
                 const form = modal?.querySelector('#review-form');
@@ -3025,3 +3051,4 @@
   </script>
 </body>
 </html>
+								
