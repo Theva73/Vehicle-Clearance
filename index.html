@@ -1937,9 +1937,8 @@ html, body {
 
         const requestsQuery = query(collection(db, "clearanceRequests"), orderBy("createdAt", "desc"));
         unsubRequests = onSnapshot(requestsQuery, snap => {
-            clearanceRequests = snap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(req => req.status === 'pending');
+            const allRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            clearanceRequests = allRequests.filter(req => req.status === 'pending');
             
             renderRequestsList();
             const badge = document.getElementById('requests-count-badge');
@@ -2729,7 +2728,11 @@ html, body {
                 const form = modal?.querySelector('#review-form');
                 const requestId = button.dataset.id;
                 
-                if (!form || !requestId) { showNotification("Critical error: Cannot find form or request ID.", "error"); return; }
+                if (!form || !requestId) { throw new Error("Critical error: Cannot find form or request ID."); }
+                
+                const originalRequest = clearanceRequests.find(r => r.id === requestId);
+                if (!originalRequest) { throw new Error("Critical error: Cannot find original request in state."); }
+
                 button.disabled = true;
 
                 try {
@@ -2743,7 +2746,7 @@ html, body {
                         button.disabled = false; return;
                     }
                     
-                    if (!currentAdminProfile) { showNotification("Error: Admin profile not loaded. Cannot approve.", "error"); button.disabled = false; return; }
+                    if (!currentAdminProfile) { throw new Error("Admin profile not loaded. Cannot approve."); }
 
                     const approvalTimestamp = Timestamp.now();
                     const clearancePayload = {
@@ -2765,28 +2768,35 @@ html, body {
                         approvedAt: approvalTimestamp, approvedByUid: auth.currentUser?.uid
                     });
                     
-                    showNotification(`Request approved by ${currentAdminProfile.username} (${currentAdminProfile.designation})`);
+                    showNotification(`Request approved by ${currentAdminProfile.username}`);
                     
-                    const requestDoc = await getDoc(doc(db, "clearanceRequests", requestId));
-                    if (requestDoc.exists()) {
-                        const requestData = requestDoc.data();
-                        if (requestData.requesterEmail) {
+                    if (originalRequest.requesterEmail) {
+                        try {
+                            showNotification("Generating approval email...", "info");
                             const emailSubject = `Vehicle Clearance Approved: ${clearancePayload.vehicleNumber}`;
                             const emailPrompt = `Generate a professional and friendly HTML email. The user's vehicle clearance request has been APPROVED.
-                            - Recipient's Name: ${requestData.requesterName}
+                            - Recipient's Name: ${originalRequest.requesterName}
                             - Vehicle Number: ${clearancePayload.vehicleNumber}
                             - Approved Location: ${clearancePayload.location}
                             - Validity Period: From ${formatDate(clearancePayload.entryDate)} to ${formatDate(clearancePayload.expiryDate)}.
                             - Include a friendly closing and mention that they can track their status online.
                             - The email should be well-formatted with HTML, using headings, bold text, and paragraphs for readability. Do not include any CSS or style tags.`;
                             const emailBody = await callGeminiApi(emailPrompt);
-                            await sendEmail(requestData.requesterEmail, emailSubject, emailBody);
+                            await sendEmail(originalRequest.requesterEmail, emailSubject, emailBody);
+                        } catch (emailError) {
+                            console.error("Email notification failed:", emailError);
+                            showNotification("Approval saved, but failed to send email notification.", "error");
                         }
+                    } else {
+                        console.warn("No requester email found for this request. Skipping notification.");
                     }
 
                     document.getElementById("modal-container").innerHTML = "";
                     
-                } catch (error) { showNotification("Failed to approve request.", "error"); button.disabled = false; }
+                } catch (error) { 
+                    showNotification(`Failed to approve request: ${error.message}`, "error"); 
+                    button.disabled = false; 
+                }
                 return;
             }
 
@@ -2958,9 +2968,13 @@ html, body {
                 const requestId = form.querySelector('button[type="submit"]').dataset.id;
                 if (!rejectionReason.trim()) {
                     showNotification("Please provide a rejection reason.", "error");
+                    if(button) button.disabled = false;
                     return;
                 }
                 
+                const originalRequest = clearanceRequests.find(r => r.id === requestId);
+                if (!originalRequest) { throw new Error("Could not find original request to process rejection."); }
+
                 await updateDoc(doc(db, "clearanceRequests", requestId), { 
                     status: 'rejected', 
                     rejectionReason: rejectionReason.trim(),
@@ -2970,19 +2984,21 @@ html, body {
                 });
                 showNotification("Request rejected.");
 
-                const requestDoc = await getDoc(doc(db, "clearanceRequests", requestId));
-                if (requestDoc.exists()) {
-                    const requestData = requestDoc.data();
-                    if (requestData.requesterEmail) {
-                        const emailSubject = `Update on Vehicle Clearance Request: ${requestData.vehicleNumber}`;
+                if (originalRequest.requesterEmail) {
+                    try {
+                        showNotification("Generating rejection email...", "info");
+                        const emailSubject = `Update on Vehicle Clearance Request: ${originalRequest.vehicleNumber}`;
                         const emailPrompt = `Generate a professional and polite HTML email informing the user their vehicle clearance request has been REJECTED.
-                        - Recipient's Name: ${requestData.requesterName}
-                        - Vehicle Number: ${requestData.vehicleNumber}
+                        - Recipient's Name: ${originalRequest.requesterName}
+                        - Vehicle Number: ${originalRequest.vehicleNumber}
                         - Reason for rejection: "${rejectionReason.trim()}"
                         - Include a closing that suggests they can submit a new request with corrected information if applicable.
                         - The email should be well-formatted with HTML, using headings, bold text, and paragraphs for readability. Do not include any CSS or style tags.`;
                         const emailBody = await callGeminiApi(emailPrompt);
-                        await sendEmail(requestData.requesterEmail, emailSubject, emailBody);
+                        await sendEmail(originalRequest.requesterEmail, emailSubject, emailBody);
+                    } catch (emailError) {
+                        console.error("Email notification failed:", emailError);
+                        showNotification("Rejection saved, but failed to send email notification.", "error");
                     }
                 }
                 document.getElementById("modal-container").innerHTML = "";
