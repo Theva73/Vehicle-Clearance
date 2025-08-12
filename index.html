@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -8,7 +7,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <style>
@@ -314,7 +313,7 @@ html, body {
     let authMode = "login";
     let routeHistory = [];
 
-    // --- Gemini API Helper ---
+    // --- Gemini API & Email Notification Helpers ---
     const callGeminiApi = async (prompt, maxRetries = 3) => {
         let attempts = 0;
         while (attempts < maxRetries) {
@@ -350,6 +349,28 @@ html, body {
             }
         }
     };
+
+    /**
+     * Simulates sending an email.
+     * In a real-world application, this function would trigger a backend service
+     * (e.g., a Firebase Cloud Function) to send an email using a provider like
+     * SendGrid, Mailgun, or AWS SES. For this client-side demonstration,
+     * we log the email content to the console and show a UI notification.
+     * @param {string} to - The recipient's email address.
+     * @param {string} subject - The email subject.
+     * @param {string} htmlBody - The HTML content of the email.
+     */
+    const sendEmail = async (to, subject, htmlBody) => {
+        // --- SIMULATION ---
+        console.log("--- EMAIL SIMULATION ---");
+        console.log(`To: ${to}`);
+        console.log(`Subject: ${subject}`);
+        console.log("Body (HTML):");
+        console.log(htmlBody);
+        console.log("--- END EMAIL SIMULATION ---");
+        showNotification(`Email notification sent to ${to}.`, "success");
+    };
+
 
     // --- Voice Search Implementation ---
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -1390,7 +1411,11 @@ html, body {
                 <form id="request-form" class="space-y-4 text-left">
                     <div>
                         <label class="text-sm font-medium text-slate-300">Your Name</label>
-                        <input name="requesterName" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                        <input name="requesterName" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="e.g. John Doe" required />
+                    </div>
+                     <div>
+                        <label class="text-sm font-medium text-slate-300">Your Email Address</label>
+                        <input type="email" name="requesterEmail" placeholder="you@example.com" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
                     
                     <div>
@@ -1471,6 +1496,11 @@ html, body {
                     <p class="text-xs text-slate-400">Requested by</p>
                     <p class="font-semibold text-slate-200">${r.requesterName || 'N/A'}</p>
                 </div>`}
+                ${r.requesterEmail ? `
+                <div>
+                    <p class="text-xs text-slate-400">Requester Email</p>
+                    <p class="font-semibold text-slate-200">${r.requesterEmail}</p>
+                </div>` : ''}
                 <div>
                     <p class="text-xs text-slate-400">Location</p>
                     <p class="font-semibold text-slate-200">${r.location}</p>
@@ -2105,6 +2135,10 @@ html, body {
                 <form id="review-form" class="space-y-4">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Review Request</h2>
                     <input type="hidden" name="id" value="${request.id}">
+                     <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Email</label>
+                        <p class="mt-1 w-full p-3 bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${request.requesterEmail || 'Not provided'}</p>
+                    </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Name</label>
                         <input name="ownerName" value="${request.requesterName || ''}" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
@@ -2163,7 +2197,6 @@ html, body {
             </div>
         </div>`;
     };
-
     const renderModal = (edit = null) => {
         const modalContainer = document.getElementById("modal-container");
         const isEdit = edit ? true : false;
@@ -2266,6 +2299,28 @@ html, body {
         document.getElementById('confirm-modal-backdrop').onclick = (e) => {
             if (e.target.id === 'confirm-modal-backdrop') closeModal();
         };
+    };
+
+    const renderRejectionModal = (requestId) => {
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+        <div id="rejection-modal-backdrop" class="mobile-modal bg-black bg-opacity-60 z-[60]">
+            <div class="mobile-modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-md relative animate-fade-in">
+                <form id="rejection-form">
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Reject Request</h2>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Please provide a reason for rejecting this request. This will be sent to the requester.</p>
+                    <div class="mt-4">
+                        <label for="rejectionReason" class="text-sm font-medium text-gray-700 dark:text-gray-300">Rejection Reason</label>
+                        <textarea id="rejectionReason" name="rejectionReason" rows="3" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required></textarea>
+                    </div>
+                    <div class="mt-6 flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                        <button type="button" id="cancel-rejection-btn" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 mobile-button">Cancel</button>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 mobile-button" data-id="${requestId}">Confirm Rejection</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        `;
     };
 
     const toggleSettingsPanel = (show) => {
@@ -2554,6 +2609,7 @@ html, body {
         if (target.id === 'form-modal-backdrop') target.closest('#modal-container').innerHTML = '';
         if (target.id === 'review-modal-backdrop' && e.target.id === 'review-modal-backdrop') target.closest('#modal-container').innerHTML = '';
         if (target.id === 'vvip-modal-backdrop') target.closest('#modal-container').innerHTML = '';
+        if (target.id === 'rejection-modal-backdrop' && e.target.id === 'rejection-modal-backdrop') target.closest('#modal-container').innerHTML = '';
         
         if (!button) return;
 
@@ -2657,23 +2713,17 @@ html, body {
             if (button.classList.contains("reject-request-btn")) {
                 e.preventDefault();
                 const requestId = button.dataset.id;
-                renderConfirmationModal( 'Reject Request', 'Are you sure you want to reject this request?',
-                    async () => {
-                         try {
-                            await updateDoc(doc(db, "clearanceRequests", requestId), { status: 'rejected' });
-                            showNotification("Request rejected.");
-                            document.getElementById("modal-container").innerHTML = "";
-                        } catch (err) {
-                            showNotification("Error rejecting request.", "error");
-                        }
-                    }
-                );
+                renderRejectionModal(requestId);
+                return;
+            }
+            
+            if (button.id === "cancel-rejection-btn") {
+                e.preventDefault();
+                button.closest("#modal-container").innerHTML = "";
                 return;
             }
 
-            if
-					
-						(button.classList.contains("approve-request-btn")) {
+            if (button.classList.contains("approve-request-btn")) {
                 e.preventDefault();
                 const modal = button.closest('#review-modal-backdrop');
                 const form = modal?.querySelector('#review-form');
@@ -2716,15 +2766,26 @@ html, body {
                     });
                     
                     showNotification(`Request approved by ${currentAdminProfile.username} (${currentAdminProfile.designation})`);
+                    
+                    const requestDoc = await getDoc(doc(db, "clearanceRequests", requestId));
+                    if (requestDoc.exists()) {
+                        const requestData = requestDoc.data();
+                        if (requestData.requesterEmail) {
+                            const emailSubject = `Vehicle Clearance Approved: ${clearancePayload.vehicleNumber}`;
+                            const emailPrompt = `Generate a professional and friendly HTML email. The user's vehicle clearance request has been APPROVED.
+                            - Recipient's Name: ${requestData.requesterName}
+                            - Vehicle Number: ${clearancePayload.vehicleNumber}
+                            - Approved Location: ${clearancePayload.location}
+                            - Validity Period: From ${formatDate(clearancePayload.entryDate)} to ${formatDate(clearancePayload.expiryDate)}.
+                            - Include a friendly closing and mention that they can track their status online.
+                            - The email should be well-formatted with HTML, using headings, bold text, and paragraphs for readability. Do not include any CSS or style tags.`;
+                            const emailBody = await callGeminiApi(emailPrompt);
+                            await sendEmail(requestData.requesterEmail, emailSubject, emailBody);
+                        }
+                    }
+
                     document.getElementById("modal-container").innerHTML = "";
                     
-                    clearanceRequests = clearanceRequests.filter(req => req.id !== requestId);
-                    renderRequestsList();
-                    const badge = document.getElementById('requests-count-badge');
-                    if(badge) {
-                        badge.textContent = clearanceRequests.length;
-                        badge.classList.toggle('hidden', clearanceRequests.length === 0);
-                    }
                 } catch (error) { showNotification("Failed to approve request.", "error"); button.disabled = false; }
                 return;
             }
@@ -2892,7 +2953,41 @@ html, body {
         if (button) button.disabled = true;
 
         try {
-            if (form.id === "secure-user-login-form") {
+            if (form.id === "rejection-form") {
+                const { rejectionReason } = getFormObj(form);
+                const requestId = form.querySelector('button[type="submit"]').dataset.id;
+                if (!rejectionReason.trim()) {
+                    showNotification("Please provide a rejection reason.", "error");
+                    return;
+                }
+                
+                await updateDoc(doc(db, "clearanceRequests", requestId), { 
+                    status: 'rejected', 
+                    rejectionReason: rejectionReason.trim(),
+                    reviewedBy: `${currentAdminProfile.username} (${currentAdminProfile.designation})`,
+                    reviewedAt: Timestamp.now(),
+                    reviewedByUid: auth.currentUser?.uid
+                });
+                showNotification("Request rejected.");
+
+                const requestDoc = await getDoc(doc(db, "clearanceRequests", requestId));
+                if (requestDoc.exists()) {
+                    const requestData = requestDoc.data();
+                    if (requestData.requesterEmail) {
+                        const emailSubject = `Update on Vehicle Clearance Request: ${requestData.vehicleNumber}`;
+                        const emailPrompt = `Generate a professional and polite HTML email informing the user their vehicle clearance request has been REJECTED.
+                        - Recipient's Name: ${requestData.requesterName}
+                        - Vehicle Number: ${requestData.vehicleNumber}
+                        - Reason for rejection: "${rejectionReason.trim()}"
+                        - Include a closing that suggests they can submit a new request with corrected information if applicable.
+                        - The email should be well-formatted with HTML, using headings, bold text, and paragraphs for readability. Do not include any CSS or style tags.`;
+                        const emailBody = await callGeminiApi(emailPrompt);
+                        await sendEmail(requestData.requesterEmail, emailSubject, emailBody);
+                    }
+                }
+                document.getElementById("modal-container").innerHTML = "";
+
+            } else if (form.id === "secure-user-login-form") {
                 const { userID } = getFormObj(form);
                 if (!userID.trim()) {
                     showNotification("Please enter a User ID", "error");
@@ -3002,14 +3097,22 @@ html, body {
                 const expiryDate = parseLocalDate(data.expiryDate);
                 if(!entryDate || !expiryDate) { showNotification("Valid entry and expiry dates are required.", "error"); if (button) button.disabled = false; return; }
                 const payload = {
-                    requesterName: data.requesterName, requesterId: currentUser.uid, vehicleNumber: data.vehicleNumber.toUpperCase(),
-                    vehicleType: data.vehicleType, location: data.location === "Other" ? data.customLocation : data.location,
-                    entryDate: Timestamp.fromDate(entryDate), expiryDate: Timestamp.fromDate(expiryDate),
-                    escortRequired: !!data.escortRequired, notes: data.notes || "", status: "pending", createdAt: Timestamp.now()
+                    requesterName: data.requesterName, 
+                    requesterEmail: data.requesterEmail,
+                    requesterId: currentUser.uid, 
+                    vehicleNumber: data.vehicleNumber.toUpperCase(),
+                    vehicleType: data.vehicleType, 
+                    location: data.location === "Other" ? data.customLocation : data.location,
+                    entryDate: Timestamp.fromDate(entryDate), 
+                    expiryDate: Timestamp.fromDate(expiryDate),
+                    escortRequired: !!data.escortRequired, 
+                    notes: data.notes || "", 
+                    status: "pending", 
+                    createdAt: Timestamp.now()
                 };
                 try {
                     const docRef = await addDoc(collection(db, "clearanceRequests"), payload);
-                    showNotification("Request submitted successfully!");
+                    showNotification("Request submitted successfully! You will be notified by email of any status changes.");
                     const newRequestData = { id: docRef.id, ...payload };
                     renderLandingPage({ trackingResultHTML: createStatusCard(newRequestData), vehicleNumber: newRequestData.vehicleNumber });
                 } catch (error) { showNotification("Failed to submit request. Please try again.", "error"); }
@@ -3066,4 +3169,3 @@ html, body {
   </script>
 </body>
 </html>
-								
