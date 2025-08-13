@@ -20,6 +20,10 @@
     --yellow: #f59e0b;
   }
   * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    overflow: hidden; /* Prevent body from scrolling */
+  }
   body {
     margin: 0;
     background: var(--bg);
@@ -29,7 +33,18 @@
   .wrap {
     max-width: 780px;
     margin: 0 auto;
-    padding: 20px 14px 80px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+  }
+  .sticky-header {
+    flex-shrink: 0; /* This part will not shrink */
+    padding: 20px 14px 16px 14px;
+  }
+  .scroll-content {
+    flex-grow: 1; /* This part will grow to fill available space */
+    overflow-y: auto; /* Enable vertical scrolling ONLY for this container */
+    padding: 0 14px 80px 14px;
   }
   header {
     display: flex;
@@ -106,7 +121,6 @@
       background-color: #b91c1c;
   }
   .list {
-    margin-top: 16px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -114,7 +128,6 @@
   .hint {
     color: var(--muted);
     font-size: 12px;
-    margin-top: 12px;
     text-align: center;
   }
   .back-btn {
@@ -242,38 +255,42 @@
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <div>
-        <h1>Green List</h1>
-        <div class="subtitle">Local CSV search with advanced voice recognition.</div>
-      </div>
-      <button class="btn back-btn" id="backBtn">Back to Main</button>
-    </header>
+    <div class="sticky-header">
+      <header>
+        <div>
+          <h1>Green List</h1>
+          <div class="subtitle">Local CSV search with advanced voice recognition.</div>
+        </div>
+        <button class="btn back-btn" id="backBtn">Back to Main</button>
+      </header>
 
-    <div class="card">
-      <div class="row">
-        <label class="btn" style="background-color: var(--accent-dark);">
-          <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
-          Import CSV
-        </label>
-        <button class="btn" id="exportBtn">Export CSV</button>
-        <button class="btn" id="saveBtn">Save List</button>
-        <button class="btn danger" id="clearListBtn">Clear List</button>
-      </div>
-       <div class="row" style="margin-top:12px">
-        <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
-        <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
-        <button class="btn" id="clearSearchBtn">Clear Search</button>
-      </div>
-      <div class="row" style="margin-top: 12px;">
-         <span id="count" class="subtitle" style="flex:1; text-align:left;">0 rows</span>
+      <div class="card">
+        <div class="row">
+          <label class="btn" style="background-color: var(--accent-dark);">
+            <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
+            Import CSV
+          </label>
+          <button class="btn" id="exportBtn">Export CSV</button>
+          <button class="btn" id="saveBtn">Save List</button>
+          <button class="btn danger" id="clearListBtn">Clear List</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
+          <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
+          <button class="btn" id="clearSearchBtn">Clear Search</button>
+        </div>
+        <div class="row" style="margin-top: 12px;">
+          <span id="count" class="subtitle" style="flex:1; text-align:left;">0 rows</span>
+        </div>
       </div>
     </div>
-
-    <div id="list" class="list"></div>
-    <div id="empty" class="hint" style="padding: 40px 0;">
-        No rows yet. Import a CSV or load a saved list.<br>
-        CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>. Location is optional.
+    
+    <div class="scroll-content">
+      <div id="list" class="list"></div>
+      <div id="empty" class="hint" style="padding: 40px 0;">
+          No rows yet. Import a CSV or load a saved list.<br>
+          CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>. Location is optional.
+      </div>
     </div>
   </div>
 
