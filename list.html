@@ -40,6 +40,7 @@
   .sticky-header {
     flex-shrink: 0; /* This part will not shrink */
     padding: 20px 14px 16px 14px;
+    background-color: var(--bg);
   }
   .scroll-content {
     flex-grow: 1; /* This part will grow to fill available space */
@@ -523,7 +524,7 @@
 
     if (allRows.length === 0) {
         emptyEl.style.display = 'block';
-        listEl.style.display = 'none';
+        listEl.style.display = 'block'; // Keep list container for layout
         countEl.textContent = '0 rows';
         emptyEl.innerHTML = 'No rows yet. Import a CSV or load a saved list.<br>CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.';
         return;
