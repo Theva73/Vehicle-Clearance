@@ -17,6 +17,7 @@
     --accent: #22c55e;
     --accent-dark: #16a34a;
     --red: #ef4444;
+    --yellow: #f59e0b;
   }
   * { box-sizing: border-box; }
   body {
@@ -98,6 +99,12 @@
     background: var(--red);
     animation: pulse-ring 1.5s infinite;
   }
+  .btn.danger {
+      background-color: #991b1b;
+  }
+  .btn.danger:hover {
+      background-color: #b91c1c;
+  }
   .list {
     margin-top: 16px;
     display: flex;
@@ -118,11 +125,19 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   }
+  .item-details {
+      flex-grow: 1;
+  }
   .plate {
     letter-spacing: 0.08em;
     font-weight: 800;
     font-size: 1.1rem;
     color: #93c5fd;
+  }
+  .location {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 2px;
   }
   .badge {
     padding: 6px 12px;
@@ -132,6 +147,7 @@
     color: #bbf7d0;
     font-weight: 700;
     font-size: 12px;
+    flex-shrink: 0;
   }
   .hint {
     color: var(--muted);
@@ -143,6 +159,28 @@
     background: none;
     border: 1px solid var(--outline);
   }
+  .notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+  .notification.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  .notification.success { background-color: var(--accent-dark); }
+  .notification.error { background-color: var(--red); }
+  .notification.info { background-color: var(--yellow); }
+
   @keyframes pulse-ring {
     0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
     70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
@@ -167,19 +205,23 @@
           Import CSV
         </label>
         <button class="btn" id="exportBtn">Export CSV</button>
-        <span id="count" class="subtitle" style="flex:1; text-align:right;">0 rows</span>
+        <button class="btn" id="saveBtn">Save List</button>
+        <button class="btn danger" id="clearListBtn">Clear List</button>
       </div>
-      <div class="row" style="margin-top:12px">
+       <div class="row" style="margin-top:12px">
         <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
         <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
-        <button class="btn" id="clearBtn">Clear</button>
+        <button class="btn" id="clearSearchBtn">Clear Search</button>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+         <span id="count" class="subtitle" style="flex:1; text-align:left;">0 rows</span>
       </div>
     </div>
 
     <div id="list" class="list"></div>
     <div id="empty" class="hint" style="padding: 40px 0;">
-        No rows yet. Import a CSV to begin.<br>
-        CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.
+        No rows yet. Import a CSV or load a saved list.<br>
+        CSV headers accepted: <b>vehicleNumber, location</b>.
     </div>
   </div>
 
@@ -235,7 +277,7 @@
           let errorMessage = 'An error occurred during voice recognition.';
           if (event.error === 'no-speech') errorMessage = 'No speech detected. Please try again.';
           else if (event.error === 'not-allowed') errorMessage = 'Microphone permission denied.';
-          alert(errorMessage); // Simple alert for this page
+          showNotification(errorMessage, 'error');
           stopVoiceSearch();
       };
       recognition.onend = () => {
@@ -288,7 +330,7 @@
       if (isValidVehicleNumber(detectedNumber)) {
           completeVoiceSearch(detectedNumber);
       } else {
-          alert(`Could not detect a valid number from "${transcript}"`);
+          showNotification(`Could not detect a valid number from "${transcript}"`, 'error');
           stopVoiceSearch();
       }
   };
@@ -296,7 +338,7 @@
   const startVoiceSearch = () => {
       if (!recognition) {
           if (!initializeVoiceRecognition()) {
-              alert("Voice search not supported on this device");
+              showNotification("Voice search not supported on this device", "error");
               return;
           }
       }
@@ -310,11 +352,11 @@
           playBeep(523, 150);
           recognition.start();
           voiceSearchTimeout = setTimeout(() => {
-              alert("Voice search timed out.");
+              showNotification("Voice search timed out.", "error");
               stopVoiceSearch();
           }, 8000);
       } catch (error) {
-          alert("Failed to start voice search");
+          showNotification("Failed to start voice search", "error");
       }
   };
 
@@ -336,24 +378,59 @@
       stopVoiceSearch();
   };
 
-  // --- CSV + List + Filtering ---
+  // --- CSV, Local Storage, and List Management ---
+  const LOCAL_STORAGE_KEY = 'greenListData';
   let allRows = [];
   let filtered = [];
   const listEl = document.getElementById('list');
   const emptyEl = document.getElementById('empty');
   const countEl = document.getElementById('count');
 
+  function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+          notification.classList.add('show');
+      }, 10);
+
+      setTimeout(() => {
+          notification.classList.remove('show');
+          setTimeout(() => {
+              notification.remove();
+          }, 300);
+      }, 3000);
+  }
+
+  function saveListToLocal() {
+      try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(allRows));
+          showNotification('List saved to local storage.', 'success');
+      } catch (e) {
+          console.error("Failed to save to local storage", e);
+          showNotification('Could not save list. Storage may be full.', 'error');
+      }
+  }
+
+  function loadListFromLocal() {
+      const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedData) {
+          try {
+              allRows = JSON.parse(savedData);
+              showNotification('Loaded list from local storage.', 'info');
+          } catch (e) {
+              console.error("Failed to parse saved data", e);
+              allRows = [];
+              localStorage.removeItem(LOCAL_STORAGE_KEY);
+          }
+      }
+      applyFilter();
+  }
+
   function normalizePlate(s){
     return (s||'').toString().toUpperCase().replace(/\s+/g,'').replace(/O/g,'0').replace(/[^A-Z0-9]/g,'');
-  }
-  function joinFromColumns(row){
-    let plate = row.vehicleNumber || row.VehicleNumber || row.plate || row.Plate;
-    if(plate) return normalizePlate(plate);
-    const code = row.Code || row.code;
-    const num = row.Number || row.number;
-    const suffix = row.Suffix || row.suffix;
-    if(code && num && suffix) return normalizePlate(`${code}${num}${suffix}`);
-    return '';
   }
 
   function render(){
@@ -362,6 +439,7 @@
         emptyEl.style.display = 'block';
         listEl.style.display = 'none';
         countEl.textContent = '0 rows';
+        emptyEl.innerHTML = 'No rows yet. Import a CSV or load a saved list.<br>CSV headers accepted: <b>vehicleNumber, location</b>.';
         return;
     }
 
@@ -369,18 +447,23 @@
       emptyEl.style.display = 'block';
       listEl.style.display = 'none';
       countEl.textContent = `${allRows.length} total rows`;
-      emptyEl.innerHTML = `No results for "${searchBox.value}"`;
+      emptyEl.innerHTML = `No results for "<b>${searchBox.value}</b>"`;
     } else {
       emptyEl.style.display = 'none';
       listEl.style.display = 'flex';
-      countEl.textContent = `${filtered.length} of ${allRows.length} rows`;
+      countEl.textContent = `Showing ${filtered.length} of ${allRows.length} rows`;
     }
 
     const frag = document.createDocumentFragment();
     filtered.forEach(r => {
       const div = document.createElement('div');
       div.className = 'item';
-      div.innerHTML = `<div class="plate">${r.vehicleNumber}</div><span class="badge">Cleared</span>`;
+      div.innerHTML = `
+        <div class="item-details">
+            <div class="plate">${r.vehicleNumber}</div>
+            <div class="location">${r.location || 'N/A'}</div>
+        </div>
+        <span class="badge">Cleared</span>`;
       frag.appendChild(div);
     });
     listEl.appendChild(frag);
@@ -400,27 +483,42 @@
     const file = e.target.files?.[0]; if(!file) return;
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(Boolean);
-    if(!lines.length){ alert('Empty CSV'); return; }
+    if(!lines.length){ showNotification('Empty CSV', 'error'); return; }
     const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-    allRows = [];
+    
+    const plateHeader = headers.find(h => h.toLowerCase() === 'vehiclenumber');
+    const locationHeader = headers.find(h => h.toLowerCase() === 'location');
+
+    if (!plateHeader) {
+        showNotification('CSV must contain a "vehicleNumber" header.', 'error');
+        return;
+    }
+
+    const newRows = [];
     for(let i=1; i<lines.length; i++){
       const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
       const row = Object.fromEntries(headers.map((h,idx)=>[h, cols[idx] || '']));
-      const plate = joinFromColumns(row);
-      if(plate) allRows.push({vehicleNumber: plate});
+      const plate = normalizePlate(row[plateHeader]);
+      const location = row[locationHeader] || 'N/A';
+      if(plate) newRows.push({vehicleNumber: plate, location: location});
     }
+    allRows = newRows;
     searchBox.value = '';
     applyFilter();
+    saveListToLocal();
+    e.target.value = ''; // Reset file input
   });
 
   document.getElementById('exportBtn').addEventListener('click', ()=>{
-    if(!allRows.length){ alert('Nothing to export.'); return; }
-    const csv = 'vehicleNumber,status\n' + allRows.map(r => `${r.vehicleNumber},Cleared`).join('\n');
-    const blob = new Blob([csv], {type:'text/csv'});
+    if(!allRows.length){ showNotification('Nothing to export.', 'error'); return; }
+    const csv = 'vehicleNumber,location,status\n' + allRows.map(r => `"${r.vehicleNumber}","${r.location || 'N/A'}","Cleared"`).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'green_list_export.csv';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
   });
   
@@ -428,12 +526,24 @@
     window.location.href = 'index.html';
   });
 
+  document.getElementById('saveBtn').addEventListener('click', saveListToLocal);
+
+  document.getElementById('clearListBtn').addEventListener('click', () => {
+      if (confirm('Are you sure you want to permanently delete the current list?')) {
+          allRows = [];
+          filtered = [];
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
+          applyFilter();
+          showNotification('List has been cleared.', 'success');
+      }
+  });
+
   searchBox.addEventListener('input', ()=>{ 
     if(window.__t) clearTimeout(window.__t); 
     window.__t = setTimeout(applyFilter, 120); 
   });
 
-  document.getElementById('clearBtn').addEventListener('click', ()=>{ 
+  document.getElementById('clearSearchBtn').addEventListener('click', ()=>{ 
     searchBox.value=''; 
     applyFilter(); 
   });
@@ -443,7 +553,7 @@
   // Initial setup
   window.addEventListener('load', () => {
       initializeVoiceRecognition();
-      applyFilter(); // Initial render
+      loadListFromLocal();
   });
 </script>
 </body>
