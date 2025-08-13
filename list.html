@@ -3,106 +3,98 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Daily Vehicle Clearances — Voice & Search (v2)</title>
+<title>Vehicle CSV — Search + Voice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#a7b0c8;
-    --accent:#8b5cf6; --ok:#16a34a; --card:#111827; --outline:#1f2a44;
+    --outline:#1f2a44;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
-  .wrap{max-width:720px;margin:0 auto;padding:14px 14px 60px}
-  header{display:flex;flex-direction:column;gap:6px;margin:8px 0 14px}
+  .wrap{max-width:780px;margin:0 auto;padding:14px 14px 80px}
+  header{display:flex;gap:8px;align-items:center;margin:8px 0 14px}
+  header img{width:36px;height:36px;border-radius:8px;border:1px solid var(--outline)}
   h1{font-size:clamp(18px,3.8vw,26px);margin:0}
-  .subtitle{color:var(--muted);font-size:13px}
-  .panel{background:linear-gradient(180deg,var(--panel),#0a0f1c);border:1px solid var(--outline);border-radius:14px;padding:12px 12px}
-  .status{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
-  .pill{border:1px solid #234; padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
-  .row{display:flex;gap:8px;align-items:center}
+  .subtitle{color:var(--muted);font-size:12px}
+  .card{background:linear-gradient(180deg,#0b1220,#0a0f1c);border:1px solid var(--outline);border-radius:14px;padding:12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .input{flex:1;display:flex;align-items:center;background:#0a1428;border:1px solid #2b3a5f;border-radius:12px;padding:10px 12px}
-  .input input{flex:1;border:0;background:transparent;outline:none;color:var(--text);font-size:16px;min-height:20px}
+  .input input{flex:1;border:0;background:transparent;outline:none;color:#e5e7eb;font-size:16px}
   .btn{border:0;border-radius:12px;padding:10px 12px;background:#1f2937;color:#e5e7eb;border:1px solid #334155;cursor:pointer;font-weight:600}
-  .btn.primary{background:#5b21b6;color:#fff;border-color:#5b21b6}
-  .btn.mic{background:#6d28d9;border-color:#6d28d9;display:flex;align-items:center;gap:8px}
-  .btn.mic.listening{background:#ef4444;border-color:#ef4444;animation:pulse 1.5s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}70%{box-shadow:0 0 0 15px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+  .btn.mic{background:#6d28d9;border-color:#6d28d9}
+  .btn.mic.listening{background:#ef4444;border-color:#ef4444}
   .list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
   .item{background:linear-gradient(180deg,#0b1220,#0a0f1b);border:1px solid #1f2a44;border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
   .plate{letter-spacing:0.06em;font-weight:800;color:#93c5fd}
   .badge{padding:6px 10px;border-radius:999px;background:#052e12;border:1px solid #14532d;color:#bbf7d0;font-weight:700;font-size:12px}
-  .empty{color:var(--muted);text-align:center;padding:16px}
-  .actions{display:flex;gap:8px;flex-wrap:wrap}
-  .file{display:flex;align-items:center;gap:10px}
-  small{color:var(--muted)}
-  .notice{margin-top:8px;color:#fbbf24;font-size:12px}
+  .hint{color:#a7b0c8;font-size:12px;margin-top:8px}
 </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>Daily Vehicle Clearances</h1>
-      <div class="subtitle" id="dateSub">Showing vehicles cleared for today</div>
-      <div class="notice" id="voiceNotice" style="display:none"></div>
+      <img src="car_logo.jpg" alt="logo" onerror="this.style.display='none'">
+      <div>
+        <h1>Vehicle CSV</h1>
+        <div class="subtitle">Import a CSV and use your existing search + voice</div>
+      </div>
     </header>
 
-    <div class="panel">
-      <div class="status actions">
-        <label class="file">
-          <input id="csv" type="file" accept=".csv,text/csv" />
-          <span class="btn">Import CSV</span>
+    <div class="card">
+      <div class="row">
+        <label class="btn">
+          <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
+          Import CSV
         </label>
-        <button class="btn" id="export">Export CSV</button>
-        <span class="pill" id="count">0 rows</span>
+        <button class="btn" id="exportBtn">Export CSV</button>
+        <span id="count" class="subtitle">0 rows</span>
       </div>
-      <div class="row" style="margin-top:6px">
-        <div class="input"><input id="q" placeholder="Search Vehicle..." inputmode="latin" autocapitalize="characters" autocomplete="off"></div>
-        <button class="btn mic" id="micBtn" title="Voice search">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-          <span>Voice</span>
-        </button>
-        <button class="btn" id="clear">Clear</button>
+      <div class="row" style="margin-top:8px">
+        <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="latin" autocapitalize="characters" autocomplete="off"></div>
+        <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
+        <button class="btn" id="clearBtn">Clear</button>
       </div>
+      <div id="voiceHint" class="hint"></div>
     </div>
 
-    <div class="panel" style="margin-top:12px">
+    <div class="card" style="margin-top:12px">
       <div id="list" class="list"></div>
-      <div id="empty" class="empty">No vehicles loaded yet. Import a CSV to begin.</div>
-      <small>Expected CSV headers: <b>vehicleNumber</b> (or Code+Number+Suffix which will be joined as CODE####X).</small>
+      <div id="empty" class="hint">No rows yet. Import a CSV to begin.</div>
+      <div class="hint">CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b> (auto-joined as CODE####X).</div>
     </div>
   </div>
 
 <script>
-  // State
-  let allRows = [];   // {vehicleNumber}
-  let filtered = [];
-  const q = document.getElementById('q');
-  const micBtn = document.getElementById('micBtn');
-  const list = document.getElementById('list');
-  const empty = document.getElementById('empty');
-  const count = document.getElementById('count');
-  const voiceNotice = document.getElementById('voiceNotice');
+  // --- Expect these in your repo from the main app ---
+  // window.initializeVoiceRecognition()
+  // window.startVoiceSearch(inputElement, buttonElement)
+  const hasVoice = typeof window.initializeVoiceRecognition === 'function'
+                && typeof window.startVoiceSearch === 'function';
 
-  document.getElementById('dateSub').textContent = "Showing vehicles cleared for today: " + new Date().toLocaleDateString('en-GB');
+  // Minimal no-API fallback
+  function showHint(msg){ document.getElementById('voiceHint').textContent = msg || ''; }
 
-  // Voice capability check
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const isHttps = location.protocol === 'https:' || location.hostname === 'localhost';
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-  if(!SR){
-    voiceNotice.style.display = 'block';
-    voiceNotice.innerHTML = "Voice search is not supported in this browser. On iPhone/iPad, use the keyboard microphone to dictate into the search box. On Android/desktop Chrome over HTTPS it will work.";
-  } else if(!isHttps){
-    voiceNotice.style.display = 'block';
-    voiceNotice.innerHTML = "Voice search requires HTTPS. Host this page on a secure site (e.g., GitHub Pages) to enable the mic.";
+  if(hasVoice){
+    try{ window.initializeVoiceRecognition(); }catch(e){}
+    showHint('Voice ready — tap 🎤 and speak the plate.');
+  }else{
+    showHint('Voice module not found. This page will still work; add your voice script to enable the mic.');
   }
 
+  // --- CSV + List + Filtering ---
+  let allRows = [];   // {vehicleNumber}
+  let filtered = [];
+  const listEl = document.getElementById('list');
+  const emptyEl = document.getElementById('empty');
+  const countEl = document.getElementById('count');
+  const searchBox = document.getElementById('searchBox');
+  const micBtn = document.getElementById('micBtn');
+
   function normalizePlate(s){
-    if(!s) return '';
-    return s.toString().toUpperCase().replace(/\s+/g,'').replace(/O/g,'0').replace(/[^A-Z0-9]/g,'');
+    return (s||'').toString().toUpperCase().replace(/\s+/g,'').replace(/O/g,'0').replace(/[^A-Z0-9]/g,'');
   }
   function joinFromColumns(row){
     let plate = row.vehicleNumber || row.VehicleNumber || row.plate || row.Plate;
@@ -113,54 +105,51 @@
     if(code && num && suffix) return normalizePlate(`${code}${num}${suffix}`);
     return '';
   }
+
   function render(){
-    list.innerHTML = '';
+    listEl.innerHTML = '';
     if(filtered.length === 0){
-      empty.style.display = 'block';
-      count.textContent = '0 rows';
-      return;
+      emptyEl.style.display = 'block'; countEl.textContent = '0 rows'; return;
     }
-    empty.style.display = 'none';
-    count.textContent = filtered.length + ' rows';
+    emptyEl.style.display = 'none';
+    countEl.textContent = filtered.length + ' rows';
     const frag = document.createDocumentFragment();
-    filtered.forEach(rec => {
+    filtered.forEach(r => {
       const div = document.createElement('div');
       div.className = 'item';
-      div.innerHTML = `<div class="plate">${rec.vehicleNumber}</div><span class="badge">Cleared</span>`;
+      div.innerHTML = `<div class="plate">${r.vehicleNumber}</div><span class="badge">Cleared</span>`;
       frag.appendChild(div);
     });
-    list.appendChild(frag);
+    listEl.appendChild(frag);
   }
   function applyFilter(){
-    const term = normalizePlate(q.value);
-    if(!term){ filtered = [...allRows]; render(); return; }
-    filtered = allRows.filter(r => r.vehicleNumber.includes(term));
+    const term = normalizePlate(searchBox.value);
+    filtered = term ? allRows.filter(r => r.vehicleNumber.includes(term)) : [...allRows];
     render();
   }
 
-  // CSV import
-  document.getElementById('csv').addEventListener('change', async (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
+  // Import
+  document.getElementById('csvFile').addEventListener('change', async (e)=>{
+    const file = e.target.files?.[0]; if(!file) return;
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(Boolean);
-    if(lines.length === 0){ alert('Empty CSV'); return; }
+    if(!lines.length){ alert('Empty CSV'); return; }
     const headers = lines[0].split(',').map(h => h.trim());
     allRows = [];
     for(let i=1;i<lines.length;i++){
       const cols = lines[i].split(',').map(c => c.trim());
       const row = Object.fromEntries(headers.map((h,idx)=>[h, cols[idx] || '']));
       const plate = joinFromColumns(row);
-      if(plate){ allRows.push({vehicleNumber: plate}); }
+      if(plate) allRows.push({vehicleNumber: plate});
     }
     filtered = [...allRows];
     applyFilter();
   });
 
-  // Export CSV
-  document.getElementById('export').addEventListener('click', ()=>{
-    if(allRows.length === 0){ alert('Nothing to export.'); return; }
-    const csv = 'vehicleNumber,status\n' + allRows.map(r => `${r.vehicleNumber},Cleared`).join('\n');
+  // Export
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    if(!allRows.length){ alert('Nothing to export.'); return; }
+    const csv = 'vehicleNumber,status\\n' + allRows.map(r => `${r.vehicleNumber},Cleared`).join('\\n');
     const blob = new Blob([csv], {type:'text/csv'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -168,44 +157,14 @@
     a.click();
   });
 
-  document.getElementById('clear').addEventListener('click', ()=>{ q.value=''; applyFilter(); });
-  q.addEventListener('input', ()=>{
-    if(window.__t) clearTimeout(window.__t);
-    window.__t = setTimeout(applyFilter, 120);
-  });
+  // Search
+  searchBox.addEventListener('input', ()=>{ if(window.__t) clearTimeout(window.__t); window.__t = setTimeout(applyFilter, 120); });
+  document.getElementById('clearBtn').addEventListener('click', ()=>{ searchBox.value=''; applyFilter(); });
 
-  // Voice search
-  let recognition = null;
-  function startVoice(){
-    if(!SR){ q.focus(); return; }
-    if(!isHttps){ alert('Voice search requires HTTPS.'); return; }
-    recognition = recognition || new SR();
-    recognition.lang = 'en-US';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.onstart = ()=>{ micBtn.classList.add('listening'); };
-    recognition.onend = ()=>{ micBtn.classList.remove('listening'); };
-    recognition.onerror = ()=>{ micBtn.classList.remove('listening'); };
-    recognition.onresult = (e)=>{
-      const transcript = e.results[0][0].transcript || '';
-      const map = [[' zero ',' 0 '],[' oh ',' 0 '],[' o ',' 0 '],[' one ',' 1 '],[' won ',' 1 '],[' two ',' 2 '],[' to ',' 2 '],[' too ',' 2 '],[' three ',' 3 '],[' tree ',' 3 '],[' four ',' 4 '],[' for ',' 4 '],[' fore ',' 4 '],[' five ',' 5 '],[' fife ',' 5 '],[' six ',' 6 '],[' sex ',' 6 '],[' seven ',' 7 '],[' sven ',' 7 '],[' eight ',' 8 '],[' ate ',' 8 '],[' nine ',' 9 '],[' dash ','-']];
-      let s = (' ' + transcript.toLowerCase() + ' ').replace(/\s+/g,' ');
-      map.forEach(([w,d]) => s = s.replaceAll(w,d));
-      q.value = s.toUpperCase().trim();
-      applyFilter();
-    };
-    try{ recognition.start(); }catch(e){ /* ignore */ }
-  }
+  // Voice (delegate to your existing module)
   micBtn.addEventListener('click', ()=>{
-    if(!SR){
-      // Fallback for iOS Safari: focus the input so the keyboard mic can be used.
-      q.focus();
-      setTimeout(()=>{
-        alert('Tip: tap the keyboard microphone to dictate, then release to search.');
-      }, 50);
-      return;
-    }
-    startVoice();
+    if(hasVoice){ window.startVoiceSearch(searchBox, micBtn); }
+    else { searchBox.focus(); alert('Add your voice module script to enable the mic.'); }
   });
 </script>
 </body>
