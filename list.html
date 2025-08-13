@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vehicle CSV — Search + Voice (Auto‑load Module)</title>
+<title>Vehicle CSV — Voice Digits Mode</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -12,7 +12,6 @@
   *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
   .wrap{max-width:780px;margin:0 auto;padding:14px 14px 80px}
   header{display:flex;gap:8px;align-items:center;margin:8px 0 14px}
-  header img{width:36px;height:36px;border-radius:8px;border:1px solid var(--outline)}
   h1{font-size:clamp(18px,3.8vw,26px);margin:0}
   .subtitle{color:var(--muted);font-size:12px}
   .card{background:linear-gradient(180deg,#0b1220,#0a0f1c);border:1px solid var(--outline);border-radius:14px;padding:12px}
@@ -27,15 +26,16 @@
   .plate{letter-spacing:0.06em;font-weight:800;color:#93c5fd}
   .badge{padding:6px 10px;border-radius:999px;background:#052e12;border:1px solid #14532d;color:#bbf7d0;font-weight:700;font-size:12px}
   .hint{color:#a7b0c8;font-size:12px;margin-top:8px}
+  .toggle{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .toggle input{accent-color:#22c55e}
 </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <img src="car_logo.jpg" alt="logo" onerror="this.style.display='none'">
       <div>
         <h1>Vehicle CSV</h1>
-        <div class="subtitle">Import a CSV and use your existing search + voice</div>
+        <div class="subtitle">Digits-only voice mode to avoid false words (e.g., "YouTube")</div>
       </div>
     </header>
 
@@ -49,9 +49,13 @@
         <span id="count" class="subtitle">0 rows</span>
       </div>
       <div class="row" style="margin-top:8px">
-        <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="latin" autocapitalize="characters" autocomplete="off"></div>
+        <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
         <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
         <button class="btn" id="clearBtn">Clear</button>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="digitsOnly" checked>
+        <label for="digitsOnly" class="subtitle">Force digits-only recognition</label>
       </div>
       <div id="voiceHint" class="hint"></div>
     </div>
@@ -64,67 +68,90 @@
   </div>
 
 <script>
-  // ---- Auto-load your voice module if available
-  const possiblePaths = ["voice.js","js/voice.js","scripts/voice.js","assets/voice.js"];
-  function log(msg){ console.log("[csv-voice]", msg); }
+  const searchBox = document.getElementById('searchBox');
+  const micBtn = document.getElementById('micBtn');
+  const digitsOnly = document.getElementById('digitsOnly');
   function showHint(msg){ document.getElementById('voiceHint').textContent = msg || ''; }
 
-  async function tryLoad(path){
-    return new Promise((resolve)=>{
-      const s = document.createElement('script'); s.src = path; s.onload = ()=>resolve({ok:true, path}); s.onerror=()=>resolve({ok:false, path});
-      document.head.appendChild(s);
+  // ---- Robust digits extractor
+  function extractDigits(text){
+    let s = (' ' + (text||'') + ' ').toLowerCase();
+    // remove filler words
+    ['vehicle','plate','number','is','the','my','car','please','search','find'].forEach(w=>{
+      s = s.replace(new RegExp('\\b'+w+'\\b','g'), ' ');
     });
+    // handle double/triple patterns
+    s = s.replace(/\bdouble\s+(zero|oh|o|one|two|three|four|five|six|seven|eight|nine)\b/g, (m, d)=>{
+      const map={zero:'00',oh:'00',o:'00',one:'11',two:'22',three:'33',four:'44',five:'55',six:'66',seven:'77',eight:'88',nine:'99'};
+      return ' '+map[d]+' ';
+    });
+    s = s.replace(/\btriple\s+(zero|oh|o|one|two|three|four|five|six|seven|eight|nine)\b/g, (m, d)=>{
+      const map={zero:'000',oh:'000',o:'000',one:'111',two:'222',three:'333',four:'444',five:'555',six:'666',seven:'777',eight:'888',nine:'999'};
+      return ' '+map[d]+' ';
+    });
+    // words -> digits
+    const words = [
+      ['zero','0'],['oh','0'],['o','0'],
+      ['one','1'],['won','1'],
+      ['two','2'],['to','2'],['too','2'],
+      ['three','3'],['tree','3'],
+      ['four','4'],['for','4'],['fore','4'],
+      ['five','5'],['fife','5'],
+      ['six','6'],['sex','6'],
+      ['seven','7'],['sven','7'],
+      ['eight','8'],['ate','8'],
+      ['nine','9'],['nein','9'],
+      // tens (for phrases like "seventy nine")
+      ['ten','10'],['eleven','11'],['twelve','12'],['thirteen','13'],['fourteen','14'],['fifteen','15'],['sixteen','16'],['seventeen','17'],['eighteen','18'],['nineteen','19'],
+      ['twenty','20'],['thirty','30'],['forty','40'],['fifty','50'],['sixty','60'],['seventy','70'],['eighty','80'],['ninety','90']
+    ];
+    words.forEach(([w,d])=>{ s = s.replace(new RegExp('\\b'+w+'\\b','g'),' '+d+' '); });
+    // collapse to digits only
+    s = s.replace(/[^0-9]/g,' ').replace(/\s+/g,' ').trim();
+    if(!s) return '';
+    // If there are spaces between digits groups like "79 31", join them
+    return s.split(' ').join('');
   }
 
+  // ---- Auto-load user's module if present, else digits-only shim
+  const possiblePaths = ["voice.js","js/voice.js","scripts/voice.js","assets/voice.js"];
+  async function loadScript(path){ return new Promise(res=>{ const s=document.createElement('script'); s.src=path; s.onload=()=>res(true); s.onerror=()=>res(false); document.head.appendChild(s);}); }
   async function ensureVoice(){
-    // Already present?
-    if (typeof window.initializeVoiceRecognition === "function" && typeof window.startVoiceSearch === "function"){
-      showHint("Voice ready (module already loaded)."); return true;
-    }
-    // Try common paths
-    for (const p of possiblePaths){
-      const res = await tryLoad(p);
-      if(res.ok){
-        if (typeof window.initializeVoiceRecognition === "function" && typeof window.startVoiceSearch === "function"){
-          showHint("Voice ready (loaded: " + p + ")."); return true;
-        }
-      }
-    }
-    // Fallback shim
-    showHint("Voice module not found. Using basic built-in mic (if supported).");
-    installShim();
-    return true;
-  }
-
-  function installShim(){
+    if(window.initializeVoiceRecognition && window.startVoiceSearch) return 'user';
+    for(const p of possiblePaths){ if(await loadScript(p)){ if(window.initializeVoiceRecognition && window.startVoiceSearch) return 'user'; }}
+    // install digits-only shim
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    window.initializeVoiceRecognition = function(){};
+    window.initializeVoiceRecognition = function(){ };
     window.startVoiceSearch = function(input, btn){
       if(!SR){ input.focus(); alert('Speech recognition not supported here.'); return; }
       const r = new SR(); r.lang='en-US'; r.continuous=false; r.interimResults=false;
       r.onstart=()=>btn.classList.add('listening');
       r.onend=()=>btn.classList.remove('listening');
       r.onresult=(e)=>{
-        let t = (e.results[0][0].transcript||'') + ' ';
-        const map = [[' zero ',' 0 '],[' oh ',' 0 '],[' o ',' 0 '],[' one ',' 1 '],[' won ',' 1 '],[' two ',' 2 '],[' to ',' 2 '],[' too ',' 2 '],[' three ',' 3 '],[' tree ',' 3 '],[' four ',' 4 '],[' for ',' 4 '],[' fore ',' 4 '],[' five ',' 5 '],[' fife ',' 5 '],[' six ',' 6 '],[' sex ',' 6 '],[' seven ',' 7 '],[' sven ',' 7 '],[' eight ',' 8 '],[' ate ',' 8 '],[' nine ',' 9 ']];
-        map.forEach(([w,d])=> t = t.replaceAll(w,d));
-        input.value = t.toUpperCase().trim();
+        const transcript = e.results[0][0].transcript || '';
+        const out = digitsOnly.checked ? extractDigits(transcript) : transcript.toUpperCase();
+        input.value = out;
         input.dispatchEvent(new Event('input', {bubbles:true}));
       };
       try{ r.start(); }catch(e){}
     };
+    return 'shim';
   }
+
+  (async ()=>{
+    const mode = await ensureVoice();
+    showHint(mode==='user' ? 'Voice ready (your module loaded)' : 'Digits-only mic enabled (shim).');
+    try{ window.initializeVoiceRecognition?.(); }catch(e){}
+  })();
 </script>
 
 <script>
-  // --- CSV + List + Filtering (same as before)
+  // --- CSV + List + Filtering
   let allRows = [];   // {vehicleNumber}
   let filtered = [];
   const listEl = document.getElementById('list');
   const emptyEl = document.getElementById('empty');
   const countEl = document.getElementById('count');
-  const searchBox = document.getElementById('searchBox');
-  const micBtn = document.getElementById('micBtn');
 
   function normalizePlate(s){
     return (s||'').toString().toUpperCase().replace(/\s+/g,'').replace(/O/g,'0').replace(/[^A-Z0-9]/g,'');
@@ -190,13 +217,7 @@
 
   searchBox.addEventListener('input', ()=>{ if(window.__t) clearTimeout(window.__t); window.__t = setTimeout(applyFilter, 120); });
   document.getElementById('clearBtn').addEventListener('click', ()=>{ searchBox.value=''; applyFilter(); });
-
-  // Initialize voice (auto-load then wire button)
-  (async ()=>{
-    await ensureVoice();
-    try{ window.initializeVoiceRecognition?.(); }catch(e){}
-    document.getElementById('micBtn').addEventListener('click', ()=> window.startVoiceSearch(searchBox, micBtn) );
-  })();
+  micBtn.addEventListener('click', ()=> window.startVoiceSearch(searchBox, micBtn) );
 </script>
 </body>
 </html>
