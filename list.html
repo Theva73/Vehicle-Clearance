@@ -3,17 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vehicle CSV — Search + Voice</title>
+<title>Vehicle CSV — Search + Voice (Auto‑load Module)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#a7b0c8;
-    --outline:#1f2a44;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  :root{ --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#a7b0c8; --outline:#1f2a44 }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
   .wrap{max-width:780px;margin:0 auto;padding:14px 14px 80px}
   header{display:flex;gap:8px;align-items:center;margin:8px 0 14px}
   header img{width:36px;height:36px;border-radius:8px;border:1px solid var(--outline)}
@@ -68,23 +64,60 @@
   </div>
 
 <script>
-  // --- Expect these in your repo from the main app ---
-  // window.initializeVoiceRecognition()
-  // window.startVoiceSearch(inputElement, buttonElement)
-  const hasVoice = typeof window.initializeVoiceRecognition === 'function'
-                && typeof window.startVoiceSearch === 'function';
-
-  // Minimal no-API fallback
+  // ---- Auto-load your voice module if available
+  const possiblePaths = ["voice.js","js/voice.js","scripts/voice.js","assets/voice.js"];
+  function log(msg){ console.log("[csv-voice]", msg); }
   function showHint(msg){ document.getElementById('voiceHint').textContent = msg || ''; }
 
-  if(hasVoice){
-    try{ window.initializeVoiceRecognition(); }catch(e){}
-    showHint('Voice ready — tap 🎤 and speak the plate.');
-  }else{
-    showHint('Voice module not found. This page will still work; add your voice script to enable the mic.');
+  async function tryLoad(path){
+    return new Promise((resolve)=>{
+      const s = document.createElement('script'); s.src = path; s.onload = ()=>resolve({ok:true, path}); s.onerror=()=>resolve({ok:false, path});
+      document.head.appendChild(s);
+    });
   }
 
-  // --- CSV + List + Filtering ---
+  async function ensureVoice(){
+    // Already present?
+    if (typeof window.initializeVoiceRecognition === "function" && typeof window.startVoiceSearch === "function"){
+      showHint("Voice ready (module already loaded)."); return true;
+    }
+    // Try common paths
+    for (const p of possiblePaths){
+      const res = await tryLoad(p);
+      if(res.ok){
+        if (typeof window.initializeVoiceRecognition === "function" && typeof window.startVoiceSearch === "function"){
+          showHint("Voice ready (loaded: " + p + ")."); return true;
+        }
+      }
+    }
+    // Fallback shim
+    showHint("Voice module not found. Using basic built-in mic (if supported).");
+    installShim();
+    return true;
+  }
+
+  function installShim(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    window.initializeVoiceRecognition = function(){};
+    window.startVoiceSearch = function(input, btn){
+      if(!SR){ input.focus(); alert('Speech recognition not supported here.'); return; }
+      const r = new SR(); r.lang='en-US'; r.continuous=false; r.interimResults=false;
+      r.onstart=()=>btn.classList.add('listening');
+      r.onend=()=>btn.classList.remove('listening');
+      r.onresult=(e)=>{
+        let t = (e.results[0][0].transcript||'') + ' ';
+        const map = [[' zero ',' 0 '],[' oh ',' 0 '],[' o ',' 0 '],[' one ',' 1 '],[' won ',' 1 '],[' two ',' 2 '],[' to ',' 2 '],[' too ',' 2 '],[' three ',' 3 '],[' tree ',' 3 '],[' four ',' 4 '],[' for ',' 4 '],[' fore ',' 4 '],[' five ',' 5 '],[' fife ',' 5 '],[' six ',' 6 '],[' sex ',' 6 '],[' seven ',' 7 '],[' sven ',' 7 '],[' eight ',' 8 '],[' ate ',' 8 '],[' nine ',' 9 ']];
+        map.forEach(([w,d])=> t = t.replaceAll(w,d));
+        input.value = t.toUpperCase().trim();
+        input.dispatchEvent(new Event('input', {bubbles:true}));
+      };
+      try{ r.start(); }catch(e){}
+    };
+  }
+</script>
+
+<script>
+  // --- CSV + List + Filtering (same as before)
   let allRows = [];   // {vehicleNumber}
   let filtered = [];
   const listEl = document.getElementById('list');
@@ -128,7 +161,6 @@
     render();
   }
 
-  // Import
   document.getElementById('csvFile').addEventListener('change', async (e)=>{
     const file = e.target.files?.[0]; if(!file) return;
     const text = await file.text();
@@ -146,7 +178,6 @@
     applyFilter();
   });
 
-  // Export
   document.getElementById('exportBtn').addEventListener('click', ()=>{
     if(!allRows.length){ alert('Nothing to export.'); return; }
     const csv = 'vehicleNumber,status\\n' + allRows.map(r => `${r.vehicleNumber},Cleared`).join('\\n');
@@ -157,15 +188,15 @@
     a.click();
   });
 
-  // Search
   searchBox.addEventListener('input', ()=>{ if(window.__t) clearTimeout(window.__t); window.__t = setTimeout(applyFilter, 120); });
   document.getElementById('clearBtn').addEventListener('click', ()=>{ searchBox.value=''; applyFilter(); });
 
-  // Voice (delegate to your existing module)
-  micBtn.addEventListener('click', ()=>{
-    if(hasVoice){ window.startVoiceSearch(searchBox, micBtn); }
-    else { searchBox.focus(); alert('Add your voice module script to enable the mic.'); }
-  });
+  // Initialize voice (auto-load then wire button)
+  (async ()=>{
+    await ensureVoice();
+    try{ window.initializeVoiceRecognition?.(); }catch(e){}
+    document.getElementById('micBtn').addEventListener('click', ()=> window.startVoiceSearch(searchBox, micBtn) );
+  })();
 </script>
 </body>
 </html>
