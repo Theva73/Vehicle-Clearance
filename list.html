@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Green List - Voice Search</title>
+<title>Green List - Gemini API Integration</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -18,11 +18,13 @@
     --accent-dark: #16a34a;
     --red: #ef4444;
     --yellow: #f59e0b;
+    --purple: #8b5cf6;
+    --purple-dark: #6d28d9;
   }
   * { box-sizing: border-box; }
   html, body {
     height: 100%;
-    overflow: hidden; /* Prevent body from scrolling */
+    overflow: hidden;
   }
   body {
     margin: 0;
@@ -35,16 +37,16 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    height: 100vh; /* Full viewport height */
+    height: 100vh;
   }
   .sticky-header {
-    flex-shrink: 0; /* This part will not shrink */
+    flex-shrink: 0;
     padding: 20px 14px 16px 14px;
     background-color: var(--bg);
   }
   .scroll-content {
-    flex-grow: 1; /* This part will grow to fill available space */
-    overflow-y: auto; /* Enable vertical scrolling ONLY for this container */
+    flex-grow: 1;
+    overflow-y: auto;
     padding: 0 14px 80px 14px;
   }
   header {
@@ -84,13 +86,26 @@
     border-radius: 12px;
     padding: 12px 14px;
   }
-  .input input {
+  .input input, .prompt-area textarea {
     flex: 1;
     border: 0;
     background: transparent;
     outline: none;
     color: var(--text);
     font-size: 16px;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+   .prompt-area {
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 12px;
+  }
+  .prompt-area textarea {
+    width: 100%;
+    height: 120px;
+    resize: vertical;
   }
   .btn {
     border: 0;
@@ -101,6 +116,7 @@
     cursor: pointer;
     font-weight: 600;
     transition: background-color 0.2s;
+    white-space: nowrap;
   }
   .btn:hover {
     background: #475569;
@@ -157,7 +173,6 @@
   .notification.error { background-color: var(--red); }
   .notification.info { background-color: var(--yellow); }
 
-  /* Styles for new list view */
   .list-item {
     background: var(--panel);
     border: 1px solid var(--outline);
@@ -183,7 +198,6 @@
     font-size: 12px;
   }
 
-  /* Styles from index.html for search results */
   .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
   @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -260,13 +274,17 @@
       <header>
         <div>
           <h1>Green List</h1>
-          <div class="subtitle">Local CSV search with advanced voice recognition.</div>
+          <div class="subtitle">Local search with Voice, CSV, and Gemini API Image Import.</div>
         </div>
         <button class="btn back-btn" id="backBtn">Back to Main</button>
       </header>
 
       <div class="card">
         <div class="row">
+          <label class="btn" style="background-color: var(--purple-dark);">
+            <input id="geminiImageFile" type="file" accept="image/*" style="display:none">
+            Import with Gemini
+          </label>
           <label class="btn" style="background-color: var(--accent-dark);">
             <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
             Import CSV
@@ -274,6 +292,9 @@
           <button class="btn" id="exportBtn">Export CSV</button>
           <button class="btn" id="saveBtn">Save List</button>
           <button class="btn danger" id="clearListBtn">Clear List</button>
+        </div>
+        <div class="prompt-area">
+          <textarea id="geminiPrompt" placeholder="Enter your prompt for the Gemini API here..."></textarea>
         </div>
         <div class="row" style="margin-top:12px">
           <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
@@ -289,14 +310,14 @@
     <div class="scroll-content">
       <div id="list" class="list"></div>
       <div id="empty" class="hint" style="padding: 40px 0;">
-          No rows yet. Import a CSV or load a saved list.<br>
+          No rows yet. Import a file or load a saved list.<br>
           CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>. Location is optional.
       </div>
     </div>
   </div>
 
 <script>
-  // --- Voice Search Implementation (Upgraded) ---
+  // --- Voice Search Implementation ---
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   const playBeep = (frequency = 440, duration = 100, type = 'sine') => {
       if (!audioContext) return;
@@ -327,22 +348,16 @@
           console.warn('Speech recognition not supported');
           return false;
       }
-
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = 'en-US';
-      recognition.maxAlternatives = 3;
       recognition.onstart = () => {
           isVoiceSearchActive = true;
           if (micBtn) micBtn.classList.add('listening');
       };
-
-      recognition.onresult = (event) => {
-          handleVoiceResult(event);
-      };
-
+      recognition.onresult = (event) => handleVoiceResult(event);
       recognition.onerror = (event) => {
           let errorMessage = 'An error occurred during voice recognition.';
           if (event.error === 'no-speech') errorMessage = 'No speech detected. Please try again.';
@@ -385,18 +400,6 @@
   const handleVoiceResult = (event) => {
       let transcript = event.results[0][0].transcript;
       let detectedNumber = processVehicleNumber(transcript);
-      
-      if (!isValidVehicleNumber(detectedNumber) && event.results[0].length > 1) {
-          for (let i = 1; i < event.results[0].length; i++) {
-              const altTranscript = event.results[0][i].transcript;
-              const altNumber = processVehicleNumber(altTranscript);
-              if (isValidVehicleNumber(altNumber)) {
-                  detectedNumber = altNumber;
-                  break;
-              }
-          }
-      }
-      
       if (isValidVehicleNumber(detectedNumber)) {
           completeVoiceSearch(detectedNumber);
       } else {
@@ -412,12 +415,10 @@
               return;
           }
       }
-
       if (isVoiceSearchActive) {
           stopVoiceSearch();
           return;
       }
-
       try {
           playBeep(523, 150);
           recognition.start();
@@ -448,14 +449,15 @@
       stopVoiceSearch();
   };
 
-  // --- CSV, Local Storage, and List Management ---
+  // --- CSV, Gemini API, Local Storage, and List Management ---
   const LOCAL_STORAGE_KEY = 'greenListData';
   let allRows = [];
   let filtered = [];
   const listEl = document.getElementById('list');
   const emptyEl = document.getElementById('empty');
   const countEl = document.getElementById('count');
-  
+  const geminiPromptEl = document.getElementById('geminiPrompt');
+
   const icons = {
     car: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2,16H46" /><path d="M6,16 C6,16 6,12 10,8 C14,4 18,4 24,4 C30,4 34,4 38,8 C42,12 42,16 42,16" /><path d="M8 20a2 2 0 100-4 2 2 0 000 4z" /><path d="M40 20a2 2 0 100-4 2 2 0 000 4z" /></svg>`,
     x: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
@@ -466,17 +468,15 @@
       notification.className = `notification ${type}`;
       notification.textContent = message;
       document.body.appendChild(notification);
-      
       setTimeout(() => {
           notification.classList.add('show');
       }, 10);
-
       setTimeout(() => {
           notification.classList.remove('show');
           setTimeout(() => {
               notification.remove();
           }, 300);
-      }, 3000);
+      }, 4000);
   }
 
   function saveListToLocal() {
@@ -517,6 +517,24 @@
     if(code && num) return normalizePlate(`${code}${num}${suffix || ''}`);
     return '';
   }
+  
+  function parseCsvText(text) {
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+      if (lines.length < 2) return []; // Needs at least a header and one data row
+      
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const locationHeader = headers.find(h => h.toLowerCase() === 'location');
+
+      const newRows = [];
+      for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
+          const row = Object.fromEntries(headers.map((h, idx) => [h, cols[idx] || '']));
+          const plate = joinFromColumns(row);
+          const location = locationHeader ? row[locationHeader] : 'N/A';
+          if (plate) newRows.push({ vehicleNumber: plate, location: location });
+      }
+      return newRows;
+  }
 
   function render(){
     const searchTerm = searchBox.value.trim().toUpperCase();
@@ -524,9 +542,9 @@
 
     if (allRows.length === 0) {
         emptyEl.style.display = 'block';
-        listEl.style.display = 'block'; // Keep list container for layout
+        listEl.style.display = 'block';
         countEl.textContent = '0 rows';
-        emptyEl.innerHTML = 'No rows yet. Import a CSV or load a saved list.<br>CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.';
+        emptyEl.innerHTML = 'No rows yet. Import a file or load a saved list.<br>CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.';
         return;
     }
 
@@ -594,24 +612,99 @@
     }
     render();
   }
+  
+  // --- Gemini API Implementation ---
+  const fileToGenerativePart = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Data = reader.result.split(',')[1];
+        resolve({
+          inlineData: {
+            mimeType: file.type,
+            data: base64Data
+          }
+        });
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
 
+  document.getElementById('geminiImageFile').addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const prompt = geminiPromptEl.value;
+    if (!prompt) {
+        showNotification('Please enter a prompt for the Gemini API.', 'error');
+        e.target.value = '';
+        return;
+    }
+
+    showNotification('Processing with Gemini API...', 'info');
+
+    try {
+        const imagePart = await fileToGenerativePart(file);
+        
+        const apiKey = ""; // IMPORTANT: Leave this empty. The environment will provide the key.
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{
+                parts: [
+                    { text: prompt },
+                    imagePart
+                ]
+            }]
+        };
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`API Error: ${errorData.error?.message || response.statusText}`);
+        }
+
+        const result = await response.json();
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!text) {
+            throw new Error('No text returned from API.');
+        }
+        
+        // Clean up potential markdown code block fences
+        const cleanedText = text.replace(/```csv\n|```/g, '').trim();
+        const newRows = parseCsvText(cleanedText);
+
+        if (newRows.length === 0) {
+            showNotification('Gemini could not extract valid data. Check the prompt and image.', 'error');
+            return;
+        }
+
+        allRows = newRows;
+        searchBox.value = '';
+        applyFilter();
+        saveListToLocal();
+        showNotification(`Successfully imported ${newRows.length} vehicles via Gemini.`, 'success');
+
+    } catch (error) {
+        console.error('Gemini API Error:', error);
+        showNotification(error.message, 'error');
+    } finally {
+        e.target.value = ''; // Reset file input
+    }
+  });
+
+  // --- Existing CSV and Event Listener Code ---
   document.getElementById('csvFile').addEventListener('change', async (e)=>{
     const file = e.target.files?.[0]; if(!file) return;
     const text = await file.text();
-    const lines = text.split(/\r?\n/).filter(Boolean);
-    if(!lines.length){ showNotification('Empty CSV', 'error'); return; }
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-    
-    const locationHeader = headers.find(h => h.toLowerCase() === 'location');
-
-    const newRows = [];
-    for(let i=1; i<lines.length; i++){
-      const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
-      const row = Object.fromEntries(headers.map((h,idx)=>[h, cols[idx] || '']));
-      const plate = joinFromColumns(row);
-      const location = locationHeader ? row[locationHeader] : 'N/A';
-      if(plate) newRows.push({vehicleNumber: plate, location: location});
-    }
+    const newRows = parseCsvText(text);
 
     if (newRows.length === 0) {
         showNotification('Could not find valid vehicle numbers in the CSV.', 'error');
@@ -670,6 +763,17 @@
   window.addEventListener('load', () => {
       initializeVoiceRecognition();
       loadListFromLocal();
+      // Pre-fill the prompt textarea with the user's provided prompt
+      geminiPromptEl.value = `Analyze the attached image, which contains a table. Your task is to meticulously extract all the information from this table and format it as a CSV (Comma-Separated Values) text.
+Instructions:
+1. Header Row: The first line of your output must be the header row. Based on the image, the headers are: Type,Code,Number,Suffix,Date,Location
+2. Data Rows: Each subsequent line in your output must correspond to a single row from the table in the image.
+3. Formatting:
+    * Separate the value for each column with a single comma.
+    * Do not omit any rows or columns.
+    * Ensure the data in each field matches the image exactly.
+4. Example: The first row of data in the image should be formatted like this: DOC,GBD,3945,J,13TH AUG 2025,COURTYARD
+Please generate the full CSV data from the image now.`;
   });
 </script>
 </body>
