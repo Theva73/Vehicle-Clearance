@@ -2770,10 +2770,11 @@ html, body {
                     
                     showNotification(`Request approved by ${currentAdminProfile.username}`);
                     
+                    // --- Start Email Logic ---
                     if (originalRequest.requesterEmail) {
+                        let emailBody;
                         try {
-                            showNotification("Generating approval email...", "info");
-                            const emailSubject = `Vehicle Clearance Approved: ${clearancePayload.vehicleNumber}`;
+                            showNotification("Generating approval email content...", "info");
                             const emailPrompt = `Generate a professional and friendly HTML email. The user's vehicle clearance request has been APPROVED.
                             - Recipient's Name: ${originalRequest.requesterName}
                             - Vehicle Number: ${clearancePayload.vehicleNumber}
@@ -2781,15 +2782,26 @@ html, body {
                             - Validity Period: From ${formatDate(clearancePayload.entryDate)} to ${formatDate(clearancePayload.expiryDate)}.
                             - Include a friendly closing and mention that they can track their status online.
                             - The email should be well-formatted with HTML, using headings, bold text, and paragraphs for readability. Do not include any CSS or style tags.`;
-                            const emailBody = await callGeminiApi(emailPrompt);
+                            emailBody = await callGeminiApi(emailPrompt);
+                        } catch (apiError) {
+                            console.error("Gemini API failed:", apiError);
+                            showNotification("Approval saved, but AI email generation failed.", "error");
+                            document.getElementById("modal-container").innerHTML = ""; // Close modal even on email fail
+                            return; // Exit the handler
+                        }
+
+                        try {
+                            const emailSubject = `Vehicle Clearance Approved: ${clearancePayload.vehicleNumber}`;
                             await sendEmail(originalRequest.requesterEmail, emailSubject, emailBody);
-                        } catch (emailError) {
-                            console.error("Email notification failed:", emailError);
-                            showNotification("Approval saved, but failed to send email notification.", "error");
+                        } catch (sendError) {
+                            console.error("Email sending simulation failed:", sendError);
+                            showNotification("Approval saved, but the email could not be sent.", "error");
                         }
                     } else {
                         console.warn("No requester email found for this request. Skipping notification.");
+                        showNotification("Approval saved. Email not sent (no address on file).", "info");
                     }
+                    // --- End Email Logic ---
 
                     document.getElementById("modal-container").innerHTML = "";
                     
