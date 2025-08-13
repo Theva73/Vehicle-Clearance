@@ -3,151 +3,341 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vehicle CSV — Voice Digits Mode</title>
+<title>Green List - Voice Search</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{ --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#a7b0c8; --outline:#1f2a44 }
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
-  .wrap{max-width:780px;margin:0 auto;padding:14px 14px 80px}
-  header{display:flex;gap:8px;align-items:center;margin:8px 0 14px}
-  h1{font-size:clamp(18px,3.8vw,26px);margin:0}
-  .subtitle{color:var(--muted);font-size:12px}
-  .card{background:linear-gradient(180deg,#0b1220,#0a0f1c);border:1px solid var(--outline);border-radius:14px;padding:12px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .input{flex:1;display:flex;align-items:center;background:#0a1428;border:1px solid #2b3a5f;border-radius:12px;padding:10px 12px}
-  .input input{flex:1;border:0;background:transparent;outline:none;color:#e5e7eb;font-size:16px}
-  .btn{border:0;border-radius:12px;padding:10px 12px;background:#1f2937;color:#e5e7eb;border:1px solid #334155;cursor:pointer;font-weight:600}
-  .btn.mic{background:#6d28d9;border-color:#6d28d9}
-  .btn.mic.listening{background:#ef4444;border-color:#ef4444}
-  .list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-  .item{background:linear-gradient(180deg,#0b1220,#0a0f1b);border:1px solid #1f2a44;border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
-  .plate{letter-spacing:0.06em;font-weight:800;color:#93c5fd}
-  .badge{padding:6px 10px;border-radius:999px;background:#052e12;border:1px solid #14532d;color:#bbf7d0;font-weight:700;font-size:12px}
-  .hint{color:#a7b0c8;font-size:12px;margin-top:8px}
-  .toggle{display:flex;align-items:center;gap:8px;margin-top:8px}
-  .toggle input{accent-color:#22c55e}
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --outline: #334155;
+    --accent: #22c55e;
+    --accent-dark: #16a34a;
+    --red: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 20px 14px 80px;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(20px, 4vw, 28px);
+    margin: 0;
+    font-weight: 800;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--outline);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .input input {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    outline: none;
+    color: var(--text);
+    font-size: 16px;
+  }
+  .btn {
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    background: #334155;
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+  }
+  .btn:hover {
+    background: #475569;
+  }
+  .btn.mic {
+    background: #6d28d9;
+  }
+  .btn.mic:hover {
+    background: #5b21b6;
+  }
+  .btn.mic.listening {
+    background: var(--red);
+    animation: pulse-ring 1.5s infinite;
+  }
+  .list {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .item {
+    background: #0f172a;
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  .plate {
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #93c5fd;
+  }
+  .badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #14532d;
+    border: 1px solid #166534;
+    color: #bbf7d0;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .hint {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .back-btn {
+    background: none;
+    border: 1px solid var(--outline);
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  }
 </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div>
-        <h1>Vehicle CSV</h1>
-        <div class="subtitle">Digits-only voice mode to avoid false words (e.g., "YouTube")</div>
+        <h1>Green List</h1>
+        <div class="subtitle">Local CSV search with advanced voice recognition.</div>
       </div>
+      <button class="btn back-btn" id="backBtn">Back to Main</button>
     </header>
 
     <div class="card">
       <div class="row">
-        <label class="btn">
+        <label class="btn" style="background-color: var(--accent-dark);">
           <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
           Import CSV
         </label>
         <button class="btn" id="exportBtn">Export CSV</button>
-        <span id="count" class="subtitle">0 rows</span>
+        <span id="count" class="subtitle" style="flex:1; text-align:right;">0 rows</span>
       </div>
-      <div class="row" style="margin-top:8px">
+      <div class="row" style="margin-top:12px">
         <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
         <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
         <button class="btn" id="clearBtn">Clear</button>
       </div>
-      <div class="toggle">
-        <input type="checkbox" id="digitsOnly" checked>
-        <label for="digitsOnly" class="subtitle">Force digits-only recognition</label>
-      </div>
-      <div id="voiceHint" class="hint"></div>
     </div>
 
-    <div class="card" style="margin-top:12px">
-      <div id="list" class="list"></div>
-      <div id="empty" class="hint">No rows yet. Import a CSV to begin.</div>
-      <div class="hint">CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b> (auto-joined as CODE####X).</div>
+    <div id="list" class="list"></div>
+    <div id="empty" class="hint" style="padding: 40px 0;">
+        No rows yet. Import a CSV to begin.<br>
+        CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.
     </div>
   </div>
 
 <script>
+  // --- Voice Search Implementation (Upgraded) ---
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const playBeep = (frequency = 440, duration = 100, type = 'sine') => {
+      if (!audioContext) return;
+      try {
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.type = type;
+          oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration / 1000);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + duration / 1000);
+      } catch (error) {
+          console.error("Beep playback failed:", error);
+      }
+  };
+
+  let recognition = null;
+  let isVoiceSearchActive = false;
+  let voiceSearchTimeout = null;
   const searchBox = document.getElementById('searchBox');
   const micBtn = document.getElementById('micBtn');
-  const digitsOnly = document.getElementById('digitsOnly');
-  function showHint(msg){ document.getElementById('voiceHint').textContent = msg || ''; }
 
-  // ---- Robust digits extractor
-  function extractDigits(text){
-    let s = (' ' + (text||'') + ' ').toLowerCase();
-    // remove filler words
-    ['vehicle','plate','number','is','the','my','car','please','search','find'].forEach(w=>{
-      s = s.replace(new RegExp('\\b'+w+'\\b','g'), ' ');
-    });
-    // handle double/triple patterns
-    s = s.replace(/\bdouble\s+(zero|oh|o|one|two|three|four|five|six|seven|eight|nine)\b/g, (m, d)=>{
-      const map={zero:'00',oh:'00',o:'00',one:'11',two:'22',three:'33',four:'44',five:'55',six:'66',seven:'77',eight:'88',nine:'99'};
-      return ' '+map[d]+' ';
-    });
-    s = s.replace(/\btriple\s+(zero|oh|o|one|two|three|four|five|six|seven|eight|nine)\b/g, (m, d)=>{
-      const map={zero:'000',oh:'000',o:'000',one:'111',two:'222',three:'333',four:'444',five:'555',six:'666',seven:'777',eight:'888',nine:'999'};
-      return ' '+map[d]+' ';
-    });
-    // words -> digits
-    const words = [
-      ['zero','0'],['oh','0'],['o','0'],
-      ['one','1'],['won','1'],
-      ['two','2'],['to','2'],['too','2'],
-      ['three','3'],['tree','3'],
-      ['four','4'],['for','4'],['fore','4'],
-      ['five','5'],['fife','5'],
-      ['six','6'],['sex','6'],
-      ['seven','7'],['sven','7'],
-      ['eight','8'],['ate','8'],
-      ['nine','9'],['nein','9'],
-      // tens (for phrases like "seventy nine")
-      ['ten','10'],['eleven','11'],['twelve','12'],['thirteen','13'],['fourteen','14'],['fifteen','15'],['sixteen','16'],['seventeen','17'],['eighteen','18'],['nineteen','19'],
-      ['twenty','20'],['thirty','30'],['forty','40'],['fifty','50'],['sixty','60'],['seventy','70'],['eighty','80'],['ninety','90']
-    ];
-    words.forEach(([w,d])=>{ s = s.replace(new RegExp('\\b'+w+'\\b','g'),' '+d+' '); });
-    // collapse to digits only
-    s = s.replace(/[^0-9]/g,' ').replace(/\s+/g,' ').trim();
-    if(!s) return '';
-    // If there are spaces between digits groups like "79 31", join them
-    return s.split(' ').join('');
-  }
+  const initializeVoiceRecognition = () => {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+          console.warn('Speech recognition not supported');
+          return false;
+      }
 
-  // ---- Auto-load user's module if present, else digits-only shim
-  const possiblePaths = ["voice.js","js/voice.js","scripts/voice.js","assets/voice.js"];
-  async function loadScript(path){ return new Promise(res=>{ const s=document.createElement('script'); s.src=path; s.onload=()=>res(true); s.onerror=()=>res(false); document.head.appendChild(s);}); }
-  async function ensureVoice(){
-    if(window.initializeVoiceRecognition && window.startVoiceSearch) return 'user';
-    for(const p of possiblePaths){ if(await loadScript(p)){ if(window.initializeVoiceRecognition && window.startVoiceSearch) return 'user'; }}
-    // install digits-only shim
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    window.initializeVoiceRecognition = function(){ };
-    window.startVoiceSearch = function(input, btn){
-      if(!SR){ input.focus(); alert('Speech recognition not supported here.'); return; }
-      const r = new SR(); r.lang='en-US'; r.continuous=false; r.interimResults=false;
-      r.onstart=()=>btn.classList.add('listening');
-      r.onend=()=>btn.classList.remove('listening');
-      r.onresult=(e)=>{
-        const transcript = e.results[0][0].transcript || '';
-        const out = digitsOnly.checked ? extractDigits(transcript) : transcript.toUpperCase();
-        input.value = out;
-        input.dispatchEvent(new Event('input', {bubbles:true}));
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 3;
+      recognition.onstart = () => {
+          isVoiceSearchActive = true;
+          if (micBtn) micBtn.classList.add('listening');
       };
-      try{ r.start(); }catch(e){}
-    };
-    return 'shim';
-  }
 
-  (async ()=>{
-    const mode = await ensureVoice();
-    showHint(mode==='user' ? 'Voice ready (your module loaded)' : 'Digits-only mic enabled (shim).');
-    try{ window.initializeVoiceRecognition?.(); }catch(e){}
-  })();
-</script>
+      recognition.onresult = (event) => {
+          handleVoiceResult(event);
+      };
 
-<script>
-  // --- CSV + List + Filtering
-  let allRows = [];   // {vehicleNumber}
+      recognition.onerror = (event) => {
+          let errorMessage = 'An error occurred during voice recognition.';
+          if (event.error === 'no-speech') errorMessage = 'No speech detected. Please try again.';
+          else if (event.error === 'not-allowed') errorMessage = 'Microphone permission denied.';
+          alert(errorMessage); // Simple alert for this page
+          stopVoiceSearch();
+      };
+      recognition.onend = () => {
+          if (isVoiceSearchActive) stopVoiceSearch();
+      };
+      return true;
+  };
+
+  const processVehicleNumber = (spokenText) => {
+      let processed = spokenText.toLowerCase().trim();
+      const fillerWords = ['um', 'uh', 'the', 'number', 'is', 'vehicle', 'car', 'plate'];
+      fillerWords.forEach(word => {
+          processed = processed.replace(new RegExp(`\\b${word}\\b`, 'gi'), ' ');
+      });
+      const numberMappings = [
+          ['zero', '0'], ['oh', '0'], ['o', '0'], ['one', '1'], ['won', '1'], 
+          ['two', '2'], ['to', '2'], ['too', '2'], ['three', '3'], ['tree', '3'],
+          ['four', '4'], ['for', '4'], ['fore', '4'], ['five', '5'], ['fife', '5'],
+          ['six', '6'], ['sex', '6'], ['seven', '7'], ['sven', '7'],
+          ['eight', '8'], ['ate', '8'], ['nine', '9'], ['nein', '9']
+      ];
+      numberMappings.forEach(([word, digit]) => {
+          processed = processed.replace(new RegExp(`\\b${word}\\b`, 'gi'), ` ${digit} `);
+      });
+      const digitMatches = processed.match(/\d+/g);
+      return digitMatches ? digitMatches.join('') : '';
+  };
+
+  const isValidVehicleNumber = (vehicleNumber) => {
+      if (!vehicleNumber) return false;
+      if (vehicleNumber.length < 3 || vehicleNumber.length > 8) return false;
+      return /^\d+$/.test(vehicleNumber);
+  };
+
+  const handleVoiceResult = (event) => {
+      let transcript = event.results[0][0].transcript;
+      let detectedNumber = processVehicleNumber(transcript);
+      
+      if (!isValidVehicleNumber(detectedNumber) && event.results[0].length > 1) {
+          for (let i = 1; i < event.results[0].length; i++) {
+              const altTranscript = event.results[0][i].transcript;
+              const altNumber = processVehicleNumber(altTranscript);
+              if (isValidVehicleNumber(altNumber)) {
+                  detectedNumber = altNumber;
+                  break;
+              }
+          }
+      }
+      
+      if (isValidVehicleNumber(detectedNumber)) {
+          completeVoiceSearch(detectedNumber);
+      } else {
+          alert(`Could not detect a valid number from "${transcript}"`);
+          stopVoiceSearch();
+      }
+  };
+
+  const startVoiceSearch = () => {
+      if (!recognition) {
+          if (!initializeVoiceRecognition()) {
+              alert("Voice search not supported on this device");
+              return;
+          }
+      }
+
+      if (isVoiceSearchActive) {
+          stopVoiceSearch();
+          return;
+      }
+
+      try {
+          playBeep(523, 150);
+          recognition.start();
+          voiceSearchTimeout = setTimeout(() => {
+              alert("Voice search timed out.");
+              stopVoiceSearch();
+          }, 8000);
+      } catch (error) {
+          alert("Failed to start voice search");
+      }
+  };
+
+  const stopVoiceSearch = () => {
+      if (!isVoiceSearchActive) return;
+      playBeep(392, 150);
+      if (recognition) recognition.stop();
+      if (voiceSearchTimeout) clearTimeout(voiceSearchTimeout);
+      if (micBtn) micBtn.classList.remove('listening');
+      isVoiceSearchActive = false;
+      voiceSearchTimeout = null;
+  };
+
+  const completeVoiceSearch = (detectedNumber) => {
+      if (searchBox && detectedNumber) {
+          searchBox.value = detectedNumber;
+          searchBox.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      stopVoiceSearch();
+  };
+
+  // --- CSV + List + Filtering ---
+  let allRows = [];
   let filtered = [];
   const listEl = document.getElementById('list');
   const emptyEl = document.getElementById('empty');
@@ -168,11 +358,24 @@
 
   function render(){
     listEl.innerHTML = '';
-    if(filtered.length === 0){
-      emptyEl.style.display = 'block'; countEl.textContent = '0 rows'; return;
+    if (allRows.length === 0) {
+        emptyEl.style.display = 'block';
+        listEl.style.display = 'none';
+        countEl.textContent = '0 rows';
+        return;
     }
-    emptyEl.style.display = 'none';
-    countEl.textContent = filtered.length + ' rows';
+
+    if(filtered.length === 0){
+      emptyEl.style.display = 'block';
+      listEl.style.display = 'none';
+      countEl.textContent = `${allRows.length} total rows`;
+      emptyEl.innerHTML = `No results for "${searchBox.value}"`;
+    } else {
+      emptyEl.style.display = 'none';
+      listEl.style.display = 'flex';
+      countEl.textContent = `${filtered.length} of ${allRows.length} rows`;
+    }
+
     const frag = document.createDocumentFragment();
     filtered.forEach(r => {
       const div = document.createElement('div');
@@ -182,9 +385,14 @@
     });
     listEl.appendChild(frag);
   }
+
   function applyFilter(){
     const term = normalizePlate(searchBox.value);
-    filtered = term ? allRows.filter(r => r.vehicleNumber.includes(term)) : [...allRows];
+    if (!term) {
+        filtered = [...allRows];
+    } else {
+        filtered = allRows.filter(r => r.vehicleNumber.includes(term));
+    }
     render();
   }
 
@@ -193,32 +401,50 @@
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(Boolean);
     if(!lines.length){ alert('Empty CSV'); return; }
-    const headers = lines[0].split(',').map(h => h.trim());
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
     allRows = [];
-    for(let i=1;i<lines.length;i++){
-      const cols = lines[i].split(',').map(c => c.trim());
+    for(let i=1; i<lines.length; i++){
+      const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
       const row = Object.fromEntries(headers.map((h,idx)=>[h, cols[idx] || '']));
       const plate = joinFromColumns(row);
       if(plate) allRows.push({vehicleNumber: plate});
     }
-    filtered = [...allRows];
+    searchBox.value = '';
     applyFilter();
   });
 
   document.getElementById('exportBtn').addEventListener('click', ()=>{
     if(!allRows.length){ alert('Nothing to export.'); return; }
-    const csv = 'vehicleNumber,status\\n' + allRows.map(r => `${r.vehicleNumber},Cleared`).join('\\n');
+    const csv = 'vehicleNumber,status\n' + allRows.map(r => `${r.vehicleNumber},Cleared`).join('\n');
     const blob = new Blob([csv], {type:'text/csv'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'vehicle_clearances.csv';
+    a.download = 'green_list_export.csv';
     a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  
+  document.getElementById('backBtn').addEventListener('click', () => {
+    window.location.href = 'index.html';
   });
 
-  searchBox.addEventListener('input', ()=>{ if(window.__t) clearTimeout(window.__t); window.__t = setTimeout(applyFilter, 120); });
-  document.getElementById('clearBtn').addEventListener('click', ()=>{ searchBox.value=''; applyFilter(); });
-  micBtn.addEventListener('click', ()=> window.startVoiceSearch(searchBox, micBtn) );
+  searchBox.addEventListener('input', ()=>{ 
+    if(window.__t) clearTimeout(window.__t); 
+    window.__t = setTimeout(applyFilter, 120); 
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', ()=>{ 
+    searchBox.value=''; 
+    applyFilter(); 
+  });
+
+  micBtn.addEventListener('click', startVoiceSearch);
+
+  // Initial setup
+  window.addEventListener('load', () => {
+      initializeVoiceRecognition();
+      applyFilter(); // Initial render
+  });
 </script>
 </body>
 </html>
-
