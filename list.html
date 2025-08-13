@@ -221,7 +221,7 @@
     <div id="list" class="list"></div>
     <div id="empty" class="hint" style="padding: 40px 0;">
         No rows yet. Import a CSV or load a saved list.<br>
-        CSV headers accepted: <b>vehicleNumber, location</b>.
+        CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>. Location is optional.
     </div>
   </div>
 
@@ -433,13 +433,24 @@
     return (s||'').toString().toUpperCase().replace(/\s+/g,'').replace(/O/g,'0').replace(/[^A-Z0-9]/g,'');
   }
 
+  // --- REVERTED to original CSV parsing logic ---
+  function joinFromColumns(row){
+    let plate = row.vehicleNumber || row.VehicleNumber || row.plate || row.Plate;
+    if(plate) return normalizePlate(plate);
+    const code = row.Code || row.code;
+    const num = row.Number || row.number;
+    const suffix = row.Suffix || row.suffix;
+    if(code && num) return normalizePlate(`${code}${num}${suffix || ''}`); // Suffix is optional
+    return '';
+  }
+
   function render(){
     listEl.innerHTML = '';
     if (allRows.length === 0) {
         emptyEl.style.display = 'block';
         listEl.style.display = 'none';
         countEl.textContent = '0 rows';
-        emptyEl.innerHTML = 'No rows yet. Import a CSV or load a saved list.<br>CSV headers accepted: <b>vehicleNumber, location</b>.';
+        emptyEl.innerHTML = 'No rows yet. Import a CSV or load a saved list.<br>CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.';
         return;
     }
 
@@ -486,22 +497,22 @@
     if(!lines.length){ showNotification('Empty CSV', 'error'); return; }
     const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
     
-    const plateHeader = headers.find(h => h.toLowerCase() === 'vehiclenumber');
     const locationHeader = headers.find(h => h.toLowerCase() === 'location');
-
-    if (!plateHeader) {
-        showNotification('CSV must contain a "vehicleNumber" header.', 'error');
-        return;
-    }
 
     const newRows = [];
     for(let i=1; i<lines.length; i++){
       const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
       const row = Object.fromEntries(headers.map((h,idx)=>[h, cols[idx] || '']));
-      const plate = normalizePlate(row[plateHeader]);
-      const location = row[locationHeader] || 'N/A';
+      const plate = joinFromColumns(row); // Use the flexible join function
+      const location = locationHeader ? row[locationHeader] : 'N/A';
       if(plate) newRows.push({vehicleNumber: plate, location: location});
     }
+
+    if (newRows.length === 0) {
+        showNotification('Could not find valid vehicle numbers in the CSV.', 'error');
+        return;
+    }
+
     allRows = newRows;
     searchBox.value = '';
     applyFilter();
