@@ -55,6 +55,9 @@
     align-items: center;
     margin-bottom: 20px;
   }
+   .header-left {
+      flex-grow: 1;
+  }
   h1 {
     font-size: clamp(20px, 4vw, 28px);
     margin: 0;
@@ -86,26 +89,13 @@
     border-radius: 12px;
     padding: 12px 14px;
   }
-  .input input, .prompt-area textarea {
+  .input input {
     flex: 1;
     border: 0;
     background: transparent;
     outline: none;
     color: var(--text);
     font-size: 16px;
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-   .prompt-area {
-    background: #0f172a;
-    border: 1px solid #475569;
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-top: 12px;
-  }
-  .prompt-area textarea {
-    width: 100%;
-    height: 120px;
-    resize: vertical;
   }
   .btn {
     border: 0;
@@ -122,7 +112,7 @@
     background: #475569;
   }
   .btn.mic {
-    background: #6d28d9;
+    background: var(--purple-dark);
   }
   .btn.mic:hover {
     background: #5b21b6;
@@ -147,10 +137,6 @@
     font-size: 12px;
     text-align: center;
   }
-  .back-btn {
-    background: none;
-    border: 1px solid var(--outline);
-  }
   .notification {
     position: fixed;
     bottom: 20px;
@@ -160,7 +146,7 @@
     border-radius: 8px;
     color: white;
     font-weight: 600;
-    z-index: 100;
+    z-index: 1001;
     opacity: 0;
     transition: opacity 0.3s, transform 0.3s;
     pointer-events: none;
@@ -184,7 +170,7 @@
     transition: background-color 0.2s;
   }
   .list-item-plate {
-    font-mono: monospace;
+    font-family: monospace;
     font-weight: 700;
     font-size: 1.1rem;
     color: var(--text);
@@ -203,6 +189,8 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
   }
+  
+  /* RESTORED: Original Search Result Styles */
   .car-plate-display {
       background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
       border: 4px solid #fbbf24;
@@ -261,22 +249,138 @@
       from { filter: drop-shadow(0 0 5px #fbbf24); }
       to { filter: drop-shadow(0 0 15px #f59e0b); }
   }
+
+  /* Settings Modal Styles */
+  .settings-btn {
+    background: none;
+    border: 1px solid var(--outline);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    margin-left: 16px;
+  }
+  .settings-btn:hover {
+    background-color: var(--panel);
+  }
+  .settings-btn svg {
+    width: 24px;
+    height: 24px;
+    color: var(--muted);
+  }
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInModal 0.2s ease-out forwards;
+  }
+  .modal-overlay.visible {
+    display: flex;
+  }
+  .modal-panel {
+    background-color: var(--bg);
+    border: 1px solid var(--outline);
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .modal-content .api-key-input, .modal-content .prompt-area {
+    background: var(--panel);
+    border: 1px solid #475569;
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .modal-content .api-key-input input, .modal-content .prompt-area textarea {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    outline: none;
+    color: var(--text);
+    font-size: 16px;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .modal-content .prompt-area {
+    margin-top: 12px;
+  }
+  .modal-content .prompt-area textarea {
+    height: 200px;
+    resize: vertical;
+    font-size: 14px;
+  }
+  @keyframes fadeInModal {
+      from { opacity: 0; }
+      to { opacity: 1; }
+  }
   @keyframes pulse-ring {
     0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
     70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
     100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
   }
+
 </style>
 </head>
 <body>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>API Settings</h2>
+        <button id="closeSettingsBtn" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-content">
+        <label for="apiKeyInput" class="subtitle">Gemini API Key</label>
+        <div class="api-key-input" style="margin-top: 8px;">
+            <input type="password" id="apiKeyInput" placeholder="Paste your Gemini API Key here">
+        </div>
+        <label for="geminiPrompt" class="subtitle" style="display: block; margin-top: 16px;">Gemini Prompt</label>
+        <div class="prompt-area">
+          <textarea id="geminiPrompt" placeholder="Enter your prompt for the Gemini API here..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="wrap">
     <div class="sticky-header">
       <header>
-        <div>
+        <div class="header-left">
           <h1>Green List</h1>
           <div class="subtitle">Local search with Voice, CSV, and Gemini API Image Import.</div>
         </div>
-        <button class="btn back-btn" id="backBtn">Back to Main</button>
+        <button id="backBtn" class="btn">Back to Main</button>
+        <button id="settingsBtn" class="settings-btn" title="API Settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        </button>
       </header>
 
       <div class="card">
@@ -292,9 +396,6 @@
           <button class="btn" id="exportBtn">Export CSV</button>
           <button class="btn" id="saveBtn">Save List</button>
           <button class="btn danger" id="clearListBtn">Clear List</button>
-        </div>
-        <div class="prompt-area">
-          <textarea id="geminiPrompt" placeholder="Enter your prompt for the Gemini API here..."></textarea>
         </div>
         <div class="row" style="margin-top:12px">
           <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
@@ -451,17 +552,17 @@
 
   // --- CSV, Gemini API, Local Storage, and List Management ---
   const LOCAL_STORAGE_KEY = 'greenListData';
+  const API_KEY_STORAGE_KEY = 'geminiApiKey';
   let allRows = [];
   let filtered = [];
   const listEl = document.getElementById('list');
   const emptyEl = document.getElementById('empty');
   const countEl = document.getElementById('count');
+  const settingsModal = document.getElementById('settingsModal');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
   const geminiPromptEl = document.getElementById('geminiPrompt');
-
-  const icons = {
-    car: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2,16H46" /><path d="M6,16 C6,16 6,12 10,8 C14,4 18,4 24,4 C30,4 34,4 38,8 C42,12 42,16 42,16" /><path d="M8 20a2 2 0 100-4 2 2 0 000 4z" /><path d="M40 20a2 2 0 100-4 2 2 0 000 4z" /></svg>`,
-    x: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
-  };
+  const apiKeyInput = document.getElementById('apiKeyInput');
 
   function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
@@ -520,22 +621,25 @@
   
   function parseCsvText(text) {
       const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
-      if (lines.length < 2) return []; // Needs at least a header and one data row
+      if (lines.length < 2) return [];
       
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       const locationHeader = headers.find(h => h.toLowerCase() === 'location');
+      const vehicleNumberHeader = headers.find(h => h.toLowerCase().replace(/\s/g,'') === 'vehiclenumber');
+
 
       const newRows = [];
       for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
           const row = Object.fromEntries(headers.map((h, idx) => [h, cols[idx] || '']));
-          const plate = joinFromColumns(row);
+          const plate = vehicleNumberHeader ? row[vehicleNumberHeader] : joinFromColumns(row);
           const location = locationHeader ? row[locationHeader] : 'N/A';
-          if (plate) newRows.push({ vehicleNumber: plate, location: location });
+          if (plate) newRows.push({ vehicleNumber: normalizePlate(plate), location: location });
       }
       return newRows;
   }
 
+  // RESTORED: Original render function with detailed search result
   function render(){
     const searchTerm = searchBox.value.trim().toUpperCase();
     listEl.innerHTML = '';
@@ -554,14 +658,7 @@
         countEl.textContent = `0 matches found for "${searchTerm}"`;
         listEl.innerHTML = `
             <div class="space-y-4 animate-fade-in">
-                <div class="car-plate-display p-8 relative">
-                    <div style="opacity: 0.5; width: 4rem; height: 4rem; margin: 0 auto 1rem; color: var(--yellow);">${icons.car}</div>
-                    <div class="car-plate-text text-4xl">
-                        <span class="search-highlight">${searchTerm}</span>
-                    </div>
-                </div>
                 <div class="text-center py-8 bg-panel rounded-2xl border border-outline">
-                    <div style="width: 3rem; height: 3rem; margin: 0 auto 1rem; color: var(--red);">${icons.x}</div>
                     <h3 class="text-xl font-semibold">Not Found on Green List</h3>
                     <p class="mt-2 text-muted">Vehicle <strong>${searchTerm}</strong> is not on the current list.</p>
                 </div>
@@ -635,9 +732,16 @@
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const apiKey = apiKeyInput.value.trim();
+    if (!apiKey) {
+        showNotification('Please set your Gemini API Key in the settings panel (⚙️) first.', 'error');
+        e.target.value = '';
+        return;
+    }
+
     const prompt = geminiPromptEl.value;
     if (!prompt) {
-        showNotification('Please enter a prompt for the Gemini API.', 'error');
+        showNotification('Please enter a prompt in the settings panel (⚙️).', 'error');
         e.target.value = '';
         return;
     }
@@ -647,7 +751,6 @@
     try {
         const imagePart = await fileToGenerativePart(file);
         
-        const apiKey = ""; // IMPORTANT: Leave this empty. The environment will provide the key.
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
         const payload = {
@@ -677,7 +780,6 @@
             throw new Error('No text returned from API.');
         }
         
-        // Clean up potential markdown code block fences
         const cleanedText = text.replace(/```csv\n|```/g, '').trim();
         const newRows = parseCsvText(cleanedText);
 
@@ -696,7 +798,7 @@
         console.error('Gemini API Error:', error);
         showNotification(error.message, 'error');
     } finally {
-        e.target.value = ''; // Reset file input
+        e.target.value = '';
     }
   });
 
@@ -759,20 +861,47 @@
 
   micBtn.addEventListener('click', startVoiceSearch);
 
-  // Initial setup
+  // --- Settings Modal Logic ---
+  settingsBtn.addEventListener('click', () => {
+    settingsModal.classList.add('visible');
+  });
+
+  closeSettingsBtn.addEventListener('click', () => {
+    settingsModal.classList.remove('visible');
+    const apiKey = apiKeyInput.value.trim();
+    if (apiKey) {
+      localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
+      showNotification('API Key saved.', 'info');
+    }
+  });
+
+  settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+      closeSettingsBtn.click();
+    }
+  });
+
+
+  // --- Initial setup ---
   window.addEventListener('load', () => {
       initializeVoiceRecognition();
       loadListFromLocal();
-      // Pre-fill the prompt textarea with the user's provided prompt
+
+      const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+      if (savedApiKey) {
+        apiKeyInput.value = savedApiKey;
+      }
+
       geminiPromptEl.value = `Analyze the attached image, which contains a table. Your task is to meticulously extract all the information from this table and format it as a CSV (Comma-Separated Values) text.
-Instructions:
-1. Header Row: The first line of your output must be the header row. Based on the image, the headers are: Type,Code,Number,Suffix,Date,Location
-2. Data Rows: Each subsequent line in your output must correspond to a single row from the table in the image.
-3. Formatting:
-    * Separate the value for each column with a single comma.
-    * Do not omit any rows or columns.
-    * Ensure the data in each field matches the image exactly.
-4. Example: The first row of data in the image should be formatted like this: DOC,GBD,3945,J,13TH AUG 2025,COURTYARD
+The first column often contains "DOC" or "OC", which should be ignored.
+The primary columns to extract are for the vehicle number and the location.
+Combine the separate parts of the vehicle number (e.g., "GBD", "3945", "J") into a single, normalized string like "GBD3945J".
+The final columns of the table are the date and the location (e.g., "COURTYARD", "BASEMENT").
+Your output should be a CSV with two headers: vehicleNumber,location
+
+Example Input Row: DOC | GBD | 3945 | J | 13TH AUG 2025 | COURTYARD
+Example Output Row: GBD3945J,COURTYARD
+
 Please generate the full CSV data from the image now.`;
   });
 </script>
