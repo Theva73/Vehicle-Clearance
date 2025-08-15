@@ -73,6 +73,7 @@
     border: 1px solid var(--outline);
     border-radius: 16px;
     padding: 16px;
+    position: relative; /* Added for positioning the exit button */
   }
   .row {
     display: flex;
@@ -186,13 +187,11 @@
     font-size: 1.1rem;
     color: var(--text);
   }
-  /* NEW: Styles for the location text */
   .list-item-location {
     font-size: 0.9rem;
     color: var(--muted);
     margin-top: 4px;
   }
-  /* NEW: Style for Foyer location */
   .list-item-location.foyer {
     color: var(--red);
     font-weight: 700;
@@ -261,6 +260,29 @@
       background: none !important;
       animation: glow 2s ease-in-out infinite alternate;
       text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+  /* NEW: Styles for the exit button on the single result card */
+  .exit-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 4px;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+    z-index: 10;
+  }
+  .exit-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+  }
+  .exit-btn svg {
+    width: 28px;
+    height: 28px;
+    display: block;
   }
   @keyframes shine {
       0% { left: -100%; }
@@ -694,6 +716,7 @@
 
     if (searchTerm && filtered.length === 1) {
         const c = filtered[0];
+        // MODIFIED: Added exit button to the single result card
         const plateHTML = `
             <div class="car-plate-display mb-4 animate-fade-in">
                 <div class="car-plate-text">
@@ -704,15 +727,26 @@
                 </div>
             </div>
             <div class="card animate-fade-in" style="padding: 24px;">
+                <button id="exitSingleViewBtn" class="exit-btn" title="Back to list">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
                 <div style="text-align: center;">
                     <p style="font-size: 0.875rem; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Location</p>
-                    <p style="font-weight: 700; color: var(--text); font-size: 1.5rem; ${ (c.location && c.location.toLowerCase() === 'foyer') ? 'color: var(--red);' : ''}">${c.location || 'N/A'}</p>
+                    <p style="font-weight: 700; font-size: 1.5rem; ${ (c.location && c.location.toLowerCase() === 'foyer') ? 'color: var(--red);' : 'color: var(--text);'}">${c.location || 'N/A'}</p>
                 </div>
             </div>
         `;
         listEl.innerHTML = plateHTML;
+
+        // MODIFIED: Added event listener for the new exit button
+        document.getElementById('exitSingleViewBtn').addEventListener('click', () => {
+            searchBox.value = '';
+            applyFilter();
+        });
+
     } else {
-        // MODIFIED: Updated list item rendering to include location and special styling for "Foyer"
         const listHTML = filtered.map(c => {
             const locationText = c.location || 'N/A';
             const isFoyer = locationText.toLowerCase() === 'foyer';
@@ -741,15 +775,13 @@
         tempFiltered = allRows.filter(r => r.vehicleNumber.includes(term));
     }
 
-    // MODIFIED: Sort the array to prioritize "Foyer" locations
     tempFiltered.sort((a, b) => {
         const aIsFoyer = a.location && a.location.toLowerCase() === 'foyer';
         const bIsFoyer = b.location && b.location.toLowerCase() === 'foyer';
 
-        if (aIsFoyer && !bIsFoyer) return -1; // a comes first
-        if (!aIsFoyer && bIsFoyer) return 1;  // b comes first
+        if (aIsFoyer && !bIsFoyer) return -1;
+        if (!aIsFoyer && bIsFoyer) return 1;
         
-        // For items that are both foyer or neither, sort by vehicle number
         return a.vehicleNumber.localeCompare(b.vehicleNumber);
     });
 
