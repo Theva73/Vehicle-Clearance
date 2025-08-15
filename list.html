@@ -536,16 +536,19 @@
       return digitMatches ? digitMatches.join('') : '';
   };
 
-  const isValidVehicleNumber = (vehicleNumber) => {
-      if (!vehicleNumber) return false;
-      if (vehicleNumber.length < 3 || vehicleNumber.length > 8) return false;
-      return /^\d+$/.test(vehicleNumber);
+  // MODIFIED: Renamed and relaxed the validation for voice search terms
+  const isValidSearchTerm = (searchTerm) => {
+      if (!searchTerm) return false;
+      // Allow shorter search terms (e.g., "52")
+      if (searchTerm.length < 1 || searchTerm.length > 8) return false;
+      return /^\d+$/.test(searchTerm);
   };
 
   const handleVoiceResult = (event) => {
       let transcript = event.results[0][0].transcript;
       let detectedNumber = processVehicleNumber(transcript);
-      if (isValidVehicleNumber(detectedNumber)) {
+      // MODIFIED: Using the new validation logic
+      if (isValidSearchTerm(detectedNumber)) {
           completeVoiceSearch(detectedNumber);
       } else {
           showNotification(`Could not detect a valid number from "${transcript}"`, 'error');
@@ -769,8 +772,6 @@
     if (!term) {
         tempFiltered = [...allRows];
     } else {
-        // MODIFIED: Final search logic.
-        // Checks if the numeric part of the vehicle number *starts with* the search term.
         tempFiltered = allRows.filter(r => {
             const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
             return numericPartOfPlate.startsWith(term);
