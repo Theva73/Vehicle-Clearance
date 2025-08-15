@@ -1,4 +1,4 @@
-l<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -143,8 +143,9 @@ l<!DOCTYPE html>
     display: flex;
     flex-direction: column;
     gap: 10px;
-    align-items: center; 
-    padding-top: 10px; /* MODIFIED: Added some padding to the top */
+    align-items: center;
+    padding-top: 10px;
+    width: 100%; /* MODIFIED: Ensures the container is full-width */
   }
   .hint {
     color: var(--muted);
@@ -182,7 +183,7 @@ l<!DOCTYPE html>
     align-items: center;
     justify-content: space-between;
     transition: background-color 0.2s;
-    width: 100%; /* Ensure list items take full width */
+    width: 100%; 
   }
   .list-item-plate {
     font-family: monospace;
@@ -226,7 +227,7 @@ l<!DOCTYPE html>
       align-items: center;
       justify-content: space-between;
       padding: 0.75rem 1rem;
-      width: 100%; /* Ensure the card takes full width */
+      width: 100%;
   }
   .car-plate-display::before {
       content: '';
