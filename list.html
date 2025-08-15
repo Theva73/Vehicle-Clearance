@@ -73,7 +73,7 @@
     border: 1px solid var(--outline);
     border-radius: 16px;
     padding: 16px;
-    position: relative; /* Added for positioning the exit button */
+    position: relative; 
   }
   .row {
     display: flex;
@@ -261,7 +261,6 @@
       animation: glow 2s ease-in-out infinite alternate;
       text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
   }
-  /* NEW: Styles for the exit button on the single result card */
   .exit-btn {
     position: absolute;
     top: 12px;
@@ -716,7 +715,6 @@
 
     if (searchTerm && filtered.length === 1) {
         const c = filtered[0];
-        // MODIFIED: Added exit button to the single result card
         const plateHTML = `
             <div class="car-plate-display mb-4 animate-fade-in">
                 <div class="car-plate-text">
@@ -740,7 +738,6 @@
         `;
         listEl.innerHTML = plateHTML;
 
-        // MODIFIED: Added event listener for the new exit button
         document.getElementById('exitSingleViewBtn').addEventListener('click', () => {
             searchBox.value = '';
             applyFilter();
@@ -767,12 +764,17 @@
   }
 
   function applyFilter(){
-    const term = normalizePlate(searchBox.value);
+    const term = searchBox.value.trim().toUpperCase();
     let tempFiltered;
     if (!term) {
         tempFiltered = [...allRows];
     } else {
-        tempFiltered = allRows.filter(r => r.vehicleNumber.includes(term));
+        // MODIFIED: Final search logic.
+        // Checks if the numeric part of the vehicle number *starts with* the search term.
+        tempFiltered = allRows.filter(r => {
+            const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
+            return numericPartOfPlate.startsWith(term);
+        });
     }
 
     tempFiltered.sort((a, b) => {
