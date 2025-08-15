@@ -139,17 +139,15 @@
       font-weight: bold;
       color: white;
   }
+  /* MODIFIED: Updated .list rule */
   .list {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    align-items: center; 
-  }
-  /* MODIFIED: Added this new rule to center the single item view */
-  .list.single-item {
-    justify-content: center;
-    height: 100%;
-    padding-bottom: 50px; /* Adjust this to visually balance the centered item */
+    /* Center content when there’s a single item */
+    align-items: center;
+    justify-content: flex-start; /* Keep items at top when multiple */
+    width: 100%;
   }
   .hint {
     color: var(--muted);
@@ -178,6 +176,7 @@
   .notification.error { background-color: var(--red); }
   .notification.info { background-color: var(--yellow); }
 
+  /* MODIFIED: Updated .list-item rule */
   .list-item {
     background: var(--panel);
     border: 1px solid var(--outline);
@@ -188,6 +187,7 @@
     justify-content: space-between;
     transition: background-color 0.2s;
     width: 100%; /* Ensure list items take full width */
+    max-width: 100%; /* Prevent overflow */
   }
   .list-item-plate {
     font-family: monospace;
@@ -219,6 +219,7 @@
       to { opacity: 1; transform: translateY(0); }
   }
   
+  /* MODIFIED: Updated .car-plate-display rule */
   .car-plate-display {
       background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
       border: 4px solid #fbbf24;
@@ -232,6 +233,8 @@
       justify-content: space-between;
       padding: 0.75rem 1rem;
       width: 100%; /* Ensure the card takes full width */
+      max-width: 100%; /* Prevent overflow */
+      margin: 0 auto; /* Center the plate display */
   }
   .car-plate-display::before {
       content: '';
@@ -695,8 +698,6 @@
   function render(){
     const searchTerm = searchBox.value.trim().toUpperCase();
     listEl.innerHTML = '';
-    // MODIFIED: Always remove the single-item class before rendering
-    listEl.classList.remove('single-item');
 
     if (allRows.length === 0) {
         emptyEl.style.display = 'block';
@@ -725,8 +726,6 @@
     countEl.textContent = `Showing ${filtered.length} of ${allRows.length} rows`;
 
     if (searchTerm && filtered.length === 1) {
-        // MODIFIED: Add the single-item class for centering
-        listEl.classList.add('single-item');
         const c = filtered[0];
         const plateHTML = `
             <div class="car-plate-display mb-4 animate-fade-in">
@@ -999,4 +998,3 @@ Please generate the full CSV data from the image now.`;
 </script>
 </body>
 </html>
-
