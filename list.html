@@ -112,6 +112,10 @@
   .btn:hover {
     background: #475569;
   }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .btn.mic {
     background: var(--purple-dark);
     padding: 14px 18px;
@@ -144,6 +148,12 @@
     flex-direction: column;
     gap: 10px;
     align-items: center; 
+  }
+  /* INJECTED FIX: Styles for centering a single search result */
+  .list.single-result {
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 300px); /* Adjusted height */
   }
   .hint {
     color: var(--muted);
@@ -225,14 +235,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0.75rem 1rem;
-      /* MODIFIED: Set a max-width to allow centering */
-      max-width: 500px;
       width: 100%;
-  }
-  /* MODIFIED: Add a rule to constrain the width of the card in the single-result view */
-  .list > .card {
-    max-width: 500px;
-    width: 100%;
   }
   .car-plate-display::before {
       content: '';
@@ -302,27 +305,7 @@
       to { filter: drop-shadow(0 0 15px #f59e0b); }
   }
 
-  /* Settings Modal Styles */
-  .settings-btn {
-    background: none;
-    border: 1px solid var(--outline);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
-    margin-left: 16px;
-  }
-  .settings-btn:hover {
-    background-color: var(--panel);
-  }
-  .settings-btn svg {
-    width: 24px;
-    height: 24px;
-    color: var(--muted);
-  }
+  /* Modal Styles */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -388,6 +371,14 @@
     resize: vertical;
     font-size: 14px;
   }
+  #analysisResult {
+    background-color: var(--panel);
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 150px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+  }
   @keyframes fadeInModal {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -422,6 +413,19 @@
     </div>
   </div>
 
+  <!-- Analysis Modal -->
+  <div id="analysisModal" class="modal-overlay">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>✨ List Analysis</h2>
+        <button id="closeAnalysisBtn" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-content">
+        <div id="analysisResult">Generating analysis...</div>
+      </div>
+    </div>
+  </div>
+
   <div class="wrap">
     <div class="sticky-header">
       <header>
@@ -449,6 +453,9 @@
           </label>
           <button class="btn" id="exportBtn">Export CSV</button>
           <button class="btn" id="saveBtn">Save List</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="analyzeBtn" style="background-color: var(--purple-dark);">✨ Analyze List</button>
           <button class="btn danger" id="clearListBtn">Clear List</button>
         </div>
         <div class="row" style="margin-top:12px">
@@ -465,8 +472,8 @@
     <div class="scroll-content">
       <div id="list" class="list"></div>
       <div id="empty" class="hint" style="padding: 40px 0;">
-          No rows yet. Import a file or load a saved list.<br>
-          CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>. Location is optional.
+          No rows yet. Import a file or load a saved list.<br><br>
+          <button class="btn" id="generateSampleBtn" style="background-color: var(--accent-dark);">✨ Generate Sample Data</button>
       </div>
     </div>
   </div>
@@ -617,6 +624,12 @@
   const closeSettingsBtn = document.getElementById('closeSettingsBtn');
   const geminiPromptEl = document.getElementById('geminiPrompt');
   const apiKeyInput = document.getElementById('apiKeyInput');
+  const analysisModal = document.getElementById('analysisModal');
+  const closeAnalysisBtn = document.getElementById('closeAnalysisBtn');
+  const analysisResultEl = document.getElementById('analysisResult');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const generateSampleBtn = document.getElementById('generateSampleBtn');
+
 
   function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
@@ -699,18 +712,20 @@
 
     if (allRows.length === 0) {
         emptyEl.style.display = 'block';
-        listEl.style.display = 'block';
+        listEl.style.display = 'none'; 
         countEl.textContent = '0 rows';
-        emptyEl.innerHTML = 'No rows yet. Import a file or load a saved list.<br>CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.';
+        analyzeBtn.style.display = 'none'; 
         return;
     }
+    
+    analyzeBtn.style.display = 'inline-flex'; 
+    emptyEl.style.display = 'none';
+    listEl.style.display = 'flex';
+    countEl.textContent = `Showing ${filtered.length} of ${allRows.length} rows`;
 
     if (searchTerm && filtered.length === 0) {
-        listEl.style.display = 'block';
-        emptyEl.style.display = 'none';
-        countEl.textContent = `0 matches found for "${searchTerm}"`;
         listEl.innerHTML = `
-            <div class="space-y-4 animate-fade-in">
+            <div class="space-y-4 animate-fade-in" style="width: 100%;">
                 <div class="text-center py-8 bg-panel rounded-2xl border border-outline">
                     <h3 class="text-xl font-semibold">Not Found on Green List</h3>
                     <p class="mt-2 text-muted">Vehicle <strong>${searchTerm}</strong> is not on the current list.</p>
@@ -719,11 +734,9 @@
         return;
     }
 
-    emptyEl.style.display = 'none';
-    listEl.style.display = 'flex';
-    countEl.textContent = `Showing ${filtered.length} of ${allRows.length} rows`;
-
     if (searchTerm && filtered.length === 1) {
+        // INJECTED FIX: Add the 'single-result' class
+        listEl.classList.add('single-result');
         const c = filtered[0];
         const plateHTML = `
             <div class="car-plate-display mb-4 animate-fade-in">
@@ -734,7 +747,7 @@
                     ✓ CLEARED
                 </div>
             </div>
-            <div class="card animate-fade-in" style="padding: 24px;">
+            <div class="card animate-fade-in" style="padding: 24px; width: 100%;">
                 <button id="exitSingleViewBtn" class="exit-btn" title="Back to list">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -754,6 +767,8 @@
         });
 
     } else {
+        // INJECTED FIX: Remove the 'single-result' class
+        listEl.classList.remove('single-result');
         const listHTML = filtered.map(c => {
             const locationText = c.location || 'N/A';
             const isFoyer = locationText.toLowerCase() === 'foyer';
@@ -891,7 +906,43 @@
     }
   });
 
-  // --- Existing CSV and Event Listener Code ---
+  async function callGemini(prompt, buttonToDisable) {
+    const apiKey = apiKeyInput.value.trim();
+    if (!apiKey) {
+        showNotification('Please set your Gemini API Key in the settings panel (⚙️) first.', 'error');
+        return null;
+    }
+
+    if (buttonToDisable) buttonToDisable.disabled = true;
+    showNotification('✨ Calling Gemini API...', 'info');
+
+    try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`API Error: ${errorData.error?.message || response.statusText}`);
+        }
+
+        const result = await response.json();
+        return result.candidates?.[0]?.content?.parts?.[0]?.text;
+    } catch (error) {
+        console.error('Gemini API Error:', error);
+        showNotification(error.message, 'error');
+        return null;
+    } finally {
+        if (buttonToDisable) buttonToDisable.disabled = false;
+    }
+  }
+
+  // --- Event Listeners ---
   document.getElementById('csvFile').addEventListener('change', async (e)=>{
     const file = e.target.files?.[0]; if(!file) return;
     const text = await file.text();
@@ -950,11 +1001,8 @@
 
   micBtn.addEventListener('click', startVoiceSearch);
 
-  // --- Settings Modal Logic ---
-  settingsBtn.addEventListener('click', () => {
-    settingsModal.classList.add('visible');
-  });
-
+  // --- Modal Logic ---
+  settingsBtn.addEventListener('click', () => settingsModal.classList.add('visible'));
   closeSettingsBtn.addEventListener('click', () => {
     settingsModal.classList.remove('visible');
     const apiKey = apiKeyInput.value.trim();
@@ -963,10 +1011,47 @@
       showNotification('API Key saved.', 'info');
     }
   });
-
   settingsModal.addEventListener('click', (e) => {
-    if (e.target === settingsModal) {
-      closeSettingsBtn.click();
+    if (e.target === settingsModal) closeSettingsBtn.click();
+  });
+
+  analyzeBtn.addEventListener('click', async () => {
+    if (allRows.length === 0) {
+        showNotification('List is empty, nothing to analyze.', 'error');
+        return;
+    }
+    analysisResultEl.textContent = 'Generating analysis...';
+    analysisModal.classList.add('visible');
+    
+    const dataString = JSON.stringify(allRows);
+    const prompt = `Here is a JSON list of vehicles and their parking locations: ${dataString}. Provide a brief, bulleted summary of this list. For example, count how many vehicles are in each location.`;
+    
+    const result = await callGemini(prompt, analyzeBtn);
+    if (result) {
+        analysisResultEl.textContent = result;
+    } else {
+        analysisResultEl.textContent = 'Failed to generate analysis. Please check the console for errors.';
+    }
+  });
+  closeAnalysisBtn.addEventListener('click', () => analysisModal.classList.remove('visible'));
+  analysisModal.addEventListener('click', (e) => {
+    if (e.target === analysisModal) closeAnalysisBtn.click();
+  });
+
+  generateSampleBtn.addEventListener('click', async () => {
+    const prompt = `Generate a sample CSV-formatted list of 20 fictional Singaporean vehicle license plates and their parking locations (e.g., Foyer, Courtyard, Basement 1, Level 2). The CSV should have two headers: vehicleNumber,location.`;
+    const result = await callGemini(prompt, generateSampleBtn);
+    if (result) {
+        const cleanedText = result.replace(/```csv\n|```/g, '').trim();
+        const newRows = parseCsvText(cleanedText);
+        if (newRows.length > 0) {
+            allRows = newRows;
+            applyFilter();
+            saveListToLocal();
+            showNotification(`Generated and loaded ${newRows.length} sample vehicles.`, 'success');
+        } else {
+            showNotification('Gemini did not return valid sample data.', 'error');
+        }
     }
   });
 
