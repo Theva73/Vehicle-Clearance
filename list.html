@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vehicle Clearance V4</title>
+<title>Vehicle Listings (Firebase)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -202,10 +202,9 @@
     transition: background-color 0.2s;
     width: 100%;
     max-width: 100%;
-    position: relative; /* Fix: Needed for z-index stacking */
+    position: relative;
     z-index: 1;
   }
-  /* Fix: When a dropdown is active, raise the list item's stacking order */
   .list-item.dropdown-active {
     z-index: 2;
   }
@@ -457,7 +456,7 @@
     padding: 12px 14px;
     color: var(--text);
     font-size: 16px;
-    text-transform: uppercase; /* Fix: Visually transform text to uppercase */
+    text-transform: uppercase;
   }
   .modal-footer {
     margin-top: 24px;
@@ -531,7 +530,7 @@
           <button type="button" class="close-btn" data-close-modal>&times;</button>
         </div>
         <div class="modal-content">
-          <input type="hidden" id="originalVehicleNumber">
+          <input type="hidden" id="vehicleId">
           <div class="form-group">
             <label for="vehicleNumberInput">Vehicle Number</label>
             <input type="text" id="vehicleNumberInput" class="modal-input" required>
@@ -570,8 +569,8 @@
     <div class="sticky-header">
       <header>
         <div class="header-left">
-          <h1>Vehicle Clearance</h1>
-          <div class="subtitle">Local search with Voice, CSV, and Gemini API Image Import.</div>
+          <h1>Vehicle Listings</h1>
+          <div class="subtitle">Synced with Master Database</div>
         </div>
         <button id="settingsBtn" class="settings-btn" title="API Settings">
          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
@@ -608,13 +607,40 @@
     <div class="scroll-content">
       <div id="list" class="list"></div>
       <div id="empty" class="hint" style="padding: 40px 0;">
-          No rows yet. Add a vehicle, import a file, or load a saved list.<br>
-          CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>. Location is optional.
+          Connecting to database...<br>
+          If this persists, check your internet connection or firewall settings.
       </div>
     </div>
   </div>
 
-<script>
+<script type="module">
+  // --- Firebase Integration ---
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
+    authDomain: "vehicle-clearance.firebaseapp.com",
+    projectId: "vehicle-clearance",
+    storageBucket: "vehicle-clearance.appspot.com",
+    messagingSenderId: "187403368572",
+    appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
+  };
+
+  let app, auth, db, listingsCollection;
+  const LISTINGS_COLLECTION_NAME = 'vehicleListings'; // Separate collection for this app
+
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    console.log("Firebase initialized successfully for Vehicle Listings app.");
+  } catch (err) {
+    console.error("Firebase initialization error:", err);
+    showNotification("Could not connect to the database.", "error");
+  }
+
   // --- Voice Search Implementation ---
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   const playBeep = (frequency = 440, duration = 100, type = 'sine') => {
@@ -747,8 +773,7 @@
       stopVoiceSearch();
   };
 
-  // --- CSV, Gemini API, Local Storage, and List Management ---
-  const LOCAL_STORAGE_KEY = 'greenListData_v4';
+  // --- CSV, Gemini API, and List Management ---
   const API_KEY_STORAGE_KEY = 'geminiApiKey';
   let allRows = [];
   let filtered = [];
@@ -779,30 +804,6 @@
               notification.remove();
           }, 300);
       }, 4000);
-  }
-
-  function saveListToLocal() {
-      try {
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(allRows));
-      } catch (e) {
-          console.error("Failed to save to local storage", e);
-          showNotification('Could not save list. Storage may be full.', 'error');
-      }
-  }
-
-  function loadListFromLocal() {
-      const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (savedData) {
-          try {
-              allRows = JSON.parse(savedData);
-              showNotification('Loaded list from local storage.', 'info');
-          } catch (e) {
-              console.error("Failed to parse saved data", e);
-              allRows = [];
-              localStorage.removeItem(LOCAL_STORAGE_KEY);
-          }
-      }
-      applyFilter();
   }
 
   function normalizePlate(s){
@@ -847,7 +848,7 @@
         emptyEl.style.display = 'block';
         listEl.style.display = 'block';
         countEl.textContent = '0 rows';
-        emptyEl.innerHTML = 'No rows yet. Add a vehicle, import a file, or load a saved list.<br>CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.';
+        emptyEl.innerHTML = 'No vehicles in this list. Add one or import a file.';
         return;
     }
 
@@ -914,12 +915,12 @@
                 <div class="list-item-right">
                     <span class="list-item-badge">Cleared</span>
                     <div class="dropdown-container">
-                        <button class="more-btn" data-dropdown-for="${c.vehicleNumber}" title="More options">
+                        <button class="more-btn" data-dropdown-for="${c.id}" title="More options">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                         </button>
-                        <div class="dropdown-menu" id="dropdown-${c.vehicleNumber}">
-                            <button class="dropdown-item" data-action="edit" data-plate="${c.vehicleNumber}">Edit</button>
-                            <button class="dropdown-item danger" data-action="delete" data-plate="${c.vehicleNumber}">Delete</button>
+                        <div class="dropdown-menu" id="dropdown-${c.id}">
+                            <button class="dropdown-item" data-action="edit" data-id="${c.id}">Edit</button>
+                            <button class="dropdown-item danger" data-action="delete" data-id="${c.id}">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -1033,11 +1034,16 @@
             showNotification('Gemini could not extract valid data. Check the prompt and image.', 'error');
             return;
         }
+        
+        // Batch write new rows to Firestore
+        const batch = writeBatch(db);
+        newRows.forEach(row => {
+            const docRef = doc(listingsCollection); // Create a new doc with auto-ID
+            batch.set(docRef, row);
+        });
+        await batch.commit();
 
-        allRows = [...allRows, ...newRows];
         searchBox.value = '';
-        saveListToLocal();
-        applyFilter();
         showNotification(`Successfully imported ${newRows.length} vehicles via Gemini.`, 'success');
 
     } catch (error) {
@@ -1059,10 +1065,16 @@
         return;
     }
 
-    allRows = [...allRows, ...newRows];
+    // Batch write new rows to Firestore
+    const batch = writeBatch(db);
+    newRows.forEach(row => {
+        const docRef = doc(listingsCollection);
+        batch.set(docRef, row);
+    });
+    await batch.commit();
+    
     searchBox.value = '';
-    saveListToLocal();
-    applyFilter();
+    showNotification(`Successfully imported ${newRows.length} vehicles from CSV.`, 'success');
     e.target.value = '';
   });
 
@@ -1072,7 +1084,7 @@
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'vehicle_clearance_export.csv';
+    a.download = 'vehicle_listings_export.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1080,12 +1092,12 @@
   });
   
   document.getElementById('clearListBtn').addEventListener('click', () => {
-      showConfirmModal('Clear Entire List?', 'Are you sure you want to permanently delete the current list?', () => {
-          allRows = [];
-          filtered = [];
-          localStorage.removeItem(LOCAL_STORAGE_KEY);
-          applyFilter();
-          showNotification('List has been cleared.', 'success');
+      showConfirmModal('Clear Entire List?', 'Are you sure you want to permanently delete all vehicles in this list from the database?', async () => {
+          const snapshot = await getDocs(listingsCollection);
+          const batch = writeBatch(db);
+          snapshot.docs.forEach(d => batch.delete(d.ref));
+          await batch.commit();
+          showNotification('List has been cleared from the database.', 'success');
       });
   });
 
@@ -1152,41 +1164,41 @@
   document.getElementById('addVehicleBtn').addEventListener('click', () => {
     vehicleForm.reset();
     document.getElementById('vehicleModalTitle').textContent = 'Add Vehicle';
-    document.getElementById('originalVehicleNumber').value = '';
+    document.getElementById('vehicleId').value = '';
     vehicleModal.classList.add('visible');
     document.getElementById('vehicleNumberInput').focus();
   });
   
-  function handleAction(action, plate) {
+  async function handleAction(action, docId) {
       if (action === 'edit') {
-          const vehicle = allRows.find(r => r.vehicleNumber === plate);
+          const vehicle = allRows.find(r => r.id === docId);
           if (vehicle) {
               vehicleForm.reset();
               document.getElementById('vehicleModalTitle').textContent = 'Edit Vehicle';
-              document.getElementById('originalVehicleNumber').value = vehicle.vehicleNumber;
+              document.getElementById('vehicleId').value = vehicle.id;
               document.getElementById('vehicleNumberInput').value = vehicle.vehicleNumber;
               document.getElementById('locationInput').value = vehicle.location || '';
               vehicleModal.classList.add('visible');
           }
       } else if (action === 'delete') {
-          showConfirmModal(
-              `Delete ${plate}?`, 
-              'This vehicle will be permanently removed from the list.',
-              () => {
-                  allRows = allRows.filter(r => r.vehicleNumber !== plate);
-                  saveListToLocal();
-                  applyFilter();
-                  showNotification(`Vehicle ${plate} deleted.`, 'success');
-              }
-          );
+          const vehicle = allRows.find(r => r.id === docId);
+          if(vehicle) {
+            showConfirmModal(
+                `Delete ${vehicle.vehicleNumber}?`, 
+                'This vehicle will be permanently removed from the database.',
+                async () => {
+                    await deleteDoc(doc(db, LISTINGS_COLLECTION_NAME, docId));
+                    showNotification(`Vehicle ${vehicle.vehicleNumber} deleted.`, 'success');
+                }
+            );
+          }
       }
   }
 
-  vehicleForm.addEventListener('submit', (e) => {
+  vehicleForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const originalPlate = document.getElementById('originalVehicleNumber').value;
+    const docId = document.getElementById('vehicleId').value;
     const newPlate = normalizePlate(document.getElementById('vehicleNumberInput').value);
-    // Fix: Save location as uppercase
     const newLocation = document.getElementById('locationInput').value.trim().toUpperCase();
 
     if (!newPlate) {
@@ -1194,30 +1206,30 @@
         return;
     }
 
-    const isEditing = !!originalPlate;
-    const plateExists = allRows.some(r => r.vehicleNumber === newPlate && r.vehicleNumber !== originalPlate);
-
+    const isEditing = !!docId;
+    
+    // Check for duplicates
+    const plateExists = allRows.some(r => r.vehicleNumber === newPlate && r.id !== docId);
     if (plateExists) {
         showNotification(`Vehicle number ${newPlate} already exists.`, 'error');
         return;
     }
 
-    if (isEditing) {
-        // Edit existing
-        const vehicleIndex = allRows.findIndex(r => r.vehicleNumber === originalPlate);
-        if (vehicleIndex > -1) {
-            allRows[vehicleIndex] = { vehicleNumber: newPlate, location: newLocation };
-            showNotification(`Vehicle ${originalPlate} updated.`, 'success');
-        }
-    } else {
-        // Add new
-        allRows.push({ vehicleNumber: newPlate, location: newLocation });
-        showNotification(`Vehicle ${newPlate} added.`, 'success');
-    }
+    const vehicleData = { vehicleNumber: newPlate, location: newLocation };
 
-    saveListToLocal();
-    applyFilter();
-    vehicleModal.classList.remove('visible');
+    try {
+        if (isEditing) {
+            await setDoc(doc(db, LISTINGS_COLLECTION_NAME, docId), vehicleData);
+            showNotification(`Vehicle updated.`, 'success');
+        } else {
+            await addDoc(listingsCollection, vehicleData);
+            showNotification(`Vehicle ${newPlate} added.`, 'success');
+        }
+        vehicleModal.classList.remove('visible');
+    } catch (error) {
+        console.error("Firestore save error:", error);
+        showNotification("Error saving vehicle to the database.", "error");
+    }
   });
 
   // --- Dropdown and Action Handling ---
@@ -1226,9 +1238,7 @@
     const dropdownItem = e.target.closest('.dropdown-item');
 
     const openDropdowns = document.querySelectorAll('.dropdown-menu.show');
-    let clickedInsideCurrentDropdown = moreBtn && moreBtn.closest('.dropdown-container').querySelector('.dropdown-menu.show');
-
-    // Close all dropdowns that aren't the one being interacted with
+    
     openDropdowns.forEach(dropdown => {
         if (dropdown !== (moreBtn ? moreBtn.closest('.dropdown-container').querySelector('.dropdown-menu') : null)) {
             dropdown.classList.remove('show');
@@ -1236,10 +1246,9 @@
         }
     });
 
-    // Handle opening/toggling the clicked dropdown
     if (moreBtn) {
-        const plate = moreBtn.dataset.dropdownFor;
-        const dropdown = document.getElementById(`dropdown-${plate}`);
+        const docId = moreBtn.dataset.dropdownFor;
+        const dropdown = document.getElementById(`dropdown-${docId}`);
         const listItem = moreBtn.closest('.list-item');
         if (dropdown && listItem) {
             dropdown.classList.toggle('show');
@@ -1247,11 +1256,10 @@
         }
     }
 
-    // Handle action from dropdown item
     if (dropdownItem) {
         const action = dropdownItem.dataset.action;
-        const plate = dropdownItem.dataset.plate;
-        handleAction(action, plate);
+        const docId = dropdownItem.dataset.id;
+        handleAction(action, docId);
     }
   });
 
@@ -1271,10 +1279,30 @@
 
 
   // --- Initial setup ---
+  onAuthStateChanged(auth, user => {
+    if (user) {
+        console.log("Authenticated anonymously:", user.uid);
+        listingsCollection = collection(db, LISTINGS_COLLECTION_NAME);
+        
+        // Start listening for real-time updates
+        onSnapshot(listingsCollection, (snapshot) => {
+            allRows = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            applyFilter();
+            showNotification("Data synced with the database.", "info");
+        }, (error) => {
+            console.error("Firestore snapshot error:", error);
+            showNotification("Error syncing with the database.", "error");
+        });
+    } else {
+        signInAnonymously(auth).catch((error) => {
+            console.error("Anonymous sign-in failed:", error);
+            showNotification("Authentication with the database failed.", "error");
+        });
+    }
+  });
+
   window.addEventListener('load', () => {
       initializeVoiceRecognition();
-      loadListFromLocal();
-
       const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
       if (savedApiKey) {
         apiKeyInput.value = savedApiKey;
