@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Green List - Gemini API Integration</title>
+<title>Vehicle Clearance V3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -17,6 +17,7 @@
     --accent: #22c55e;
     --accent-dark: #16a34a;
     --red: #ef4444;
+    --red-dark: #b91c1c;
     --yellow: #f59e0b;
     --purple: #8b5cf6;
     --purple-dark: #6d28d9;
@@ -96,7 +97,7 @@
     background: transparent;
     outline: none;
     color: var(--text);
-    font-size: 16px !important; /* MODIFIED: Added !important to prevent zoom */
+    font-size: 16px !important;
   }
   .input input:focus {
     outline: none;
@@ -132,8 +133,20 @@
     background: var(--red);
     animation: pulse-ring 1.5s infinite;
   }
+  .btn.primary {
+    background-color: var(--purple-dark);
+  }
+  .btn.primary:hover {
+    background-color: #5b21b6;
+  }
+  .btn.success {
+    background-color: var(--accent-dark);
+  }
+  .btn.success:hover {
+    background-color: #15803d;
+  }
   .btn.danger {
-      background-color: #991b1b;
+      background-color: var(--red-dark);
       color: #fff;
   }
   .btn.danger:hover {
@@ -190,6 +203,9 @@
     width: 100%;
     max-width: 100%;
   }
+  .list-item-content {
+    flex-grow: 1;
+  }
   .list-item-plate {
     font-family: monospace;
     font-weight: 700;
@@ -213,6 +229,77 @@
     font-weight: 600;
     font-size: 12px;
   }
+  
+  .list-item-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* Dropdown Styles */
+  .dropdown-container {
+    position: relative;
+  }
+  .more-btn {
+    background: none;
+    border: none;
+    border-radius: 50%;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    transition: background-color 0.2s;
+  }
+  .more-btn:hover {
+    background-color: #334155;
+    color: var(--text);
+  }
+  .more-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #334155;
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    padding: 8px;
+    z-index: 10;
+    min-width: 120px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  .dropdown-menu.show {
+    display: block;
+  }
+  .dropdown-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .dropdown-item:hover {
+    background-color: #475569;
+  }
+  .dropdown-item.danger {
+    color: var(--red);
+  }
+  .dropdown-item.danger:hover {
+    background-color: var(--red-dark);
+    color: white;
+  }
+
 
   .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
   @keyframes fadeIn {
@@ -304,27 +391,7 @@
       to { filter: drop-shadow(0 0 15px #f59e0b); }
   }
 
-  /* Settings Modal Styles */
-  .settings-btn {
-    background: none;
-    border: 1px solid var(--outline);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
-    margin-left: 16px;
-  }
-  .settings-btn:hover {
-    background-color: var(--panel);
-  }
-  .settings-btn svg {
-    width: 24px;
-    height: 24px;
-    color: var(--muted);
-  }
+  /* Modal Styles */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -367,6 +434,30 @@
     color: var(--muted);
     cursor: pointer;
   }
+  .modal-content .form-group {
+    margin-bottom: 16px;
+  }
+  .modal-content label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .modal-content .modal-input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid #475569;
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 16px;
+  }
+  .modal-footer {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
   .modal-content .api-key-input, .modal-content .prompt-area {
     background: var(--panel);
     border: 1px solid #475569;
@@ -374,7 +465,7 @@
     padding: 12px 14px;
   }
   .modal-content .api-key-input input, .modal-content .prompt-area textarea {
-    flex: 1;
+    width: 100%;
     border: 0;
     background: transparent;
     outline: none;
@@ -409,7 +500,7 @@
     <div class="modal-panel">
       <div class="modal-header">
         <h2>API Settings</h2>
-        <button id="closeSettingsBtn" class="close-btn">&times;</button>
+        <button class="close-btn" data-close-modal>&times;</button>
       </div>
       <div class="modal-content">
         <label for="apiKeyInput" class="subtitle">Gemini API Key</label>
@@ -424,33 +515,76 @@
     </div>
   </div>
 
+  <!-- Add/Edit Vehicle Modal -->
+  <div id="vehicleModal" class="modal-overlay">
+    <div class="modal-panel">
+      <form id="vehicleForm">
+        <div class="modal-header">
+          <h2 id="vehicleModalTitle">Add Vehicle</h2>
+          <button type="button" class="close-btn" data-close-modal>&times;</button>
+        </div>
+        <div class="modal-content">
+          <input type="hidden" id="originalVehicleNumber">
+          <div class="form-group">
+            <label for="vehicleNumberInput">Vehicle Number</label>
+            <input type="text" id="vehicleNumberInput" class="modal-input" required>
+          </div>
+          <div class="form-group">
+            <label for="locationInput">Location</label>
+            <input type="text" id="locationInput" class="modal-input">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" data-close-modal>Cancel</button>
+          <button type="submit" class="btn primary">Save Vehicle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal-overlay">
+    <div class="modal-panel">
+        <div class="modal-header">
+          <h2 id="confirmModalTitle">Are you sure?</h2>
+        </div>
+        <div class="modal-content">
+          <p id="confirmModalText">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" id="confirmCancelBtn">Cancel</button>
+          <button type="button" class="btn danger" id="confirmOkBtn">Confirm</button>
+        </div>
+    </div>
+  </div>
+
+
   <div class="wrap">
     <div class="sticky-header">
       <header>
         <div class="header-left">
-          <h1>Green List</h1>
+          <h1>Vehicle Clearance</h1>
           <div class="subtitle">Local search with Voice, CSV, and Gemini API Image Import.</div>
         </div>
-        <button id="backBtn" class="btn">Back to Main</button>
         <button id="settingsBtn" class="settings-btn" title="API Settings">
          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-  <path d="M19.43,12.98c0.04-0.32,0.07-0.64,0.07-0.98s-0.03-0.66-0.07-0.98l2.11-1.65c0.19-0.15,0.24-0.42,0.12-0.64l-2-3.46 c-0.12-0.22-0.39-0.3-0.61-0.22l-2.49,1c-0.52-0.4-1.08-0.73-1.69-0.98l-0.38-2.65C14.46,2.18,14.25,2,14,2h-4 c-0.25,0-0.46,0.18-0.49,0.42L9.13,5.07c-0.61,0.25-1.17,0.59-1.69,0.98l-2.49-1c-0.23-0.09-0.49,0-0.61,0.22l-2,3.46 c-0.13,0.22-0.07,0.49,0.12,0.64l2.11,1.65C4.57,11.34,4.54,11.66,4.54,12s0.03,0.66,0.07,0.98l-2.11,1.65 c-0.19,0.15-0.24,0.42-0.12,0.64l2,3.46c0.12,0.22,0.39,0.3,0.61,0.22l2.49-1c0.52,0.4,1.08,0.73,1.69,0.98l0.38,2.65 C9.54,21.82,9.75,22,10,22h4c0.25,0,0.46-0.18,0.49-0.42l0.38-2.65c0.61-0.25,1.17-0.59,1.69-0.98l2.49,1 c0.23,0.09,0.49,0,0.61-0.22l2-3.46c0.12-0.22,0.07-0.49-0.12-0.64L19.43,12.98z M12,15c-1.66,0-3-1.34-3-3s1.34-3,3-3 s3,1.34,3,3S13.66,15,12,15z"/>
-</svg>
+            <path d="M19.43,12.98c0.04-0.32,0.07-0.64,0.07-0.98s-0.03-0.66-0.07-0.98l2.11-1.65c0.19-0.15,0.24-0.42,0.12-0.64l-2-3.46 c-0.12-0.22-0.39-0.3-0.61-0.22l-2.49,1c-0.52-0.4-1.08-0.73-1.69-0.98l-0.38-2.65C14.46,2.18,14.25,2,14,2h-4 c-0.25,0-0.46,0.18-0.49,0.42L9.13,5.07c-0.61,0.25-1.17,0.59-1.69,0.98l-2.49-1c-0.23-0.09-0.49,0-0.61,0.22l-2,3.46 c-0.13,0.22-0.07,0.49,0.12,0.64l2.11,1.65C4.57,11.34,4.54,11.66,4.54,12s0.03,0.66,0.07,0.98l-2.11,1.65 c-0.19,0.15-0.24,0.42-0.12,0.64l2,3.46c0.12,0.22,0.39,0.3,0.61,0.22l2.49-1c0.52,0.4,1.08,0.73,1.69,0.98l0.38,2.65 C9.54,21.82,9.75,22,10,22h4c0.25,0,0.46-0.18,0.49-0.42l0.38-2.65c0.61-0.25,1.17-0.59,1.69-0.98l2.49,1 c0.23,0.09,0.49,0,0.61,0.22l2-3.46c0.12-0.22,0.07-0.49-0.12-0.64L19.43,12.98z M12,15c-1.66,0-3-1.34-3-3s1.34-3,3-3 s3,1.34,3,3S13.66,15,12,15z"/>
+          </svg>
         </button>
       </header>
 
       <div class="card">
         <div class="row">
-          <label class="btn" style="background-color: var(--purple-dark);">
-            <input id="geminiImageFile" type="file" accept="image/*" style="display:none">
-            Import with API
-          </label>
-          <label class="btn" style="background-color: var(--accent-dark);">
+          <button class="btn primary" id="addVehicleBtn">Add Vehicle</button>
+          <label class="btn success">
             <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
             Import CSV
           </label>
+          <label class="btn" style="background-color: var(--purple);">
+            <input id="geminiImageFile" type="file" accept="image/*" style="display:none">
+            Import with API
+          </label>
           <button class="btn" id="exportBtn">Export CSV</button>
-          <button class="btn" id="saveBtn">Save List</button>
           <button class="btn danger" id="clearListBtn">Clear List</button>
         </div>
         <div class="row" style="margin-top:12px">
@@ -467,7 +601,7 @@
     <div class="scroll-content">
       <div id="list" class="list"></div>
       <div id="empty" class="hint" style="padding: 40px 0;">
-          No rows yet. Import a file or load a saved list.<br>
+          No rows yet. Add a vehicle, import a file, or load a saved list.<br>
           CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>. Location is optional.
       </div>
     </div>
@@ -607,18 +741,22 @@
   };
 
   // --- CSV, Gemini API, Local Storage, and List Management ---
-  const LOCAL_STORAGE_KEY = 'greenListData';
+  const LOCAL_STORAGE_KEY = 'greenListData_v3';
   const API_KEY_STORAGE_KEY = 'geminiApiKey';
   let allRows = [];
   let filtered = [];
   const listEl = document.getElementById('list');
   const emptyEl = document.getElementById('empty');
   const countEl = document.getElementById('count');
+  
+  // --- Modal Elements ---
   const settingsModal = document.getElementById('settingsModal');
+  const vehicleModal = document.getElementById('vehicleModal');
+  const confirmModal = document.getElementById('confirmModal');
   const settingsBtn = document.getElementById('settingsBtn');
-  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
   const geminiPromptEl = document.getElementById('geminiPrompt');
   const apiKeyInput = document.getElementById('apiKeyInput');
+  const vehicleForm = document.getElementById('vehicleForm');
 
   function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
@@ -639,7 +777,6 @@
   function saveListToLocal() {
       try {
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(allRows));
-          showNotification('List saved to local storage.', 'success');
       } catch (e) {
           console.error("Failed to save to local storage", e);
           showNotification('Could not save list. Storage may be full.', 'error');
@@ -703,7 +840,7 @@
         emptyEl.style.display = 'block';
         listEl.style.display = 'block';
         countEl.textContent = '0 rows';
-        emptyEl.innerHTML = 'No rows yet. Import a file or load a saved list.<br>CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.';
+        emptyEl.innerHTML = 'No rows yet. Add a vehicle, import a file, or load a saved list.<br>CSV headers accepted: <b>vehicleNumber</b> OR <b>Code, Number, Suffix</b>.';
         return;
     }
 
@@ -714,7 +851,7 @@
         listEl.innerHTML = `
             <div class="space-y-4 animate-fade-in">
                 <div class="text-center py-8 bg-panel rounded-2xl border border-outline">
-                    <h3 class="text-xl font-semibold">Not Found on Green List</h3>
+                    <h3 class="text-xl font-semibold">Not Found on List</h3>
                     <p class="mt-2 text-muted">Vehicle <strong>${searchTerm}</strong> is not on the current list.</p>
                 </div>
             </div>`;
@@ -763,11 +900,22 @@
 
             return `
             <div class="list-item animate-fade-in">
-                <div>
+                <div class="list-item-content">
                     <div class="list-item-plate">${c.vehicleNumber}</div>
                     <div class="${locationClass}">${locationText}</div>
                 </div>
-                <span class="list-item-badge">Cleared</span>
+                <div class="list-item-right">
+                    <span class="list-item-badge">Cleared</span>
+                    <div class="dropdown-container">
+                        <button class="more-btn" data-dropdown-for="${c.vehicleNumber}" title="More options">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                        </button>
+                        <div class="dropdown-menu" id="dropdown-${c.vehicleNumber}">
+                            <button class="dropdown-item" data-action="edit" data-plate="${c.vehicleNumber}">Edit</button>
+                            <button class="dropdown-item danger" data-action="delete" data-plate="${c.vehicleNumber}">Delete</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             `;
         }).join('');
@@ -879,10 +1027,10 @@
             return;
         }
 
-        allRows = newRows;
+        allRows = [...allRows, ...newRows];
         searchBox.value = '';
-        applyFilter();
         saveListToLocal();
+        applyFilter();
         showNotification(`Successfully imported ${newRows.length} vehicles via Gemini.`, 'success');
 
     } catch (error) {
@@ -893,7 +1041,7 @@
     }
   });
 
-  // --- Existing CSV and Event Listener Code ---
+  // --- CSV and Event Listener Code ---
   document.getElementById('csvFile').addEventListener('change', async (e)=>{
     const file = e.target.files?.[0]; if(!file) return;
     const text = await file.text();
@@ -904,10 +1052,10 @@
         return;
     }
 
-    allRows = newRows;
+    allRows = [...allRows, ...newRows];
     searchBox.value = '';
-    applyFilter();
     saveListToLocal();
+    applyFilter();
     e.target.value = '';
   });
 
@@ -917,27 +1065,21 @@
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'green_list_export.csv';
+    a.download = 'vehicle_clearance_export.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
   });
   
-  document.getElementById('backBtn').addEventListener('click', () => {
-    window.location.href = 'index.html';
-  });
-
-  document.getElementById('saveBtn').addEventListener('click', saveListToLocal);
-
   document.getElementById('clearListBtn').addEventListener('click', () => {
-      if (confirm('Are you sure you want to permanently delete the current list?')) {
+      showConfirmModal('Clear Entire List?', 'Are you sure you want to permanently delete the current list?', () => {
           allRows = [];
           filtered = [];
           localStorage.removeItem(LOCAL_STORAGE_KEY);
           applyFilter();
           showNotification('List has been cleared.', 'success');
-      }
+      });
   });
 
   searchBox.addEventListener('input', ()=>{ 
@@ -952,23 +1094,173 @@
 
   micBtn.addEventListener('click', startVoiceSearch);
 
+  // --- Modal Logic ---
+  function showConfirmModal(title, text, onConfirm) {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalText').textContent = text;
+      confirmModal.classList.add('visible');
+
+      const confirmOkBtn = document.getElementById('confirmOkBtn');
+      const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+      const handleConfirm = () => {
+          onConfirm();
+          hideConfirmModal();
+          cleanup();
+      };
+      
+      const handleCancel = () => {
+          hideConfirmModal();
+          cleanup();
+      };
+
+      const cleanup = () => {
+          confirmOkBtn.removeEventListener('click', handleConfirm);
+          confirmCancelBtn.removeEventListener('click', handleCancel);
+      };
+
+      confirmOkBtn.addEventListener('click', handleConfirm);
+      confirmCancelBtn.addEventListener('click', handleCancel);
+  }
+
+  function hideConfirmModal() {
+      confirmModal.classList.remove('visible');
+  }
+
+  document.querySelectorAll('[data-close-modal]').forEach(el => {
+    el.addEventListener('click', () => {
+      el.closest('.modal-overlay').classList.remove('visible');
+    });
+  });
+
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('visible');
+      }
+    });
+  });
+
+  // --- Add/Edit/Delete Logic ---
+  document.getElementById('addVehicleBtn').addEventListener('click', () => {
+    vehicleForm.reset();
+    document.getElementById('vehicleModalTitle').textContent = 'Add Vehicle';
+    document.getElementById('originalVehicleNumber').value = '';
+    vehicleModal.classList.add('visible');
+    document.getElementById('vehicleNumberInput').focus();
+  });
+  
+  function handleAction(action, plate) {
+      if (action === 'edit') {
+          const vehicle = allRows.find(r => r.vehicleNumber === plate);
+          if (vehicle) {
+              vehicleForm.reset();
+              document.getElementById('vehicleModalTitle').textContent = 'Edit Vehicle';
+              document.getElementById('originalVehicleNumber').value = vehicle.vehicleNumber;
+              document.getElementById('vehicleNumberInput').value = vehicle.vehicleNumber;
+              document.getElementById('locationInput').value = vehicle.location || '';
+              vehicleModal.classList.add('visible');
+          }
+      } else if (action === 'delete') {
+          showConfirmModal(
+              `Delete ${plate}?`, 
+              'This vehicle will be permanently removed from the list.',
+              () => {
+                  allRows = allRows.filter(r => r.vehicleNumber !== plate);
+                  saveListToLocal();
+                  applyFilter();
+                  showNotification(`Vehicle ${plate} deleted.`, 'success');
+              }
+          );
+      }
+  }
+
+  vehicleForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const originalPlate = document.getElementById('originalVehicleNumber').value;
+    const newPlate = normalizePlate(document.getElementById('vehicleNumberInput').value);
+    const newLocation = document.getElementById('locationInput').value.trim();
+
+    if (!newPlate) {
+        showNotification('Vehicle number cannot be empty.', 'error');
+        return;
+    }
+
+    const isEditing = !!originalPlate;
+    const plateExists = allRows.some(r => r.vehicleNumber === newPlate && r.vehicleNumber !== originalPlate);
+
+    if (plateExists) {
+        showNotification(`Vehicle number ${newPlate} already exists.`, 'error');
+        return;
+    }
+
+    if (isEditing) {
+        // Edit existing
+        const vehicleIndex = allRows.findIndex(r => r.vehicleNumber === originalPlate);
+        if (vehicleIndex > -1) {
+            allRows[vehicleIndex] = { vehicleNumber: newPlate, location: newLocation };
+            showNotification(`Vehicle ${originalPlate} updated.`, 'success');
+        }
+    } else {
+        // Add new
+        allRows.push({ vehicleNumber: newPlate, location: newLocation });
+        showNotification(`Vehicle ${newPlate} added.`, 'success');
+    }
+
+    saveListToLocal();
+    applyFilter();
+    vehicleModal.classList.remove('visible');
+  });
+
+  // --- Dropdown and Action Handling ---
+  document.addEventListener('click', (e) => {
+    const moreBtn = e.target.closest('.more-btn');
+    const dropdownItem = e.target.closest('.dropdown-item');
+
+    // Close all dropdowns first
+    const openDropdowns = document.querySelectorAll('.dropdown-menu.show');
+    let clickedInsideDropdown = false;
+    if (moreBtn || dropdownItem) {
+        clickedInsideDropdown = true;
+    }
+
+    openDropdowns.forEach(dropdown => {
+        // If the click was on the button that opens THIS dropdown, don't close it yet.
+        if (moreBtn && dropdown.id === `dropdown-${moreBtn.dataset.dropdownFor}`) {
+            // It will be toggled below
+        } else {
+            dropdown.classList.remove('show');
+        }
+    });
+
+    // Handle opening the clicked dropdown
+    if (moreBtn) {
+        const plate = moreBtn.dataset.dropdownFor;
+        const dropdown = document.getElementById(`dropdown-${plate}`);
+        if (dropdown) {
+            dropdown.classList.toggle('show');
+        }
+    }
+
+    // Handle action from dropdown item
+    if (dropdownItem) {
+        const action = dropdownItem.dataset.action;
+        const plate = dropdownItem.dataset.plate;
+        handleAction(action, plate);
+    }
+  });
+
+
   // --- Settings Modal Logic ---
   settingsBtn.addEventListener('click', () => {
     settingsModal.classList.add('visible');
   });
 
-  closeSettingsBtn.addEventListener('click', () => {
-    settingsModal.classList.remove('visible');
+  document.querySelector('#settingsModal .close-btn').addEventListener('click', () => {
     const apiKey = apiKeyInput.value.trim();
     if (apiKey) {
       localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
       showNotification('API Key saved.', 'info');
-    }
-  });
-
-  settingsModal.addEventListener('click', (e) => {
-    if (e.target === settingsModal) {
-      closeSettingsBtn.click();
     }
   });
 
