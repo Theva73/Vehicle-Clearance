@@ -229,10 +229,16 @@
   .list-item-badge {
     padding: 5px 10px;
     border-radius: 9999px;
-    background: #14532d;
-    color: #bbf7d0;
     font-weight: 600;
     font-size: 12px;
+  }
+  .list-item-badge.success {
+    background: #14532d;
+    color: #bbf7d0;
+  }
+  .list-item-badge.error {
+    background: var(--red-dark);
+    color: white;
   }
   
   .list-item-right {
@@ -344,9 +350,6 @@
   }
   
   .car-plate-display {
-      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
-      border: 4px solid #fbbf24;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.1), 0 0 20px rgba(59, 130, 246, 0.3);
       position: relative;
       overflow: hidden;
       border-radius: 1rem;
@@ -358,6 +361,17 @@
       width: 100%;
       max-width: 100%;
       margin: 0 auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  }
+  .car-plate-display-cleared {
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
+      border: 4px solid #fbbf24;
+      box-shadow: var(--shadow-cleared);
+  }
+  .car-plate-display-not-found {
+      background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #7f1d1d 100%);
+      border: 4px solid var(--red-dark);
+      box-shadow: var(--shadow-not-found);
   }
   .car-plate-display::before {
       content: '';
@@ -386,9 +400,15 @@
     border-radius: 9999px;
     font-size: 0.875rem;
     font-weight: 700;
+    flex-shrink: 0;
+  }
+  .plate-status-badge.success {
     background-color: var(--accent-dark);
     color: white;
-    flex-shrink: 0;
+  }
+  .plate-status-badge.error {
+    background-color: var(--red-dark);
+    color: white;
   }
   .search-highlight {
       color: white !important;
@@ -425,6 +445,10 @@
   @keyframes glow {
       from { filter: drop-shadow(0 0 5px #fbbf24); }
       to { filter: drop-shadow(0 0 15px #f59e0b); }
+  }
+  @keyframes glow-red {
+      from { filter: drop-shadow(0 0 5px var(--red)); }
+      to { filter: drop-shadow(0 0 15px var(--red-dark)); }
   }
 
   /* Modal Styles */
@@ -900,11 +924,32 @@
         countEl.textContent = `0 matches found for "${searchTerm}"`;
         listEl.innerHTML = `
             <div class="space-y-4 animate-fade-in">
-                <div class="text-center py-8 bg-panel rounded-2xl border border-outline">
-                    <h3 class="text-xl font-semibold">Not Found on List</h3>
-                    <p class="mt-2 text-muted">Vehicle <strong>${searchTerm}</strong> is not on the current list.</p>
+                <div class="car-plate-display car-plate-display-not-found mb-4">
+                    <div class="car-plate-text">
+                        <span class="search-highlight" style="animation-name: glow-red;">${searchTerm}</span>
+                    </div>
+                    <div class="plate-status-badge error">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
+                        NOT FOUND
+                    </div>
+                </div>
+                <div class="card animate-fade-in" style="padding: 24px; width: 100%;">
+                    <button id="exitSingleViewBtn" class="exit-btn" title="Back to list">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                    <div style="text-align: center;">
+                        <h3 class="text-xl font-semibold">Access Denied</h3>
+                        <p class="mt-2 text-muted">Vehicle <strong>${searchTerm}</strong> is not on the current list.</p>
+                    </div>
                 </div>
             </div>`;
+
+        document.getElementById('exitSingleViewBtn').addEventListener('click', () => {
+            searchBox.value = '';
+            applyFilter();
+        });
         return;
     }
 
@@ -915,11 +960,11 @@
     if (searchTerm && filtered.length === 1) {
         const c = filtered[0];
         const plateHTML = `
-            <div class="car-plate-display mb-4 animate-fade-in">
+            <div class="car-plate-display car-plate-display-cleared mb-4 animate-fade-in">
                 <div class="car-plate-text">
                     <span class="search-highlight">${c.vehicleNumber}</span>
                 </div>
-                <div class="plate-status-badge">
+                <div class="plate-status-badge success">
                     ✓ CLEARED
                 </div>
             </div>
@@ -955,7 +1000,7 @@
                     <div class="${locationClass}">${locationText}</div>
                 </div>
                 <div class="list-item-right">
-                    <span class="list-item-badge">Cleared</span>
+                    <span class="list-item-badge success">Cleared</span>
                     <div class="dropdown-container">
                         <button class="more-btn" data-dropdown-for="${c.id}" title="More options">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
@@ -1117,7 +1162,7 @@
     showNotification(`Successfully imported ${newRows.length} vehicles from CSV.`, 'success');
     e.target.value = '';
   });
-
+  
   document.getElementById('exportBtn').addEventListener('click', ()=>{
     if(!allRows.length){ showNotification('Nothing to export.', 'error'); return; }
     const csv = 'vehicleNumber,location,status\n' + allRows.map(r => `"${r.vehicleNumber}","${r.location || 'N/A'}","Cleared"`).join('\n');
