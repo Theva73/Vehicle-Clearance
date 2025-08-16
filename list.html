@@ -305,6 +305,37 @@
     color: white;
   }
 
+  /* --- NEW: Action Toggler Styles --- */
+  #actions-panel {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, opacity 0.3s ease-in, margin-top 0.4s ease-out;
+    margin-top: 0;
+  }
+  #actions-panel.open {
+    max-height: 300px; /* Adjust if more buttons are added */
+    opacity: 1;
+    margin-top: 12px;
+  }
+  #toggleActionsBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: var(--purple-dark);
+  }
+  #toggleActionsBtn:hover {
+    background-color: #5b21b6;
+  }
+  #toggleActionsBtn .icon {
+    transition: transform 0.3s ease-in-out;
+  }
+  #toggleActionsBtn.open .icon {
+    transform: rotate(45deg);
+  }
+
 
   .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
   @keyframes fadeIn {
@@ -580,19 +611,31 @@
       </header>
 
       <div class="card">
-        <div class="row">
-          <button class="btn primary" id="addVehicleBtn">Add Vehicle</button>
-          <label class="btn success">
-            <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
-            Import CSV
-          </label>
-          <label class="btn" style="background-color: var(--purple);">
-            <input id="geminiImageFile" type="file" accept="image/*" style="display:none">
-            Import with API
-          </label>
-          <button class="btn" id="exportBtn">Export CSV</button>
-          <button class="btn danger" id="clearListBtn">Clear List</button>
+        <!-- NEW: Action Toggler -->
+        <button class="btn" id="toggleActionsBtn">
+          <span class="icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </span>
+          <span id="toggleActionsText">Actions</span>
+        </button>
+
+        <!-- NEW: Collapsible Panel for Buttons -->
+        <div id="actions-panel">
+            <div class="row">
+              <button class="btn primary" id="addVehicleBtn">Add Vehicle</button>
+              <label class="btn success">
+                <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
+                Import CSV
+              </label>
+              <label class="btn" style="background-color: var(--purple);">
+                <input id="geminiImageFile" type="file" accept="image/*" style="display:none">
+                Import with API
+              </label>
+              <button class="btn" id="exportBtn">Export CSV</button>
+              <button class="btn danger" id="clearListBtn">Clear List</button>
+            </div>
         </div>
+
         <div class="row" style="margin-top:12px">
           <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
           <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
@@ -629,13 +672,12 @@
   };
 
   let app, auth, db, listingsCollection;
-  const LISTINGS_COLLECTION_NAME = 'vehicleListings'; // Separate collection for this app
+  const LISTINGS_COLLECTION_NAME = 'vehicleListings';
 
   try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-    console.log("Firebase initialized successfully for Vehicle Listings app.");
   } catch (err) {
     console.error("Firebase initialization error:", err);
     showNotification("Could not connect to the database.", "error");
@@ -1035,10 +1077,9 @@
             return;
         }
         
-        // Batch write new rows to Firestore
         const batch = writeBatch(db);
         newRows.forEach(row => {
-            const docRef = doc(listingsCollection); // Create a new doc with auto-ID
+            const docRef = doc(listingsCollection);
             batch.set(docRef, row);
         });
         await batch.commit();
@@ -1065,7 +1106,6 @@
         return;
     }
 
-    // Batch write new rows to Firestore
     const batch = writeBatch(db);
     newRows.forEach(row => {
         const docRef = doc(listingsCollection);
@@ -1208,7 +1248,6 @@
 
     const isEditing = !!docId;
     
-    // Check for duplicates
     const plateExists = allRows.some(r => r.vehicleNumber === newPlate && r.id !== docId);
     if (plateExists) {
         showNotification(`Vehicle number ${newPlate} already exists.`, 'error');
@@ -1284,7 +1323,6 @@
         console.log("Authenticated anonymously:", user.uid);
         listingsCollection = collection(db, LISTINGS_COLLECTION_NAME);
         
-        // Start listening for real-time updates
         onSnapshot(listingsCollection, (snapshot) => {
             allRows = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             applyFilter();
@@ -1299,6 +1337,17 @@
             showNotification("Authentication with the database failed.", "error");
         });
     }
+  });
+
+  // --- NEW: Actions Toggler Logic ---
+  const toggleActionsBtn = document.getElementById('toggleActionsBtn');
+  const actionsPanel = document.getElementById('actions-panel');
+  const toggleActionsText = document.getElementById('toggleActionsText');
+
+  toggleActionsBtn.addEventListener('click', () => {
+    const isOpen = actionsPanel.classList.toggle('open');
+    toggleActionsBtn.classList.toggle('open');
+    toggleActionsText.textContent = isOpen ? 'Close' : 'Actions';
   });
 
   window.addEventListener('load', () => {
@@ -1323,3 +1372,13 @@ Please generate the full CSV data from the image now.`;
 </script>
 </body>
 </html>
+```
+
+I have made the following changes:
+
+* **New "Actions" Button:** A prominent "Actions" button is now displayed where the group of buttons used to be.
+* **Collapsible Panel:** The "Add Vehicle," "Import," "Export," and "Clear" buttons are now inside a panel that is hidden by default.
+* **Smooth Animation:** When you click the "Actions" button, the panel smoothly slides down to reveal the buttons. The icon on the "Actions" button also rotates to indicate the open/closed state.
+* **Dynamic Text:** The button text changes from "Actions" to "Close" when the panel is open, making it intuitive to use.
+
+This approach keeps your main interface clean and focused on the search functionality while still providing easy access to all the management features when you need th
