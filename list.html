@@ -906,25 +906,39 @@
       return newRows;
   }
 
-  function render(){
+  /**
+   * Main render function for the list.
+   * Handles all UI updates for the vehicle list area.
+   */
+  function render() {
     const searchTerm = searchBox.value.trim().toUpperCase();
     listEl.innerHTML = '';
 
+    // Default styles for multi-item list view
+    listEl.style.justifyContent = 'flex-start';
+    listEl.style.height = 'auto';
+
     if (allRows.length === 0) {
         emptyEl.style.display = 'block';
-        listEl.style.display = 'block';
+        listEl.style.display = 'block'; // This is intentional for the initial empty state
         countEl.textContent = '0 rows';
         emptyEl.innerHTML = 'No vehicles in this list. Add one or import a file.';
         return;
     }
 
     if (searchTerm && filtered.length === 0) {
-        listEl.style.display = 'block';
+        // --- FIX: Center the result block vertically and ensure flex display ---
+        listEl.style.display = 'flex';
+        listEl.style.justifyContent = 'center';
+        listEl.style.height = '100%';
+        // --- END FIX ---
+
         emptyEl.style.display = 'none';
         countEl.textContent = `0 matches found for "${searchTerm}"`;
+        // Using a wrapper div to group the content. The parent #list will center this block.
         listEl.innerHTML = `
-            <div class="space-y-4 animate-fade-in">
-                <div class="car-plate-display car-plate-display-not-found mb-4">
+            <div class="animate-fade-in" style="width: 100%;">
+                <div class="car-plate-display car-plate-display-not-found" style="margin-bottom: 16px;">
                     <div class="car-plate-text">
                         <span class="search-highlight" style="animation-name: glow-red;">${searchTerm}</span>
                     </div>
@@ -940,8 +954,8 @@
                         </svg>
                     </button>
                     <div style="text-align: center;">
-                        <h3 class="text-xl font-semibold">Access Denied</h3>
-                        <p class="mt-2 text-muted">Vehicle <strong>${searchTerm}</strong> is not on the current list.</p>
+                        <h3 style="font-size: 1.25rem; font-weight: 600;">Access Denied</h3>
+                        <p style="margin-top: 8px; color: var(--muted);">Vehicle <strong>${searchTerm}</strong> is not on the current list.</p>
                     </div>
                 </div>
             </div>`;
@@ -958,25 +972,33 @@
     countEl.textContent = `Showing ${filtered.length} of ${allRows.length} rows`;
 
     if (searchTerm && filtered.length === 1) {
+        // --- FIX: Center the result block vertically ---
+        listEl.style.justifyContent = 'center';
+        listEl.style.height = '100%';
+        // --- END FIX ---
+
         const c = filtered[0];
+        // Using a wrapper div to group the content. The parent #list will center this block.
         const plateHTML = `
-            <div class="car-plate-display car-plate-display-cleared mb-4 animate-fade-in">
-                <div class="car-plate-text">
-                    <span class="search-highlight">${c.vehicleNumber}</span>
+            <div class="animate-fade-in" style="width: 100%;">
+                <div class="car-plate-display car-plate-display-cleared animate-fade-in" style="margin-bottom: 16px;">
+                    <div class="car-plate-text">
+                        <span class="search-highlight">${c.vehicleNumber}</span>
+                    </div>
+                    <div class="plate-status-badge success">
+                        ✓ CLEARED
+                    </div>
                 </div>
-                <div class="plate-status-badge success">
-                    ✓ CLEARED
-                </div>
-            </div>
-            <div class="card animate-fade-in" style="padding: 24px; width: 100%;">
-                <button id="exitSingleViewBtn" class="exit-btn" title="Back to list">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                </button>
-                <div style="text-align: center;">
-                    <p style="font-size: 0.875rem; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Location</p>
-                    <p style="font-weight: 700; font-size: 1.5rem; ${ (c.location && c.location.toLowerCase() === 'foyer') ? 'color: var(--red);' : 'color: var(--text);'}">${c.location || 'N/A'}</p>
+                <div class="card animate-fade-in" style="padding: 24px; width: 100%;">
+                    <button id="exitSingleViewBtn" class="exit-btn" title="Back to list">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                    <div style="text-align: center;">
+                        <p style="font-size: 0.875rem; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Location</p>
+                        <p style="font-weight: 700; font-size: 1.5rem; ${ (c.location && c.location.toLowerCase() === 'foyer') ? 'color: var(--red);' : 'color: var(--text);'}">${c.location || 'N/A'}</p>
+                    </div>
                 </div>
             </div>
         `;
@@ -1017,6 +1039,7 @@
         listEl.innerHTML = listHTML;
     }
   }
+
 
   function applyFilter(){
     const term = searchBox.value.trim().toUpperCase();
