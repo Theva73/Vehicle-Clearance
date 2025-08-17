@@ -49,6 +49,9 @@
     flex-grow: 1;
     overflow-y: auto;
     padding: 0 14px 80px 14px;
+    /* This will help center the content when there's only one item */
+    display: flex;
+    flex-direction: column;
   }
   header {
     display: flex;
@@ -913,29 +916,36 @@
   function render() {
     const searchTerm = searchBox.value.trim().toUpperCase();
     listEl.innerHTML = '';
+    const scrollContent = document.querySelector('.scroll-content');
 
-    // Default styles for multi-item list view
+    // Reset styles
     listEl.style.justifyContent = 'flex-start';
     listEl.style.height = 'auto';
+    scrollContent.style.justifyContent = 'flex-start';
+
 
     if (allRows.length === 0) {
         emptyEl.style.display = 'block';
-        listEl.style.display = 'block'; // This is intentional for the initial empty state
+        listEl.style.display = 'block'; 
         countEl.textContent = '0 rows';
         emptyEl.innerHTML = 'No vehicles in this list. Add one or import a file.';
         return;
     }
 
-    if (searchTerm && filtered.length === 0) {
-        // --- FIX: Center the result block vertically and ensure flex display ---
-        listEl.style.display = 'flex';
+    const isSingleResultView = searchTerm && (filtered.length === 1 || filtered.length === 0);
+
+    if (isSingleResultView) {
+        // --- FIX: Center the result block vertically ---
         listEl.style.justifyContent = 'center';
         listEl.style.height = '100%';
+        scrollContent.style.justifyContent = 'center';
         // --- END FIX ---
+    }
 
+
+    if (searchTerm && filtered.length === 0) {
         emptyEl.style.display = 'none';
         countEl.textContent = `0 matches found for "${searchTerm}"`;
-        // Using a wrapper div to group the content. The parent #list will center this block.
         listEl.innerHTML = `
             <div class="animate-fade-in" style="width: 100%;">
                 <div class="car-plate-display car-plate-display-not-found" style="margin-bottom: 16px;">
@@ -972,13 +982,7 @@
     countEl.textContent = `Showing ${filtered.length} of ${allRows.length} rows`;
 
     if (searchTerm && filtered.length === 1) {
-        // --- FIX: Center the result block vertically ---
-        listEl.style.justifyContent = 'center';
-        listEl.style.height = '100%';
-        // --- END FIX ---
-
         const c = filtered[0];
-        // Using a wrapper div to group the content. The parent #list will center this block.
         const plateHTML = `
             <div class="animate-fade-in" style="width: 100%;">
                 <div class="car-plate-display car-plate-display-cleared animate-fade-in" style="margin-bottom: 16px;">
@@ -1049,7 +1053,8 @@
     } else {
         tempFiltered = allRows.filter(r => {
             const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
-            return numericPartOfPlate.startsWith(term);
+            // --- FIX: Change from startsWith to includes for more flexible searching ---
+            return r.vehicleNumber.includes(term) || numericPartOfPlate.includes(term);
         });
     }
 
