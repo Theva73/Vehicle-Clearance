@@ -1420,7 +1420,11 @@
   });
 
   window.addEventListener('load', () => {
-      initializeVoiceRecognition();
+      // Initialize voice recognition, and if it's supported, start listening.
+      if (initializeVoiceRecognition()) {
+        startVoiceSearch();
+      }
+      
       const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
       if (savedApiKey) {
         apiKeyInput.value = savedApiKey;
