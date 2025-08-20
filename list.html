@@ -316,7 +316,6 @@
     color: white;
   }
 
-  /* --- NEW: Action Toggler Styles --- */
   #actions-panel {
     max-height: 0;
     opacity: 0;
@@ -325,7 +324,7 @@
     margin-top: 0;
   }
   #actions-panel.open {
-    max-height: 300px; /* Adjust if more buttons are added */
+    max-height: 300px;
     opacity: 1;
     margin-top: 12px;
   }
@@ -371,12 +370,10 @@
   .car-plate-display-cleared {
       background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
       border: 4px solid #fbbf24;
-      box-shadow: var(--shadow-cleared);
   }
   .car-plate-display-not-found {
       background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #7f1d1d 100%);
       border: 4px solid var(--red-dark);
-      box-shadow: var(--shadow-not-found);
   }
   .car-plate-display::before {
       content: '';
@@ -640,7 +637,6 @@
       </header>
 
       <div class="card">
-        <!-- NEW: Action Toggler -->
         <button class="btn" id="toggleActionsBtn">
           <span class="icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -648,7 +644,6 @@
           <span id="toggleActionsText">Actions</span>
         </button>
 
-        <!-- NEW: Collapsible Panel for Buttons -->
         <div id="actions-panel">
             <div class="row">
               <button class="btn primary" id="addVehicleBtn">Add Vehicle</button>
@@ -911,10 +906,6 @@
       return newRows;
   }
 
-  /**
-   * Main render function for the list.
-   * Handles all UI updates for the vehicle list area.
-   */
   function render() {
     const searchTerm = searchBox.value.trim().toUpperCase();
     listEl.innerHTML = '';
@@ -1390,17 +1381,33 @@
         
         onSnapshot(listingsCollection, (snapshot) => {
             allRows = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            applyFilter();
-            // We only apply the URL search once after the initial data load
-            if (!window.urlSearchApplied) {
+            
+            // --- MODIFICATION START ---
+            // This flag prevents the URL check from running on every data refresh
+            if (!window.urlActionsApplied) {
                 const urlParams = new URLSearchParams(window.location.search);
                 const searchTerm = urlParams.get('search');
+                const startVoice = urlParams.get('voice');
+
                 if (searchTerm) {
                     searchBox.value = searchTerm;
-                    applyFilter();
                 }
-                window.urlSearchApplied = true; // Flag to prevent re-running
+                
+                // We apply the filter regardless, to show search results or the full list
+                applyFilter();
+
+                if (startVoice === 'true') {
+                    // Use a small delay to ensure the UI is ready before asking for permission
+                    setTimeout(startVoiceSearch, 500);
+                }
+                
+                window.urlActionsApplied = true; // Set the flag
+            } else {
+                // For subsequent data updates, just refresh the filter
+                applyFilter();
             }
+            // --- MODIFICATION END ---
+
         }, (error) => {
             console.error("Firestore snapshot error:", error);
             showNotification("Error syncing with the database.", "error");
@@ -1413,7 +1420,6 @@
     }
   });
 
-  // --- NEW: Actions Toggler Logic ---
   const toggleActionsBtn = document.getElementById('toggleActionsBtn');
   const actionsPanel = document.getElementById('actions-panel');
   const toggleActionsText = document.getElementById('toggleActionsText');
