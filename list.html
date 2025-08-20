@@ -25,6 +25,7 @@
   * { box-sizing: border-box; }
   html, body {
     height: 100%;
+    /* This is the default setting for mobile/desktop */
     overflow: hidden;
   }
   body {
@@ -33,6 +34,22 @@
     color: var(--text);
     font-family: 'Inter', system-ui, sans-serif;
   }
+  
+  /* --- NEW: Apple Watch Specific Styles --- */
+  /* These rules ONLY apply if the body has the 'is-watch' class */
+  body.is-watch {
+    height: auto; /* Allow body to grow beyond the screen height */
+    overflow-y: auto; /* Enable vertical scrolling for the whole page */
+  }
+  body.is-watch .wrap {
+    height: auto; /* Allow the main container to grow */
+  }
+  body.is-watch .scroll-content {
+    overflow-y: visible; /* Prevent an inner scrollbar */
+    flex-grow: 1; 
+  }
+  /* --- End of Apple Watch Styles --- */
+
   .wrap {
     max-width: 780px;
     margin: 0 auto;
@@ -50,7 +67,6 @@
     overflow-y: auto;
     padding: 20px 14px 80px 14px;
   }
-  /* --- FIX: New class for centering single results --- */
   .scroll-content.is-centered {
     display: flex;
     flex-direction: column;
@@ -317,7 +333,6 @@
     color: white;
   }
 
-  /* --- NEW: Action Toggler Styles --- */
   #actions-panel {
     max-height: 0;
     opacity: 0;
@@ -326,7 +341,7 @@
     margin-top: 0;
   }
   #actions-panel.open {
-    max-height: 300px; /* Adjust if more buttons are added */
+    max-height: 300px;
     opacity: 1;
     margin-top: 12px;
   }
@@ -372,12 +387,10 @@
   .car-plate-display-cleared {
       background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
       border: 4px solid #fbbf24;
-      box-shadow: var(--shadow-cleared);
   }
   .car-plate-display-not-found {
       background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #7f1d1d 100%);
       border: 4px solid var(--red-dark);
-      box-shadow: var(--shadow-not-found);
   }
   .car-plate-display::before {
       content: '';
@@ -641,7 +654,6 @@
       </header>
 
       <div class="card">
-        <!-- NEW: Action Toggler -->
         <button class="btn" id="toggleActionsBtn">
           <span class="icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -649,7 +661,6 @@
           <span id="toggleActionsText">Actions</span>
         </button>
 
-        <!-- NEW: Collapsible Panel for Buttons -->
         <div id="actions-panel">
             <div class="row">
               <button class="btn primary" id="addVehicleBtn">Add Vehicle</button>
@@ -912,16 +923,11 @@
       return newRows;
   }
 
-  /**
-   * Main render function for the list.
-   * Handles all UI updates for the vehicle list area.
-   */
   function render() {
     const searchTerm = searchBox.value.trim().toUpperCase();
     listEl.innerHTML = '';
     const scrollContent = document.querySelector('.scroll-content');
 
-    // --- FIX: Reset centering class on each render ---
     scrollContent.classList.remove('is-centered');
 
     if (allRows.length === 0) {
@@ -934,7 +940,6 @@
 
     const isSingleResultView = searchTerm && (filtered.length === 1 || filtered.length === 0);
 
-    // --- FIX: Apply centering class only for single result views ---
     if (isSingleResultView) {
         scrollContent.classList.add('is-centered');
     }
@@ -1049,7 +1054,6 @@
     } else {
         tempFiltered = allRows.filter(r => {
             const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
-            // --- FIX: Reverted search logic back to startsWith as requested ---
             return numericPartOfPlate.startsWith(term);
         });
     }
@@ -1394,8 +1398,27 @@
         
         onSnapshot(listingsCollection, (snapshot) => {
             allRows = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            applyFilter();
-            showNotification("Data synced with the database.", "info");
+            
+            if (!window.urlActionsApplied) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const searchTerm = urlParams.get('search');
+                const startVoice = urlParams.get('voice');
+
+                if (searchTerm) {
+                    searchBox.value = searchTerm;
+                }
+                
+                applyFilter();
+
+                if (startVoice === 'true') {
+                    setTimeout(startVoiceSearch, 500);
+                }
+                
+                window.urlActionsApplied = true;
+            } else {
+                applyFilter();
+            }
+
         }, (error) => {
             console.error("Firestore snapshot error:", error);
             showNotification("Error syncing with the database.", "error");
@@ -1408,7 +1431,6 @@
     }
   });
 
-  // --- NEW: Actions Toggler Logic ---
   const toggleActionsBtn = document.getElementById('toggleActionsBtn');
   const actionsPanel = document.getElementById('actions-panel');
   const toggleActionsText = document.getElementById('toggleActionsText');
@@ -1420,16 +1442,19 @@
   });
 
   window.addEventListener('load', () => {
-      // Initialize voice recognition, and if it's supported, start listening.
-      if (initializeVoiceRecognition()) {
-        startVoiceSearch();
+      // --- NEW: Apple Watch Detection ---
+      // This checks if the device is an Apple Watch and adds a class to the body
+      if (navigator.userAgent.includes("Watch")) {
+        document.body.classList.add("is-watch");
       }
-      
+      // --- End of Detection ---
+
+      initializeVoiceRecognition();
       const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
       if (savedApiKey) {
         apiKeyInput.value = savedApiKey;
       }
-
+      
       geminiPromptEl.value = `Analyze the attached image, which contains a table. Your task is to meticulously extract all the information from this table and format it as a CSV (Comma-Separated Values) text.
 The first column often contains "DOC" or "OC", which should be ignored.
 The primary columns to extract are for the vehicle number and the location.
