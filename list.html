@@ -25,7 +25,6 @@
   * { box-sizing: border-box; }
   html, body {
     height: 100%;
-    /* This is the default setting for mobile/desktop */
     overflow: hidden;
   }
   body {
@@ -34,22 +33,6 @@
     color: var(--text);
     font-family: 'Inter', system-ui, sans-serif;
   }
-  
-  /* --- NEW: Apple Watch Specific Styles --- */
-  /* These rules ONLY apply if the body has the 'is-watch' class */
-  body.is-watch {
-    height: auto; /* Allow body to grow beyond the screen height */
-    overflow-y: auto; /* Enable vertical scrolling for the whole page */
-  }
-  body.is-watch .wrap {
-    height: auto; /* Allow the main container to grow */
-  }
-  body.is-watch .scroll-content {
-    overflow-y: visible; /* Prevent an inner scrollbar */
-    flex-grow: 1; 
-  }
-  /* --- End of Apple Watch Styles --- */
-
   .wrap {
     max-width: 780px;
     margin: 0 auto;
@@ -333,6 +316,7 @@
     color: white;
   }
 
+  /* --- NEW: Action Toggler Styles --- */
   #actions-panel {
     max-height: 0;
     opacity: 0;
@@ -341,7 +325,7 @@
     margin-top: 0;
   }
   #actions-panel.open {
-    max-height: 300px;
+    max-height: 300px; /* Adjust if more buttons are added */
     opacity: 1;
     margin-top: 12px;
   }
@@ -387,10 +371,12 @@
   .car-plate-display-cleared {
       background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
       border: 4px solid #fbbf24;
+      box-shadow: var(--shadow-cleared);
   }
   .car-plate-display-not-found {
       background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #7f1d1d 100%);
       border: 4px solid var(--red-dark);
+      box-shadow: var(--shadow-not-found);
   }
   .car-plate-display::before {
       content: '';
@@ -648,12 +634,13 @@
         </div>
         <button id="settingsBtn" class="settings-btn" title="API Settings">
          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-            <path d="M19.43,12.98c0.04-0.32,0.07-0.64,0.07-0.98s-0.03-0.66-0.07-0.98l2.11-1.65c0.19-0.15,0.24-0.42,0.12-0.64l-2-3.46 c-0.12-0.22-0.39-0.3-0.61-0.22l-2.49,1c-0.52-0.4-1.08-0.73-1.69-0.98l-0.38-2.65C14.46,2.18,14.25,2,14,2h-4 c-0.25,0-0.46,0.18-0.49,0.42L9.13,5.07c-0.61,0.25-1.17,0.59-1.69,0.98l-2.49-1c-0.23-0.09-0.49,0-0.61,0.22l-2,3.46 c-0.13,0.22-0.07,0.49,0.12,0.64l2.11,1.65C4.57,11.34,4.54,11.66,4.54,12s0.03,0.66,0.07,0.98l-2.11,1.65 c-0.19,0.15-0.24-0.42-0.12,0.64l2,3.46c0.12,0.22,0.39,0.3,0.61,0.22l2.49-1c0.52,0.4,1.08,0.73,1.69,0.98l0.38,2.65 C9.54,21.82,9.75,22,10,22h4c0.25,0,0.46-0.18,0.49-0.42l0.38-2.65c0.61-0.25,1.17-0.59,1.69-0.98l2.49,1 c0.23,0.09,0.49,0,0.61,0.22l2-3.46c0.12-0.22,0.07-0.49-0.12-0.64L19.43,12.98z M12,15c-1.66,0-3-1.34-3-3s1.34-3,3-3 s3,1.34,3,3S13.66,15,12,15z"/>
+            <path d="M19.43,12.98c0.04-0.32,0.07-0.64,0.07-0.98s-0.03-0.66-0.07-0.98l2.11-1.65c0.19-0.15,0.24-0.42,0.12-0.64l-2-3.46 c-0.12-0.22-0.39-0.3-0.61-0.22l-2.49,1c-0.52-0.4-1.08-0.73-1.69-0.98l-0.38-2.65C14.46,2.18,14.25,2,14,2h-4 c-0.25,0-0.46,0.18-0.49,0.42L9.13,5.07c-0.61,0.25-1.17,0.59-1.69,0.98l-2.49-1c-0.23-0.09-0.49,0-0.61,0.22l-2,3.46 c-0.13,0.22-0.07,0.49,0.12,0.64l2.11,1.65C4.57,11.34,4.54,11.66,4.54,12s0.03,0.66,0.07,0.98l-2.11,1.65 c-0.19,0.15-0.24-0.42-0.12,0.64l2,3.46c0.12,0.22,0.39,0.3,0.61,0.22l2.49-1c0.52,0.4,1.08,0.73,1.69,0.98l0.38,2.65 C9.54,21.82,9.75,22,10,22h4c0.25,0,0.46-0.18,0.49-0.42l0.38-2.65c0.61-0.25,1.17-0.59,1.69,0.98l2.49,1 c0.23,0.09,0.49,0,0.61,0.22l2-3.46c0.12-0.22,0.07-0.49-0.12-0.64L19.43,12.98z M12,15c-1.66,0-3-1.34-3-3s1.34-3,3-3 s3,1.34,3,3S13.66,15,12,15z"/>
           </svg>
         </button>
       </header>
 
       <div class="card">
+        <!-- NEW: Action Toggler -->
         <button class="btn" id="toggleActionsBtn">
           <span class="icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -661,6 +648,7 @@
           <span id="toggleActionsText">Actions</span>
         </button>
 
+        <!-- NEW: Collapsible Panel for Buttons -->
         <div id="actions-panel">
             <div class="row">
               <button class="btn primary" id="addVehicleBtn">Add Vehicle</button>
@@ -923,11 +911,16 @@
       return newRows;
   }
 
+  /**
+   * Main render function for the list.
+   * Handles all UI updates for the vehicle list area.
+   */
   function render() {
     const searchTerm = searchBox.value.trim().toUpperCase();
     listEl.innerHTML = '';
     const scrollContent = document.querySelector('.scroll-content');
 
+    // --- FIX: Reset centering class on each render ---
     scrollContent.classList.remove('is-centered');
 
     if (allRows.length === 0) {
@@ -940,6 +933,7 @@
 
     const isSingleResultView = searchTerm && (filtered.length === 1 || filtered.length === 0);
 
+    // --- FIX: Apply centering class only for single result views ---
     if (isSingleResultView) {
         scrollContent.classList.add('is-centered');
     }
@@ -1054,6 +1048,7 @@
     } else {
         tempFiltered = allRows.filter(r => {
             const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
+            // --- FIX: Reverted search logic back to startsWith as requested ---
             return numericPartOfPlate.startsWith(term);
         });
     }
@@ -1398,27 +1393,8 @@
         
         onSnapshot(listingsCollection, (snapshot) => {
             allRows = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            if (!window.urlActionsApplied) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const searchTerm = urlParams.get('search');
-                const startVoice = urlParams.get('voice');
-
-                if (searchTerm) {
-                    searchBox.value = searchTerm;
-                }
-                
-                applyFilter();
-
-                if (startVoice === 'true') {
-                    setTimeout(startVoiceSearch, 500);
-                }
-                
-                window.urlActionsApplied = true;
-            } else {
-                applyFilter();
-            }
-
+            applyFilter();
+            showNotification("Data synced with the database.", "info");
         }, (error) => {
             console.error("Firestore snapshot error:", error);
             showNotification("Error syncing with the database.", "error");
@@ -1431,6 +1407,7 @@
     }
   });
 
+  // --- NEW: Actions Toggler Logic ---
   const toggleActionsBtn = document.getElementById('toggleActionsBtn');
   const actionsPanel = document.getElementById('actions-panel');
   const toggleActionsText = document.getElementById('toggleActionsText');
@@ -1442,19 +1419,29 @@
   });
 
   window.addEventListener('load', () => {
-      // --- NEW: Apple Watch Detection ---
-      // This checks if the device is an Apple Watch and adds a class to the body
+      // --- MODIFICATION FOR APPLE WATCH SCROLLING ---
       if (navigator.userAgent.includes("Watch")) {
-        document.body.classList.add("is-watch");
+        document.body.style.overflow = 'auto';
+        document.body.style.height = 'auto';
+        
+        const wrap = document.querySelector('.wrap');
+        if (wrap) wrap.style.height = 'auto';
+        
+        const scrollContent = document.querySelector('.scroll-content');
+        if (scrollContent) scrollContent.style.overflowY = 'visible';
       }
-      // --- End of Detection ---
+      // --- END OF MODIFICATION ---
 
-      initializeVoiceRecognition();
+      // Initialize voice recognition, and if it's supported, start listening.
+      if (initializeVoiceRecognition()) {
+        startVoiceSearch();
+      }
+      
       const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
       if (savedApiKey) {
         apiKeyInput.value = savedApiKey;
       }
-      
+
       geminiPromptEl.value = `Analyze the attached image, which contains a table. Your task is to meticulously extract all the information from this table and format it as a CSV (Comma-Separated Values) text.
 The first column often contains "DOC" or "OC", which should be ignored.
 The primary columns to extract are for the vehicle number and the location.
