@@ -127,7 +127,6 @@
             box-shadow: 0 0 20px var(--shadow-dark), inset 0 1px 2px var(--shadow-light);
         }
         
-        /* NEW: Colorful gradient for the time */
         #time-display {
             font-size: 48px;
             font-weight: 700;
@@ -147,19 +146,17 @@
         }
         
         #weather-icon { font-size: 24px; }
-        /* NEW: Color for the temperature */
         #weather-temp { 
             font-size: 24px; 
             font-weight: 500;
             color: var(--accent-yellow);
         }
 
-        /* NEW: Brighter color for location */
         #location-display {
             margin-top: 12px;
             font-size: 16px;
             font-weight: 500;
-            color: #B0B0C0; /* Brighter than text-secondary */
+            color: #B0B0C0;
             letter-spacing: 0.5px;
         }
 
@@ -190,7 +187,7 @@
         }
 
         /* * ==============================================
-         * TEXT INPUT VIEW
+         * NEW: TEXT INPUT VIEW WITH HEADER
          * ==============================================
         */
         #input-view {
@@ -198,6 +195,31 @@
             padding-top: 40px;
             gap: 20px;
         }
+
+        .input-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .input-header .time {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-header .weather {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--accent-yellow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
         #text-search-input {
             width: 100%;
             background-color: var(--bg-secondary);
@@ -351,7 +373,7 @@
 <div class="background-stars"></div>
 
 <div class="app-container">
-    <!-- VIEW 1: The new dashboard-style initial screen -->
+    <!-- VIEW 1: The dashboard-style initial screen -->
     <div class="view" id="initial-view">
         <div id="dashboard-prompt">
             <div id="time-display">--:--</div>
@@ -367,7 +389,14 @@
 
     <!-- VIEW 2: The text input screen -->
     <div class="view" id="input-view">
-        <input id="text-search-input" type="text" placeholder="Enter Vehicle Number">
+        <div class="input-header">
+            <div id="input-time" class="time">--:--</div>
+            <div id="input-weather" class="weather">
+                <span>--</span>
+                <span>--°</span>
+            </div>
+        </div>
+        <input id="text-search-input" type="text" placeholder="Vehicle Number">
         <button id="cancel-search-btn">Cancel</button>
     </div>
 
@@ -402,10 +431,17 @@
     const statusBar = document.getElementById('status-bar');
     const textSearchInput = document.getElementById('text-search-input');
     const cancelSearchBtn = document.getElementById('cancel-search-btn');
+    
+    // Dashboard display elements
     const timeDisplay = document.getElementById('time-display');
     const weatherIcon = document.getElementById('weather-icon');
     const weatherTemp = document.getElementById('weather-temp');
     const locationDisplay = document.getElementById('location-display');
+
+    // Input view header elements
+    const inputTime = document.getElementById('input-time');
+    const inputWeather = document.getElementById('input-weather');
+
 
     // --- Firebase Initialization ---
     try {
@@ -446,6 +482,12 @@
         resultView.style.display = 'none';
         initialView.style.display = 'none';
         inputView.style.display = 'flex';
+        
+        // Populate header with current info
+        inputTime.textContent = timeDisplay.textContent;
+        inputWeather.children[0].textContent = weatherIcon.textContent;
+        inputWeather.children[1].textContent = weatherTemp.textContent;
+
         textSearchInput.value = '';
         textSearchInput.focus();
     }
@@ -458,7 +500,6 @@
 
     // --- Dashboard Logic ---
     function updateDashboard() {
-        // Update time every second
         setInterval(() => {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -466,11 +507,10 @@
             timeDisplay.textContent = `${hours}:${minutes}`;
         }, 1000);
 
-        // --- Weather and Location Simulation ---
         const simulatedWeatherData = {
             location: "Singapore",
             temp: "29",
-            icon: "☁️" // Cloudy emoji
+            icon: "☁️"
         };
 
         weatherIcon.textContent = simulatedWeatherData.icon;
