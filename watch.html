@@ -3,39 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Watch Vehicle Search</title>
+    <title>Vehicle Clearance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* * ==============================================
-         * AESTHETIC & THEME DEFINITION (DARK MODE)
-         * ==============================================
-        */
         :root {
-            --bg-primary: #0D0D12; 
-            --bg-secondary: #1A1A21; 
-            --bg-glass: rgba(26, 26, 33, 0.6); 
-            --glass-border: rgba(255, 255, 255, 0.1); 
-            --text-primary: #F0F0F5; 
-            --text-secondary: #A0A0B0; 
-            --text-muted: #606070; 
-            --accent-blue: #0A84FF; 
-            --accent-blue-glow: rgba(10, 132, 255, 0.4);
-            --accent-orange: #FF9F0A;
+            --bg-primary: #000000;
+            --bg-secondary: #1C1C1E;
+            --bg-tertiary: #2C2C2E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #EBEBF599;
+            --accent-blue: #0A84FF;
             --accent-yellow: #FFD60A;
-            --success-green: #30D158; 
-            --success-green-glow: rgba(48, 209, 88, 0.4);
-            --error-red: #FF453A; 
-            --error-red-glow: rgba(255, 69, 58, 0.4);
-            --shadow-light: rgba(255, 255, 255, 0.1);
-            --shadow-dark: rgba(0, 0, 0, 0.5);
+            --success-green: #30D158;
+            --error-red: #FF453A;
         }
 
-        /* * ==============================================
-         * BASE & LAYOUT STYLES
-         * ==============================================
-        */
         body, html {
             background-color: var(--bg-primary);
             color: var(--text-primary);
@@ -47,177 +31,122 @@
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-
-        .background-stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(1px 1px at 20% 30%, #FFFFFF, transparent),
-                radial-gradient(1px 1px at 80% 70%, #FFFFFF, transparent),
-                radial-gradient(1px 1px at 50% 50%, #CCCCCC, transparent),
-                radial-gradient(2px 2px at 90% 10%, #FFFFFF, transparent),
-                radial-gradient(2px 2px at 10% 90%, #CCCCCC, transparent);
-            background-size: 100% 100%;
-            animation: move-stars 120s linear infinite;
-            z-index: -1;
+            -webkit-font-smoothing: antialiased;
         }
 
         .app-container {
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            max-width: 400px;
-            max-height: 400px;
-        }
-
-        /* * ==============================================
-         * VIEW STATES & TRANSITIONS
-         * ==============================================
-        */
-        .view {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-            animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             width: 100%;
             height: 100%;
+            position: relative;
+        }
+        
+        .view {
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            box-sizing: border-box;
             position: absolute;
             top: 0;
             left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.95);
+            transition: opacity 0.4s ease, visibility 0.4s ease, transform 0.4s ease;
         }
-        
-        #result-view, #input-view {
-            display: none;
+
+        .view.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
         }
 
         /* * ==============================================
-         * NEW: STABLE & REFINED DASHBOARD DESIGN
+         * SEARCH-FOCUSED DASHBOARD
          * ==============================================
         */
-        #dashboard-prompt {
-            width: 280px;
-            height: 280px;
-            border-radius: 50%;
-            position: relative;
-            cursor: pointer;
-            background: radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary));
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
-            transition: transform 0.3s ease;
-        }
-        #dashboard-prompt:active {
-            transform: scale(0.96);
+        #dashboard-view {
+            justify-content: space-between;
+            padding: 24px 16px;
         }
 
-        .dashboard-content {
-            position: absolute;
+        .info-header {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .info-panel {
+            flex: 1;
+            background-color: var(--bg-secondary);
+            border-radius: 18px;
+            padding: 10px;
             text-align: center;
-            left: 50%;
-            transform: translateX(-50%);
+        }
+        .info-panel .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .info-panel .value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        #weather-display .value {
+             color: var(--accent-yellow);
         }
 
-        #time-display {
-            top: 60px;
-            font-size: 48px;
-            font-weight: 700;
-            line-height: 1;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
-        }
-        #weather-display {
-            top: 115px;
+        #search-prompt {
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 18px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: flex-start;
+            gap: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            padding: 14px;
+            color: var(--text-secondary);
         }
-        #weather-icon { font-size: 20px; }
-        #weather-temp { 
-            font-size: 20px; 
+        #search-prompt:active {
+            background-color: var(--bg-tertiary);
+        }
+        #search-prompt svg {
+            width: 22px;
+            height: 22px;
+        }
+        #search-prompt .label {
+            font-size: 18px;
             font-weight: 500;
-            color: var(--accent-yellow);
-        }
-        #location-display {
-            bottom: 60px;
-            font-size: 16px;
-            font-weight: 500;
-            color: #B0B0C0;
-            letter-spacing: 0.5px;
-        }
-        .search-action-text {
-            bottom: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         #status-bar {
+            font-size: 13px;
             color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
-            position: absolute;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
             text-align: center;
-            padding: 8px 16px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid var(--glass-border);
+            opacity: 0.8;
         }
-
+        
         /* * ==============================================
-         * TEXT INPUT VIEW WITH HEADER
+         * INPUT VIEW (WORKFLOW RESTORED)
          * ==============================================
         */
         #input-view {
-            justify-content: flex-start;
-            padding-top: 40px;
             gap: 20px;
-        }
-        .input-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .input-header .time {
-            font-size: 32px;
-            font-weight: 700;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .input-header .weather {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--accent-yellow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
         #text-search-input {
             width: 100%;
             background-color: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
+            border: 1px solid #3A3A3C;
             color: var(--text-primary);
-            font-size: 18px;
+            font-size: 24px;
             padding: 16px;
             border-radius: 16px;
             text-align: center;
@@ -227,161 +156,120 @@
             outline: none;
             border-color: var(--accent-blue);
         }
-        #cancel-search-btn {
-            background: var(--bg-secondary);
+        .button-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+        .input-button {
+            flex-grow: 1;
             border: none;
-            color: var(--text-primary);
-            padding: 10px 20px;
-            border-radius: 12px;
+            padding: 14px;
+            border-radius: 16px;
             font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
+        }
+        #submit-search-btn {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+        #cancel-search-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
         }
 
         /* * ==============================================
-         * UNIFIED STATUS PANEL FOR RESULTS
+         * RESULT VIEW
          * ==============================================
         */
-        .status-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: calc(100% - 40px);
-            max-width: 320px;
-            padding: 24px;
-            box-sizing: border-box;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px 0 var(--shadow-dark);
-            text-align: center;
-            transition: border-color 0.5s ease;
-        }
-        .status-panel.cleared {
-            border-color: var(--success-green);
-            box-shadow: 0 0 40px var(--success-green-glow), 0 8px 32px 0 var(--shadow-dark);
-        }
-        .status-panel.not-found {
-            border-color: var(--error-red);
-            box-shadow: 0 0 40px var(--error-red-glow), 0 8px 32px 0 var(--shadow-dark);
-        }
-        .vehicle-number {
-            font-size: 36px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            margin-bottom: 16px;
-            line-height: 1.1;
-        }
-        .status-badge {
-            font-size: 14px;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 16px;
-            margin-bottom: 24px;
-            color: #fff;
-        }
-        .status-badge.cleared { background-color: var(--success-green); }
-        .status-badge.not-found { background-color: var(--error-red); }
-        .location-info {
-            width: 100%;
-            border-top: 1px solid var(--glass-border);
-            padding-top: 16px;
-            display: flex;
-            align-items: center;
+        #result-view {
             gap: 16px;
         }
-        .location-details {
-            text-align: left;
-            flex-grow: 1;
+        .result-card {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 20px;
+            text-align: center;
         }
-        .location-title {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-secondary);
+        .result-card.cleared {
+            background-color: var(--success-green);
+        }
+        .result-card.denied {
+            background-color: var(--error-red);
+        }
+        .result-status {
+            font-size: 24px;
+            font-weight: 700;
+            color: black;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 6px;
+            letter-spacing: 1px;
         }
-        .location-text {
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--text-primary);
-            word-break: break-word;
+        .result-vehicle-number {
+            font-size: 36px;
+            font-weight: 800;
+            color: white;
+            margin: 8px 0;
+            word-break: break-all;
+        }
+        .result-location {
+            font-size: 18px;
+            font-weight: 500;
+            color: rgba(0,0,0,0.7);
         }
         #new-search-btn {
-            background: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
+            width: 100%;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-        }
-        #new-search-btn:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-        }
-        #new-search-btn svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* * ==============================================
-         * ANIMATIONS
-         * ==============================================
-        */
-        @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes move-stars {
-            from { background-position: 0 0; }
-            to { background-position: -10000px 5000px; }
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: none;
         }
     </style>
 </head>
 <body>
 
-<div class="background-stars"></div>
-
 <div class="app-container">
-    <!-- VIEW 1: The dashboard-style initial screen -->
-    <div class="view" id="initial-view">
-        <div id="dashboard-prompt">
-            <div id="time-display" class="dashboard-content">--:--</div>
-            <div id="weather-display" class="dashboard-content">
-                <span id="weather-icon">--</span>
-                <span id="weather-temp">--°</span>
+
+    <!-- VIEW 1: SEARCH DASHBOARD -->
+    <div class="view active" id="dashboard-view">
+        <div class="info-header">
+            <div id="weather-display" class="info-panel">
+                <div class="label">Weather</div>
+                <div class="value">--° --</div>
             </div>
-            <div id="location-display" class="dashboard-content">Loading...</div>
-            <div class="search-action-text dashboard-content">Tap to Search</div>
+            <div id="location-display" class="info-panel">
+                <div class="label">Location</div>
+                <div class="value">...</div>
+            </div>
         </div>
+        
+        <button id="search-prompt">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a7.952 7.952 0 0 0 4.897-1.688l4.396 4.396 1.414-1.414-4.396-4.396A7.952 7.952 0 0 0 18 10c0-4.411-3.589-8-8-8s-8 3.589-8 8 3.589 8 8 8zm0-14c3.309 0 6 2.691 6 6s-2.691 6-6 6-6-2.691-6-6 2.691-6 6-6z"></path></svg>
+            <span class="label">Search Vehicle...</span>
+        </button>
+
         <div id="status-bar">Connecting...</div>
     </div>
-
-    <!-- VIEW 2: The text input screen -->
+    
+    <!-- VIEW 2: INPUT (FOR NATIVE WATCH UI) -->
     <div class="view" id="input-view">
-        <div class="input-header">
-            <div id="input-time" class="time">--:--</div>
-            <div id="input-weather" class="weather">
-                <span>--</span>
-                <span>--°</span>
-            </div>
+        <input id="text-search-input" type="text" placeholder="Vehicle No.">
+        <div class="button-group">
+            <button id="cancel-search-btn" class="input-button">Cancel</button>
+            <button id="submit-search-btn" class="input-button">Submit</button>
         </div>
-        <input id="text-search-input" type="text" placeholder="Vehicle Number">
-        <button id="cancel-search-btn">Cancel</button>
     </div>
 
-    <!-- VIEW 3: The results screen -->
+    <!-- VIEW 3: RESULT -->
     <div class="view" id="result-view">
-        <!-- Dynamic content will be injected here -->
+        <!-- Dynamic content here -->
     </div>
+
 </div>
 
 <script type="module">
@@ -401,182 +289,121 @@
     let db;
     let allRows = [];
     
-    // DOM element references
-    const initialView = document.getElementById('initial-view');
-    const inputView = document.getElementById('input-view');
-    const resultView = document.getElementById('result-view');
-    const dashboardPrompt = document.getElementById('dashboard-prompt');
+    // DOM Elements
+    const views = document.querySelectorAll('.view');
     const statusBar = document.getElementById('status-bar');
+    const weatherDisplayValue = document.querySelector('#weather-display .value');
+    const locationDisplayValue = document.querySelector('#location-display .value');
+    const searchPrompt = document.getElementById('search-prompt');
+    const resultView = document.getElementById('result-view');
     const textSearchInput = document.getElementById('text-search-input');
     const cancelSearchBtn = document.getElementById('cancel-search-btn');
-    
-    // Dashboard display elements
-    const timeDisplay = document.getElementById('time-display');
-    const weatherIcon = document.getElementById('weather-icon');
-    const weatherTemp = document.getElementById('weather-temp');
-    const locationDisplay = document.getElementById('location-display');
-
-    // Input view header elements
-    const inputTime = document.getElementById('input-time');
-    const inputWeather = document.getElementById('input-weather');
-
+    const submitSearchBtn = document.getElementById('submit-search-btn');
 
     // --- Firebase Initialization ---
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         db = getFirestore(app);
-
         onAuthStateChanged(auth, user => {
             if (user) {
                 const listingsCollection = collection(db, 'vehicleListings');
                 onSnapshot(listingsCollection, (snapshot) => {
                     allRows = snapshot.docs.map(doc => doc.data());
                     statusBar.textContent = `Ready (${allRows.length} vehicles)`;
-                }, (error) => { 
-                    console.error("Firestore sync error:", error);
-                    statusBar.textContent = 'Sync Error.'; 
-                });
+                }, () => { statusBar.textContent = 'Sync Error'; });
             } else {
-                signInAnonymously(auth).catch((error) => { 
-                    console.error("Anonymous auth error:", error);
-                    statusBar.textContent = 'Auth Error.'; 
-                });
+                signInAnonymously(auth).catch(() => { statusBar.textContent = 'Auth Error'; });
             }
         });
     } catch (err) {
-        console.error("Firebase init error:", err);
-        statusBar.textContent = 'Connection Failed.';
+        statusBar.textContent = 'Connection Failed';
     }
 
-    // --- UI View Management ---
-    function showInitialView() {
-        resultView.style.display = 'none';
-        inputView.style.display = 'none';
-        initialView.style.display = 'flex';
+    // --- View Management ---
+    function switchView(viewId) {
+        views.forEach(view => view.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
     }
 
-    function showInputView() {
-        resultView.style.display = 'none';
-        initialView.style.display = 'none';
-        inputView.style.display = 'flex';
-        textSearchInput.value = '';
-        textSearchInput.focus();
-    }
-
-    function showResultView() {
-        initialView.style.display = 'none';
-        inputView.style.display = 'none';
-        resultView.style.display = 'flex';
-    }
-
-    // --- Dashboard & Header Logic ---
-    function updateTime() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const currentTime = `${hours}:${minutes}`;
-        
-        timeDisplay.textContent = currentTime;
-        inputTime.textContent = currentTime;
-    }
-
-    function updateDashboardAndHeader() {
-        updateTime();
-        setInterval(updateTime, 1000);
-
+    // --- Dashboard Logic ---
+    function updateDashboard() {
         const simulatedWeatherData = {
             location: "Singapore",
             temp: "29",
             icon: "☁️"
         };
-
-        weatherIcon.textContent = simulatedWeatherData.icon;
-        weatherTemp.textContent = `${simulatedWeatherData.temp}°`;
-        locationDisplay.textContent = simulatedWeatherData.location;
-
-        inputWeather.children[0].textContent = simulatedWeatherData.icon;
-        inputWeather.children[1].textContent = `${simulatedWeatherData.temp}°`;
+        weatherDisplayValue.textContent = `${simulatedWeatherData.temp}° ${simulatedWeatherData.icon}`;
+        locationDisplayValue.textContent = simulatedWeatherData.location;
     }
 
-    // --- Event Listeners ---
-    dashboardPrompt.addEventListener('click', showInputView);
-    cancelSearchBtn.addEventListener('click', showInitialView);
-
-    textSearchInput.addEventListener('change', () => {
-        const term = textSearchInput.value.trim().toUpperCase();
-        if (term.length > 0) {
-            performSearch(term);
-        }
-    });
-
-    // --- Core Logic ---
+    // --- Core Search & UI Flow ---
     function performSearch(term) {
         const numericTerm = term.replace(/\D/g, '');
-        if (numericTerm.length === 0) return;
+        if (numericTerm.length === 0) {
+            renderResult(null, term);
+            switchView('result-view');
+            return;
+        }
 
         const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
         
         renderResult(result, term);
-        showResultView();
+        switchView('result-view');
     }
 
     function renderResult(result, term) {
-        let panelClass = '';
-        let vehicleNumberHTML = '';
-        let statusBadgeHTML = '';
-        let locationHTML = '';
-
-        const searchIconSVG = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-            </svg>
-        `;
-
+        let resultHTML = '';
         if (result) {
-            panelClass = 'cleared';
-            vehicleNumberHTML = `<div class="vehicle-number">${result.vehicleNumber}</div>`;
-            statusBadgeHTML = `<div class="status-badge cleared">✓ CLEARED</div>`;
-            locationHTML = `
-                <div class="location-info">
-                    <button id="new-search-btn">${searchIconSVG}</button>
-                    <div class="location-details">
-                        <div class="location-title">LOCATION</div>
-                        <div class="location-text">${result.location || 'N/A'}</div>
-                    </div>
+            resultHTML = `
+                <div class="result-card cleared">
+                    <div class="result-status">Cleared</div>
+                    <div class="result-vehicle-number">${result.vehicleNumber}</div>
+                    <div class="result-location">${result.location || 'N/A'}</div>
                 </div>
             `;
         } else {
-            panelClass = 'not-found';
-            vehicleNumberHTML = `<div class="vehicle-number">${term}</div>`;
-            statusBadgeHTML = `<div class="status-badge not-found">✗ NOT FOUND</div>`;
-            locationHTML = `
-                <div class="location-info">
-                    <button id="new-search-btn">${searchIconSVG}</button>
-                    <div class="location-details">
-                        <div class="location-title">STATUS</div>
-                        <div class="location-text">Denied</div>
-                    </div>
+            resultHTML = `
+                <div class="result-card denied">
+                    <div class="result-status">Denied</div>
+                    <div class="result-vehicle-number">${term}</div>
+                    <div class="result-location">-</div>
                 </div>
             `;
         }
-
-        const resultHTML = `
-            <div class="status-panel ${panelClass}">
-                ${vehicleNumberHTML}
-                ${statusBadgeHTML}
-                ${locationHTML}
-            </div>
-        `;
         
-        resultView.innerHTML = resultHTML;
+        resultView.innerHTML = resultHTML + `<button id="new-search-btn">New Search</button>`;
         
-        document.getElementById('new-search-btn').addEventListener('click', showInputView);
+        document.getElementById('new-search-btn').addEventListener('click', () => {
+             textSearchInput.value = '';
+             switchView('input-view');
+             // Focusing the input is what triggers the native watch UI
+             setTimeout(() => textSearchInput.focus(), 50);
+        });
     }
     
-    // Initialize the dashboard and header data on page load
-    updateDashboardAndHeader();
+    // --- Event Listeners ---
+    searchPrompt.addEventListener('click', () => {
+        textSearchInput.value = '';
+        switchView('input-view');
+        // Focusing the input is what triggers the native watch UI
+        setTimeout(() => textSearchInput.focus(), 50);
+    });
+
+    cancelSearchBtn.addEventListener('click', () => switchView('dashboard-view'));
+
+    const handleSubmit = () => {
+        const term = textSearchInput.value.trim().toUpperCase();
+        if (term.length > 0) {
+            performSearch(term);
+        }
+    };
+
+    submitSearchBtn.addEventListener('click', handleSubmit);
+    textSearchInput.addEventListener('change', handleSubmit);
+
+    // Initialize
+    updateDashboard();
 
 </script>
 
