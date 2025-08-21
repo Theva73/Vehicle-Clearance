@@ -97,7 +97,6 @@
         
         #result-view {
             display: none;
-            gap: 24px; /* Increased gap between card and button */
         }
 
         /* * ==============================================
@@ -175,7 +174,7 @@
         }
 
         /* * ==============================================
-         * NEW: UNIFIED STATUS PANEL FOR RESULTS
+         * UNIFIED STATUS PANEL FOR RESULTS
          * ==============================================
         */
         .status-panel {
@@ -225,10 +224,21 @@
         .status-badge.cleared { background-color: var(--success-green); }
         .status-badge.not-found { background-color: var(--error-red); }
 
+        /* * ==============================================
+         * NEW: LOCATION SECTION WITH INTEGRATED BUTTON
+         * ==============================================
+        */
         .location-info {
             width: 100%;
             border-top: 1px solid var(--glass-border);
             padding-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px; /* Space between icon and text block */
+        }
+
+        .location-details {
+            text-align: left; /* Align text to the left */
         }
         
         .location-title {
@@ -246,28 +256,31 @@
             color: var(--text-primary);
         }
         
-        /* * ==============================================
-         * NEW: SMALLER, SUBTLE SEARCH BUTTON
-         * ==============================================
-        */
+        /* NEW: Styling for the icon button */
         #new-search-btn {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 16px;
-            font-weight: 500;
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
             cursor: pointer;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 12px;
-            transition: color 0.2s ease, background-color 0.2s ease;
+            justify-content: center;
+            padding: 0;
+            flex-shrink: 0; /* Prevent the button from shrinking */
+            transition: all 0.2s ease;
         }
 
         #new-search-btn:hover {
-            color: var(--text-primary);
-            background-color: var(--bg-secondary);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        #new-search-btn svg {
+            width: 20px;
+            height: 20px;
         }
 
         /* Hidden input field */
@@ -408,14 +421,22 @@
     }
 
     /**
-     * Renders the result inside the new unified status panel.
-     * This function now builds a single card instead of multiple components.
+     * Renders the result inside the unified status panel.
+     * The "New Search" button is now an icon integrated into the location section.
      */
     function renderResult(result, term) {
         let panelClass = '';
         let vehicleNumberHTML = '';
         let statusBadgeHTML = '';
         let locationHTML = '';
+
+        // SVG icon for the new search button
+        const searchIconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg>
+        `;
 
         if (result) {
             // A vehicle was found
@@ -424,8 +445,11 @@
             statusBadgeHTML = `<div class="status-badge cleared">✓ CLEARED</div>`;
             locationHTML = `
                 <div class="location-info">
-                    <div class="location-title">LOCATION</div>
-                    <div class="location-text">${result.location || 'N/A'}</div>
+                    <button id="new-search-btn">${searchIconSVG}</button>
+                    <div class="location-details">
+                        <div class="location-title">LOCATION</div>
+                        <div class="location-text">${result.location || 'N/A'}</div>
+                    </div>
                 </div>
             `;
         } else {
@@ -435,8 +459,11 @@
             statusBadgeHTML = `<div class="status-badge not-found">✗ NOT FOUND</div>`;
             locationHTML = `
                 <div class="location-info">
-                    <div class="location-title">STATUS</div>
-                    <div class="location-text">Vehicle not on list.</div>
+                    <button id="new-search-btn">${searchIconSVG}</button>
+                    <div class="location-details">
+                        <div class="location-title">STATUS</div>
+                        <div class="location-text">Vehicle not on list.</div>
+                    </div>
                 </div>
             `;
         }
@@ -448,13 +475,6 @@
                 ${statusBadgeHTML}
                 ${locationHTML}
             </div>
-            <button id="new-search-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                </svg>
-                New Search
-            </button>
         `;
         
         resultView.innerHTML = resultHTML;
