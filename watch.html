@@ -1,584 +1,330 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Watch Vehicle Search</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        /* * ==============================================
-         * AESTHETIC & THEME DEFINITION (DARK MODE)
-         * ==============================================
-        */
-        :root {
-            --bg-primary: #0D0D12; 
-            --bg-secondary: #1A1A21; 
-            --bg-glass: rgba(26, 26, 33, 0.6); 
-            --glass-border: rgba(255, 255, 255, 0.1); 
-            --text-primary: #F0F0F5; 
-            --text-secondary: #A0A0B0; 
-            --text-muted: #606070; 
-            --accent-blue: #0A84FF; 
-            --accent-blue-glow: rgba(10, 132, 255, 0.4);
-            --accent-orange: #FF9F0A;
-            --accent-yellow: #FFD60A;
-            --success-green: #30D158; 
-            --success-green-glow: rgba(48, 209, 88, 0.4);
-            --error-red: #FF453A; 
-            --error-red-glow: rgba(255, 69, 58, 0.4);
-            --shadow-light: rgba(255, 255, 255, 0.1);
-            --shadow-dark: rgba(0, 0, 0, 0.5);
-        }
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
+  />
+  <title>Watch Vehicle Search — Ultra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg-primary:#0D0D12; --bg-secondary:#1A1A21; --bg-glass:rgba(26,26,33,.6);
+      --glass-border:rgba(255,255,255,.09); --text-primary:#F0F0F5; --text-secondary:#A0A0B0;
+      --accent-blue:#0A84FF; --accent-yellow:#FFD60A; --accent-orange:#FF9F0A;
+      --success:#30D158; --danger:#FF453A; --shadow:rgba(0,0,0,.45);
+      --tap:56px; /* Apple HIG min 44pt; larger for comfort on watch */
+      --radius-xl:28px; --radius-lg:22px; --radius-md:16px;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;width:100%;margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden}
+    .safe{
+      position:fixed; inset:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .watch-stage{
+      width:100%; height:100%;
+      max-width:520px; max-height:520px; /* fits Ultra, scales down for others */
+      margin:auto; position:relative; overflow:hidden;
+      border-radius:calc(var(--radius-xl) + 6px);
+    }
+    .stars{position:absolute; inset:0; z-index:0;
+      background-image:
+        radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+        radial-gradient(1px 1px at 80% 70%, #fff, transparent),
+        radial-gradient(2px 2px at 90% 12%, #fff, transparent);
+      animation:stars 120s linear infinite; opacity:.25;
+    }
+    @keyframes stars{from{background-position:0 0}to{background-position:-10000px 5000px}}
+    .view{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px}
+    .hidden{display:none !important}
 
-        /* * ==============================================
-         * BASE & LAYOUT STYLES
-         * ==============================================
-        */
-        body, html {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            margin: 0;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    /* Dashboard */
+    .prompt{
+      width:min(86vmin, 360px); height:min(86vmin, 360px); border-radius:50%;
+      background:radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary));
+      border:1px solid var(--glass-border);
+      box-shadow:0 10px 40px var(--shadow), inset 0 2px 4px rgba(255,255,255,.08);
+      position:relative; display:flex; align-items:center; justify-content:center;
+      transition:transform .2s ease;
+    }
+    .prompt:active{transform:scale(.97)}
+    .clock{position:absolute; top:18%; font-size:min(11vmin,48px); font-weight:800;
+      background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .wx{position:absolute; top:38%; display:flex; gap:6px; align-items:center; font-weight:600; font-size:min(4.8vmin,18px); color:var(--accent-yellow)}
+    .loc{position:absolute; bottom:26%; font-size:min(4.6vmin,16px); color:#B0B0C0; letter-spacing:.4px}
+    .tap{position:absolute; bottom:10%; font-size:min(4.2vmin,14px); color:var(--accent-blue); font-weight:700; text-transform:uppercase; letter-spacing:1px}
 
-        .background-stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(1px 1px at 20% 30%, #FFFFFF, transparent),
-                radial-gradient(1px 1px at 80% 70%, #FFFFFF, transparent),
-                radial-gradient(1px 1px at 50% 50%, #CCCCCC, transparent),
-                radial-gradient(2px 2px at 90% 10%, #FFFFFF, transparent),
-                radial-gradient(2px 2px at 10% 90%, #CCCCCC, transparent);
-            background-size: 100% 100%;
-            animation: move-stars 120s linear infinite;
-            z-index: -1;
-        }
+    .status{position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:13px; color:var(--text-secondary);
+      padding:8px 14px; border-radius:14px; background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(10px)
+    }
 
-        .app-container {
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            max-width: 400px;
-            max-height: 400px;
-        }
+    /* Input keypad view */
+    .input-wrap{width:100%; max-width:360px; display:flex; flex-direction:column; gap:14px}
+    .headerRow{display:flex; align-items:center; justify-content:space-between}
+    .headerClock{font-weight:800; font-size:28px; background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .pill{padding:8px 12px; border-radius:999px; background:var(--bg-glass); border:1px solid var(--glass-border); font-size:14px; color:var(--accent-yellow)}
+    .fakeInput{
+      width:100%; height:56px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center;
+      font-size:22px; letter-spacing:2px; background:var(--bg-secondary); border:1px solid var(--glass-border);
+    }
+    .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+    .key{
+      height:var(--tap); border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px;
+      background:linear-gradient(180deg, #22232b, #181920); border:1px solid var(--glass-border);
+      box-shadow:0 2px 8px var(--shadow); user-select:none; cursor:pointer
+    }
+    .key:active{transform:scale(.98)}
+    .key--go{background:#1d2b3f; border-color:#2b4975; color:#cfe1ff}
+    .key--back{background:#291a1b; border-color:#54232a; color:#ffd0d3}
+    .actions{display:flex; gap:10px}
+    .btn{
+      flex:1; height:46px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; cursor:pointer;
+      background:var(--bg-secondary); border:1px solid var(--glass-border)
+    }
+    .btn--cancel{opacity:.9}
+    .btn:active{transform:scale(.98)}
 
-        /* * ==============================================
-         * VIEW STATES & TRANSITIONS
-         * ==============================================
-        */
-        .view {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-            animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        
-        #result-view, #input-view {
-            display: none;
-        }
-
-        /* * ==============================================
-         * NEW: STABLE & REFINED DASHBOARD DESIGN
-         * ==============================================
-        */
-        #dashboard-prompt {
-            width: 280px;
-            height: 280px;
-            border-radius: 50%;
-            position: relative;
-            cursor: pointer;
-            background: radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary));
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
-            transition: transform 0.3s ease;
-        }
-        #dashboard-prompt:active {
-            transform: scale(0.96);
-        }
-
-        .dashboard-content {
-            position: absolute;
-            text-align: center;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        #time-display {
-            top: 60px;
-            font-size: 48px;
-            font-weight: 700;
-            line-height: 1;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
-        }
-        #weather-display {
-            top: 115px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        #weather-icon { font-size: 20px; }
-        #weather-temp { 
-            font-size: 20px; 
-            font-weight: 500;
-            color: var(--accent-yellow);
-        }
-        #location-display {
-            bottom: 60px;
-            font-size: 16px;
-            font-weight: 500;
-            color: #B0B0C0;
-            letter-spacing: 0.5px;
-        }
-        .search-action-text {
-            bottom: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        #status-bar {
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
-            position: absolute;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            padding: 8px 16px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid var(--glass-border);
-        }
-
-        /* * ==============================================
-         * TEXT INPUT VIEW WITH HEADER
-         * ==============================================
-        */
-        #input-view {
-            justify-content: flex-start;
-            padding-top: 40px;
-            gap: 20px;
-        }
-        .input-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .input-header .time {
-            font-size: 32px;
-            font-weight: 700;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .input-header .weather {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--accent-yellow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        #text-search-input {
-            width: 100%;
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            font-size: 18px;
-            padding: 16px;
-            border-radius: 16px;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        #text-search-input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-        }
-        #cancel-search-btn {
-            background: var(--bg-secondary);
-            border: none;
-            color: var(--text-primary);
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        /* * ==============================================
-         * UNIFIED STATUS PANEL FOR RESULTS
-         * ==============================================
-        */
-        .status-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: calc(100% - 40px);
-            max-width: 320px;
-            padding: 24px;
-            box-sizing: border-box;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px 0 var(--shadow-dark);
-            text-align: center;
-            transition: border-color 0.5s ease;
-        }
-        .status-panel.cleared {
-            border-color: var(--success-green);
-            box-shadow: 0 0 40px var(--success-green-glow), 0 8px 32px 0 var(--shadow-dark);
-        }
-        .status-panel.not-found {
-            border-color: var(--error-red);
-            box-shadow: 0 0 40px var(--error-red-glow), 0 8px 32px 0 var(--shadow-dark);
-        }
-        .vehicle-number {
-            font-size: 36px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            margin-bottom: 16px;
-            line-height: 1.1;
-        }
-        .status-badge {
-            font-size: 14px;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 16px;
-            margin-bottom: 24px;
-            color: #fff;
-        }
-        .status-badge.cleared { background-color: var(--success-green); }
-        .status-badge.not-found { background-color: var(--error-red); }
-        .location-info {
-            width: 100%;
-            border-top: 1px solid var(--glass-border);
-            padding-top: 16px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .location-details {
-            text-align: left;
-            flex-grow: 1;
-        }
-        .location-title {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 6px;
-        }
-        .location-text {
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--text-primary);
-            word-break: break-word;
-        }
-        #new-search-btn {
-            background: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            cursor: pointer;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-        }
-        #new-search-btn:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-        }
-        #new-search-btn svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* * ==============================================
-         * ANIMATIONS
-         * ==============================================
-        */
-        @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes move-stars {
-            from { background-position: 0 0; }
-            to { background-position: -10000px 5000px; }
-        }
-    </style>
+    /* Result view */
+    .panel{
+      width:calc(100% - 36px); max-width:360px; padding:22px; border-radius:var(--radius-lg);
+      background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(18px);
+      text-align:center; box-shadow:0 8px 28px var(--shadow)
+    }
+    .panel--ok{box-shadow:0 0 28px rgba(48,209,88,.35), 0 8px 28px var(--shadow); border-color:rgba(48,209,88,.6)}
+    .panel--bad{box-shadow:0 0 28px rgba(255,69,58,.35), 0 8px 28px var(--shadow); border-color:rgba(255,69,58,.6)}
+    .veh{font-size:34px; font-weight:800; letter-spacing:1.2px; margin-bottom:10px}
+    .badge{display:inline-block; padding:8px 14px; border-radius:999px; font-weight:800; font-size:13px; color:#fff; margin-bottom:18px}
+    .badge--ok{background:var(--success)} .badge--bad{background:var(--danger)}
+    .row{display:flex; gap:14px; align-items:center; border-top:1px solid var(--glass-border); padding-top:14px}
+    .rowTitle{font-size:11px; letter-spacing:1.2px; color:var(--text-secondary)}
+    .rowText{font-size:20px; font-weight:700}
+    .circle{width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid var(--glass-border)}
+    .circle svg{width:20px;height:20px}
+  </style>
 </head>
 <body>
+  <div class="safe">
+    <div class="watch-stage" id="stage">
+      <div class="stars"></div>
 
-<div class="background-stars"></div>
-
-<div class="app-container">
-    <!-- VIEW 1: The dashboard-style initial screen -->
-    <div class="view" id="initial-view">
-        <div id="dashboard-prompt">
-            <div id="time-display" class="dashboard-content">--:--</div>
-            <div id="weather-display" class="dashboard-content">
-                <span id="weather-icon">--</span>
-                <span id="weather-temp">--°</span>
-            </div>
-            <div id="location-display" class="dashboard-content">Loading...</div>
-            <div class="search-action-text dashboard-content">Tap to Search</div>
+      <!-- Initial (dashboard) -->
+      <section class="view" id="v-initial">
+        <div class="prompt" id="tapPrompt" role="button" aria-label="Tap to search">
+          <div class="clock" id="dashClock">--:--</div>
+          <div class="wx"><span id="wxIcon">☁️</span><span id="wxTemp">--°</span></div>
+          <div class="loc" id="wxLoc">Singapore</div>
+          <div class="tap">Tap to Search</div>
         </div>
-        <div id="status-bar">Connecting...</div>
-    </div>
+        <div class="status" id="status">Connecting…</div>
+      </section>
 
-    <!-- VIEW 2: The text input screen -->
-    <div class="view" id="input-view">
-        <div class="input-header">
-            <div id="input-time" class="time">--:--</div>
-            <div id="input-weather" class="weather">
-                <span>--</span>
-                <span>--°</span>
-            </div>
+      <!-- Input keypad -->
+      <section class="view hidden" id="v-input">
+        <div class="input-wrap">
+          <div class="headerRow">
+            <div class="headerClock" id="inpClock">--:--</div>
+            <div class="pill" id="inpWx">☁️ 29°</div>
+          </div>
+          <div class="fakeInput" id="buffer" aria-live="polite">•••</div>
+
+          <div class="keypad" id="pad">
+            <!-- 1..9 -->
+            <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+            <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+            <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+            <!-- back, 0, go -->
+            <div class="key key--back" data-act="back">⌫</div>
+            <div class="key">0</div>
+            <div class="key key--go" data-act="go">Go</div>
+          </div>
+
+          <div class="actions">
+            <div class="btn btn--cancel" id="cancel">Cancel</div>
+            <div class="btn" id="clear">Clear</div>
+          </div>
         </div>
-        <input id="text-search-input" type="text" placeholder="Vehicle Number">
-        <button id="cancel-search-btn">Cancel</button>
-    </div>
+      </section>
 
-    <!-- VIEW 3: The results screen -->
-    <div class="view" id="result-view">
-        <!-- Dynamic content will be injected here -->
+      <!-- Result -->
+      <section class="view hidden" id="v-result">
+        <div class="panel" id="panel"><!-- injected --></div>
+      </section>
     </div>
-</div>
+  </div>
 
-<script type="module">
+  <script type="module">
+    // Firebase (same config)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
-        authDomain: "vehicle-clearance.firebaseapp.com",
-        projectId: "vehicle-clearance",
-        storageBucket: "vehicle-clearance.appspot.com",
-        messagingSenderId: "187403368572",
-        appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
+      apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
+      authDomain: "vehicle-clearance.firebaseapp.com",
+      projectId: "vehicle-clearance",
+      storageBucket: "vehicle-clearance.appspot.com",
+      messagingSenderId: "187403368572",
+      appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    let db;
-    let allRows = [];
-    
-    // DOM element references
-    const initialView = document.getElementById('initial-view');
-    const inputView = document.getElementById('input-view');
-    const resultView = document.getElementById('result-view');
-    const dashboardPrompt = document.getElementById('dashboard-prompt');
-    const statusBar = document.getElementById('status-bar');
-    const textSearchInput = document.getElementById('text-search-input');
-    const cancelSearchBtn = document.getElementById('cancel-search-btn');
-    
-    // Dashboard display elements
-    const timeDisplay = document.getElementById('time-display');
-    const weatherIcon = document.getElementById('weather-icon');
-    const weatherTemp = document.getElementById('weather-temp');
-    const locationDisplay = document.getElementById('location-display');
+    // State
+    let db, allRows = [];
+    let buf = ""; // numeric buffer
 
-    // Input view header elements
-    const inputTime = document.getElementById('input-time');
-    const inputWeather = document.getElementById('input-weather');
+    // Elements
+    const vInitial = document.getElementById('v-initial');
+    const vInput = document.getElementById('v-input');
+    const vResult = document.getElementById('v-result');
+    const tapPrompt = document.getElementById('tapPrompt');
+    const statusEl = document.getElementById('status');
+    const dashClock = document.getElementById('dashClock');
+    const inpClock = document.getElementById('inpClock');
+    const wxIcon = document.getElementById('wxIcon');
+    const wxTemp = document.getElementById('wxTemp');
+    const wxLoc  = document.getElementById('wxLoc');
+    const inpWx  = document.getElementById('inpWx');
+    const buffer = document.getElementById('buffer');
+    const pad = document.getElementById('pad');
+    const cancelBtn = document.getElementById('cancel');
+    const clearBtn = document.getElementById('clear');
+    const panel = document.getElementById('panel');
 
-
-    // --- Firebase Initialization ---
-    try {
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        db = getFirestore(app);
-
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                const listingsCollection = collection(db, 'vehicleListings');
-                onSnapshot(listingsCollection, (snapshot) => {
-                    allRows = snapshot.docs.map(doc => doc.data());
-                    statusBar.textContent = `Ready (${allRows.length} vehicles)`;
-                }, (error) => { 
-                    console.error("Firestore sync error:", error);
-                    statusBar.textContent = 'Sync Error.'; 
-                });
-            } else {
-                signInAnonymously(auth).catch((error) => { 
-                    console.error("Anonymous auth error:", error);
-                    statusBar.textContent = 'Auth Error.'; 
-                });
-            }
-        });
-    } catch (err) {
-        console.error("Firebase init error:", err);
-        statusBar.textContent = 'Connection Failed.';
+    // Time + Simulated Weather (fast + watch friendly)
+    function setClocks(){
+      const now = new Date();
+      const HH = String(now.getHours()).padStart(2,'0');
+      const MM = String(now.getMinutes()).padStart(2,'0');
+      dashClock.textContent = `${HH}:${MM}`;
+      inpClock.textContent = `${HH}:${MM}`;
     }
+    setClocks(); setInterval(setClocks, 1000);
 
-    // --- UI View Management ---
-    function showInitialView() {
-        resultView.style.display = 'none';
-        inputView.style.display = 'none';
-        initialView.style.display = 'flex';
-    }
+    const WX = { icon:"☁️", temp:"29°", loc:"Singapore" };
+    wxIcon.textContent = WX.icon; wxTemp.textContent = WX.temp; wxLoc.textContent = WX.loc; inpWx.textContent = `${WX.icon} ${WX.temp}`;
 
-    function showInputView() {
-        resultView.style.display = 'none';
-        initialView.style.display = 'none';
-        inputView.style.display = 'flex';
-        textSearchInput.value = '';
-        textSearchInput.focus();
-    }
+    // Firebase init + live data
+    try{
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      db = getFirestore(app);
 
-    function showResultView() {
-        initialView.style.display = 'none';
-        inputView.style.display = 'none';
-        resultView.style.display = 'flex';
-    }
-
-    // --- Dashboard & Header Logic ---
-    function updateTime() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const currentTime = `${hours}:${minutes}`;
-        
-        timeDisplay.textContent = currentTime;
-        inputTime.textContent = currentTime;
-    }
-
-    function updateDashboardAndHeader() {
-        updateTime();
-        setInterval(updateTime, 1000);
-
-        const simulatedWeatherData = {
-            location: "Singapore",
-            temp: "29",
-            icon: "☁️"
-        };
-
-        weatherIcon.textContent = simulatedWeatherData.icon;
-        weatherTemp.textContent = `${simulatedWeatherData.temp}°`;
-        locationDisplay.textContent = simulatedWeatherData.location;
-
-        inputWeather.children[0].textContent = simulatedWeatherData.icon;
-        inputWeather.children[1].textContent = `${simulatedWeatherData.temp}°`;
-    }
-
-    // --- Event Listeners ---
-    dashboardPrompt.addEventListener('click', showInputView);
-    cancelSearchBtn.addEventListener('click', showInitialView);
-
-    textSearchInput.addEventListener('change', () => {
-        const term = textSearchInput.value.trim().toUpperCase();
-        if (term.length > 0) {
-            performSearch(term);
+      onAuthStateChanged(auth, (user)=>{
+        if(user){
+          const listings = collection(db,'vehicleListings');
+          onSnapshot(listings, (snap)=>{
+            allRows = snap.docs.map(d=>d.data());
+            statusEl.textContent = `Ready (${allRows.length})`;
+          }, (err)=>{ console.error(err); statusEl.textContent = 'Sync Error'; });
+        }else{
+          signInAnonymously(auth).catch(e=>{ console.error(e); statusEl.textContent='Auth Error'; });
         }
+      });
+    }catch(e){ console.error(e); statusEl.textContent='Connection Failed'; }
+
+    // View helpers
+    const show = (el)=>el.classList.remove('hidden');
+    const hide = (el)=>el.classList.add('hidden');
+
+    function toInput(){
+      hide(vInitial); hide(vResult); show(vInput);
+      haptic(5);
+    }
+    function toInitial(){
+      hide(vResult); hide(vInput); show(vInitial);
+      buf=""; renderBuf();
+    }
+    function toResult(){ hide(vInitial); hide(vInput); show(vResult); }
+
+    // Haptic-lite (may no-op on watchOS)
+    function haptic(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(_){} }
+
+    // Buffer display
+    function renderBuf(){
+      buffer.textContent = buf.length ? buf : "•••";
+    }
+
+    // Search (same logic: numeric-only startsWith)
+    function performSearch(term){
+      const numeric = term.replace(/\D/g,'');
+      if(!numeric) return;
+      const found = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g,'').startsWith(numeric));
+      renderResult(found, term);
+      toResult();
+    }
+
+    function renderResult(result, term){
+      const searchIcon = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+        </svg>`;
+
+      if(result){
+        panel.className = 'panel panel--ok';
+        panel.innerHTML = `
+          <div class="veh">${result.vehicleNumber}</div>
+          <div class="badge badge--ok">✓ CLEARED</div>
+          <div class="row">
+            <div class="circle" id="again">${searchIcon}</div>
+            <div>
+              <div class="rowTitle">LOCATION</div>
+              <div class="rowText">${result.location || 'N/A'}</div>
+            </div>
+          </div>
+        `;
+      }else{
+        panel.className = 'panel panel--bad';
+        panel.innerHTML = `
+          <div class="veh">${term}</div>
+          <div class="badge badge--bad">✗ NOT FOUND</div>
+          <div class="row">
+            <div class="circle" id="again">${searchIcon}</div>
+            <div>
+              <div class="rowTitle">STATUS</div>
+              <div class="rowText">Denied</div>
+            </div>
+          </div>
+        `;
+      }
+      document.getElementById('again').addEventListener('click', toInput);
+    }
+
+    // Event wiring
+    tapPrompt.addEventListener('click', toInput);
+    cancelBtn.addEventListener('click', toInitial);
+    clearBtn.addEventListener('click', ()=>{ buf=""; renderBuf(); haptic(8); });
+
+    pad.addEventListener('click', (e)=>{
+      const key = e.target.closest('.key'); if(!key) return;
+      haptic(8);
+      const act = key.dataset.act;
+      if(act === 'back'){ buf = buf.slice(0,-1); renderBuf(); return; }
+      if(act === 'go'){ if(buf.length>0) performSearch(buf); return; }
+      const v = key.textContent.trim();
+      if(/^\d$/.test(v)){
+        buf = (buf + v).slice(0,10); // limit length
+        renderBuf();
+        if(buf.length >= 3){ // auto search after a few digits for speed
+          performSearch(buf);
+        }
+      }
     });
 
-    // --- Core Logic ---
-    function performSearch(term) {
-        const numericTerm = term.replace(/\D/g, '');
-        if (numericTerm.length === 0) return;
-
-        const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
-        
-        renderResult(result, term);
-        showResultView();
+    // Resize guard: keep content comfortably inside rounded corners
+    function fitStage(){
+      const stage = document.getElementById('stage');
+      const w = stage.clientWidth, h = stage.clientHeight;
+      stage.style.padding = (Math.min(w,h) * 0.02) + "px";
     }
-
-    function renderResult(result, term) {
-        let panelClass = '';
-        let vehicleNumberHTML = '';
-        let statusBadgeHTML = '';
-        let locationHTML = '';
-
-        const searchIconSVG = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-            </svg>
-        `;
-
-        if (result) {
-            panelClass = 'cleared';
-            vehicleNumberHTML = `<div class="vehicle-number">${result.vehicleNumber}</div>`;
-            statusBadgeHTML = `<div class="status-badge cleared">✓ CLEARED</div>`;
-            locationHTML = `
-                <div class="location-info">
-                    <button id="new-search-btn">${searchIconSVG}</button>
-                    <div class="location-details">
-                        <div class="location-title">LOCATION</div>
-                        <div class="location-text">${result.location || 'N/A'}</div>
-                    </div>
-                </div>
-            `;
-        } else {
-            panelClass = 'not-found';
-            vehicleNumberHTML = `<div class="vehicle-number">${term}</div>`;
-            statusBadgeHTML = `<div class="status-badge not-found">✗ NOT FOUND</div>`;
-            locationHTML = `
-                <div class="location-info">
-                    <button id="new-search-btn">${searchIconSVG}</button>
-                    <div class="location-details">
-                        <div class="location-title">STATUS</div>
-                        <div class="location-text">Denied</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        const resultHTML = `
-            <div class="status-panel ${panelClass}">
-                ${vehicleNumberHTML}
-                ${statusBadgeHTML}
-                ${locationHTML}
-            </div>
-        `;
-        
-        resultView.innerHTML = resultHTML;
-        
-        document.getElementById('new-search-btn').addEventListener('click', showInputView);
-    }
-    
-    // Initialize the dashboard and header data on page load
-    updateDashboardAndHeader();
-
-</script>
-
+    window.addEventListener('resize', fitStage); fitStage();
+  </script>
 </body>
 </html>
