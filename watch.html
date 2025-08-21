@@ -61,7 +61,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 24px;
+        padding: 16px;
         box-sizing: border-box;
         animation: slide-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
         width: 100%;
@@ -73,8 +73,10 @@
     
     #result-view {
         display: none;
-        justify-content: space-evenly;
-        gap: 20px;
+        justify-content: flex-start;
+        gap: 12px;
+        padding-top: 10px;
+        overflow-y: auto;
     }
 
     /* --- Initial Search View --- */
@@ -156,13 +158,13 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 18px 24px;
-        border-radius: 20px;
+        padding: 14px 18px;
+        border-radius: 18px;
         position: relative;
-        width: calc(100% - 48px);
-        max-width: 320px;
+        width: calc(100% - 32px);
+        max-width: 300px;
         box-sizing: border-box;
-        min-height: 70px;
+        min-height: 60px;
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         overflow: hidden;
@@ -203,13 +205,13 @@
 
     .plate-text {
         font-family: 'SF Pro Display', monospace;
-        font-size: 28px;
+        font-size: 22px;
         font-weight: 800;
         color: var(--text-primary);
         flex: 1;
         text-align: left;
         line-height: 1;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
     }
 
     .plate-text.cleared {
@@ -226,9 +228,9 @@
     }
 
     .plate-status-badge {
-        padding: 8px 16px;
-        border-radius: 25px;
-        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 11px;
         font-weight: 700;
         flex-shrink: 0;
         white-space: nowrap;
@@ -266,16 +268,20 @@
             rgba(28, 28, 30, 0.8)
         );
         backdrop-filter: blur(20px);
-        border-radius: 20px;
-        padding: 20px;
+        border-radius: 18px;
+        padding: 16px;
         text-align: center;
-        width: calc(100% - 48px);
-        max-width: 320px;
+        width: calc(100% - 32px);
+        max-width: 300px;
         box-sizing: border-box;
         margin: 0;
         border: 1px solid rgba(255, 255, 255, 0.1);
         position: relative;
         overflow: hidden;
+        min-height: 70px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .location-card::before {
@@ -299,12 +305,14 @@
     }
 
     .location-text {
-        font-size: 24px;
+        font-size: 20px;
         font-weight: 700;
         color: var(--text-primary);
-        line-height: 1.2;
+        line-height: 1.1;
         word-wrap: break-word;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        overflow-wrap: break-word;
+        hyphens: auto;
     }
     
     /* --- Enhanced Button --- */
@@ -312,12 +320,12 @@
         border: none;
         background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
         color: white;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
-        padding: 18px 32px;
-        border-radius: 25px;
-        width: calc(100% - 48px);
-        max-width: 320px;
+        padding: 14px 24px;
+        border-radius: 20px;
+        width: calc(100% - 32px);
+        max-width: 300px;
         cursor: pointer;
         box-sizing: border-box;
         margin: 0;
@@ -327,6 +335,7 @@
         box-shadow: 
             0 8px 25px rgba(0, 122, 255, 0.3),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        min-height: 50px;
     }
 
     #new-search-btn::before {
@@ -394,29 +403,48 @@
     /* --- Responsive Design --- */
     @media (max-width: 396px) {
         .view {
-            padding: 20px;
+            padding: 14px;
         }
         .plate-text {
-            font-size: 24px;
+            font-size: 20px;
         }
         .location-text {
-            font-size: 22px;
+            font-size: 18px;
         }
         #new-search-btn {
-            font-size: 16px;
-            padding: 16px 28px;
+            font-size: 15px;
+            padding: 12px 20px;
         }
     }
 
     @media (max-height: 484px) {
         .view {
-            gap: 16px;
+            gap: 10px;
+            padding: 12px;
+        }
+        #result-view {
+            gap: 8px;
+            padding-top: 5px;
         }
         .search-icon {
             font-size: 46px;
         }
         #search-prompt .text {
             font-size: 22px;
+        }
+        .result-plate {
+            min-height: 55px;
+            padding: 12px 16px;
+        }
+        .location-card {
+            min-height: 60px;
+            padding: 14px;
+        }
+        .location-text {
+            font-size: 18px;
+        }
+        .plate-text {
+            font-size: 20px;
         }
     }
 </style>
