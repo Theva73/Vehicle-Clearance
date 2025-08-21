@@ -171,7 +171,8 @@
 
     <div class="header">
         <div class="search-wrapper">
-            <input id="search-input" type="text" placeholder="Search..." inputmode="numeric">
+            <!-- MODIFICATION: Removed inputmode="numeric" to get the standard keyboard -->
+            <input id="search-input" type="text" placeholder="Search...">
             <button id="clear-btn">×</button>
         </div>
     </div>
@@ -251,7 +252,14 @@
         });
 
         function applyFilter(term) {
-            const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(term));
+            // Since input is now text, we must strip non-numeric characters for the search
+            const numericTerm = term.replace(/\D/g, '');
+            if (numericTerm.length === 0) {
+                contentArea.innerHTML = '';
+                return;
+            }
+
+            const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
             
             contentArea.innerHTML = '';
             
@@ -259,7 +267,7 @@
                 renderResult(result);
                 body.className = 'cleared';
             } else {
-                renderResult(null, term);
+                renderResult(null, numericTerm);
                 body.className = 'not-found';
             }
         }
