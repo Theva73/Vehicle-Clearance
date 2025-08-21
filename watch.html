@@ -17,6 +17,7 @@
             --status-green: #34c759;
             --status-red: #ff3b30;
             --accent-blue: #0a84ff;
+            --gold: #ffd700;
         }
 
         body {
@@ -28,42 +29,25 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            transition: background-color 0.5s ease;
         }
-
-        /* --- Dynamic Background Glow --- */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at top, rgba(34, 197, 94, 0.15) 0%, rgba(0,0,0,0) 60%);
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            z-index: 0;
-        }
-        body.cleared::before { opacity: 1; }
-        body.not-found::before {
-            background: radial-gradient(circle at top, rgba(255, 59, 48, 0.2) 0%, rgba(0,0,0,0) 60%);
-            opacity: 1;
-        }
-
 
         /* --- Header & Search Bar --- */
         .header {
             flex-shrink: 0;
             padding: 12px;
-            background: linear-gradient(180deg, #111, #000);
+            background: #111;
             border-bottom: 1px solid var(--outline);
             position: relative;
             z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         .search-wrapper {
             position: relative;
             display: flex;
             align-items: center;
+            flex-grow: 1;
         }
         #search-input {
             width: 100%;
@@ -76,7 +60,6 @@
             font-size: 20px;
             font-family: monospace;
             box-sizing: border-box;
-            caret-color: var(--accent-blue);
         }
         #clear-btn {
             position: absolute;
@@ -94,10 +77,15 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: opacity 0.2s;
         }
-        #clear-btn.visible {
-            display: flex;
+        #clear-btn.visible { display: flex; }
+
+        #clock {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--muted);
+            font-family: monospace;
+            flex-shrink: 0;
         }
 
         /* --- Content Area --- */
@@ -106,8 +94,6 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding: 16px;
-            position: relative;
-            z-index: 1;
         }
         .hint {
             text-align: center;
@@ -115,55 +101,86 @@
             padding-top: 20px;
             font-size: 16px;
         }
+
+        /* --- NEW: Graphical Result Card --- */
+        .result-container {
+            perspective: 1000px;
+        }
         .result-card {
-            background-color: var(--panel);
-            border-radius: 18px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border: 1px solid var(--outline);
-            animation: slide-in 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            transform-style: preserve-3d;
+            animation: flip-in 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        
+
         .result-plate {
-            font-family: monospace;
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0 0 8px 0;
-            text-align: center;
-        }
-        .result-status-wrapper {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 10px;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
         }
-        .result-status {
-            font-size: 18px;
-            font-weight: bold;
-            text-transform: uppercase;
+        .result-plate.cleared {
+            background: linear-gradient(145deg, #0a84ff, #0056b3);
+            border: 3px solid var(--gold);
         }
-        .result-status.cleared { color: var(--status-green); }
-        .result-status.not-found { color: var(--status-red); }
+        .result-plate.not-found {
+            background: linear-gradient(145deg, #58585d, #3a3a3c);
+            border: 3px solid var(--status-red);
+        }
 
-        .result-location {
-            font-size: 16px;
-            font-weight: 400;
-            color: var(--muted);
-            margin: 0;
+        .plate-text {
+            font-family: monospace;
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--text);
+        }
+        .plate-text.cleared {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
+        }
+        .plate-text.not-found {
+            color: #b0b0b0;
+        }
+
+        .plate-status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .plate-status-badge.cleared {
+            background-color: var(--status-green);
+            color: white;
+        }
+        .plate-status-badge.not-found {
+            background-color: var(--status-red);
+            color: white;
+        }
+
+        .location-card {
+            background-color: var(--panel);
+            border-radius: 16px;
+            padding: 16px;
             text-align: center;
         }
+        .location-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .location-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+        }
         
-        @keyframes slide-in {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes flip-in {
+            from { transform: rotateX(-90deg); opacity: 0; }
+            to { transform: rotateX(0deg); opacity: 1; }
         }
     </style>
 </head>
@@ -174,6 +191,7 @@
             <input id="search-input" type="text" placeholder="Search...">
             <button id="clear-btn">×</button>
         </div>
+        <div id="clock">--:--</div>
     </div>
 
     <div class="content" id="content-area">
@@ -196,13 +214,23 @@
 
         let db;
         let allRows = [];
-        let isReady = false; // Flag to track if initial load is complete
+        let isReady = false;
         
         const searchInput = document.getElementById('search-input');
         const clearBtn = document.getElementById('clear-btn');
         const contentArea = document.getElementById('content-area');
         const hintText = document.getElementById('hint-text');
-        const body = document.body;
+        const clockDisplay = document.getElementById('clock');
+
+        // --- Clock Functionality ---
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            clockDisplay.textContent = `${hours}:${minutes}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
 
         // --- Firebase Connection ---
         try {
@@ -216,10 +244,8 @@
                     onSnapshot(listingsCollection, (snapshot) => {
                         allRows = snapshot.docs.map(doc => doc.data());
                         hintText.textContent = `Ready (${allRows.length} vehicles)`;
-                        
-                        // --- NEW: Auto-focus logic ---
                         if (!isReady) {
-                            searchInput.focus(); // Automatically bring up the keyboard
+                            searchInput.focus();
                             isReady = true;
                         }
                     }, () => { hintText.textContent = 'Sync Error.'; });
@@ -234,9 +260,6 @@
         // --- Search and UI Logic ---
         searchInput.addEventListener('input', () => {
             const term = searchInput.value.trim();
-            
-            body.className = ''; // Reset background glow
-
             if (term.length > 0) {
                 clearBtn.classList.add('visible');
                 hintText.style.display = 'none';
@@ -253,7 +276,6 @@
             clearBtn.classList.remove('visible');
             contentArea.innerHTML = ''; 
             hintText.style.display = 'block';
-            body.className = '';
             searchInput.focus(); 
         });
 
@@ -270,37 +292,43 @@
             
             if (result) {
                 renderResult(result);
-                body.className = 'cleared';
             } else {
                 renderResult(null, numericTerm);
-                body.className = 'not-found';
             }
         }
 
         function renderResult(result, term) {
+            const container = document.createElement('div');
+            container.className = 'result-container';
+            
             const card = document.createElement('div');
             card.className = 'result-card';
 
             if (result) {
-                card.classList.add('cleared');
                 card.innerHTML = `
-                    <div class="result-status-wrapper">
-                        <div class="result-status cleared">✓ CLEARED</div>
+                    <div class="result-plate cleared">
+                        <span class="plate-text cleared">${result.vehicleNumber}</span>
+                        <span class="plate-status-badge cleared">✓ CLEARED</span>
                     </div>
-                    <div class="result-plate">${result.vehicleNumber}</div>
-                    <div class="result-location">Location: ${result.location || 'N/A'}</div>
+                    <div class="location-card">
+                        <div class="location-title">LOCATION</div>
+                        <div class="location-text">${result.location || 'N/A'}</div>
+                    </div>
                 `;
             } else {
-                card.classList.add('not-found');
                 card.innerHTML = `
-                    <div class="result-status-wrapper">
-                        <div class="result-status not-found">✗ NOT FOUND</div>
+                    <div class="result-plate not-found">
+                        <span class="plate-text not-found">${term}</span>
+                        <span class="plate-status-badge not-found">✗ NOT FOUND</span>
                     </div>
-                    <div class="result-plate">${term}</div>
-                    <div class="result-location">This vehicle is not on the list.</div>
+                     <div class="location-card">
+                        <div class="location-title">STATUS</div>
+                        <div class="location-text">Vehicle not on list.</div>
+                    </div>
                 `;
             }
-            contentArea.appendChild(card);
+            container.appendChild(card);
+            contentArea.appendChild(container);
         }
 
     </script>
