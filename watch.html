@@ -22,6 +22,8 @@
             --text-muted: #606070; 
             --accent-blue: #0A84FF; 
             --accent-blue-glow: rgba(10, 132, 255, 0.4);
+            --accent-orange: #FF9F0A;
+            --accent-yellow: #FFD60A;
             --success-green: #30D158; 
             --success-green-glow: rgba(48, 209, 88, 0.4);
             --error-red: #FF453A; 
@@ -100,12 +102,12 @@
         }
 
         /* * ==============================================
-         * INITIAL SEARCH VIEW
+         * DASHBOARD-STYLE INITIAL VIEW
          * ==============================================
         */
-        #search-prompt {
-            width: 200px;
-            height: 200px;
+        #dashboard-prompt {
+            width: 250px;
+            height: 250px;
             border-radius: 50%;
             display: flex;
             flex-direction: column;
@@ -116,45 +118,59 @@
             position: relative;
             background: radial-gradient(circle at 50% 50%, var(--bg-secondary), var(--bg-primary));
             border: 2px solid var(--glass-border);
-            box-shadow: 0 0 40px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
+            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        #search-prompt:active {
+        #dashboard-prompt:active {
             transform: scale(0.96);
             box-shadow: 0 0 20px var(--shadow-dark), inset 0 1px 2px var(--shadow-light);
         }
+        
+        /* NEW: Colorful gradient for the time */
+        #time-display {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1;
+            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
 
-        #search-prompt::before {
-            content: '';
+        #weather-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        
+        #weather-icon { font-size: 24px; }
+        /* NEW: Color for the temperature */
+        #weather-temp { 
+            font-size: 24px; 
+            font-weight: 500;
+            color: var(--accent-yellow);
+        }
+
+        /* NEW: Brighter color for location */
+        #location-display {
+            margin-top: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #B0B0C0; /* Brighter than text-secondary */
+            letter-spacing: 0.5px;
+        }
+
+        .search-action-text {
             position: absolute;
-            top: -4px;
-            left: -4px;
-            right: -4px;
-            bottom: -4px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            background: conic-gradient(from 180deg at 50% 50%, var(--accent-blue), var(--bg-primary), var(--accent-blue)) border-box;
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            animation: spin 4s linear infinite;
-            opacity: 0.8;
-        }
-
-        .search-icon {
-            font-size: 56px;
-            color: var(--accent-blue);
-            filter: drop-shadow(0 0 15px var(--accent-blue-glow));
-            margin-bottom: 8px;
-            animation: pulse-icon 2.5s ease-in-out infinite;
-        }
-
-        #search-prompt .text {
-            font-size: 22px;
+            bottom: 30px;
+            font-size: 14px;
             font-weight: 600;
-            color: var(--text-primary);
-            line-height: 1.2;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         #status-bar {
@@ -174,7 +190,7 @@
         }
 
         /* * ==============================================
-         * NEW: TEXT INPUT VIEW
+         * TEXT INPUT VIEW
          * ==============================================
         */
         #input-view {
@@ -269,7 +285,7 @@
 
         .location-details {
             text-align: left;
-            flex-grow: 1; /* Allow text block to take available space */
+            flex-grow: 1;
         }
         
         .location-title {
@@ -282,10 +298,10 @@
         }
 
         .location-text {
-            font-size: 22px; /* Slightly reduced for better wrapping */
+            font-size: 22px;
             font-weight: 600;
             color: var(--text-primary);
-            word-break: break-word; /* FIX: Ensures long text wraps */
+            word-break: break-word;
         }
         
         #new-search-btn {
@@ -322,16 +338,6 @@
             from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
-        @keyframes pulse-icon {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
         
         @keyframes move-stars {
             from { background-position: 0 0; }
@@ -345,16 +351,21 @@
 <div class="background-stars"></div>
 
 <div class="app-container">
-    <!-- VIEW 1: The initial search prompt screen -->
+    <!-- VIEW 1: The new dashboard-style initial screen -->
     <div class="view" id="initial-view">
-        <div id="search-prompt">
-            <div class="search-icon">🔍</div>
-            <div class="text">Tap to Search</div>
+        <div id="dashboard-prompt">
+            <div id="time-display">--:--</div>
+            <div id="weather-display">
+                <span id="weather-icon">--</span>
+                <span id="weather-temp">--°</span>
+            </div>
+            <div id="location-display">Loading...</div>
+            <div class="search-action-text">Tap to Search</div>
         </div>
         <div id="status-bar">Connecting...</div>
     </div>
 
-    <!-- VIEW 2: The new text input screen -->
+    <!-- VIEW 2: The text input screen -->
     <div class="view" id="input-view">
         <input id="text-search-input" type="text" placeholder="Enter Vehicle Number">
         <button id="cancel-search-btn">Cancel</button>
@@ -387,10 +398,14 @@
     const initialView = document.getElementById('initial-view');
     const inputView = document.getElementById('input-view');
     const resultView = document.getElementById('result-view');
-    const searchPrompt = document.getElementById('search-prompt');
+    const dashboardPrompt = document.getElementById('dashboard-prompt');
     const statusBar = document.getElementById('status-bar');
     const textSearchInput = document.getElementById('text-search-input');
     const cancelSearchBtn = document.getElementById('cancel-search-btn');
+    const timeDisplay = document.getElementById('time-display');
+    const weatherIcon = document.getElementById('weather-icon');
+    const weatherTemp = document.getElementById('weather-temp');
+    const locationDisplay = document.getElementById('location-display');
 
     // --- Firebase Initialization ---
     try {
@@ -441,8 +456,30 @@
         resultView.style.display = 'flex';
     }
 
+    // --- Dashboard Logic ---
+    function updateDashboard() {
+        // Update time every second
+        setInterval(() => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            timeDisplay.textContent = `${hours}:${minutes}`;
+        }, 1000);
+
+        // --- Weather and Location Simulation ---
+        const simulatedWeatherData = {
+            location: "Singapore",
+            temp: "29",
+            icon: "☁️" // Cloudy emoji
+        };
+
+        weatherIcon.textContent = simulatedWeatherData.icon;
+        weatherTemp.textContent = `${simulatedWeatherData.temp}°`;
+        locationDisplay.textContent = simulatedWeatherData.location;
+    }
+
     // --- Event Listeners ---
-    searchPrompt.addEventListener('click', showInputView);
+    dashboardPrompt.addEventListener('click', showInputView);
     cancelSearchBtn.addEventListener('click', showInitialView);
 
     textSearchInput.addEventListener('change', () => {
@@ -514,9 +551,11 @@
         
         resultView.innerHTML = resultHTML;
         
-        // The new search button now takes the user directly to the input view
         document.getElementById('new-search-btn').addEventListener('click', showInputView);
     }
+    
+    // Initialize the dashboard on page load
+    updateDashboard();
 
 </script>
 
