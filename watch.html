@@ -13,11 +13,11 @@
          * ==============================================
         */
         :root {
-            --bg-primary: #0D0D12; 
+            --bg-primary: #000000; 
             --bg-secondary: #1A1A21; 
             --bg-glass: rgba(26, 26, 33, 0.6); 
             --glass-border: rgba(255, 255, 255, 0.1); 
-            --text-primary: #F0F0F5; 
+            --text-primary: #FFFFFF; 
             --text-secondary: #A0A0B0; 
             --text-muted: #606070; 
             --accent-blue: #0A84FF; 
@@ -47,6 +47,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .background-stars {
@@ -58,9 +61,7 @@
             background-image: 
                 radial-gradient(1px 1px at 20% 30%, #FFFFFF, transparent),
                 radial-gradient(1px 1px at 80% 70%, #FFFFFF, transparent),
-                radial-gradient(1px 1px at 50% 50%, #CCCCCC, transparent),
-                radial-gradient(2px 2px at 90% 10%, #FFFFFF, transparent),
-                radial-gradient(2px 2px at 10% 90%, #CCCCCC, transparent);
+                radial-gradient(1px 1px at 50% 50%, #CCCCCC, transparent);
             background-size: 100% 100%;
             animation: move-stars 120s linear infinite;
             z-index: -1;
@@ -74,8 +75,8 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            max-width: 400px;
-            max-height: 400px;
+            max-width: 410px; /* Apple Watch Ultra 2 width */
+            max-height: 502px; /* Apple Watch Ultra 2 height */
         }
 
         /* * ==============================================
@@ -102,122 +103,98 @@
         }
 
         /* * ==============================================
-         * NEW: STABLE & REFINED DASHBOARD DESIGN
+         * NEW: MODERN WATCH FACE DASHBOARD
          * ==============================================
         */
-        #dashboard-prompt {
-            width: 280px;
-            height: 280px;
-            border-radius: 50%;
-            position: relative;
-            cursor: pointer;
-            background: radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary));
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
-            transition: transform 0.3s ease;
-        }
-        #dashboard-prompt:active {
-            transform: scale(0.96);
+        #initial-view {
+            justify-content: space-between;
+            padding: 30px 20px;
         }
 
-        .dashboard-content {
-            position: absolute;
-            text-align: center;
-            left: 50%;
-            transform: translateX(-50%);
+        .header-info {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
         }
-
-        #time-display {
-            top: 60px;
-            font-size: 48px;
-            font-weight: 700;
-            line-height: 1;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
-        }
+        
         #weather-display {
-            top: 115px;
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-        #weather-icon { font-size: 20px; }
-        #weather-temp { 
-            font-size: 20px; 
+            font-size: 18px;
             font-weight: 500;
-            color: var(--accent-yellow);
         }
+        #weather-icon { font-size: 18px; }
         #location-display {
-            bottom: 60px;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 500;
-            color: #B0B0C0;
-            letter-spacing: 0.5px;
         }
-        .search-action-text {
-            bottom: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+
+        #time-display {
+            font-size: 80px;
+            font-weight: 800;
+            line-height: 1;
+            text-align: center;
+            color: var(--text-primary);
+            margin-top: -40px; /* Adjust vertical centering */
+        }
+
+        .mic-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--accent-blue);
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 25px var(--accent-blue-glow);
+        }
+        #mic-button:active {
+            transform: scale(0.9);
+        }
+        #mic-button.listening {
+            animation: pulse 1.5s infinite;
+        }
+        #mic-button svg {
+            width: 40px;
+            height: 40px;
+            color: white;
         }
 
         #status-bar {
             color: var(--text-secondary);
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 500;
-            position: absolute;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
             text-align: center;
-            padding: 8px 16px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid var(--glass-border);
+            min-height: 20px;
         }
 
         /* * ==============================================
-         * TEXT INPUT VIEW WITH HEADER
+         * TEXT INPUT VIEW (FALLBACK)
          * ==============================================
         */
         #input-view {
-            justify-content: flex-start;
-            padding-top: 40px;
-            gap: 20px;
-        }
-        .input-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .input-header .time {
-            font-size: 32px;
-            font-weight: 700;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .input-header .weather {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--accent-yellow);
-            display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 20px;
         }
         #text-search-input {
             width: 100%;
             background-color: var(--bg-secondary);
             border: 1px solid var(--glass-border);
             color: var(--text-primary);
-            font-size: 18px;
+            font-size: 22px;
             padding: 16px;
             border-radius: 16px;
             text-align: center;
@@ -231,9 +208,9 @@
             background: var(--bg-secondary);
             border: none;
             color: var(--text-primary);
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 18px;
             cursor: pointer;
         }
 
@@ -246,7 +223,7 @@
             flex-direction: column;
             align-items: center;
             width: calc(100% - 40px);
-            max-width: 320px;
+            max-width: 360px;
             padding: 24px;
             box-sizing: border-box;
             background: var(--bg-glass);
@@ -344,6 +321,11 @@
             from { background-position: 0 0; }
             to { background-position: -10000px 5000px; }
         }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 25px var(--accent-blue-glow); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px var(--accent-blue-glow); }
+            100% { transform: scale(1); box-shadow: 0 0 25px var(--accent-blue-glow); }
+        }
     </style>
 </head>
 <body>
@@ -351,29 +333,28 @@
 <div class="background-stars"></div>
 
 <div class="app-container">
-    <!-- VIEW 1: The dashboard-style initial screen -->
+    <!-- VIEW 1: The modern watch face screen -->
     <div class="view" id="initial-view">
-        <div id="dashboard-prompt">
-            <div id="time-display" class="dashboard-content">--:--</div>
-            <div id="weather-display" class="dashboard-content">
+        <div class="header-info">
+             <div id="weather-display">
                 <span id="weather-icon">--</span>
                 <span id="weather-temp">--°</span>
             </div>
-            <div id="location-display" class="dashboard-content">Loading...</div>
-            <div class="search-action-text dashboard-content">Tap to Search</div>
+            <div id="location-display">Loading...</div>
         </div>
-        <div id="status-bar">Connecting...</div>
+        
+        <div id="time-display">--:--</div>
+
+        <div class="mic-container">
+            <button id="mic-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"></path></svg>
+            </button>
+            <div id="status-bar">Connecting...</div>
+        </div>
     </div>
 
-    <!-- VIEW 2: The text input screen -->
+    <!-- VIEW 2: The text input screen (fallback) -->
     <div class="view" id="input-view">
-        <div class="input-header">
-            <div id="input-time" class="time">--:--</div>
-            <div id="input-weather" class="weather">
-                <span>--</span>
-                <span>--°</span>
-            </div>
-        </div>
         <input id="text-search-input" type="text" placeholder="Vehicle Number">
         <button id="cancel-search-btn">Cancel</button>
     </div>
@@ -385,10 +366,12 @@
 </div>
 
 <script type="module">
+    // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
         authDomain: "vehicle-clearance.firebaseapp.com",
@@ -398,28 +381,25 @@
         appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
+    // Global variables
     let db;
     let allRows = [];
-    
+    let recognition;
+
     // DOM element references
     const initialView = document.getElementById('initial-view');
     const inputView = document.getElementById('input-view');
     const resultView = document.getElementById('result-view');
-    const dashboardPrompt = document.getElementById('dashboard-prompt');
     const statusBar = document.getElementById('status-bar');
     const textSearchInput = document.getElementById('text-search-input');
     const cancelSearchBtn = document.getElementById('cancel-search-btn');
+    const micButton = document.getElementById('mic-button');
     
     // Dashboard display elements
     const timeDisplay = document.getElementById('time-display');
     const weatherIcon = document.getElementById('weather-icon');
     const weatherTemp = document.getElementById('weather-temp');
     const locationDisplay = document.getElementById('location-display');
-
-    // Input view header elements
-    const inputTime = document.getElementById('input-time');
-    const inputWeather = document.getElementById('input-weather');
-
 
     // --- Firebase Initialization ---
     try {
@@ -432,7 +412,7 @@
                 const listingsCollection = collection(db, 'vehicleListings');
                 onSnapshot(listingsCollection, (snapshot) => {
                     allRows = snapshot.docs.map(doc => doc.data());
-                    statusBar.textContent = `Ready (${allRows.length} vehicles)`;
+                    statusBar.textContent = `Tap mic to start`;
                 }, (error) => { 
                     console.error("Firestore sync error:", error);
                     statusBar.textContent = 'Sync Error.'; 
@@ -454,6 +434,7 @@
         resultView.style.display = 'none';
         inputView.style.display = 'none';
         initialView.style.display = 'flex';
+        statusBar.textContent = 'Tap mic to start';
     }
 
     function showInputView() {
@@ -475,13 +456,10 @@
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        const currentTime = `${hours}:${minutes}`;
-        
-        timeDisplay.textContent = currentTime;
-        inputTime.textContent = currentTime;
+        timeDisplay.textContent = `${hours}:${minutes}`;
     }
 
-    function updateDashboardAndHeader() {
+    function updateDashboard() {
         updateTime();
         setInterval(updateTime, 1000);
 
@@ -494,13 +472,78 @@
         weatherIcon.textContent = simulatedWeatherData.icon;
         weatherTemp.textContent = `${simulatedWeatherData.temp}°`;
         locationDisplay.textContent = simulatedWeatherData.location;
-
-        inputWeather.children[0].textContent = simulatedWeatherData.icon;
-        inputWeather.children[1].textContent = `${simulatedWeatherData.temp}°`;
     }
 
+    // --- Voice Search Logic ---
+    function initializeVoiceSearch() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            statusBar.textContent = "Voice search not supported.";
+            // Fallback to text input if mic is clicked
+            micButton.addEventListener('click', showInputView);
+            return;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            statusBar.textContent = "Listening...";
+            micButton.classList.add('listening');
+        };
+
+        recognition.onresult = (event) => {
+            const speechResult = event.results[0][0].transcript;
+            statusBar.textContent = `Heard: "${speechResult}"`;
+            performSearch(speechResult);
+        };
+
+        recognition.onspeechend = () => {
+            recognition.stop();
+            micButton.classList.remove('listening');
+        };
+
+        recognition.onerror = (event) => {
+            if (event.error == 'no-speech') {
+                statusBar.textContent = 'Did not hear anything.';
+            } else if (event.error == 'audio-capture') {
+                statusBar.textContent = 'Mic problem.';
+            } else if (event.error == 'not-allowed') {
+                statusBar.textContent = 'Mic access denied.';
+            } else {
+                statusBar.textContent = 'Error. Tap to retry.';
+            }
+            micButton.classList.remove('listening');
+        };
+        
+        // Auto-start listening once the app is ready
+        setTimeout(() => {
+            try {
+                recognition.start();
+            } catch(e) {
+                console.error("Could not auto-start recognition:", e);
+                statusBar.textContent = "Tap mic to start";
+            }
+        }, 1000);
+    }
+
+    function startListening() {
+        if (recognition) {
+            try {
+                recognition.start();
+            } catch(e) {
+                console.error("Recognition already started or error:", e);
+                statusBar.textContent = "Tap mic to start";
+            }
+        }
+    }
+
+
     // --- Event Listeners ---
-    dashboardPrompt.addEventListener('click', showInputView);
+    micButton.addEventListener('click', startListening);
     cancelSearchBtn.addEventListener('click', showInitialView);
 
     textSearchInput.addEventListener('change', () => {
@@ -510,14 +553,18 @@
         }
     });
 
-    // --- Core Logic ---
+    // --- Core Search Logic ---
     function performSearch(term) {
-        const numericTerm = term.replace(/\D/g, '');
-        if (numericTerm.length === 0) return;
+        const cleanedTerm = term.trim().toUpperCase();
+        const numericTerm = cleanedTerm.replace(/\D/g, '');
+        if (numericTerm.length === 0) {
+            statusBar.textContent = "Couldn't find a number.";
+            return;
+        };
 
-        const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
+        const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').includes(numericTerm));
         
-        renderResult(result, term);
+        renderResult(result, cleanedTerm);
         showResultView();
     }
 
@@ -572,11 +619,17 @@
         
         resultView.innerHTML = resultHTML;
         
-        document.getElementById('new-search-btn').addEventListener('click', showInputView);
+        // Re-attach event listener for the new search button
+        document.getElementById('new-search-btn').addEventListener('click', () => {
+            showInitialView();
+            // Try to start listening again when returning to home
+            setTimeout(startListening, 300);
+        });
     }
     
-    // Initialize the dashboard and header data on page load
-    updateDashboardAndHeader();
+    // --- App Initialization ---
+    updateDashboard();
+    initializeVoiceSearch();
 
 </script>
 
