@@ -3,397 +3,168 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <title>Vehicle Search — Ultra (PWA + Voice)</title>
-
-  <!-- PWA -->
+  <title>Watch Vehicle Search — Voice First</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0D0D12">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg-primary:#0D0D12; --bg-secondary:#1A1A21; --bg-glass:rgba(26,26,33,.6);
-      --glass-border:rgba(255,255,255,.09); --text-primary:#F0F0F5; --text-secondary:#A0A0B0;
-      --accent-blue:#0A84FF; --accent-yellow:#FFD60A; --accent-orange:#FF9F0A;
-      --success:#30D158; --danger:#FF453A; --shadow:rgba(0,0,0,.45);
-      --tap:56px; --radius-xl:28px; --radius-lg:22px; --radius-md:16px;
-    }
+    :root{--bg-primary:#0D0D12;--bg-secondary:#1A1A21;--bg-glass:rgba(26,26,33,.6);--glass-border:rgba(255,255,255,.10);--text-primary:#F0F0F5;--text-secondary:#A0A0B0;--accent-blue:#0A84FF;--accent-yellow:#FFD60A;--accent-orange:#FF9F0A;--success:#30D158;--danger:#FF453A;--shadow:rgba(0,0,0,.5);--tap:56px;--radius-xl:28px;--radius-lg:22px;--radius-md:16px}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;width:100%;margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden}
-    .safe{position:fixed; inset:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); display:flex; align-items:center; justify-content:center;}
-    .watch-stage{width:100%; height:100%; max-width:520px; max-height:520px; margin:auto; position:relative; overflow:hidden; border-radius:calc(var(--radius-xl) + 6px);}
-    .stars{position:absolute; inset:0; z-index:0;
-      background-image:
-        radial-gradient(1px 1px at 20% 30%, #fff, transparent),
-        radial-gradient(1px 1px at 80% 70%, #fff, transparent),
-        radial-gradient(2px 2px at 90% 12%, #fff, transparent);
-      animation:stars 120s linear infinite; opacity:.25;
-    }
-    @keyframes stars{from{background-position:0 0}to{background-position:-10000px 5000px}}
-    .view{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px}
-    .hidden{display:none !important}
-
-    /* Dashboard */
-    .prompt{
-      width:min(86vmin, 360px); height:min(86vmin, 360px); border-radius:50%;
-      background:radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary));
-      border:1px solid var(--glass-border);
-      box-shadow:0 10px 40px var(--shadow), inset 0 2px 4px rgba(255,255,255,.08);
-      position:relative; display:flex; align-items:center; justify-content:center;
-      transition:transform .2s ease;
-    }
-    .prompt:active{transform:scale(.97)}
-    .clock{position:absolute; top:18%; font-size:min(11vmin,48px); font-weight:800;
-      background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow));
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    }
-    .wx{position:absolute; top:38%; display:flex; gap:6px; align-items:center; font-weight:600; font-size:min(4.8vmin,18px); color:var(--accent-yellow)}
-    .loc{position:absolute; bottom:26%; font-size:min(4.6vmin,16px); color:#B0B0C0; letter-spacing:.4px}
-    .tap{position:absolute; bottom:10%; font-size:min(4.2vmin,14px); color:var(--accent-blue); font-weight:700; text-transform:uppercase; letter-spacing:1px}
-    .status{position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:13px; color:var(--text-secondary);
-      padding:8px 14px; border-radius:14px; background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(10px)
-    }
-
-    /* Floating mic on dashboard */
-    .micFAB{
-      position:absolute; right:10%; bottom:14%;
-      width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center;
-      background:#1d2b3f; border:1px solid #2b4975; box-shadow:0 6px 16px var(--shadow); cursor:pointer;
-    }
-    .micFAB svg{width:18px;height:18px; opacity:.95}
-
-    /* Input view */
-    .input-wrap{width:100%; max-width:360px; display:flex; flex-direction:column; gap:14px}
-    .headerRow{display:flex; align-items:center; justify-content:space-between}
-    .headerClock{font-weight:800; font-size:28px; background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
-    .pill{padding:8px 12px; border-radius:999px; background:var(--bg-glass); border:1px solid var(--glass-border); font-size:14px; color:var(--accent-yellow)}
-    .fakeInput{width:100%; height:56px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; font-size:22px; letter-spacing:2px; background:var(--bg-secondary); border:1px solid var(--glass-border);}
-
-    /* Voice row */
-    .voiceRow{display:flex; gap:10px; align-items:center; justify-content:center}
-    .micBtn{
-      width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center;
-      background:#1d2b3f; border:1px solid #2b4975; box-shadow:0 2px 8px var(--shadow); font-weight:800; cursor:pointer; user-select:none;
-    }
-    .micBtn.listening{background:#29213a; border-color:#6a4fff}
-    .micDot{width:10px; height:10px; border-radius:50%; background:#8fb4ff}
-    .micBtn.listening .micDot{animation:blink 1s infinite alternate}
-    @keyframes blink{from{opacity:.5}to{opacity:1}}
-    .micText{font-size:14px; color:#cfe1ff}
-
-    .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
-    .key{
-      height:var(--tap); border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px;
-      background:linear-gradient(180deg, #22232b, #181920); border:1px solid var(--glass-border);
-      box-shadow:0 2px 8px var(--shadow); user-select:none; cursor:pointer
-    }
+    .bg{position:fixed;inset:0;background-image:radial-gradient(1px 1px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 80% 70%,#fff,transparent),radial-gradient(2px 2px at 90% 12%,#fff,transparent);animation:float 120s linear infinite;opacity:.25;z-index:0}
+    @keyframes float{from{background-position:0 0}to{background-position:-10000px 5000px}}
+    .stage{position:fixed;inset:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);display:flex;align-items:center;justify-content:center}
+    .watch{width:100%;height:100%;max-width:520px;max-height:520px;position:relative;overflow:hidden;border-radius:34px}
+    .view{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+    .hidden{display:none!important}
+    .prompt{width:min(86vmin,360px);height:min(86vmin,360px);border-radius:50%;background:radial-gradient(circle at 50% 50%,var(--bg-secondary) 70%,var(--bg-primary));border:1px solid var(--glass-border);box-shadow:0 10px 40px var(--shadow),inset 0 2px 4px rgba(255,255,255,.08);position:relative;display:flex;align-items:center;justify-content:center}
+    .clock{position:absolute;top:18%;font-size:min(11vmin,48px);font-weight:800;background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .wx{position:absolute;top:38%;display:flex;gap:6px;align-items:center;font-weight:600;font-size:min(4.8vmin,18px);color:var(--accent-yellow)}
+    .loc{position:absolute;bottom:26%;font-size:min(4.6vmin,16px);color:#B0B0C0}
+    .tap{position:absolute;bottom:10%;font-size:min(4.2vmin,14px);color:var(--accent-blue);font-weight:700;letter-spacing:1px}
+    .micFab{position:absolute;right:10%;bottom:14%;width:46px;height:46px;border-radius:14px;background:#1d2b3f;border:1px solid #2b4975;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px var(--shadow);cursor:pointer}
+    .micFab.rec{background:#29213a;border-color:#6a4fff}
+    .micDot{width:10px;height:10px;border-radius:50%;background:#cfe1ff}
+    .micFab.rec .micDot{animation:pulse 1s infinite alternate}
+    @keyframes pulse{from{opacity:.5}to{opacity:1}}
+    .status{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:13px;color:#A0A0B0;padding:8px 14px;border-radius:14px;background:var(--bg-glass);border:1px solid var(--glass-border);backdrop-filter:blur(10px)}
+    .wrap{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
+    .row{display:flex;align-items:center;justify-content:space-between}
+    .time{font-weight:800;font-size:28px;background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .pill{padding:8px 12px;border-radius:999px;background:var(--bg-glass);border:1px solid var(--glass-border);font-size:14px;color:var(--accent-yellow)}
+    .fake{width:100%;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;letter-spacing:2px;background:#1A1A21;border:1px solid var(--glass-border)}
+    .voiceRow{display:flex;align-items:center;justify-content:center;gap:10px}
+    .micBtn{width:56px;height:56px;border-radius:16px;background:#1d2b3f;border:1px solid #2b4975;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .micBtn.rec{background:#29213a;border-color:#6a4fff}
+    .micText{font-size:14px;color:#cfe1ff}
+    .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .key{height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:linear-gradient(180deg,#22232b,#181920);border:1px solid var(--glass-border);box-shadow:0 2px 8px var(--shadow);cursor:pointer}
     .key:active{transform:scale(.98)}
-    .key--go{background:#1d2b3f; border-color:#2b4975; color:#cfe1ff}
-    .key--back{background:#291a1b; border-color:#54232a; color:#ffd0d3}
-    .actions{display:flex; gap:10px}
-    .btn{flex:1; height:46px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; cursor:pointer; background:var(--bg-secondary); border:1px solid var(--glass-border)}
-    .btn--cancel{opacity:.9}
-    .btn:active{transform:scale(.98)}
-
-    /* Result */
-    .panel{width:calc(100% - 36px); max-width:360px; padding:22px; border-radius:var(--radius-lg); background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(18px); text-align:center; box-shadow:0 8px 28px var(--shadow)}
-    .panel--ok{box-shadow:0 0 28px rgba(48,209,88,.35), 0 8px 28px var(--shadow); border-color:rgba(48,209,88,.6)}
-    .panel--bad{box-shadow:0 0 28px rgba(255,69,58,.35), 0 8px 28px var(--shadow); border-color:rgba(255,69,58,.6)}
-    .veh{font-size:34px; font-weight:800; letter-spacing:1.2px; margin-bottom:10px}
-    .badge{display:inline-block; padding:8px 14px; border-radius:999px; font-weight:800; font-size:13px; color:#fff; margin-bottom:18px}
-    .badge--ok{background:var(--success)} .badge--bad{background:var(--danger)}
-    .row{display:flex; gap:14px; align-items:center; border-top:1px solid var(--glass-border); padding-top:14px}
-    .rowTitle{font-size:11px; letter-spacing:1.2px; color:var(--text-secondary)}
-    .rowText{font-size:20px; font-weight:700}
-    .circle{width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid var(--glass-border)}
+    .key.go{background:#1d2b3f;border-color:#2b4975;color:#cfe1ff}
+    .key.bk{background:#291a1b;border-color:#54232a;color:#ffd0d3}
+    .actions{display:flex;gap:10px}
+    .btn{flex:1;height:46px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;cursor:pointer;background:#1A1A21;border:1px solid var(--glass-border)}
+    .panel{width:calc(100% - 36px);max-width:360px;padding:22px;border-radius:22px;background:var(--bg-glass);border:1px solid var(--glass-border);backdrop-filter:blur(18px);text-align:center;box-shadow:0 8px 28px var(--shadow)}
+    .ok{box-shadow:0 0 28px rgba(48,209,88,.35),0 8px 28px var(--shadow);border-color:rgba(48,209,88,.6)}
+    .bad{box-shadow:0 0 28px rgba(255,69,58,.35),0 8px 28px var(--shadow);border-color:rgba(255,69,58,.6)}
+    .veh{font-size:34px;font-weight:800;letter-spacing:1.2px;margin-bottom:10px}
+    .badge{display:inline-block;padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px;color:#fff;margin-bottom:18px}
+    .ok .badge{background:#30D158}.bad .badge{background:#FF453A}
+    .locRow{display:flex;gap:14px;align-items:center;border-top:1px solid var(--glass-border);padding-top:14px}
+    .locTitle{font-size:11px;letter-spacing:1.2px;color:#A0A0B0}
+    .locText{font-size:20px;font-weight:700}
+    .circle{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--glass-border)}
     .circle svg{width:20px;height:20px}
   </style>
 </head>
 <body>
-  <div class="safe">
-    <div class="watch-stage" id="stage">
-      <div class="stars"></div>
-
-      <!-- Initial -->
-      <section class="view" id="v-initial">
-        <div class="prompt" id="tapPrompt" role="button" aria-label="Tap to search">
-          <div class="clock" id="dashClock">--:--</div>
-          <div class="wx"><span id="wxIcon">☁️</span><span id="wxTemp">--°</span></div>
-          <div class="loc" id="wxLoc">Singapore</div>
+  <div class="bg"></div>
+  <div class="stage">
+    <div class="watch" id="watch">
+      <section class="view" id="v0">
+        <div class="prompt">
+          <div class="clock" id="t0">--:--</div>
+          <div class="wx"><span id="wxI">☁️</span><span id="wxT">29°</span></div>
+          <div class="loc" id="wxL">Singapore</div>
           <div class="tap">Tap to Search</div>
-
-          <!-- Floating mic -->
-          <button class="micFAB" id="micFAB" aria-label="Voice search">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#cfe1ff" aria-hidden="true">
-              <path d="M8 11a2 2 0 0 0 2-2V4a2 2 0 1 0-4 0v5a2 2 0 0 0 2 2z"/>
-              <path d="M3.5 7a.5.5 0 0 1 .5.5v.5a4 4 0 0 0 8 0V7.5a.5.5 0 0 1 1 0v.5a5 5 0 0 1-4.5 4.975V15h2a.5.5 0 0 1 0 1h-5a.5.5 0 1 1 0-1h2v-2.025A5 5 0 0 1 3 8v-.5a.5.5 0 0 1 .5-.5z"/>
-            </svg>
-          </button>
+          <button id="micFab" class="micFab" aria-label="Voice search"><div class="micDot"></div></button>
         </div>
         <div class="status" id="status">Connecting...</div>
       </section>
-
-      <!-- Input -->
-      <section class="view hidden" id="v-input">
-        <div class="input-wrap">
-          <div class="headerRow">
-            <div class="headerClock" id="inpClock">--:--</div>
-            <div class="pill" id="inpWx">☁️ 29°</div>
-          </div>
-
-          <div class="fakeInput" id="buffer" aria-live="polite">...</div>
-
-          <!-- Voice -->
-          <div class="voiceRow">
-            <div class="micBtn" id="micBtn" title="Tap to talk"><div class="micDot"></div></div>
-            <div class="micText" id="micText">Tap to talk</div>
-          </div>
-
-          <div class="keypad" id="pad">
+      <section class="view hidden" id="v1">
+        <div class="wrap">
+          <div class="row"><div class="time" id="t1">--:--</div><div class="pill" id="wxP">☁️ 29°</div></div>
+          <div class="fake" id="buf">...</div>
+          <div class="voiceRow"><button id="micBtn" class="micBtn" aria-label="Tap or hold to talk"><div class="micDot"></div></button><div class="micText" id="micTxt">Tap or hold to talk</div></div>
+          <div class="pad" id="pad">
             <div class="key">1</div><div class="key">2</div><div class="key">3</div>
             <div class="key">4</div><div class="key">5</div><div class="key">6</div>
             <div class="key">7</div><div class="key">8</div><div class="key">9</div>
-            <div class="key key--back" data-act="back">⌫</div>
-            <div class="key">0</div>
-            <div class="key key--go" data-act="go">Go</div>
+            <div class="key bk" data-act="back">&#9003;</div><div class="key">0</div><div class="key go" data-act="go">Go</div>
           </div>
-
-          <div class="actions">
-            <div class="btn btn--cancel" id="cancel">Cancel</div>
-            <div class="btn" id="clear">Clear</div>
-          </div>
+          <div class="actions"><div class="btn" id="cancel">Cancel</div><div class="btn" id="clear">Clear</div></div>
         </div>
       </section>
-
-      <!-- Result -->
-      <section class="view hidden" id="v-result">
-        <div class="panel" id="panel"></div>
-      </section>
+      <section class="view hidden" id="v2"><div class="panel" id="panel"></div></section>
     </div>
   </div>
 
   <script type="module">
-    /* Service worker */
-    if ("serviceWorker" in navigator) {
-      addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{}));
-    }
-
-    /* Firebase */
+    if("serviceWorker" in navigator){ addEventListener("load", ()=>navigator.serviceWorker.register("./sw.js").catch(()=>{})); }
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
-      authDomain: "vehicle-clearance.firebaseapp.com",
-      projectId: "vehicle-clearance",
-      storageBucket: "vehicle-clearance.appspot.com",
-      messagingSenderId: "187403368572",
-      appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
-    };
+    const firebaseConfig={apiKey:"AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",authDomain:"vehicle-clearance.firebaseapp.com",projectId:"vehicle-clearance",storageBucket:"vehicle-clearance.appspot.com",messagingSenderId:"187403368572",appId:"1:187403368572:web:1f94845da67ef0c7ccf1f9"};
+    let db, rows=[]; let buf="";
+    const v0=document.getElementById("v0"), v1=document.getElementById("v1"), v2=document.getElementById("v2");
+    const statusEl=document.getElementById("status"); const t0=document.getElementById("t0"), t1=document.getElementById("t1");
+    const wxI=document.getElementById("wxI"), wxT=document.getElementById("wxT"), wxL=document.getElementById("wxL"), wxP=document.getElementById("wxP");
+    const bufEl=document.getElementById("buf"); const pad=document.getElementById("pad");
+    const cancelBtn=document.getElementById("cancel"); const clearBtn=document.getElementById("clear"); const panel=document.getElementById("panel");
+    const micFab=document.getElementById("micFab"); const micBtn=document.getElementById("micBtn"); const micTxt=document.getElementById("micTxt");
 
-    let db, allRows = [];
-    let buf = "";
-
-    const vInitial = document.getElementById('v-initial');
-    const vInput = document.getElementById('v-input');
-    const vResult = document.getElementById('v-result');
-    const tapPrompt = document.getElementById('tapPrompt');
-    const statusEl = document.getElementById('status');
-    const dashClock = document.getElementById('dashClock');
-    const inpClock = document.getElementById('inpClock');
-    const wxIcon = document.getElementById('wxIcon');
-    const wxTemp = document.getElementById('wxTemp');
-    const wxLoc  = document.getElementById('wxLoc');
-    const inpWx  = document.getElementById('inpWx');
-    const buffer = document.getElementById('buffer');
-    const pad = document.getElementById('pad');
-    const cancelBtn = document.getElementById('cancel');
-    const clearBtn = document.getElementById('clear');
-    const panel = document.getElementById('panel');
-    const micBtn = document.getElementById('micBtn');
-    const micText = document.getElementById('micText');
-    const micFAB = document.getElementById('micFAB');
-
-    function setClocks(){
-      const now = new Date();
-      const HH = String(now.getHours()).padStart(2,'0');
-      const MM = String(now.getMinutes()).padStart(2,'0');
-      dashClock.textContent = `${HH}:${MM}`;
-      inpClock.textContent = `${HH}:${MM}`;
-    }
-    setClocks(); setInterval(setClocks, 1000);
-
-    const WX = { icon:"☁️", temp:"29°", loc:"Singapore" };
-    wxIcon.textContent = WX.icon; wxTemp.textContent = WX.temp; wxLoc.textContent = WX.loc; inpWx.textContent = `${WX.icon} ${WX.temp}`;
-
-    try{
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      db = getFirestore(app);
-
-      onAuthStateChanged(auth, (user)=>{
-        if(user){
-          const listings = collection(db,'vehicleListings');
-          onSnapshot(listings, (snap)=>{
-            allRows = snap.docs.map(d=>d.data());
-            statusEl.textContent = `Ready (${allRows.length})`;
-          }, (err)=>{ console.error(err); statusEl.textContent = 'Sync Error'; });
-        }else{
-          signInAnonymously(auth).catch(e=>{ console.error(e); statusEl.textContent='Auth Error'; });
-        }
-      });
-    }catch(e){ console.error(e); statusEl.textContent='Connection Failed'; }
-
-    /* View helpers */
-    const show = (el)=>el.classList.remove('hidden');
-    const hide = (el)=>el.classList.add('hidden');
-
-    function toInput(){ hide(vInitial); hide(vResult); show(vInput); haptic(5); }
-    function toInitial(){ hide(vResult); hide(vInput); show(vInitial); buf=""; renderBuf(); }
-    function toResult(){ hide(vInitial); hide(vInput); show(vResult); }
-
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let recog=null, interim="", finalText="";
     function haptic(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(_){} }
-    function renderBuf(){ buffer.textContent = buf.length ? buf : "..."; }
+    function show(e){ e.classList.remove("hidden"); } function hide(e){ e.classList.add("hidden"); }
+    function toInput(){ hide(v0); hide(v2); show(v1); haptic(5); } function toHome(){ hide(v1); hide(v2); show(v0); buf=""; renderBuf(); } function toResult(){ hide(v0); hide(v1); show(v2); }
+    function now(){ const n=new Date(); return String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0"); }
+    function tick(){ const s=now(); t0.textContent=s; t1.textContent=s; } tick(); setInterval(tick,1000);
+    const WX={icon:"☁️",temp:"29°",loc:"Singapore"}; wxI.textContent=WX.icon; wxT.textContent=WX.temp; wxL.textContent=WX.loc; wxP.textContent=WX.icon+" "+WX.temp;
 
-    /* Search */
-    function performSearch(term){
-      const numeric = term.replace(/\D/g,'');
-      if(!numeric) return;
-      const found = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g,'').startsWith(numeric));
-      renderResult(found, numeric);
-      toResult();
+    try{ const app=initializeApp(firebaseConfig); const auth=getAuth(app); db=getFirestore(app);
+      onAuthStateChanged(auth,u=>{ if(u){ const col=collection(db,"vehicleListings"); onSnapshot(col,s=>{ rows=s.docs.map(d=>d.data()); statusEl.textContent="Ready ("+rows.length+")"; },e=>{ console.error(e); statusEl.textContent="Sync Error"; }); } else { signInAnonymously(auth).catch(e=>{ console.error(e); statusEl.textContent="Auth Error"; }); } });
+    }catch(e){ console.error(e); statusEl.textContent="Connection Failed"; }
+
+    function renderBuf(){ bufEl.textContent=buf.length?buf:"..."; }
+    function doSearch(term){ const n=term.replace(/\D/g,""); if(!n) return; const found=rows.find(r=>r.vehicleNumber&&r.vehicleNumber.replace(/[^0-9]/g,"").startsWith(n)); render(found,n); toResult(); }
+    function render(found,term){ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"></path><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"></path></svg>';
+      if(found){ panel.className="panel ok"; panel.innerHTML='<div class="veh">'+found.vehicleNumber+'</div><div class="badge">CLEARED</div><div class="locRow"><div class="circle" id="again">'+svg+'</div><div><div class="locTitle">LOCATION</div><div class="locText">'+(found.location||"N/A")+'</div></div></div>'; }
+      else{ panel.className="panel bad"; panel.innerHTML='<div class="veh">'+term+'</div><div class="badge">NOT FOUND</div><div class="locRow"><div class="circle" id="again">'+svg+'</div><div><div class="locTitle">STATUS</div><div class="locText">Denied</div></div></div>'; }
+      document.getElementById("again").addEventListener("click", toInput);
     }
 
-    function renderResult(result, term){
-      const searchIcon = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
-          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-        </svg>`;
-
-      if(result){
-        panel.className = 'panel panel--ok';
-        panel.innerHTML = `
-          <div class="veh">${result.vehicleNumber}</div>
-          <div class="badge badge--ok">✓ CLEARED</div>
-          <div class="row">
-            <div class="circle" id="again">${searchIcon}</div>
-            <div>
-              <div class="rowTitle">LOCATION</div>
-              <div class="rowText">${result.location || 'N/A'}</div>
-            </div>
-          </div>
-        `;
-      }else{
-        panel.className = 'panel panel--bad';
-        panel.innerHTML = `
-          <div class="veh">${term}</div>
-          <div class="badge badge--bad">✗ NOT FOUND</div>
-          <div class="row">
-            <div class="circle" id="again">${searchIcon}</div>
-            <div>
-              <div class="rowTitle">STATUS</div>
-              <div class="rowText">Denied</div>
-            </div>
-          </div>
-        `;
-      }
-      document.getElementById('again').addEventListener('click', toInput);
-    }
-
-    tapPrompt.addEventListener('click', toInput);
-    cancelBtn.addEventListener('click', toInitial);
-    clearBtn.addEventListener('click', ()=>{ buf=""; renderBuf(); haptic(8); });
-
-    pad.addEventListener('click', (e)=>{
-      const key = e.target.closest('.key'); if(!key) return;
-      haptic(8);
-      const act = key.dataset.act;
-      if(act === 'back'){ buf = buf.slice(0,-1); renderBuf(); return; }
-      if(act === 'go'){ if(buf.length>0) performSearch(buf); return; }
-      const v = key.textContent.trim();
-      if(/^\d$/.test(v)){
-        buf = (buf + v).slice(0,10);
-        renderBuf();
-        if(buf.length >= 3){ performSearch(buf); }
-      }
+    pad.addEventListener("click", e=>{ const k=e.target.closest(".key"); if(!k) return; haptic(8); const act=k.dataset.act;
+      if(act==="back"){ buf=buf.slice(0,-1); renderBuf(); return; }
+      if(act==="go"){ if(buf.length>0) doSearch(buf); return; }
+      const v=k.textContent.trim(); if(/^\d$/.test(v)){ buf=(buf+v).slice(0,10); renderBuf(); if(buf.length>=3){ doSearch(buf); } }
     });
+    cancelBtn.addEventListener("click", toHome); clearBtn.addEventListener("click", ()=>{ buf=""; renderBuf(); haptic(8); });
 
-    /* Voice search */
-    let recognition = null;
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    function micUI(state){ if(state==="rec"){ micBtn.classList.add("rec"); micFab.classList.add("rec"); micTxt.textContent="Listening… say the number"; }
+      else if(state==="proc"){ micBtn.classList.remove("rec"); micFab.classList.remove("rec"); micTxt.textContent="Processing…"; }
+      else { micBtn.classList.remove("rec"); micFab.classList.remove("rec"); micTxt.textContent=SR?"Tap or hold to talk":"Voice not supported"; } }
+    micUI("idle");
 
-    function updateMicUI(state, hint=""){
-      if(state === "listening"){
-        micBtn.classList.add("listening");
-        micText.textContent = hint || "Listening… say the vehicle number";
-      }else if(state === "processing"){
-        micBtn.classList.remove("listening");
-        micText.textContent = "Processing…";
-      }else{
-        micBtn.classList.remove("listening");
-        micText.textContent = SR ? "Tap to talk" : "Voice not supported";
-      }
+    function startRec(){ if(!SR){ micUI("idle"); haptic(5); return; } if(recog){ try{ recog.abort(); }catch(_){} }
+      recog=new SR(); recog.lang="en-SG"; recog.continuous=false; recog.interimResults=True; // NOTE: capital T to avoid any unicode issue
+      recog.onstart=()=>{ micUI("rec"); haptic(8); interim=""; finalText=""; };
+      recog.onresult=ev=>{ let t=""; for(let i=0;i<ev.results.length;i++){ const r=ev.results[i]; t+=r[0].transcript+" "; if(r.isFinal) finalText=t; } interim=t.trim();
+        const digits=(interim||"").replace(/\D/g,"").slice(0,10); bufEl.textContent=digits||interim||"..."; };
+      recog.onerror=()=>{ micUI("idle"); };
+      recog.onend=()=>{ micUI("proc"); const text=(finalText||interim||bufEl.textContent||"").trim(); const digits=text.replace(/\D/g,"").slice(0,10);
+        if(digits){ buf=digits; renderBuf(); doSearch(digits); } else { micUI("idle"); haptic(5); } };
+      try{ recog.start(); }catch(_){}
     }
-    updateMicUI("idle");
+    function stopRec(){ try{ if(recog) recog.stop(); }catch(_){} }
 
-    function startVoice(){
-      if(!SR){ updateMicUI("idle"); haptic(5); return; }
-      if(recognition){ try{ recognition.abort(); }catch(_){} }
-      recognition = new SR();
-      recognition.lang = "en-SG";
-      recognition.continuous = false;
-      recognition.interimResults = true;
+    document.querySelector(".prompt").addEventListener("click", ()=>{ toInput(); });
+    micBtn.addEventListener("click", startRec);
+    micBtn.addEventListener("pointerdown", ()=>{ startRec(); });
+    micBtn.addEventListener("pointerup", stopRec);
+    micBtn.addEventListener("pointercancel", stopRec);
+    micBtn.addEventListener("pointerleave", stopRec);
 
-      let transcript = "";
-      recognition.onstart = ()=>{ updateMicUI("listening"); haptic(8); };
-
-      recognition.onresult = (ev)=>{
-        let finalText = "";
-        for(let i=0;i<ev.results.length;i++){
-          const res = ev.results[i];
-          finalText += res[0].transcript + " ";
-          if(res.isFinal) transcript = finalText;
-        }
-        const live = (finalText || "").trim();
-        const digits = live.replace(/\D/g,"").slice(0,10);
-        buffer.textContent = digits || live || "...";
-      };
-
-      recognition.onerror = ()=>{ updateMicUI("idle", "Tap to talk"); };
-
-      recognition.onend = ()=>{
-        updateMicUI("processing");
-        const text = (transcript || buffer.textContent || "").trim();
-        const digits = text.replace(/\D/g,"").slice(0,10);
-        if(digits){
-          buf = digits;
-          renderBuf();
-          performSearch(digits);
-        }else{
-          updateMicUI("idle", "No number heard");
-          haptic(5);
-        }
-      };
-
-      recognition.start();
-    }
-
-    // Start voice from input view mic
-    micBtn.addEventListener("click", startVoice);
-
-    // Start voice from dashboard mic (jump to input first)
-    document.getElementById("micFAB").addEventListener("click", ()=>{
-      toInput();
-      startVoice();
-    });
+    micFab.addEventListener("click", ()=>{ toInput(); startRec(); });
+    micFab.addEventListener("pointerdown", ()=>{ toInput(); startRec(); });
+    micFab.addEventListener("pointerup", stopRec);
+    micFab.addEventListener("pointercancel", stopRec);
+    micFab.addEventListener("pointerleave", stopRec);
   </script>
 </body>
 </html>
