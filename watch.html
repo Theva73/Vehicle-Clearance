@@ -34,7 +34,7 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Center the active view */
+            justify-content: center;
             align-items: center;
         }
 
@@ -44,7 +44,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 16px;
+            padding: 12px;
             box-sizing: border-box;
             animation: fade-in 0.5s ease;
             width: 100%;
@@ -59,11 +59,11 @@
             cursor: pointer;
         }
         #search-prompt .icon {
-            font-size: 48px;
-            margin-bottom: 12px;
+            font-size: 44px;
+            margin-bottom: 10px;
         }
         #search-prompt .text {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--accent-blue);
         }
@@ -71,42 +71,44 @@
             color: var(--muted);
             font-size: 14px;
             margin-top: 20px;
+            position: absolute;
+            bottom: 10px;
         }
 
-        /* --- Result View --- */
+        /* --- Result View (Compact Design) --- */
         .result-plate {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
-            border-radius: 16px;
-            margin-bottom: 12px;
+            padding: 10px 14px; /* Reduced padding */
+            border-radius: 14px; /* Slightly smaller radius */
+            margin-bottom: 10px;
             position: relative;
             width: 100%;
             box-sizing: border-box;
         }
         .result-plate.cleared {
             background: linear-gradient(145deg, #0a84ff, #0056b3);
-            border: 3px solid var(--gold);
+            border: 2px solid var(--gold);
         }
         .result-plate.not-found {
             background: linear-gradient(145deg, #58585d, #3a3a3c);
-            border: 3px solid var(--status-red);
+            border: 2px solid var(--status-red);
         }
         .plate-text {
             font-family: monospace;
-            font-size: 28px;
+            font-size: 24px; /* Reduced font size */
             font-weight: 900;
             color: var(--text);
         }
         .plate-text.cleared {
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
         }
         .plate-text.not-found { color: #b0b0b0; }
         .plate-status-badge {
-            padding: 6px 12px;
+            padding: 5px 10px; /* Reduced padding */
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 12px; /* Reduced font size */
             font-weight: 700;
             flex-shrink: 0;
         }
@@ -115,22 +117,22 @@
 
         .location-card {
             background-color: var(--panel);
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 14px;
+            padding: 12px; /* Reduced padding */
             text-align: center;
             width: 100%;
             box-sizing: border-box;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
         .location-title {
-            font-size: 14px;
+            font-size: 12px; /* Reduced font size */
             font-weight: bold;
             color: var(--muted);
             text-transform: uppercase;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .location-text {
-            font-size: 24px;
+            font-size: 20px; /* Reduced font size */
             font-weight: 700;
             color: var(--text);
         }
@@ -235,13 +237,12 @@
         }
 
         function triggerSearch() {
-            searchInput.value = ''; // Clear previous search
+            searchInput.value = ''; 
             searchInput.focus();
         }
 
         searchPrompt.addEventListener('click', triggerSearch);
 
-        // This event fires after the user taps "Done" on the keyboard
         searchInput.addEventListener('change', () => {
             const term = searchInput.value.trim();
             if (term.length > 0) {
@@ -284,13 +285,10 @@
                     </div>
                 `;
             }
-            // --- NEW: Add the "New Search" button directly to the result ---
             resultView.innerHTML = cardHTML + `<button id="new-search-btn">New Search</button>`;
             
-            // We must re-add the event listener every time we create the button
             document.getElementById('new-search-btn').addEventListener('click', () => {
                 showInitialView();
-                // --- NEW: Immediately trigger the keyboard ---
                 triggerSearch();
             });
         }
