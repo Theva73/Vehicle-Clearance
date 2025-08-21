@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -20,279 +21,363 @@
             --gold: #ffd700;
         }
 
-        body, html {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-            margin: 0;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
+```
+    body, html {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+        margin: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
-        .app-container {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* Center the active view */
-            align-items: center;
-        }
+    .app-container {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        max-width: 500px; /* Apple Watch Ultra max width */
+        max-height: 500px; /* Apple Watch Ultra max height */
+    }
 
-        /* --- View States --- */
+    /* --- View States --- */
+    .view {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+        animation: fade-in 0.5s ease;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    
+    #result-view {
+        display: none;
+        justify-content: space-evenly; /* Better spacing distribution */
+        gap: 16px; /* Consistent spacing between elements */
+    }
+
+    /* --- Initial Search View --- */
+    #search-prompt {
+        text-align: center;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    #search-prompt .icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        display: block;
+    }
+    #search-prompt .text {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--accent-blue);
+        line-height: 1.2;
+    }
+    #status-bar {
+        color: var(--muted);
+        font-size: 14px;
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+    }
+
+    /* --- Result View (Optimized for Watch Ultra) --- */
+    .result-plate {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        border-radius: 16px;
+        margin: 0;
+        position: relative;
+        width: calc(100% - 40px); /* Account for view padding */
+        max-width: 300px; /* Prevent over-stretching */
+        box-sizing: border-box;
+        min-height: 60px; /* Ensure consistent height */
+    }
+    .result-plate.cleared {
+        background: linear-gradient(145deg, #0a84ff, #0056b3);
+        border: 2px solid var(--gold);
+    }
+    .result-plate.not-found {
+        background: linear-gradient(145deg, #58585d, #3a3a3c);
+        border: 2px solid var(--status-red);
+    }
+    .plate-text {
+        font-family: 'SF Pro Display', monospace;
+        font-size: 26px;
+        font-weight: 900;
+        color: var(--text);
+        flex: 1;
+        text-align: left;
+        line-height: 1;
+    }
+    .plate-text.cleared {
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+    }
+    .plate-text.not-found { 
+        color: #b0b0b0; 
+    }
+    .plate-status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    .plate-status-badge.cleared { 
+        background-color: var(--status-green); 
+        color: white; 
+    }
+    .plate-status-badge.not-found { 
+        background-color: var(--status-red); 
+        color: white; 
+    }
+
+    .location-card {
+        background-color: var(--panel);
+        border-radius: 16px;
+        padding: 16px;
+        text-align: center;
+        width: calc(100% - 40px); /* Account for view padding */
+        max-width: 300px; /* Prevent over-stretching */
+        box-sizing: border-box;
+        margin: 0;
+    }
+    .location-title {
+        font-size: 12px;
+        font-weight: bold;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        letter-spacing: 0.5px;
+    }
+    .location-text {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.2;
+        word-wrap: break-word;
+    }
+    
+    #new-search-btn {
+        border: none;
+        background-color: var(--accent-blue);
+        color: white;
+        font-size: 18px;
+        font-weight: 700;
+        padding: 16px 24px;
+        border-radius: 16px;
+        width: calc(100% - 40px); /* Account for view padding */
+        max-width: 300px; /* Prevent over-stretching */
+        cursor: pointer;
+        box-sizing: border-box;
+        margin: 0;
+        transition: background-color 0.2s ease;
+    }
+    
+    #new-search-btn:active {
+        background-color: #0056b3;
+    }
+
+    /* --- Hidden input for triggering keyboard --- */
+    #search-input {
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        opacity: 0;
+    }
+
+    @keyframes fade-in {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Responsive adjustments for different watch sizes */
+    @media (max-width: 396px) {
         .view {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 12px;
-            box-sizing: border-box;
-            animation: fade-in 0.5s ease;
-            width: 100%;
+            padding: 16px;
         }
-        #result-view {
-            display: none; /* Hidden by default */
+        .plate-text {
+            font-size: 22px;
         }
+        .location-text {
+            font-size: 20px;
+        }
+        #new-search-btn {
+            font-size: 16px;
+            padding: 14px 20px;
+        }
+    }
 
-        /* --- Initial Search View --- */
-        #search-prompt {
-            text-align: center;
-            cursor: pointer;
+    @media (max-height: 484px) {
+        .view {
+            gap: 12px;
         }
         #search-prompt .icon {
-            font-size: 44px;
-            margin-bottom: 10px;
+            font-size: 42px;
+            margin-bottom: 8px;
         }
         #search-prompt .text {
             font-size: 20px;
-            font-weight: 700;
-            color: var(--accent-blue);
         }
-        #status-bar {
-            color: var(--muted);
-            font-size: 14px;
-            margin-top: 20px;
-            position: absolute;
-            bottom: 10px;
-        }
+    }
+</style>
+```
 
-        /* --- Result View (Compact Design) --- */
-        .result-plate {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 14px; /* Reduced padding */
-            border-radius: 14px; /* Slightly smaller radius */
-            margin-bottom: 10px;
-            position: relative;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .result-plate.cleared {
-            background: linear-gradient(145deg, #0a84ff, #0056b3);
-            border: 2px solid var(--gold);
-        }
-        .result-plate.not-found {
-            background: linear-gradient(145deg, #58585d, #3a3a3c);
-            border: 2px solid var(--status-red);
-        }
-        .plate-text {
-            font-family: monospace;
-            font-size: 24px; /* Reduced font size */
-            font-weight: 900;
-            color: var(--text);
-        }
-        .plate-text.cleared {
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-        }
-        .plate-text.not-found { color: #b0b0b0; }
-        .plate-status-badge {
-            padding: 5px 10px; /* Reduced padding */
-            border-radius: 20px;
-            font-size: 12px; /* Reduced font size */
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-        .plate-status-badge.cleared { background-color: var(--status-green); color: white; }
-        .plate-status-badge.not-found { background-color: var(--status-red); color: white; }
-
-        .location-card {
-            background-color: var(--panel);
-            border-radius: 14px;
-            padding: 12px; /* Reduced padding */
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 14px;
-        }
-        .location-title {
-            font-size: 12px; /* Reduced font size */
-            font-weight: bold;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-        .location-text {
-            font-size: 20px; /* Reduced font size */
-            font-weight: 700;
-            color: var(--text);
-        }
-        
-        #new-search-btn {
-            border: none;
-            background-color: var(--accent-blue);
-            color: white;
-            font-size: 18px;
-            font-weight: 700;
-            padding: 14px 20px;
-            border-radius: 14px;
-            width: 100%;
-            cursor: pointer;
-            box-sizing: border-box;
-        }
-
-        /* --- Hidden input for triggering keyboard --- */
-        #search-input {
-            position: absolute;
-            left: -9999px;
-            top: -9999px;
-        }
-
-        @keyframes fade-in {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-    </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <input id="search-input" type="text">
+```
+<div class="app-container">
+    <input id="search-input" type="text">
 
-        <div class="view" id="initial-view">
-            <div id="search-prompt">
-                <div class="icon">🔍</div>
-                <div class="text">Tap to Search</div>
-            </div>
-            <div id="status-bar">Connecting...</div>
+    <div class="view" id="initial-view">
+        <div id="search-prompt">
+            <div class="icon">🔍</div>
+            <div class="text">Tap to Search</div>
         </div>
-
-        <div class="view" id="result-view">
-            <!-- Content will be injected by JavaScript -->
-        </div>
+        <div id="status-bar">Connecting...</div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <div class="view" id="result-view">
+        <!-- Content will be injected by JavaScript -->
+    </div>
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
-            authDomain: "vehicle-clearance.firebaseapp.com",
-            projectId: "vehicle-clearance",
-            storageBucket: "vehicle-clearance.appspot.com",
-            messagingSenderId: "187403368572",
-            appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
-        };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let db;
-        let allRows = [];
-        
-        const searchInput = document.getElementById('search-input');
-        const initialView = document.getElementById('initial-view');
-        const resultView = document.getElementById('result-view');
-        const searchPrompt = document.getElementById('search-prompt');
-        const statusBar = document.getElementById('status-bar');
+    const firebaseConfig = {
+        apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
+        authDomain: "vehicle-clearance.firebaseapp.com",
+        projectId: "vehicle-clearance",
+        storageBucket: "vehicle-clearance.appspot.com",
+        messagingSenderId: "187403368572",
+        appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
+    };
 
-        // --- Firebase Connection ---
-        try {
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            db = getFirestore(app);
+    let db;
+    let allRows = [];
+    
+    const searchInput = document.getElementById('search-input');
+    const initialView = document.getElementById('initial-view');
+    const resultView = document.getElementById('result-view');
+    const searchPrompt = document.getElementById('search-prompt');
+    const statusBar = document.getElementById('status-bar');
 
-            onAuthStateChanged(auth, user => {
-                if (user) {
-                    const listingsCollection = collection(db, 'vehicleListings');
-                    onSnapshot(listingsCollection, (snapshot) => {
-                        allRows = snapshot.docs.map(doc => doc.data());
-                        statusBar.textContent = `Ready (${allRows.length} vehicles)`;
-                    }, () => { statusBar.textContent = 'Sync Error.'; });
-                } else {
-                    signInAnonymously(auth).catch(() => { statusBar.textContent = 'Auth Error.'; });
-                }
-            });
-        } catch (err) {
-            statusBar.textContent = 'Connection Failed.';
-        }
+    // --- Firebase Connection ---
+    try {
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        db = getFirestore(app);
 
-        // --- UI Logic ---
-        function showInitialView() {
-            resultView.style.display = 'none';
-            initialView.style.display = 'flex';
-        }
-
-        function showResultView() {
-            initialView.style.display = 'none';
-            resultView.style.display = 'flex';
-        }
-
-        function triggerSearch() {
-            searchInput.value = ''; 
-            searchInput.focus();
-        }
-
-        searchPrompt.addEventListener('click', triggerSearch);
-
-        searchInput.addEventListener('change', () => {
-            const term = searchInput.value.trim();
-            if (term.length > 0) {
-                applyFilter(term);
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                const listingsCollection = collection(db, 'vehicleListings');
+                onSnapshot(listingsCollection, (snapshot) => {
+                    allRows = snapshot.docs.map(doc => doc.data());
+                    statusBar.textContent = `Ready (${allRows.length} vehicles)`;
+                }, () => { statusBar.textContent = 'Sync Error.'; });
+            } else {
+                signInAnonymously(auth).catch(() => { statusBar.textContent = 'Auth Error.'; });
             }
         });
+    } catch (err) {
+        statusBar.textContent = 'Connection Failed.';
+    }
 
-        function applyFilter(term) {
-            const numericTerm = term.replace(/\D/g, '');
-            if (numericTerm.length === 0) return;
+    // --- UI Logic ---
+    function showInitialView() {
+        resultView.style.display = 'none';
+        initialView.style.display = 'flex';
+    }
 
-            const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
-            
-            renderResult(result, numericTerm);
-            showResultView();
+    function showResultView() {
+        initialView.style.display = 'none';
+        resultView.style.display = 'flex';
+    }
+
+    function triggerSearch() {
+        searchInput.value = ''; 
+        searchInput.focus();
+    }
+
+    searchPrompt.addEventListener('click', triggerSearch);
+
+    searchInput.addEventListener('change', () => {
+        const term = searchInput.value.trim();
+        if (term.length > 0) {
+            applyFilter(term);
         }
+    });
 
-        function renderResult(result, term) {
-            let cardHTML = '';
-            if (result) {
-                cardHTML = `
-                    <div class="result-plate cleared">
-                        <span class="plate-text cleared">${result.vehicleNumber}</span>
-                        <span class="plate-status-badge cleared">✓ CLEARED</span>
-                    </div>
-                    <div class="location-card">
-                        <div class="location-title">LOCATION</div>
-                        <div class="location-text">${result.location || 'N/A'}</div>
-                    </div>
-                `;
-            } else {
-                cardHTML = `
-                    <div class="result-plate not-found">
-                        <span class="plate-text not-found">${term}</span>
-                        <span class="plate-status-badge not-found">✗ NOT FOUND</span>
-                    </div>
-                     <div class="location-card">
-                        <div class="location-title">STATUS</div>
-                        <div class="location-text">Vehicle not on list.</div>
-                    </div>
-                `;
-            }
-            resultView.innerHTML = cardHTML + `<button id="new-search-btn">New Search</button>`;
-            
-            document.getElementById('new-search-btn').addEventListener('click', () => {
-                showInitialView();
-                triggerSearch();
-            });
+    function applyFilter(term) {
+        const numericTerm = term.replace(/\D/g, '');
+        if (numericTerm.length === 0) return;
+
+        const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
+        
+        renderResult(result, numericTerm);
+        showResultView();
+    }
+
+    function renderResult(result, term) {
+        let cardHTML = '';
+        if (result) {
+            cardHTML = `
+                <div class="result-plate cleared">
+                    <span class="plate-text cleared">${result.vehicleNumber}</span>
+                    <span class="plate-status-badge cleared">✓ CLEARED</span>
+                </div>
+                <div class="location-card">
+                    <div class="location-title">LOCATION</div>
+                    <div class="location-text">${result.location || 'N/A'}</div>
+                </div>
+            `;
+        } else {
+            cardHTML = `
+                <div class="result-plate not-found">
+                    <span class="plate-text not-found">${term}</span>
+                    <span class="plate-status-badge not-found">✗ NOT FOUND</span>
+                </div>
+                 <div class="location-card">
+                    <div class="location-title">STATUS</div>
+                    <div class="location-text">Vehicle not on list.</div>
+                </div>
+            `;
         }
+        resultView.innerHTML = cardHTML + `<button id="new-search-btn">New Search</button>`;
+        
+        document.getElementById('new-search-btn').addEventListener('click', () => {
+            showInitialView();
+            triggerSearch();
+        });
+    }
 
-    </script>
+</script>
+```
+
 </body>
 </html>
