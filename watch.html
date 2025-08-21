@@ -187,7 +187,7 @@
         }
 
         /* * ==============================================
-         * NEW: TEXT INPUT VIEW WITH HEADER
+         * TEXT INPUT VIEW WITH HEADER
          * ==============================================
         */
         #input-view {
@@ -482,12 +482,6 @@
         resultView.style.display = 'none';
         initialView.style.display = 'none';
         inputView.style.display = 'flex';
-        
-        // Populate header with current info
-        inputTime.textContent = timeDisplay.textContent;
-        inputWeather.children[0].textContent = weatherIcon.textContent;
-        inputWeather.children[1].textContent = weatherTemp.textContent;
-
         textSearchInput.value = '';
         textSearchInput.focus();
     }
@@ -498,24 +492,38 @@
         resultView.style.display = 'flex';
     }
 
-    // --- Dashboard Logic ---
-    function updateDashboard() {
-        setInterval(() => {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            timeDisplay.textContent = `${hours}:${minutes}`;
-        }, 1000);
+    // --- Dashboard & Header Logic (FIXED) ---
+    function updateTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const currentTime = `${hours}:${minutes}`;
+        
+        // Update both dashboard and input header time
+        timeDisplay.textContent = currentTime;
+        inputTime.textContent = currentTime;
+    }
 
+    function updateDashboardAndHeader() {
+        // Update time immediately and then every second
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Update weather immediately
         const simulatedWeatherData = {
             location: "Singapore",
             temp: "29",
             icon: "☁️"
         };
 
+        // Update dashboard weather
         weatherIcon.textContent = simulatedWeatherData.icon;
         weatherTemp.textContent = `${simulatedWeatherData.temp}°`;
         locationDisplay.textContent = simulatedWeatherData.location;
+
+        // Update input header weather
+        inputWeather.children[0].textContent = simulatedWeatherData.icon;
+        inputWeather.children[1].textContent = `${simulatedWeatherData.temp}°`;
     }
 
     // --- Event Listeners ---
@@ -594,8 +602,8 @@
         document.getElementById('new-search-btn').addEventListener('click', showInputView);
     }
     
-    // Initialize the dashboard on page load
-    updateDashboard();
+    // Initialize the dashboard and header data on page load
+    updateDashboardAndHeader();
 
 </script>
 
