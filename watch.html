@@ -7,559 +7,603 @@
     <title>Vehicle Clearance Search</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* ==============================================
-         * ENHANCED THEME & VARIABLES
+         * ULTRA-MODERN THEME & VARIABLES
          * ==============================================
         */
         :root {
-            --bg-primary: #000814; 
-            --bg-secondary: #001D3D; 
-            --bg-tertiary: #003566;
-            --bg-glass: rgba(0, 29, 61, 0.85); 
-            --glass-border: rgba(255, 255, 255, 0.15); 
-            --text-primary: #FFFFFF; 
-            --text-secondary: #B8C5D6; 
-            --text-muted: #7B8794; 
-            --accent-primary: #FFD60A;
-            --accent-secondary: #FF9500;
-            --accent-blue: #0077BE;
-            --accent-blue-glow: rgba(0, 119, 190, 0.5);
-            --success-green: #00C896; 
-            --success-green-glow: rgba(0, 200, 150, 0.4);
-            --error-red: #FF6B6B; 
-            --error-red-glow: rgba(255, 107, 107, 0.4);
-            --warning-orange: #FF8E53;
-            --shadow-strong: rgba(0, 0, 0, 0.6);
-            --shadow-subtle: rgba(0, 0, 0, 0.2);
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #131318;
+            --bg-accent: #1a1a23;
+            --neon-cyan: #00ffd5;
+            --neon-pink: #ff007f;
+            --neon-purple: #9c5fff;
+            --neon-blue: #0066ff;
+            --neon-orange: #ff6b35;
+            --text-primary: #ffffff;
+            --text-glow: rgba(255, 255, 255, 0.9);
+            --glass-white: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --success: #00ff88;
+            --error: #ff3366;
+            --warning: #ffaa00;
         }
 
 ```
     /* ==============================================
-     * BASE STYLES & LAYOUT
+     * RESET & BASE STYLES
      * ==============================================
     */
     * {
-        box-sizing: border-box;
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
     }
 
-    body, html {
-        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+    body {
+        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(156, 95, 255, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(0, 255, 213, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(255, 0, 127, 0.1) 0%, transparent 50%),
+            linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        min-height: 100vh;
         color: var(--text-primary);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        height: 100vh;
-        width: 100vw;
         overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
         position: relative;
     }
 
-    /* Enhanced animated background */
-    .background-particles {
+    /* Animated mesh background */
+    .mesh-bg {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
         background-image: 
-            radial-gradient(2px 2px at 20% 30%, rgba(255, 214, 10, 0.8), transparent),
-            radial-gradient(1px 1px at 80% 70%, rgba(255, 255, 255, 0.6), transparent),
-            radial-gradient(1px 1px at 50% 50%, rgba(184, 197, 214, 0.4), transparent),
-            radial-gradient(3px 3px at 90% 10%, rgba(255, 149, 0, 0.6), transparent),
-            radial-gradient(2px 2px at 10% 90%, rgba(0, 200, 150, 0.5), transparent);
-        background-size: 150% 150%;
-        animation: float-particles 200s linear infinite;
-        z-index: -1;
-        opacity: 0.7;
+            linear-gradient(45deg, transparent 40%, rgba(0, 255, 213, 0.03) 50%, transparent 60%),
+            linear-gradient(-45deg, transparent 40%, rgba(255, 0, 127, 0.03) 50%, transparent 60%);
+        background-size: 60px 60px;
+        animation: mesh-move 20s linear infinite;
+        z-index: -2;
     }
 
-    .app-container {
-        height: 100vh;
-        width: 100vw;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-        max-width: 420px;
-        max-height: 420px;
-        padding: 20px;
-    }
-
-    /* ==============================================
-     * VIEW MANAGEMENT & TRANSITIONS
-     * ==============================================
-    */
-    .view {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        height: 100%;
-        position: absolute;
+    .floating-orbs {
+        position: fixed;
         top: 0;
         left: 0;
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-        padding: 24px;
-    }
-    
-    .view.active {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-
-    /* ==============================================
-     * ENHANCED DASHBOARD DESIGN
-     * ==============================================
-    */
-    .dashboard-main {
-        width: 320px;
-        height: 320px;
-        border-radius: 50%;
-        position: relative;
-        cursor: pointer;
-        background: 
-            radial-gradient(circle at 30% 30%, rgba(255, 214, 10, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 70% 70%, rgba(0, 119, 190, 0.1) 0%, transparent 50%),
-            linear-gradient(135deg, var(--bg-glass) 0%, rgba(0, 53, 102, 0.8) 100%);
-        backdrop-filter: blur(20px);
-        border: 2px solid var(--glass-border);
-        box-shadow: 
-            0 0 80px var(--shadow-strong),
-            inset 0 4px 8px rgba(255, 255, 255, 0.1),
-            0 20px 40px rgba(0, 0, 0, 0.3);
-        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        width: 100%;
+        height: 100%;
+        z-index: -1;
         overflow: hidden;
     }
 
-    .dashboard-main::before {
-        content: '';
+    .orb {
         position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
         border-radius: 50%;
-        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary), var(--accent-blue));
-        z-index: -1;
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        filter: blur(1px);
+        animation: float 8s ease-in-out infinite;
     }
 
-    .dashboard-main:hover {
-        transform: scale(1.02);
-        border-color: var(--accent-primary);
-        box-shadow: 
-            0 0 120px var(--shadow-strong),
-            0 0 60px rgba(255, 214, 10, 0.3),
-            inset 0 4px 8px rgba(255, 255, 255, 0.15);
+    .orb-1 {
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, var(--neon-cyan), transparent);
+        top: 20%;
+        left: 10%;
+        animation-delay: -2s;
     }
 
-    .dashboard-main:hover::before {
-        opacity: 0.2;
+    .orb-2 {
+        width: 60px;
+        height: 60px;
+        background: radial-gradient(circle, var(--neon-pink), transparent);
+        top: 60%;
+        right: 15%;
+        animation-delay: -4s;
     }
 
-    .dashboard-main:active {
-        transform: scale(0.98);
-    }
-
-    /* Dashboard content positioning */
-    .dashboard-element {
-        position: absolute;
-        text-align: center;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    .time-display {
-        top: 70px;
-        font-size: 52px;
-        font-weight: 800;
-        line-height: 1;
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: -1px;
-        text-shadow: 0 4px 8px rgba(255, 214, 10, 0.3);
-    }
-
-    .weather-display {
-        top: 135px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 8px 16px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        backdrop-filter: blur(10px);
-    }
-
-    .weather-icon { 
-        font-size: 24px; 
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    }
-
-    .weather-temp { 
-        font-size: 20px; 
-        font-weight: 600;
-        color: var(--accent-primary);
-    }
-
-    .location-display {
-        bottom: 80px;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-secondary);
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    }
-
-    .search-prompt {
-        bottom: 40px;
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--accent-blue);
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        padding: 12px 24px;
-        background: rgba(0, 119, 190, 0.2);
-        border: 1px solid var(--accent-blue);
-        border-radius: 25px;
-        backdrop-filter: blur(10px);
-        animation: pulse-glow 2s ease-in-out infinite;
-    }
-
-    .status-indicator {
-        position: absolute;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 20px;
-        background: var(--bg-glass);
-        backdrop-filter: blur(15px);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--text-secondary);
-        box-shadow: 0 8px 16px var(--shadow-subtle);
+    .orb-3 {
+        width: 80px;
+        height: 80px;
+        background: radial-gradient(circle, var(--neon-purple), transparent);
+        bottom: 30%;
+        left: 20%;
+        animation-delay: -6s;
     }
 
     /* ==============================================
-     * REDESIGNED INPUT VIEW
+     * CONTAINER & LAYOUT
+     * ==============================================
+    */
+    .app-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .main-interface {
+        width: 380px;
+        height: 380px;
+        position: relative;
+    }
+
+    /* ==============================================
+     * VIEW SYSTEM
+     * ==============================================
+    */
+    .view {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: scale(0.8) rotateY(90deg);
+        transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        transform-style: preserve-3d;
+    }
+
+    .view.active {
+        opacity: 1;
+        transform: scale(1) rotateY(0deg);
+    }
+
+    /* ==============================================
+     * ULTRA-MODERN DASHBOARD
+     * ==============================================
+    */
+    .dashboard-sphere {
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: 
+            conic-gradient(from 0deg, 
+                var(--neon-cyan) 0deg, 
+                var(--neon-purple) 120deg, 
+                var(--neon-pink) 240deg, 
+                var(--neon-cyan) 360deg);
+        padding: 3px;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        position: relative;
+        animation: rotate-border 10s linear infinite;
+    }
+
+    .dashboard-inner {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: 
+            radial-gradient(circle at 30% 30%, rgba(0, 255, 213, 0.1) 0%, transparent 70%),
+            radial-gradient(circle at 70% 70%, rgba(255, 0, 127, 0.1) 0%, transparent 70%),
+            var(--bg-primary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+    }
+
+    .dashboard-sphere:hover {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 50px rgba(0, 255, 213, 0.3));
+    }
+
+    .dashboard-sphere:active {
+        transform: scale(0.98);
+    }
+
+    /* Dashboard content */
+    .time-display {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 48px;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 30px rgba(0, 255, 213, 0.5);
+        letter-spacing: -2px;
+        margin-bottom: 20px;
+    }
+
+    .weather-pod {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--glass-white);
+        border: 1px solid var(--glass-border);
+        border-radius: 25px;
+        padding: 12px 20px;
+        backdrop-filter: blur(20px);
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .weather-icon {
+        font-size: 20px;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+    }
+
+    .weather-temp {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--neon-cyan);
+    }
+
+    .location-badge {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-glow);
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin-bottom: 25px;
+    }
+
+    .search-prompt {
+        background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 30px;
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 30px rgba(0, 102, 255, 0.4);
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    .search-prompt:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 40px rgba(0, 102, 255, 0.6);
+    }
+
+    /* Status indicator */
+    .status-display {
+        position: absolute;
+        bottom: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--glass-white);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 12px 24px;
+        backdrop-filter: blur(20px);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-glow);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ==============================================
+     * FUTURISTIC INPUT VIEW
      * ==============================================
     */
     .input-container {
         width: 100%;
-        max-width: 360px;
+        height: 100%;
         display: flex;
         flex-direction: column;
-        gap: 32px;
         align-items: center;
+        justify-content: center;
+        gap: 30px;
     }
 
     .input-header {
         text-align: center;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
 
-    .input-header .time {
+    .input-time {
+        font-family: 'JetBrains Mono', monospace;
         font-size: 36px;
         font-weight: 700;
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         margin-bottom: 8px;
     }
 
-    .input-header .weather {
-        font-size: 18px;
-        font-weight: 500;
-        color: var(--text-secondary);
+    .input-weather {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-
-    .search-input-group {
-        width: 100%;
-        position: relative;
-    }
-
-    .search-input {
-        width: 100%;
-        background: var(--bg-glass);
-        backdrop-filter: blur(20px);
-        border: 2px solid var(--glass-border);
-        color: var(--text-primary);
-        font-size: 24px;
-        font-weight: 600;
-        padding: 20px 24px;
-        border-radius: 20px;
-        text-align: center;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 24px var(--shadow-subtle);
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 
-            0 0 40px rgba(255, 214, 10, 0.3),
-            0 12px 32px var(--shadow-strong);
-        transform: translateY(-2px);
-    }
-
-    .search-input::placeholder {
-        color: var(--text-muted);
-        font-weight: 500;
-    }
-
-    .input-actions {
-        display: flex;
-        gap: 16px;
-        width: 100%;
-        justify-content: center;
-    }
-
-    .btn {
-        padding: 14px 28px;
-        border: none;
-        border-radius: 16px;
+        gap: 8px;
         font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        min-width: 120px;
+        color: var(--text-glow);
     }
 
-    .btn-cancel {
-        background: var(--bg-secondary);
-        color: var(--text-secondary);
-        border: 2px solid var(--glass-border);
-    }
-
-    .btn-cancel:hover {
-        background: var(--bg-tertiary);
-        color: var(--text-primary);
-        border-color: var(--text-secondary);
-        transform: translateY(-2px);
-    }
-
-    .btn-search {
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        color: var(--bg-primary);
-        box-shadow: 0 8px 16px rgba(255, 214, 10, 0.3);
-    }
-
-    .btn-search:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 24px rgba(255, 214, 10, 0.4);
-    }
-
-    .btn-search:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    /* ==============================================
-     * ENHANCED RESULTS VIEW
-     * ==============================================
-    */
-    .result-container {
-        width: 100%;
-        max-width: 360px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 24px;
-    }
-
-    .result-panel {
-        width: 100%;
-        padding: 32px;
-        background: var(--bg-glass);
-        backdrop-filter: blur(25px);
-        border: 2px solid var(--glass-border);
-        border-radius: 28px;
-        box-shadow: 
-            0 20px 40px var(--shadow-strong),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        text-align: center;
-        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    /* Holographic input field */
+    .holo-input {
         position: relative;
-        overflow: hidden;
+        width: 100%;
+        max-width: 300px;
     }
 
-    .result-panel::before {
+    .vehicle-input {
+        width: 100%;
+        background: var(--glass-white);
+        border: 2px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 20px 25px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        backdrop-filter: blur(20px);
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .vehicle-input:focus {
+        outline: none;
+        border-color: var(--neon-cyan);
+        box-shadow: 
+            0 0 40px rgba(0, 255, 213, 0.3),
+            0 8px 32px rgba(0, 0, 0, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .vehicle-input::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+        font-weight: 400;
+    }
+
+    /* Scanning effect */
+    .holo-input::before {
         content: '';
         position: absolute;
         top: 0;
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        background: linear-gradient(90deg, transparent, rgba(0, 255, 213, 0.2), transparent);
         transition: left 0.6s ease;
+        border-radius: 20px;
     }
 
-    .result-panel.success {
-        border-color: var(--success-green);
-        box-shadow: 
-            0 0 60px var(--success-green-glow),
-            0 20px 40px var(--shadow-strong);
-    }
-
-    .result-panel.error {
-        border-color: var(--error-red);
-        box-shadow: 
-            0 0 60px var(--error-red-glow),
-            0 20px 40px var(--shadow-strong);
-    }
-
-    .result-panel.success::before,
-    .result-panel.error::before {
+    .holo-input.scanning::before {
         left: 100%;
     }
 
-    .vehicle-number {
-        font-size: 42px;
-        font-weight: 800;
-        letter-spacing: 3px;
-        margin-bottom: 20px;
-        line-height: 1;
-        text-transform: uppercase;
-    }
-
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 16px;
-        font-weight: 700;
-        padding: 12px 24px;
-        border-radius: 20px;
-        margin-bottom: 28px;
-        color: #fff;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    }
-
-    .status-badge.success { 
-        background: linear-gradient(135deg, var(--success-green), #00A575);
-    }
-
-    .status-badge.error { 
-        background: linear-gradient(135deg, var(--error-red), #E85555);
-    }
-
-    .location-section {
-        width: 100%;
-        border-top: 1px solid var(--glass-border);
-        padding-top: 20px;
+    /* Action buttons */
+    .input-actions {
         display: flex;
-        align-items: center;
         gap: 20px;
     }
 
-    .location-info {
-        text-align: left;
-        flex-grow: 1;
+    .cyber-btn {
+        padding: 15px 25px;
+        border: none;
+        border-radius: 15px;
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        min-width: 100px;
     }
 
-    .location-label {
-        font-size: 12px;
+    .cyber-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .cyber-btn:hover::before {
+        left: 100%;
+    }
+
+    .btn-cancel {
+        background: linear-gradient(135deg, #333, #555);
+        color: var(--text-primary);
+        border: 1px solid var(--glass-border);
+    }
+
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-search {
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+        color: var(--bg-primary);
+        box-shadow: 0 0 20px rgba(0, 255, 213, 0.4);
+    }
+
+    .btn-search:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 30px rgba(0, 255, 213, 0.6);
+    }
+
+    .btn-search:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* ==============================================
+     * HOLOGRAPHIC RESULTS VIEW
+     * ==============================================
+    */
+    .result-container {
+        width: 100%;
+        max-width: 340px;
+        margin: 0 auto;
+    }
+
+    .result-holo {
+        background: var(--glass-white);
+        border: 2px solid var(--glass-border);
+        border-radius: 25px;
+        padding: 35px 30px;
+        backdrop-filter: blur(25px);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        transition: all 0.6s ease;
+    }
+
+    .result-holo::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(from 0deg, transparent, rgba(0, 255, 213, 0.1), transparent);
+        animation: holo-rotate 6s linear infinite;
+        z-index: -1;
+    }
+
+    .result-holo.success {
+        border-color: var(--success);
+        box-shadow: 
+            0 0 60px rgba(0, 255, 136, 0.3),
+            0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .result-holo.error {
+        border-color: var(--error);
+        box-shadow: 
+            0 0 60px rgba(255, 51, 102, 0.3),
+            0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .vehicle-display {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+    }
+
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 24px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-indicator.success {
+        background: linear-gradient(135deg, var(--success), #00cc77);
+        color: var(--bg-primary);
+    }
+
+    .status-indicator.error {
+        background: linear-gradient(135deg, var(--error), #e62e5c);
+        color: white;
+    }
+
+    .result-details {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 20px;
+        border-top: 1px solid var(--glass-border);
+    }
+
+    .detail-info {
+        text-align: left;
+        flex: 1;
+    }
+
+    .detail-label {
+        font-size: 11px;
         font-weight: 600;
-        color: var(--text-muted);
+        color: rgba(255, 255, 255, 0.5);
         text-transform: uppercase;
         letter-spacing: 2px;
-        margin-bottom: 8px;
+        margin-bottom: 5px;
     }
 
-    .location-value {
-        font-size: 20px;
+    .detail-value {
+        font-size: 18px;
         font-weight: 600;
         color: var(--text-primary);
-        word-break: break-word;
-        line-height: 1.3;
     }
 
-    .action-btn {
-        width: 56px;
-        height: 56px;
+    .action-orb {
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
-        background: var(--bg-secondary);
-        border: 2px solid var(--glass-border);
-        color: var(--text-primary);
+        background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+        border: none;
+        color: white;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.3s ease;
-        flex-shrink: 0;
+        box-shadow: 0 0 20px rgba(156, 95, 255, 0.4);
     }
 
-    .action-btn:hover {
-        border-color: var(--accent-primary);
-        color: var(--accent-primary);
-        transform: scale(1.05);
-        box-shadow: 0 8px 16px rgba(255, 214, 10, 0.3);
-    }
-
-    .action-btn svg {
-        width: 24px;
-        height: 24px;
+    .action-orb:hover {
+        transform: scale(1.1) rotate(10deg);
+        box-shadow: 0 0 30px rgba(156, 95, 255, 0.6);
     }
 
     /* ==============================================
      * ANIMATIONS
      * ==============================================
     */
-    @keyframes float-particles {
-        0%, 100% { 
-            background-position: 0% 0%;
-            transform: rotate(0deg);
-        }
-        25% { 
-            background-position: 25% 25%;
-            transform: rotate(90deg);
-        }
-        50% { 
-            background-position: 50% 50%;
-            transform: rotate(180deg);
-        }
-        75% { 
-            background-position: 75% 25%;
-            transform: rotate(270deg);
-        }
+    @keyframes mesh-move {
+        0% { background-position: 0 0; }
+        100% { background-position: 60px 60px; }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    @keyframes rotate-border {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 
     @keyframes pulse-glow {
-        0%, 100% { 
-            box-shadow: 0 0 20px rgba(0, 119, 190, 0.3);
-            transform: scale(1);
-        }
-        50% { 
-            box-shadow: 0 0 30px rgba(0, 119, 190, 0.5);
-            transform: scale(1.02);
-        }
+        0%, 100% { box-shadow: 0 0 30px rgba(0, 102, 255, 0.4); }
+        50% { box-shadow: 0 0 50px rgba(0, 102, 255, 0.8); }
+    }
+
+    @keyframes holo-rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 
     /* ==============================================
@@ -567,23 +611,22 @@
      * ==============================================
     */
     @media (max-width: 430px) {
-        .dashboard-main {
+        .main-interface {
+            width: 340px;
+            height: 340px;
+        }
+        
+        .dashboard-sphere {
             width: 280px;
             height: 280px;
         }
         
         .time-display {
-            font-size: 44px;
-            top: 60px;
+            font-size: 42px;
         }
         
-        .search-input {
-            font-size: 20px;
-            padding: 18px 20px;
-        }
-        
-        .vehicle-number {
-            font-size: 36px;
+        .vehicle-display {
+            font-size: 28px;
         }
     }
 </style>
@@ -592,58 +635,73 @@
 </head>
 <body>
 
-<div class="background-particles"></div>
+<div class="mesh-bg"></div>
 
-<div class="app-container">
-    <!-- DASHBOARD VIEW -->
-    <div class="view active" id="dashboard-view">
-        <div class="dashboard-main" id="dashboard-btn">
-            <div class="time-display dashboard-element" id="dash-time">--:--</div>
-            <div class="weather-display dashboard-element" id="dash-weather">
-                <span class="weather-icon">--</span>
-                <span class="weather-temp">--°</span>
-            </div>
-            <div class="location-display dashboard-element" id="dash-location">Loading...</div>
-            <div class="search-prompt dashboard-element">Tap to Search</div>
-        </div>
-        <div class="status-indicator" id="status-bar">Connecting...</div>
-    </div>
-
-```
-<!-- SEARCH INPUT VIEW -->
-<div class="view" id="input-view">
-    <div class="input-container">
-        <div class="input-header">
-            <div class="time" id="input-time">--:--</div>
-            <div class="weather" id="input-weather">
-                <span>--</span>
-                <span>--°</span>
-            </div>
-        </div>
-        
-        <div class="search-input-group">
-            <input class="search-input" id="vehicle-input" type="text" placeholder="Enter Vehicle Number" maxlength="12">
-        </div>
-        
-        <div class="input-actions">
-            <button class="btn btn-cancel" id="cancel-btn">Cancel</button>
-            <button class="btn btn-search" id="search-btn" disabled>Search</button>
-        </div>
-    </div>
+<div class="floating-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
 </div>
 
-<!-- RESULTS VIEW -->
-<div class="view" id="result-view">
-    <div class="result-container">
-        <!-- Dynamic content will be inserted here -->
+<div class="app-container">
+    <div class="main-interface">
+
+```
+    <!-- FUTURISTIC DASHBOARD -->
+    <div class="view active" id="dashboard-view">
+        <div class="dashboard-sphere" id="dashboard-trigger">
+            <div class="dashboard-inner">
+                <div class="time-display" id="main-time">--:--</div>
+                <div class="weather-pod">
+                    <span class="weather-icon" id="main-weather-icon">--</span>
+                    <span class="weather-temp" id="main-weather-temp">--°</span>
+                </div>
+                <div class="location-badge" id="main-location">Loading...</div>
+                <button class="search-prompt">⚡ Scan Vehicle</button>
+            </div>
+        </div>
+        <div class="status-display" id="connection-status">Connecting...</div>
     </div>
+
+    <!-- CYBER INPUT VIEW -->
+    <div class="view" id="input-view">
+        <div class="input-container">
+            <div class="input-header">
+                <div class="input-time" id="input-time">--:--</div>
+                <div class="input-weather">
+                    <span id="input-weather-icon">--</span>
+                    <span id="input-weather-temp">--°</span>
+                </div>
+            </div>
+            
+            <div class="holo-input" id="input-wrapper">
+                <input class="vehicle-input" id="vehicle-scanner" 
+                       type="text" 
+                       placeholder="Vehicle ID" 
+                       maxlength="15">
+            </div>
+            
+            <div class="input-actions">
+                <button class="cyber-btn btn-cancel" id="abort-btn">Abort</button>
+                <button class="cyber-btn btn-search" id="scan-btn" disabled>Scan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOLOGRAPHIC RESULTS -->
+    <div class="view" id="result-view">
+        <div class="result-container">
+            <!-- Dynamic holographic content -->
+        </div>
+    </div>
+
 </div>
 ```
 
 </div>
 
 <script type="module">
-    // Firebase configuration (same as original)
+    // Firebase imports (same as before)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -657,40 +715,43 @@
         appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    // State management
+    // App state
     let db;
-    let allRows = [];
-    let currentView = 'dashboard';
+    let vehicleData = [];
     
-    // DOM elements
+    // DOM references
     const views = {
         dashboard: document.getElementById('dashboard-view'),
         input: document.getElementById('input-view'),
         result: document.getElementById('result-view')
     };
     
-    const elements = {
-        dashboardBtn: document.getElementById('dashboard-btn'),
-        statusBar: document.getElementById('status-bar'),
-        vehicleInput: document.getElementById('vehicle-input'),
-        cancelBtn: document.getElementById('cancel-btn'),
-        searchBtn: document.getElementById('search-btn'),
-        dashTime: document.getElementById('dash-time'),
-        dashWeather: document.getElementById('dash-weather'),
-        dashLocation: document.getElementById('dash-location'),
+    const controls = {
+        dashboardTrigger: document.getElementById('dashboard-trigger'),
+        connectionStatus: document.getElementById('connection-status'),
+        vehicleScanner: document.getElementById('vehicle-scanner'),
+        inputWrapper: document.getElementById('input-wrapper'),
+        abortBtn: document.getElementById('abort-btn'),
+        scanBtn: document.getElementById('scan-btn'),
+        mainTime: document.getElementById('main-time'),
+        mainWeatherIcon: document.getElementById('main-weather-icon'),
+        mainWeatherTemp: document.getElementById('main-weather-temp'),
+        mainLocation: document.getElementById('main-location'),
         inputTime: document.getElementById('input-time'),
-        inputWeather: document.getElementById('input-weather')
+        inputWeatherIcon: document.getElementById('input-weather-icon'),
+        inputWeatherTemp: document.getElementById('input-weather-temp')
     };
 
-    // === VIEW MANAGEMENT ===
-    function showView(viewName) {
+    // === ENHANCED VIEW MANAGEMENT ===
+    function switchToView(targetView) {
         Object.values(views).forEach(view => view.classList.remove('active'));
-        views[viewName].classList.add('active');
-        currentView = viewName;
+        views[targetView].classList.add('active');
         
-        if (viewName === 'input') {
+        if (targetView === 'input') {
             setTimeout(() => {
-                elements.vehicleInput.focus();
+                controls.vehicleScanner.focus();
+                controls.inputWrapper.classList.add('scanning');
+                setTimeout(() => controls.inputWrapper.classList.remove('scanning'), 600);
             }, 400);
         }
     }
@@ -703,27 +764,27 @@
 
         onAuthStateChanged(auth, user => {
             if (user) {
-                const listingsCollection = collection(db, 'vehicleListings');
-                onSnapshot(listingsCollection, (snapshot) => {
-                    allRows = snapshot.docs.map(doc => doc.data());
-                    elements.statusBar.textContent = `Ready (${allRows.length} vehicles)`;
+                const vehicleCollection = collection(db, 'vehicleListings');
+                onSnapshot(vehicleCollection, (snapshot) => {
+                    vehicleData = snapshot.docs.map(doc => doc.data());
+                    controls.connectionStatus.textContent = `⚡ Ready (${vehicleData.length} vehicles)`;
                 }, (error) => { 
-                    console.error("Firestore sync error:", error);
-                    elements.statusBar.textContent = 'Sync Error'; 
+                    console.error("Sync error:", error);
+                    controls.connectionStatus.textContent = '❌ Sync Error'; 
                 });
             } else {
                 signInAnonymously(auth).catch((error) => { 
-                    console.error("Anonymous auth error:", error);
-                    elements.statusBar.textContent = 'Authentication Error'; 
+                    console.error("Auth error:", error);
+                    controls.connectionStatus.textContent = '🔐 Auth Error'; 
                 });
             }
         });
-    } catch (err) {
-        console.error("Firebase init error:", err);
-        elements.statusBar.textContent = 'Connection Failed';
+    } catch (error) {
+        console.error("Firebase error:", error);
+        controls.connectionStatus.textContent = '💥 Connection Failed';
     }
 
-    // === TIME AND WEATHER UPDATES ===
+    // === REAL-TIME UPDATES ===
     function updateTimeAndWeather() {
         const now = new Date();
         const timeString = now.toLocaleTimeString('en-SG', { 
@@ -732,124 +793,65 @@
             hour12: false 
         });
         
-        elements.dashTime.textContent = timeString;
-        elements.inputTime.textContent = timeString;
+        controls.mainTime.textContent = timeString;
+        controls.inputTime.textContent = timeString;
 
-        // Simulated weather (you can replace with real API)
-        const weatherData = {
-            location: "Singapore",
-            temp: "29",
-            icon: "☁️"
-        };
-
-        elements.dashWeather.children[0].textContent = weatherData.icon;
-        elements.dashWeather.children[1].textContent = `${weatherData.temp}°`;
-        elements.dashLocation.textContent = weatherData.location;
-
-        elements.inputWeather.children[0].textContent = weatherData.icon;
-        elements.inputWeather.children[1].textContent = `${weatherData.temp}°`;
+        // Enhanced weather simulation
+        const weatherStates = [
+            { icon: '⛅', temp: '29', desc: 'Partly Cloudy' },
+            { icon: '🌧️', temp: '26', desc: 'Light Rain' },
+            { icon: '☀️', temp: '32', desc: 'Sunny' },
+            { icon: '🌩️', temp: '28', desc: 'Thunderstorm' }
+        ];
+        
+        const currentWeather = weatherStates[0]; // You can randomize this
+        
+        controls.mainWeatherIcon.textContent = currentWeather.icon;
+        controls.mainWeatherTemp.textContent = `${currentWeather.temp}°`;
+        controls.mainLocation.textContent = 'Singapore';
+        
+        controls.inputWeatherIcon.textContent = currentWeather.icon;
+        controls.inputWeatherTemp.textContent = `${currentWeather.temp}°`;
     }
 
-    // === SEARCH FUNCTIONALITY ===
-    function validateInput(value) {
-        const cleanValue = value.replace(/[^A-Z0-9]/g, '');
-        return cleanValue.length >= 3;
+    // === ENHANCED SEARCH LOGIC ===
+    function validateVehicleInput(input) {
+        const cleaned = input.replace(/[^A-Z0-9]/g, '');
+        return cleaned.length >= 3;
     }
 
-    function performSearch(searchTerm) {
-        const numericTerm = searchTerm.replace(/\D/g, '');
-        if (numericTerm.length === 0) return null;
+    function searchVehicle(query) {
+        const numericPart = query.replace(/\D/g, '');
+        if (numericPart.length === 0) return null;
 
-        return allRows.find(row => 
-            row.vehicleNumber && 
-            row.vehicleNumber.replace(/[^0-9]/g, '').includes(numericTerm)
+        return vehicleData.find(vehicle => 
+            vehicle.vehicleNumber && 
+            vehicle.vehicleNumber.replace(/[^0-9]/g, '').includes(numericPart)
         );
     }
 
-    function displayResults(result, searchTerm) {
+    function displayResults(searchResult, query) {
         const container = views.result.querySelector('.result-container');
         
         const searchIcon = `
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
             </svg>
         `;
 
-        let panelClass, statusClass, statusIcon, statusText, locationLabel, locationValue;
+        let panelClass, statusClass, statusIcon, statusText, detailLabel, detailValue;
 
-        if (result) {
+        if (searchResult) {
             panelClass = 'success';
             statusClass = 'success';
-            statusIcon = '✓';
-            statusText = 'Cleared';
-            locationLabel = 'Location';
-            locationValue = result.location || 'Not specified';
+            statusIcon = '✅';
+            statusText = 'Access Granted';
+            detailLabel = 'Location';
+            detailValue = searchResult.location || 'Zone Alpha';
         } else {
             panelClass = 'error';
             statusClass = 'error';
-            statusIcon = '✗';
-            statusText = 'Not Found';
-            locationLabel = 'Status';
-            locationValue = 'Access Denied';
-        }
-
-        container.innerHTML = `
-            <div class="result-panel ${panelClass}">
-                <div class="vehicle-number">${result ? result.vehicleNumber : searchTerm}</div>
-                <div class="status-badge ${statusClass}">
-                    <span>${statusIcon}</span>
-                    <span>${statusText}</span>
-                </div>
-                <div class="location-section">
-                    <div class="location-info">
-                        <div class="location-label">${locationLabel}</div>
-                        <div class="location-value">${locationValue}</div>
-                    </div>
-                    <button class="action-btn" id="new-search-btn">
-                        ${searchIcon}
-                    </button>
-                </div>
-            </div>
-        `;
-
-        // Add event listener for new search
-        document.getElementById('new-search-btn').addEventListener('click', () => {
-            elements.vehicleInput.value = '';
-            elements.searchBtn.disabled = true;
-            showView('input');
-        });
-
-        showView('result');
-    }
-
-    // === EVENT LISTENERS ===
-    elements.dashboardBtn.addEventListener('click', () => showView('input'));
-    
-    elements.cancelBtn.addEventListener('click', () => showView('dashboard'));
-    
-    elements.vehicleInput.addEventListener('input', (e) => {
-        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        e.target.value = value;
-        elements.searchBtn.disabled = !validateInput(value);
-    });
-    
-    elements.vehicleInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !elements.searchBtn.disabled) {
-            const result = performSearch(elements.vehicleInput.value);
-            displayResults(result, elements.vehicleInput.value);
-        }
-    });
-    
-    elements.searchBtn.addEventListener('click', () => {
-        const result = performSearch(elements.vehicleInput.value);
-        displayResults(result, elements.vehicleInput.value);
-    });
-
-    // === INITIALIZATION ===
-    updateTimeAndWeather();
-    setInterval(updateTimeAndWeather, 1000);
-
-</script>
-
-</body>
-</html>
+            statusIcon = '🚫';
+            statusText = 'Access Denied';
+            detailLabel = 'Status
