@@ -1,682 +1,390 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Vehicle Clearance Search</title>
+    <title>Watch Vehicle Search</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* ==============================================
-         * ULTRA-MODERN THEME & VARIABLES
+        /* * ==============================================
+         * AESTHETIC & THEME DEFINITION (DARK MODE)
          * ==============================================
         */
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #131318;
-            --bg-accent: #1a1a23;
-            --neon-cyan: #00ffd5;
-            --neon-pink: #ff007f;
-            --neon-purple: #9c5fff;
-            --neon-blue: #0066ff;
-            --neon-orange: #ff6b35;
-            --text-primary: #ffffff;
-            --text-glow: rgba(255, 255, 255, 0.9);
-            --glass-white: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --success: #00ff88;
-            --error: #ff3366;
-            --warning: #ffaa00;
+            --bg-primary: #0D0D12; 
+            --bg-secondary: #1A1A21; 
+            --bg-glass: rgba(26, 26, 33, 0.6); 
+            --glass-border: rgba(255, 255, 255, 0.1); 
+            --text-primary: #F0F0F5; 
+            --text-secondary: #A0A0B0; 
+            --text-muted: #606070; 
+            --accent-blue: #0A84FF; 
+            --accent-blue-glow: rgba(10, 132, 255, 0.4);
+            --accent-orange: #FF9F0A;
+            --accent-yellow: #FFD60A;
+            --success-green: #30D158; 
+            --success-green-glow: rgba(48, 209, 88, 0.4);
+            --error-red: #FF453A; 
+            --error-red-glow: rgba(255, 69, 58, 0.4);
+            --shadow-light: rgba(255, 255, 255, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.5);
         }
 
-```
-    /* ==============================================
-     * RESET & BASE STYLES
-     * ==============================================
-    */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+        /* * ==============================================
+         * BASE & LAYOUT STYLES
+         * ==============================================
+        */
+        body, html {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-    body {
-        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-        background: 
-            radial-gradient(circle at 20% 80%, rgba(156, 95, 255, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(0, 255, 213, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(255, 0, 127, 0.1) 0%, transparent 50%),
-            linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-        min-height: 100vh;
-        color: var(--text-primary);
-        overflow: hidden;
-        position: relative;
-    }
+        .background-stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(1px 1px at 20% 30%, #FFFFFF, transparent),
+                radial-gradient(1px 1px at 80% 70%, #FFFFFF, transparent),
+                radial-gradient(1px 1px at 50% 50%, #CCCCCC, transparent),
+                radial-gradient(2px 2px at 90% 10%, #FFFFFF, transparent),
+                radial-gradient(2px 2px at 10% 90%, #CCCCCC, transparent);
+            background-size: 100% 100%;
+            animation: move-stars 120s linear infinite;
+            z-index: -1;
+        }
 
-    /* Static mesh background - removed animation */
-    .mesh-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: 
-            linear-gradient(45deg, transparent 40%, rgba(0, 255, 213, 0.03) 50%, transparent 60%),
-            linear-gradient(-45deg, transparent 40%, rgba(255, 0, 127, 0.03) 50%, transparent 60%);
-        background-size: 60px 60px;
-        z-index: -2;
-    }
+        .app-container {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            max-width: 400px;
+            max-height: 400px;
+        }
 
-    .floating-orbs {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        overflow: hidden;
-    }
-
-    .orb {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(1px);
-        /* Removed float animation */
-    }
-
-    .orb-1 {
-        width: 100px;
-        height: 100px;
-        background: radial-gradient(circle, var(--neon-cyan), transparent);
-        top: 20%;
-        left: 10%;
-    }
-
-    .orb-2 {
-        width: 60px;
-        height: 60px;
-        background: radial-gradient(circle, var(--neon-pink), transparent);
-        top: 60%;
-        right: 15%;
-    }
-
-    .orb-3 {
-        width: 80px;
-        height: 80px;
-        background: radial-gradient(circle, var(--neon-purple), transparent);
-        bottom: 30%;
-        left: 20%;
-    }
-
-    /* ==============================================
-     * CONTAINER & LAYOUT
-     * ==============================================
-    */
-    .app-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    .main-interface {
-        width: 380px;
-        height: 380px;
-        position: relative;
-    }
-
-    /* ==============================================
-     * VIEW SYSTEM
-     * ==============================================
-    */
-    .view {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transform: scale(0.8) rotateY(90deg);
-        transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-        transform-style: preserve-3d;
-    }
-
-    .view.active {
-        opacity: 1;
-        transform: scale(1) rotateY(0deg);
-    }
-
-    /* ==============================================
-     * STATIC DASHBOARD - REMOVED ROTATING BORDER
-     * ==============================================
-    */
-    .dashboard-sphere {
-        width: 320px;
-        height: 320px;
-        border-radius: 50%;
-        background: 
-            conic-gradient(from 0deg, 
-                var(--neon-cyan) 0deg, 
-                var(--neon-purple) 120deg, 
-                var(--neon-pink) 240deg, 
-                var(--neon-cyan) 360deg);
-        padding: 3px;
-        cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-        position: relative;
-        /* Removed rotation animation */
-    }
-
-    .dashboard-inner {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: 
-            radial-gradient(circle at 30% 30%, rgba(0, 255, 213, 0.1) 0%, transparent 70%),
-            radial-gradient(circle at 70% 70%, rgba(255, 0, 127, 0.1) 0%, transparent 70%),
-            var(--bg-primary);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-    }
-
-    .dashboard-sphere:hover {
-        transform: scale(1.05);
-        filter: drop-shadow(0 0 50px rgba(0, 255, 213, 0.3));
-    }
-
-    .dashboard-sphere:active {
-        transform: scale(0.98);
-    }
-
-    /* Dashboard content */
-    .time-display {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 48px;
-        font-weight: 800;
-        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: 0 0 30px rgba(0, 255, 213, 0.5);
-        letter-spacing: -2px;
-        margin-bottom: 20px;
-    }
-
-    .weather-pod {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: var(--glass-white);
-        border: 1px solid var(--glass-border);
-        border-radius: 25px;
-        padding: 12px 20px;
-        backdrop-filter: blur(20px);
-        margin-bottom: 20px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .weather-icon {
-        font-size: 20px;
-        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
-    }
-
-    .weather-temp {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--neon-cyan);
-    }
-
-    .location-badge {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-glow);
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        margin-bottom: 25px;
-    }
-
-    .search-prompt {
-        background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        border-radius: 30px;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 30px rgba(0, 102, 255, 0.4);
-        /* Removed pulse animation */
-    }
-
-    .search-prompt:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 40px rgba(0, 102, 255, 0.6);
-    }
-
-    /* Status indicator */
-    .status-display {
-        position: absolute;
-        bottom: -60px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--glass-white);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 12px 24px;
-        backdrop-filter: blur(20px);
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--text-glow);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    }
-
-    /* ==============================================
-     * FUTURISTIC INPUT VIEW
-     * ==============================================
-    */
-    .input-container {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 30px;
-    }
-
-    .input-header {
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    .input-time {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 36px;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 8px;
-    }
-
-    .input-weather {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 16px;
-        color: var(--text-glow);
-    }
-
-    /* Holographic input field */
-    .holo-input {
-        position: relative;
-        width: 100%;
-        max-width: 300px;
-    }
-
-    .vehicle-input {
-        width: 100%;
-        background: var(--glass-white);
-        border: 2px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 20px 25px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--text-primary);
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        backdrop-filter: blur(20px);
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .vehicle-input:focus {
-        outline: none;
-        border-color: var(--neon-cyan);
-        box-shadow: 
-            0 0 40px rgba(0, 255, 213, 0.3),
-            0 8px 32px rgba(0, 0, 0, 0.4);
-        transform: translateY(-2px);
-    }
-
-    .vehicle-input::placeholder {
-        color: rgba(255, 255, 255, 0.3);
-        font-weight: 400;
-    }
-
-    /* Scanning effect */
-    .holo-input::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(0, 255, 213, 0.2), transparent);
-        transition: left 0.6s ease;
-        border-radius: 20px;
-    }
-
-    .holo-input.scanning::before {
-        left: 100%;
-    }
-
-    /* Action buttons */
-    .input-actions {
-        display: flex;
-        gap: 20px;
-    }
-
-    .cyber-btn {
-        padding: 15px 25px;
-        border: none;
-        border-radius: 15px;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        min-width: 100px;
-    }
-
-    .cyber-btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s ease;
-    }
-
-    .cyber-btn:hover::before {
-        left: 100%;
-    }
-
-    .btn-cancel {
-        background: linear-gradient(135deg, #333, #555);
-        color: var(--text-primary);
-        border: 1px solid var(--glass-border);
-    }
-
-    .btn-cancel:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    .btn-search {
-        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
-        color: var(--bg-primary);
-        box-shadow: 0 0 20px rgba(0, 255, 213, 0.4);
-    }
-
-    .btn-search:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 30px rgba(0, 255, 213, 0.6);
-    }
-
-    .btn-search:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-        transform: none !important;
-    }
-
-    /* ==============================================
-     * STATIC RESULTS VIEW - REMOVED SPINNING
-     * ==============================================
-    */
-    .result-container {
-        width: 100%;
-        max-width: 340px;
-        margin: 0 auto;
-    }
-
-    .result-holo {
-        background: var(--glass-white);
-        border: 2px solid var(--glass-border);
-        border-radius: 25px;
-        padding: 35px 30px;
-        backdrop-filter: blur(25px);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-        transition: all 0.6s ease;
-    }
-
-    /* Removed rotating background animation */
-    .result-holo::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: conic-gradient(from 0deg, transparent, rgba(0, 255, 213, 0.1), transparent);
-        z-index: -1;
-        /* Removed animation */
-    }
-
-    .result-holo.success {
-        border-color: var(--success);
-        box-shadow: 
-            0 0 60px rgba(0, 255, 136, 0.3),
-            0 20px 60px rgba(0, 0, 0, 0.4);
-    }
-
-    .result-holo.error {
-        border-color: var(--error);
-        box-shadow: 
-            0 0 60px rgba(255, 51, 102, 0.3),
-            0 20px 60px rgba(0, 0, 0, 0.4);
-    }
-
-    .vehicle-display {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 32px;
-        font-weight: 800;
-        letter-spacing: 3px;
-        margin-bottom: 20px;
-        text-transform: uppercase;
-    }
-
-    .status-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 24px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    }
-
-    .status-indicator.success {
-        background: linear-gradient(135deg, var(--success), #00cc77);
-        color: var(--bg-primary);
-    }
-
-    .status-indicator.error {
-        background: linear-gradient(135deg, var(--error), #e62e5c);
-        color: white;
-    }
-
-    .result-details {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-top: 20px;
-        border-top: 1px solid var(--glass-border);
-    }
-
-    .detail-info {
-        text-align: left;
-        flex: 1;
-    }
-
-    .detail-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.5);
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 5px;
-    }
-
-    .detail-value {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .action-orb {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
-        border: none;
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 20px rgba(156, 95, 255, 0.4);
-    }
-
-    .action-orb:hover {
-        transform: scale(1.1);
-        /* Removed rotation on hover */
-        box-shadow: 0 0 30px rgba(156, 95, 255, 0.6);
-    }
-
-    /* ==============================================
-     * STATIC ANIMATIONS - REMOVED ALL SPINNING
-     * ==============================================
-    */
-    /* Removed all keyframe animations for watch compatibility */
-
-    /* ==============================================
-     * RESPONSIVE DESIGN
-     * ==============================================
-    */
-    @media (max-width: 430px) {
-        .main-interface {
-            width: 340px;
-            height: 340px;
+        /* * ==============================================
+         * VIEW STATES & TRANSITIONS
+         * ==============================================
+        */
+        .view {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
         
-        .dashboard-sphere {
+        #result-view, #input-view {
+            display: none;
+        }
+
+        /* * ==============================================
+         * NEW: STABLE & REFINED DASHBOARD DESIGN
+         * ==============================================
+        */
+        #dashboard-prompt {
             width: 280px;
             height: 280px;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            background: radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary));
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
+            transition: transform 0.3s ease;
         }
-        
-        .time-display {
-            font-size: 42px;
+        #dashboard-prompt:active {
+            transform: scale(0.96);
         }
-        
-        .vehicle-display {
-            font-size: 28px;
-        }
-    }
-</style>
-```
 
+        .dashboard-content {
+            position: absolute;
+            text-align: center;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #time-display {
+            top: 60px;
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1;
+            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        #weather-display {
+            top: 115px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #weather-icon { font-size: 20px; }
+        #weather-temp { 
+            font-size: 20px; 
+            font-weight: 500;
+            color: var(--accent-yellow);
+        }
+        #location-display {
+            bottom: 60px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #B0B0C0;
+            letter-spacing: 0.5px;
+        }
+        .search-action-text {
+            bottom: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #status-bar {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            padding: 8px 16px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* * ==============================================
+         * TEXT INPUT VIEW WITH HEADER
+         * ==============================================
+        */
+        #input-view {
+            justify-content: flex-start;
+            padding-top: 40px;
+            gap: 20px;
+        }
+        .input-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-header .time {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .input-header .weather {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--accent-yellow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        #text-search-input {
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-size: 18px;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        #text-search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        #cancel-search-btn {
+            background: var(--bg-secondary);
+            border: none;
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* * ==============================================
+         * UNIFIED STATUS PANEL FOR RESULTS
+         * ==============================================
+        */
+        .status-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: calc(100% - 40px);
+            max-width: 320px;
+            padding: 24px;
+            box-sizing: border-box;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 var(--shadow-dark);
+            text-align: center;
+            transition: border-color 0.5s ease;
+        }
+        .status-panel.cleared {
+            border-color: var(--success-green);
+            box-shadow: 0 0 40px var(--success-green-glow), 0 8px 32px 0 var(--shadow-dark);
+        }
+        .status-panel.not-found {
+            border-color: var(--error-red);
+            box-shadow: 0 0 40px var(--error-red-glow), 0 8px 32px 0 var(--shadow-dark);
+        }
+        .vehicle-number {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+            line-height: 1.1;
+        }
+        .status-badge {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            color: #fff;
+        }
+        .status-badge.cleared { background-color: var(--success-green); }
+        .status-badge.not-found { background-color: var(--error-red); }
+        .location-info {
+            width: 100%;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .location-details {
+            text-align: left;
+            flex-grow: 1;
+        }
+        .location-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+        }
+        .location-text {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+        #new-search-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        #new-search-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        #new-search-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* * ==============================================
+         * ANIMATIONS
+         * ==============================================
+        */
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes move-stars {
+            from { background-position: 0 0; }
+            to { background-position: -10000px 5000px; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="mesh-bg"></div>
-
-<div class="floating-orbs">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-</div>
+<div class="background-stars"></div>
 
 <div class="app-container">
-    <div class="main-interface">
-
-```
-    <!-- FUTURISTIC DASHBOARD -->
-    <div class="view active" id="dashboard-view">
-        <div class="dashboard-sphere" id="dashboard-trigger">
-            <div class="dashboard-inner">
-                <div class="time-display" id="main-time">--:--</div>
-                <div class="weather-pod">
-                    <span class="weather-icon" id="main-weather-icon">--</span>
-                    <span class="weather-temp" id="main-weather-temp">--°</span>
-                </div>
-                <div class="location-badge" id="main-location">Loading...</div>
-                <button class="search-prompt">⚡ Scan Vehicle</button>
+    <!-- VIEW 1: The dashboard-style initial screen -->
+    <div class="view" id="initial-view">
+        <div id="dashboard-prompt">
+            <div id="time-display" class="dashboard-content">--:--</div>
+            <div id="weather-display" class="dashboard-content">
+                <span id="weather-icon">--</span>
+                <span id="weather-temp">--°</span>
             </div>
+            <div id="location-display" class="dashboard-content">Loading...</div>
+            <div class="search-action-text dashboard-content">Tap to Search</div>
         </div>
-        <div class="status-display" id="connection-status">Connecting...</div>
+        <div id="status-bar">Connecting...</div>
     </div>
 
-    <!-- CYBER INPUT VIEW -->
+    <!-- VIEW 2: The text input screen -->
     <div class="view" id="input-view">
-        <div class="input-container">
-            <div class="input-header">
-                <div class="input-time" id="input-time">--:--</div>
-                <div class="input-weather">
-                    <span id="input-weather-icon">--</span>
-                    <span id="input-weather-temp">--°</span>
-                </div>
-            </div>
-            
-            <div class="holo-input" id="input-wrapper">
-                <input class="vehicle-input" id="vehicle-scanner" 
-                       type="text" 
-                       placeholder="Vehicle ID" 
-                       maxlength="15">
-            </div>
-            
-            <div class="input-actions">
-                <button class="cyber-btn btn-cancel" id="abort-btn">Abort</button>
-                <button class="cyber-btn btn-search" id="scan-btn" disabled>Scan</button>
+        <div class="input-header">
+            <div id="input-time" class="time">--:--</div>
+            <div id="input-weather" class="weather">
+                <span>--</span>
+                <span>--°</span>
             </div>
         </div>
+        <input id="text-search-input" type="text" placeholder="Vehicle Number">
+        <button id="cancel-search-btn">Cancel</button>
     </div>
 
-    <!-- HOLOGRAPHIC RESULTS -->
+    <!-- VIEW 3: The results screen -->
     <div class="view" id="result-view">
-        <div class="result-container">
-            <!-- Dynamic holographic content -->
-        </div>
+        <!-- Dynamic content will be injected here -->
     </div>
-
-</div>
-```
-
 </div>
 
 <script type="module">
-    // Firebase imports (same as before)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -690,48 +398,30 @@
         appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    // App state
     let db;
-    let vehicleData = [];
+    let allRows = [];
     
-    // DOM references
-    const views = {
-        dashboard: document.getElementById('dashboard-view'),
-        input: document.getElementById('input-view'),
-        result: document.getElementById('result-view')
-    };
+    // DOM element references
+    const initialView = document.getElementById('initial-view');
+    const inputView = document.getElementById('input-view');
+    const resultView = document.getElementById('result-view');
+    const dashboardPrompt = document.getElementById('dashboard-prompt');
+    const statusBar = document.getElementById('status-bar');
+    const textSearchInput = document.getElementById('text-search-input');
+    const cancelSearchBtn = document.getElementById('cancel-search-btn');
     
-    const controls = {
-        dashboardTrigger: document.getElementById('dashboard-trigger'),
-        connectionStatus: document.getElementById('connection-status'),
-        vehicleScanner: document.getElementById('vehicle-scanner'),
-        inputWrapper: document.getElementById('input-wrapper'),
-        abortBtn: document.getElementById('abort-btn'),
-        scanBtn: document.getElementById('scan-btn'),
-        mainTime: document.getElementById('main-time'),
-        mainWeatherIcon: document.getElementById('main-weather-icon'),
-        mainWeatherTemp: document.getElementById('main-weather-temp'),
-        mainLocation: document.getElementById('main-location'),
-        inputTime: document.getElementById('input-time'),
-        inputWeatherIcon: document.getElementById('input-weather-icon'),
-        inputWeatherTemp: document.getElementById('input-weather-temp')
-    };
+    // Dashboard display elements
+    const timeDisplay = document.getElementById('time-display');
+    const weatherIcon = document.getElementById('weather-icon');
+    const weatherTemp = document.getElementById('weather-temp');
+    const locationDisplay = document.getElementById('location-display');
 
-    // === ENHANCED VIEW MANAGEMENT ===
-    function switchToView(targetView) {
-        Object.values(views).forEach(view => view.classList.remove('active'));
-        views[targetView].classList.add('active');
-        
-        if (targetView === 'input') {
-            setTimeout(() => {
-                controls.vehicleScanner.focus();
-                controls.inputWrapper.classList.add('scanning');
-                setTimeout(() => controls.inputWrapper.classList.remove('scanning'), 600);
-            }, 400);
-        }
-    }
+    // Input view header elements
+    const inputTime = document.getElementById('input-time');
+    const inputWeather = document.getElementById('input-weather');
 
-    // === FIREBASE INITIALIZATION ===
+
+    // --- Firebase Initialization ---
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -739,159 +429,154 @@
 
         onAuthStateChanged(auth, user => {
             if (user) {
-                const vehicleCollection = collection(db, 'vehicleListings');
-                onSnapshot(vehicleCollection, (snapshot) => {
-                    vehicleData = snapshot.docs.map(doc => doc.data());
-                    controls.connectionStatus.textContent = `⚡ Ready (${vehicleData.length} vehicles)`;
+                const listingsCollection = collection(db, 'vehicleListings');
+                onSnapshot(listingsCollection, (snapshot) => {
+                    allRows = snapshot.docs.map(doc => doc.data());
+                    statusBar.textContent = `Ready (${allRows.length} vehicles)`;
                 }, (error) => { 
-                    console.error("Sync error:", error);
-                    controls.connectionStatus.textContent = '❌ Sync Error'; 
+                    console.error("Firestore sync error:", error);
+                    statusBar.textContent = 'Sync Error.'; 
                 });
             } else {
                 signInAnonymously(auth).catch((error) => { 
-                    console.error("Auth error:", error);
-                    controls.connectionStatus.textContent = '🔐 Auth Error'; 
+                    console.error("Anonymous auth error:", error);
+                    statusBar.textContent = 'Auth Error.'; 
                 });
             }
         });
-    } catch (error) {
-        console.error("Firebase error:", error);
-        controls.connectionStatus.textContent = '💥 Connection Failed';
+    } catch (err) {
+        console.error("Firebase init error:", err);
+        statusBar.textContent = 'Connection Failed.';
     }
 
-    // === REAL-TIME UPDATES ===
-    function updateTimeAndWeather() {
+    // --- UI View Management ---
+    function showInitialView() {
+        resultView.style.display = 'none';
+        inputView.style.display = 'none';
+        initialView.style.display = 'flex';
+    }
+
+    function showInputView() {
+        resultView.style.display = 'none';
+        initialView.style.display = 'none';
+        inputView.style.display = 'flex';
+        textSearchInput.value = '';
+        textSearchInput.focus();
+    }
+
+    function showResultView() {
+        initialView.style.display = 'none';
+        inputView.style.display = 'none';
+        resultView.style.display = 'flex';
+    }
+
+    // --- Dashboard & Header Logic ---
+    function updateTime() {
         const now = new Date();
-        const timeString = now.toLocaleTimeString('en-SG', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false 
-        });
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const currentTime = `${hours}:${minutes}`;
         
-        controls.mainTime.textContent = timeString;
-        controls.inputTime.textContent = timeString;
-
-        // Enhanced weather simulation
-        const weatherStates = [
-            { icon: '⛅', temp: '29', desc: 'Partly Cloudy' },
-            { icon: '🌧️', temp: '26', desc: 'Light Rain' },
-            { icon: '☀️', temp: '32', desc: 'Sunny' },
-            { icon: '🌩️', temp: '28', desc: 'Thunderstorm' }
-        ];
-        
-        const currentWeather = weatherStates[0]; // You can randomize this
-        
-        controls.mainWeatherIcon.textContent = currentWeather.icon;
-        controls.mainWeatherTemp.textContent = `${currentWeather.temp}°`;
-        controls.mainLocation.textContent = 'Singapore';
-        
-        controls.inputWeatherIcon.textContent = currentWeather.icon;
-        controls.inputWeatherTemp.textContent = `${currentWeather.temp}°`;
+        timeDisplay.textContent = currentTime;
+        inputTime.textContent = currentTime;
     }
 
-    // === ENHANCED SEARCH LOGIC ===
-    function validateVehicleInput(input) {
-        const cleaned = input.replace(/[^A-Z0-9]/g, '');
-        return cleaned.length >= 3;
+    function updateDashboardAndHeader() {
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        const simulatedWeatherData = {
+            location: "Singapore",
+            temp: "29",
+            icon: "☁️"
+        };
+
+        weatherIcon.textContent = simulatedWeatherData.icon;
+        weatherTemp.textContent = `${simulatedWeatherData.temp}°`;
+        locationDisplay.textContent = simulatedWeatherData.location;
+
+        inputWeather.children[0].textContent = simulatedWeatherData.icon;
+        inputWeather.children[1].textContent = `${simulatedWeatherData.temp}°`;
     }
 
-    function searchVehicle(query) {
-        const numericPart = query.replace(/\D/g, '');
-        if (numericPart.length === 0) return null;
+    // --- Event Listeners ---
+    dashboardPrompt.addEventListener('click', showInputView);
+    cancelSearchBtn.addEventListener('click', showInitialView);
 
-        return vehicleData.find(vehicle => 
-            vehicle.vehicleNumber && 
-            vehicle.vehicleNumber.replace(/[^0-9]/g, '').includes(numericPart)
-        );
-    }
+    textSearchInput.addEventListener('change', () => {
+        const term = textSearchInput.value.trim().toUpperCase();
+        if (term.length > 0) {
+            performSearch(term);
+        }
+    });
 
-    function displayResults(searchResult, query) {
-        const container = views.result.querySelector('.result-container');
+    // --- Core Logic ---
+    function performSearch(term) {
+        const numericTerm = term.replace(/\D/g, '');
+        if (numericTerm.length === 0) return;
+
+        const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
         
-        const searchIcon = `
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
+        renderResult(result, term);
+        showResultView();
+    }
+
+    function renderResult(result, term) {
+        let panelClass = '';
+        let vehicleNumberHTML = '';
+        let statusBadgeHTML = '';
+        let locationHTML = '';
+
+        const searchIconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
             </svg>
         `;
 
-        let panelClass, statusClass, statusIcon, statusText, detailLabel, detailValue;
-
-        if (searchResult) {
-            panelClass = 'success';
-            statusClass = 'success';
-            statusIcon = '✅';
-            statusText = 'Access Granted';
-            detailLabel = 'Location';
-            detailValue = searchResult.location || 'Zone Alpha';
+        if (result) {
+            panelClass = 'cleared';
+            vehicleNumberHTML = `<div class="vehicle-number">${result.vehicleNumber}</div>`;
+            statusBadgeHTML = `<div class="status-badge cleared">✓ CLEARED</div>`;
+            locationHTML = `
+                <div class="location-info">
+                    <button id="new-search-btn">${searchIconSVG}</button>
+                    <div class="location-details">
+                        <div class="location-title">LOCATION</div>
+                        <div class="location-text">${result.location || 'N/A'}</div>
+                    </div>
+                </div>
+            `;
         } else {
-            panelClass = 'error';
-            statusClass = 'error';
-            statusIcon = '🚫';
-            statusText = 'Access Denied';
-            detailLabel = 'Status';
-            detailValue = 'Restricted';
+            panelClass = 'not-found';
+            vehicleNumberHTML = `<div class="vehicle-number">${term}</div>`;
+            statusBadgeHTML = `<div class="status-badge not-found">✗ NOT FOUND</div>`;
+            locationHTML = `
+                <div class="location-info">
+                    <button id="new-search-btn">${searchIconSVG}</button>
+                    <div class="location-details">
+                        <div class="location-title">STATUS</div>
+                        <div class="location-text">Denied</div>
+                    </div>
+                </div>
+            `;
         }
 
-        container.innerHTML = `
-            <div class="result-holo ${panelClass}">
-                <div class="vehicle-display">${searchResult ? searchResult.vehicleNumber : query}</div>
-                <div class="status-indicator ${statusClass}">
-                    <span>${statusIcon}</span>
-                    <span>${statusText}</span>
-                </div>
-                <div class="result-details">
-                    <div class="detail-info">
-                        <div class="detail-label">${detailLabel}</div>
-                        <div class="detail-value">${detailValue}</div>
-                    </div>
-                    <button class="action-orb" id="new-scan-btn">
-                        ${searchIcon}
-                    </button>
-                </div>
+        const resultHTML = `
+            <div class="status-panel ${panelClass}">
+                ${vehicleNumberHTML}
+                ${statusBadgeHTML}
+                ${locationHTML}
             </div>
         `;
-
-        // Add new scan functionality
-        document.getElementById('new-scan-btn').addEventListener('click', () => {
-            controls.vehicleScanner.value = '';
-            controls.scanBtn.disabled = true;
-            switchToView('input');
-        });
-
-        switchToView('result');
-    }
-
-    // === EVENT LISTENERS ===
-    controls.dashboardTrigger.addEventListener('click', () => switchToView('input'));
-    
-    controls.abortBtn.addEventListener('click', () => switchToView('dashboard'));
-    
-    controls.vehicleScanner.addEventListener('input', (e) => {
-        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        e.target.value = value;
-        controls.scanBtn.disabled = !validateVehicleInput(value);
         
-        // Add scanning effect on input
-        controls.inputWrapper.classList.add('scanning');
-        setTimeout(() => controls.inputWrapper.classList.remove('scanning'), 300);
-    });
+        resultView.innerHTML = resultHTML;
+        
+        document.getElementById('new-search-btn').addEventListener('click', showInputView);
+    }
     
-    controls.vehicleScanner.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !controls.scanBtn.disabled) {
-            const result = searchVehicle(controls.vehicleScanner.value);
-            displayResults(result, controls.vehicleScanner.value);
-        }
-    });
-    
-    controls.scanBtn.addEventListener('click', () => {
-        const result = searchVehicle(controls.vehicleScanner.value);
-        displayResults(result, controls.vehicleScanner.value);
-    });
-
-    // === INITIALIZE ===
-    updateTimeAndWeather();
-    setInterval(updateTimeAndWeather, 1000);
+    // Initialize the dashboard and header data on page load
+    updateDashboardAndHeader();
 
 </script>
 
