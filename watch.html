@@ -34,12 +34,12 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center; /* Center the active view */
+            align-items: center;
         }
 
         /* --- View States --- */
         .view {
-            flex-grow: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -47,6 +47,7 @@
             padding: 16px;
             box-sizing: border-box;
             animation: fade-in 0.5s ease;
+            width: 100%;
         }
         #result-view {
             display: none; /* Hidden by default */
@@ -65,6 +66,11 @@
             font-size: 22px;
             font-weight: 700;
             color: var(--accent-blue);
+        }
+        #status-bar {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 20px;
         }
 
         /* --- Result View --- */
@@ -114,6 +120,7 @@
             text-align: center;
             width: 100%;
             box-sizing: border-box;
+            margin-bottom: 16px;
         }
         .location-title {
             font-size: 14px;
@@ -127,27 +134,18 @@
             font-weight: 700;
             color: var(--text);
         }
-
-        /* --- Footer and Buttons --- */
-        .footer {
-            flex-shrink: 0;
-            padding: 12px;
-            text-align: center;
-        }
-        #status-bar {
-            color: var(--muted);
-            font-size: 14px;
-        }
+        
         #new-search-btn {
             border: none;
-            background-color: var(--panel);
-            color: var(--accent-blue);
+            background-color: var(--accent-blue);
+            color: white;
             font-size: 18px;
             font-weight: 700;
             padding: 14px 20px;
             border-radius: 14px;
             width: 100%;
             cursor: pointer;
+            box-sizing: border-box;
         }
 
         /* --- Hidden input for triggering keyboard --- */
@@ -166,26 +164,18 @@
 <body>
 
     <div class="app-container">
-        <!-- This input is never seen, but is used to trigger the native keyboard -->
         <input id="search-input" type="text">
 
-        <!-- View 1: Initial Search Prompt -->
         <div class="view" id="initial-view">
             <div id="search-prompt">
                 <div class="icon">🔍</div>
                 <div class="text">Tap to Search</div>
             </div>
+            <div id="status-bar">Connecting...</div>
         </div>
 
-        <!-- View 2: Search Result -->
         <div class="view" id="result-view">
             <!-- Content will be injected by JavaScript -->
-        </div>
-
-        <!-- Footer for status and reset button -->
-        <div class="footer">
-            <div id="status-bar">Connecting...</div>
-            <button id="new-search-btn" style="display: none;">New Search</button>
         </div>
     </div>
 
@@ -210,7 +200,6 @@
         const initialView = document.getElementById('initial-view');
         const resultView = document.getElementById('result-view');
         const searchPrompt = document.getElementById('search-prompt');
-        const newSearchBtn = document.getElementById('new-search-btn');
         const statusBar = document.getElementById('status-bar');
 
         // --- Firebase Connection ---
@@ -237,28 +226,23 @@
         // --- UI Logic ---
         function showInitialView() {
             resultView.style.display = 'none';
-            newSearchBtn.style.display = 'none';
             initialView.style.display = 'flex';
-            statusBar.style.display = 'block';
         }
 
         function showResultView() {
             initialView.style.display = 'none';
-            statusBar.style.display = 'none';
             resultView.style.display = 'flex';
-            newSearchBtn.style.display = 'block';
         }
 
-        searchPrompt.addEventListener('click', () => {
+        function triggerSearch() {
+            searchInput.value = ''; // Clear previous search
             searchInput.focus();
-        });
+        }
 
-        newSearchBtn.addEventListener('click', () => {
-            searchInput.value = '';
-            showInitialView();
-        });
+        searchPrompt.addEventListener('click', triggerSearch);
 
-        searchInput.addEventListener('input', () => {
+        // This event fires after the user taps "Done" on the keyboard
+        searchInput.addEventListener('change', () => {
             const term = searchInput.value.trim();
             if (term.length > 0) {
                 applyFilter(term);
@@ -300,7 +284,15 @@
                     </div>
                 `;
             }
-            resultView.innerHTML = cardHTML;
+            // --- NEW: Add the "New Search" button directly to the result ---
+            resultView.innerHTML = cardHTML + `<button id="new-search-btn">New Search</button>`;
+            
+            // We must re-add the event listener every time we create the button
+            document.getElementById('new-search-btn').addEventListener('click', () => {
+                showInitialView();
+                // --- NEW: Immediately trigger the keyboard ---
+                triggerSearch();
+            });
         }
 
     </script>
