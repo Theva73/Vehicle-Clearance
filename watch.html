@@ -8,34 +8,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* * ==============================================
-         * AESTHETIC & THEME DEFINITION (DARK MODE)
-         * ==============================================
-        */
         :root {
             --bg-primary: #0D0D12; 
             --bg-secondary: #1A1A21; 
-            --bg-glass: rgba(26, 26, 33, 0.6); 
+            --bg-glass: rgba(40, 40, 50, 0.5); 
             --glass-border: rgba(255, 255, 255, 0.1); 
             --text-primary: #F0F0F5; 
             --text-secondary: #A0A0B0; 
             --text-muted: #606070; 
             --accent-blue: #0A84FF; 
-            --accent-blue-glow: rgba(10, 132, 255, 0.4);
-            --accent-orange: #FF9F0A;
-            --accent-yellow: #FFD60A;
             --success-green: #30D158; 
-            --success-green-glow: rgba(48, 209, 88, 0.4);
             --error-red: #FF453A; 
-            --error-red-glow: rgba(255, 69, 58, 0.4);
-            --shadow-light: rgba(255, 255, 255, 0.1);
             --shadow-dark: rgba(0, 0, 0, 0.5);
         }
 
-        /* * ==============================================
-         * BASE & LAYOUT STYLES
-         * ==============================================
-        */
         body, html {
             background-color: var(--bg-primary);
             color: var(--text-primary);
@@ -52,23 +38,6 @@
             user-select: none;
         }
 
-        .background-stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(1px 1px at 20% 30%, #FFFFFF, transparent),
-                radial-gradient(1px 1px at 80% 70%, #FFFFFF, transparent),
-                radial-gradient(1px 1px at 50% 50%, #CCCCCC, transparent),
-                radial-gradient(2px 2px at 90% 10%, #FFFFFF, transparent),
-                radial-gradient(2px 2px at 10% 90%, #CCCCCC, transparent);
-            background-size: 100% 100%;
-            animation: move-stars 120s linear infinite;
-            z-index: -1;
-        }
-
         .app-container {
             height: 100vh;
             width: 100vw;
@@ -79,10 +48,6 @@
             position: relative;
         }
 
-        /* * ==============================================
-         * VIEW STATES & TRANSITIONS
-         * ==============================================
-        */
         .view {
             display: flex;
             flex-direction: column;
@@ -98,12 +63,10 @@
             left: 0;
         }
         
-        #result-view, #input-view {
-            display: none;
-        }
+        #result-view, #input-view { display: none; }
 
         /* * ==============================================
-         * NEW: APPLE WATCH ULTRA 2 LAYOUT
+         * ANIMATED WEATHER-FOCUSED LAYOUT
          * ==============================================
         */
         #dashboard-prompt {
@@ -115,57 +78,89 @@
             height: 100%;
             cursor: pointer;
             box-sizing: border-box;
-            gap: 15px;
-            transition: transform 0.2s ease;
-        }
-        #dashboard-prompt:active {
-            transform: scale(0.98);
+            gap: 20px;
+            padding: 20px;
         }
 
-        .dashboard-content {
-            text-align: center;
+        .weather-widget-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
         }
 
-        #time-display {
-            font-size: 64px;
+        .current-weather {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-basis: 50%;
+            gap: 5px;
+        }
+
+        .current-weather-icon {
+            width: 90px;
+            height: 90px;
+        }
+
+        .current-weather-temp {
+            font-size: 68px;
             font-weight: 800;
             line-height: 1;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
-            order: 2; /* Displayed after location */
         }
-        #weather-display {
+
+        .current-weather-condition {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .hourly-forecast {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 15px;
+            flex-basis: 50%;
+        }
+
+        .forecast-item {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 10px;
-            order: 3;
         }
-        #weather-icon { font-size: 24px; }
-        #weather-temp { 
-            font-size: 24px; 
-            font-weight: 500;
-            color: var(--accent-yellow);
-        }
-        #location-display {
-            font-size: 18px;
+
+        .forecast-temp {
+            font-size: 22px;
             font-weight: 600;
-            color: #B0B0C0;
-            letter-spacing: 0.5px;
-            order: 1; /* Displayed first */
         }
+
+        .forecast-icon {
+            width: 32px;
+            height: 32px;
+        }
+
+        .forecast-time {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            width: 50px;
+            text-align: right;
+        }
+        
         .search-action-text {
             font-size: 16px;
             font-weight: 600;
             color: var(--accent-blue);
             text-transform: uppercase;
             letter-spacing: 1px;
-            order: 4;
-            margin-top: 10px;
+            margin-top: 15px;
         }
-
+        
         #status-bar {
             color: var(--text-secondary);
             font-size: 14px;
@@ -182,10 +177,7 @@
             border: 1px solid var(--glass-border);
         }
 
-        /* * ==============================================
-         * TEXT INPUT VIEW WITH HEADER
-         * ==============================================
-        */
+        /* Input and Result views remain largely unchanged */
         #input-view {
             justify-content: flex-start;
             padding-top: 40px;
@@ -198,19 +190,6 @@
         .input-header .time {
             font-size: 32px;
             font-weight: 700;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .input-header .weather {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--accent-yellow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
         #text-search-input {
             width: 100%;
@@ -223,10 +202,6 @@
             text-align: center;
             box-sizing: border-box;
         }
-        #text-search-input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-        }
         #cancel-search-btn {
             background: var(--bg-secondary);
             border: none;
@@ -236,11 +211,6 @@
             font-size: 16px;
             cursor: pointer;
         }
-
-        /* * ==============================================
-         * UNIFIED STATUS PANEL FOR RESULTS
-         * ==============================================
-        */
         .status-panel {
             display: flex;
             flex-direction: column;
@@ -255,82 +225,18 @@
             border-radius: 24px;
             box-shadow: 0 8px 32px 0 var(--shadow-dark);
             text-align: center;
-            transition: border-color 0.5s ease;
         }
-        .status-panel.cleared {
-            border-color: var(--success-green);
-            box-shadow: 0 0 40px var(--success-green-glow), 0 8px 32px 0 var(--shadow-dark);
-        }
-        .status-panel.not-found {
-            border-color: var(--error-red);
-            box-shadow: 0 0 40px var(--error-red-glow), 0 8px 32px 0 var(--shadow-dark);
-        }
-        .vehicle-number {
-            font-size: 36px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            margin-bottom: 16px;
-            line-height: 1.1;
-        }
-        .status-badge {
-            font-size: 14px;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 16px;
-            margin-bottom: 24px;
-            color: #fff;
-        }
+        .status-panel.cleared { border-color: var(--success-green); }
+        .status-panel.not-found { border-color: var(--error-red); }
+        .vehicle-number { font-size: 36px; font-weight: 700; margin-bottom: 16px; }
+        .status-badge { font-size: 14px; font-weight: 600; padding: 8px 16px; border-radius: 16px; margin-bottom: 24px; color: #fff; }
         .status-badge.cleared { background-color: var(--success-green); }
         .status-badge.not-found { background-color: var(--error-red); }
-        .location-info {
-            width: 100%;
-            border-top: 1px solid var(--glass-border);
-            padding-top: 16px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .location-details {
-            text-align: left;
-            flex-grow: 1;
-        }
-        .location-title {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 6px;
-        }
-        .location-text {
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--text-primary);
-            word-break: break-word;
-        }
-        #new-search-btn {
-            background: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            cursor: pointer;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-        }
-        #new-search-btn:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-        }
-        #new-search-btn svg {
-            width: 20px;
-            height: 20px;
-        }
+        .location-info { width: 100%; border-top: 1px solid var(--glass-border); padding-top: 16px; display: flex; align-items: center; gap: 16px; }
+        .location-details { text-align: left; flex-grow: 1; }
+        .location-title { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; }
+        .location-text { font-size: 22px; font-weight: 600; }
+        #new-search-btn { background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
 
         /* * ==============================================
          * ANIMATIONS
@@ -340,28 +246,35 @@
             from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes move-stars {
-            from { background-position: 0 0; }
-            to { background-position: -10000px 5000px; }
+        
+        @keyframes drift {
+            0% { transform: translateX(-3px); }
+            50% { transform: translateX(3px); }
+            100% { transform: translateX(-3px); }
+        }
+
+        .animated-cloud {
+            animation: drift 8s ease-in-out infinite;
         }
     </style>
 </head>
 <body>
 
-<div class="background-stars"></div>
-
 <div class="app-container">
     <!-- VIEW 1: The dashboard-style initial screen -->
     <div class="view" id="initial-view">
         <div id="dashboard-prompt">
-            <!-- The order of these elements is controlled by the 'order' CSS property -->
-            <div id="time-display" class="dashboard-content">--:--</div>
-            <div id="weather-display" class="dashboard-content">
-                <span id="weather-icon">--</span>
-                <span id="weather-temp">--°</span>
+            <div class="weather-widget-container">
+                <div class="current-weather">
+                    <div id="current-weather-icon-container"></div>
+                    <div class="current-weather-temp" id="current-temp">--°</div>
+                    <div class="current-weather-condition" id="current-condition">Loading...</div>
+                </div>
+                <div class="hourly-forecast" id="hourly-forecast-container">
+                    <!-- Forecast items will be injected by JS -->
+                </div>
             </div>
-            <div id="location-display" class="dashboard-content">Loading...</div>
-            <div class="search-action-text dashboard-content">Tap to Search</div>
+            <div class="search-action-text">Tap to Search Vehicle</div>
         </div>
         <div id="status-bar">Connecting...</div>
     </div>
@@ -370,28 +283,20 @@
     <div class="view" id="input-view">
         <div class="input-header">
             <div id="input-time" class="time">--:--</div>
-            <div id="input-weather" class="weather">
-                <span>--</span>
-                <span>--°</span>
-            </div>
         </div>
         <input id="text-search-input" type="text" placeholder="Vehicle Number">
         <button id="cancel-search-btn">Cancel</button>
     </div>
 
     <!-- VIEW 3: The results screen -->
-    <div class="view" id="result-view">
-        <!-- Dynamic content will be injected here -->
-    </div>
+    <div class="view" id="result-view"></div>
 </div>
 
 <script type="module">
-    // Firebase and DOM element imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
         authDomain: "vehicle-clearance.firebaseapp.com",
@@ -401,7 +306,6 @@
         appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    // Global variables
     let db;
     let allRows = [];
     
@@ -413,57 +317,36 @@
     const statusBar = document.getElementById('status-bar');
     const textSearchInput = document.getElementById('text-search-input');
     const cancelSearchBtn = document.getElementById('cancel-search-btn');
-    
-    // Dashboard display elements
-    const timeDisplay = document.getElementById('time-display');
-    const weatherIcon = document.getElementById('weather-icon');
-    const weatherTemp = document.getElementById('weather-temp');
-    const locationDisplay = document.getElementById('location-display');
-
-    // Input view header elements
     const inputTime = document.getElementById('input-time');
-    const inputWeather = document.getElementById('input-weather');
-
 
     // --- Firebase Initialization ---
-    // Establishes connection to the database and handles authentication.
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         db = getFirestore(app);
-
         onAuthStateChanged(auth, user => {
             if (user) {
-                // If user is authenticated, listen for real-time updates from the vehicle list.
                 const listingsCollection = collection(db, 'vehicleListings');
                 onSnapshot(listingsCollection, (snapshot) => {
                     allRows = snapshot.docs.map(doc => doc.data());
                     statusBar.textContent = `Ready (${allRows.length} vehicles)`;
                 }, (error) => { 
-                    console.error("Firestore sync error:", error);
                     statusBar.textContent = 'Sync Error.'; 
                 });
             } else {
-                // If no user, sign in anonymously.
-                signInAnonymously(auth).catch((error) => { 
-                    console.error("Anonymous auth error:", error);
-                    statusBar.textContent = 'Auth Error.'; 
-                });
+                signInAnonymously(auth);
             }
         });
     } catch (err) {
-        console.error("Firebase init error:", err);
         statusBar.textContent = 'Connection Failed.';
     }
 
     // --- UI View Management ---
-    // Functions to switch between the three main views of the app.
     function showInitialView() {
         resultView.style.display = 'none';
         inputView.style.display = 'none';
         initialView.style.display = 'flex';
     }
-
     function showInputView() {
         resultView.style.display = 'none';
         initialView.style.display = 'none';
@@ -471,130 +354,150 @@
         textSearchInput.value = '';
         textSearchInput.focus();
     }
-
     function showResultView() {
         initialView.style.display = 'none';
         inputView.style.display = 'none';
         resultView.style.display = 'flex';
     }
 
-    // --- Dashboard & Header Logic ---
-    // Updates the time display every second.
+    // --- Time Update ---
     function updateTime() {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        const currentTime = `${hours}:${minutes}`;
+        inputTime.textContent = `${hours}:${minutes}`;
+    }
+    
+    // --- Weather Logic ---
+    const weatherIconMap = {
+        0: { description: 'Clear', icon: (color = '#FFD60A') => `<svg class="current-weather-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="12" fill="${color}"/></svg>` },
+        1: { description: 'Mainly Clear', icon: (color = '#FFD60A') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M47.7 41.8C47.2 36.4 43.2 32 38 32H37.5C36.9 25.1 31.1 19.5 24 19.5C16.8 19.5 11 25.4 11 32.5V33H10C6.7 33 4 35.7 4 39C4 42.3 6.7 45 10 45H46C49.9 45 53 41.9 53 38C53 34.9 50.8 32.2 47.9 31.2" fill="#F0F0F5"/><circle cx="32" cy="24" r="8" fill="${color}"/></svg>` },
+        2: { description: 'Partly Cloudy', icon: (color = '#F0F0F5') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 31H18C10.3 31 4 37.3 4 45C4 52.7 10.3 59 18 59H46C53.7 59 60 52.7 60 45C60 37.3 53.7 31 46 31Z" fill="${color}"/></svg>` },
+        3: { description: 'Overcast', icon: (color = '#B0B0C0') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 31H18C10.3 31 4 37.3 4 45C4 52.7 10.3 59 18 59H46C53.7 59 60 52.7 60 45C60 37.3 53.7 31 46 31Z" fill="${color}"/></svg>` },
+        45: { description: 'Fog', icon: (color = '#A8E6CF') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 36H52" stroke="${color}" stroke-width="6" stroke-linecap="round"/><path d="M16 44H48" stroke="${color}" stroke-width="6" stroke-linecap="round"/><path d="M20 52H44" stroke="${color}" stroke-width="6" stroke-linecap="round"/></svg>` },
+        48: { description: 'Rime Fog', icon: (color = '#A8E6CF') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 36H52" stroke="${color}" stroke-width="6" stroke-linecap="round"/><path d="M16 44H48" stroke="${color}" stroke-width="6" stroke-linecap="round"/><path d="M20 52H44" stroke="${color}" stroke-width="6" stroke-linecap="round"/></svg>` },
+        51: { description: 'Drizzle', icon: (color = '#81C7D4') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 24H18C10.3 24 4 30.3 4 38C4 45.7 10.3 52 18 52H46C53.7 52 60 45.7 60 38C60 30.3 53.7 24 46 24Z" fill="#B0B0C0"/><circle cx="24" cy="58" r="2" fill="${color}"/><circle cx="32" cy="58" r="2" fill="${color}"/><circle cx="40" cy="58" r="2" fill="${color}"/></svg>` },
+        61: { description: 'Rain', icon: (color = '#0A84FF') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 24H18C10.3 24 4 30.3 4 38C4 45.7 10.3 52 18 52H46C53.7 52 60 45.7 60 38C60 30.3 53.7 24 46 24Z" fill="#606070"/><path d="M22 58L26 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/><path d="M30 58L34 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/><path d="M38 58L42 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/></svg>` },
+        80: { description: 'Showers', icon: (color = '#0A84FF') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 24H18C10.3 24 4 30.3 4 38C4 45.7 10.3 52 18 52H46C53.7 52 60 45.7 60 38C60 30.3 53.7 24 46 24Z" fill="#606070"/><path d="M22 58L26 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/><path d="M30 58L34 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/><path d="M38 58L42 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/></svg>` },
+        95: { description: 'Thunderstorm', icon: (color = '#FFD60A') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 20H18C10.3 20 4 26.3 4 34C4 41.7 10.3 48 18 48H46C53.7 48 60 41.7 60 34C60 26.3 53.7 20 46 20Z" fill="#606070"/><path d="M32 48L26 56L38 56L32 64" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>` }
+    };
+    
+    async function fetchWeather() {
+        const lat = 1.35;
+        const lon = 103.82;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&timezone=Asia/Singapore`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            updateWeatherUI(data);
+        } catch (error) {
+            document.getElementById('current-condition').textContent = 'Weather Error';
+        }
+    }
+
+    function updateWeatherUI(data) {
+        const currentTemp = Math.round(data.current.temperature_2m);
+        const currentCode = data.current.weather_code;
+        const weatherInfo = weatherIconMap[currentCode] || weatherIconMap[0];
+
+        document.getElementById('current-temp').textContent = `${currentTemp}°`;
+        document.getElementById('current-condition').textContent = weatherInfo.description;
+        document.getElementById('current-weather-icon-container').innerHTML = weatherInfo.icon();
+
+        const hourlyContainer = document.getElementById('hourly-forecast-container');
+        hourlyContainer.innerHTML = ''; 
+
+        const now = new Date();
+        const currentHour = now.getHours();
         
-        timeDisplay.textContent = currentTime;
-        inputTime.textContent = currentTime;
+        const startIndex = data.hourly.time.findIndex(time => new Date(time).getHours() === currentHour);
+        if (startIndex === -1) return;
+
+        const forecastColors = ['#FF6B6B', '#FFD166', '#06D6A0'];
+
+        for (let i = 0; i < 3; i++) {
+            const forecastIndex = startIndex + i + 1;
+            if (forecastIndex >= data.hourly.time.length) break;
+
+            const time = new Date(data.hourly.time[forecastIndex]);
+            const temp = Math.round(data.hourly.temperature_2m[forecastIndex]);
+            const code = data.hourly.weather_code[forecastIndex];
+            const hourInfo = weatherIconMap[code] || weatherIconMap[0];
+            
+            const item = document.createElement('div');
+            item.className = 'forecast-item';
+            
+            const displayHour = time.getHours();
+            const ampm = displayHour >= 12 ? 'pm' : 'am';
+            const formattedHour = displayHour % 12 === 0 ? 12 : displayHour % 12;
+
+            item.innerHTML = `
+                <div class="forecast-temp" style="color: ${forecastColors[i]}">${temp}°</div>
+                <div class="forecast-icon">${hourInfo.icon(forecastColors[i])}</div>
+                <div class="forecast-time">${formattedHour} ${ampm}</div>
+            `;
+            hourlyContainer.appendChild(item);
+        }
     }
 
-    // Fetches and displays weather and location data.
-    function updateDashboardAndHeader() {
-        updateTime();
-        setInterval(updateTime, 1000);
-
-        // Using simulated data for demonstration purposes.
-        const simulatedWeatherData = {
-            location: "Singapore",
-            temp: "29",
-            icon: "☁️"
-        };
-
-        weatherIcon.textContent = simulatedWeatherData.icon;
-        weatherTemp.textContent = `${simulatedWeatherData.temp}°`;
-        locationDisplay.textContent = simulatedWeatherData.location;
-
-        inputWeather.children[0].textContent = simulatedWeatherData.icon;
-        inputWeather.children[1].textContent = `${simulatedWeatherData.temp}°`;
-    }
-
-    // --- Event Listeners ---
+    // --- Event Listeners & Initialization ---
     dashboardPrompt.addEventListener('click', showInputView);
     cancelSearchBtn.addEventListener('click', showInitialView);
 
-    // Triggers search when the user finishes typing in the input field.
     textSearchInput.addEventListener('change', () => {
         const term = textSearchInput.value.trim().toUpperCase();
-        if (term.length > 0) {
-            performSearch(term);
-        }
+        if (term.length > 0) performSearch(term);
     });
 
-    // --- Core Logic ---
-    // Searches the local data for a matching vehicle number.
     function performSearch(term) {
         const numericTerm = term.replace(/\D/g, '');
         if (numericTerm.length === 0) return;
-
-        // Finds the first vehicle whose number starts with the entered digits.
         const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
-        
         renderResult(result, term);
         showResultView();
     }
 
-    // Renders the result panel based on whether a vehicle was found.
     function renderResult(result, term) {
-        let panelClass = '';
-        let vehicleNumberHTML = '';
-        let statusBadgeHTML = '';
-        let locationHTML = '';
-
-        const searchIconSVG = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-            </svg>
-        `;
+        const searchIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>`;
+        let resultHTML;
 
         if (result) {
-            // Case: Vehicle is found and cleared.
-            panelClass = 'cleared';
-            vehicleNumberHTML = `<div class="vehicle-number">${result.vehicleNumber}</div>`;
-            statusBadgeHTML = `<div class="status-badge cleared">✓ CLEARED</div>`;
-            locationHTML = `
-                <div class="location-info">
-                    <button id="new-search-btn">${searchIconSVG}</button>
-                    <div class="location-details">
-                        <div class="location-title">LOCATION</div>
-                        <div class="location-text">${result.location || 'N/A'}</div>
+            resultHTML = `
+                <div class="status-panel cleared">
+                    <div class="vehicle-number">${result.vehicleNumber}</div>
+                    <div class="status-badge cleared">✓ CLEARED</div>
+                    <div class="location-info">
+                        <button id="new-search-btn">${searchIconSVG}</button>
+                        <div class="location-details">
+                            <div class="location-title">LOCATION</div>
+                            <div class="location-text">${result.location || 'N/A'}</div>
+                        </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         } else {
-            // Case: Vehicle is not found.
-            panelClass = 'not-found';
-            vehicleNumberHTML = `<div class="vehicle-number">${term}</div>`;
-            statusBadgeHTML = `<div class="status-badge not-found">✗ NOT FOUND</div>`;
-            locationHTML = `
-                <div class="location-info">
-                    <button id="new-search-btn">${searchIconSVG}</button>
-                    <div class="location-details">
-                        <div class="location-title">STATUS</div>
-                        <div class="location-text">Denied</div>
+            resultHTML = `
+                <div class="status-panel not-found">
+                    <div class="vehicle-number">${term}</div>
+                    <div class="status-badge not-found">✗ NOT FOUND</div>
+                    <div class="location-info">
+                        <button id="new-search-btn">${searchIconSVG}</button>
+                        <div class="location-details">
+                            <div class="location-title">STATUS</div>
+                            <div class="location-text">Denied</div>
+                        </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
-
-        const resultHTML = `
-            <div class="status-panel ${panelClass}">
-                ${vehicleNumberHTML}
-                ${statusBadgeHTML}
-                ${locationHTML}
-            </div>
-        `;
-        
         resultView.innerHTML = resultHTML;
-        
-        // Add event listener to the "new search" button within the results view.
         document.getElementById('new-search-btn').addEventListener('click', showInputView);
     }
     
-    // Initialize the dashboard and header data on page load.
-    updateDashboardAndHeader();
+    // Initial Load
+    updateTime();
+    setInterval(updateTime, 1000 * 60); // Update time every minute
+    fetchWeather();
+    setInterval(fetchWeather, 1000 * 60 * 15); // Update weather every 15 minutes
 
 </script>
 
