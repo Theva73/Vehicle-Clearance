@@ -8,10 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* * ==============================================
-         * THEME & CORE STYLES (SQUARE WATCH-FIRST)
-         * ==============================================
-        */
         :root {
             --bg-primary: #000000;
             --bg-secondary: #1C1C1E;
@@ -19,16 +15,11 @@
             --text-primary: #FFFFFF;
             --text-secondary: #EBEBF599;
             --accent-blue: #0A84FF;
-            --accent-orange: #FF9F0A;
             --accent-yellow: #FFD60A;
             --success-green: #30D158;
             --error-red: #FF453A;
         }
 
-        /* * ==============================================
-         * BASE & LAYOUT
-         * ==============================================
-        */
         body, html {
             background-color: var(--bg-primary);
             color: var(--text-primary);
@@ -49,10 +40,6 @@
             position: relative;
         }
         
-        /* * ==============================================
-         * VIEW MANAGEMENT
-         * ==============================================
-        */
         .view {
             width: 100%;
             height: 100%;
@@ -78,37 +65,22 @@
         }
 
         /* * ==============================================
-         * REFINED SQUARE DASHBOARD VIEW
+         * NEW SEARCH-FOCUSED DASHBOARD
          * ==============================================
         */
         #dashboard-view {
-            padding: 16px;
-            justify-content: flex-start; /* Align content to the top */
-        }
-        
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            /* REFINED: Adjusted rows for better spacing */
-            grid-template-rows: auto auto 1fr auto; 
-            gap: 12px;
-            width: 100%;
-            height: 100%;
+            justify-content: space-between;
+            padding: 24px 16px;
         }
 
-        #time-display {
-            grid-column: 1 / -1;
-            font-size: 52px;
-            font-weight: 700;
-            text-align: center;
-            letter-spacing: -1px;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            padding-top: 10px; /* Pushes content down slightly from top edge */
+        .info-header {
+            display: flex;
+            gap: 12px;
+            width: 100%;
         }
 
         .info-panel {
+            flex: 1;
             background-color: var(--bg-secondary);
             border-radius: 18px;
             padding: 10px;
@@ -129,41 +101,37 @@
              color: var(--accent-yellow);
         }
 
-        #search-button {
-            grid-column: 1 / -1;
-            align-self: end; /* Pushes button to the bottom of its grid cell */
-            background-color: var(--accent-blue);
-            border: none;
+        #search-prompt {
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--bg-tertiary);
             border-radius: 18px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
+            justify-content: flex-start;
+            gap: 12px;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: background-color 0.2s ease;
             padding: 14px;
+            color: var(--text-secondary);
         }
-        #search-button:active {
-            transform: scale(0.95);
+        #search-prompt:active {
+            background-color: var(--bg-tertiary);
         }
-        #search-button svg {
+        #search-prompt svg {
             width: 22px;
             height: 22px;
-            color: white;
         }
-        #search-button .label {
-            color: white;
+        #search-prompt .label {
             font-size: 18px;
-            font-weight: 600;
+            font-weight: 500;
         }
 
         #status-bar {
-            grid-column: 1 / -1;
             font-size: 13px;
             color: var(--text-secondary);
             text-align: center;
             opacity: 0.8;
-            padding-bottom: 5px;
         }
 
         /* * ==============================================
@@ -222,10 +190,9 @@
 
 <div class="app-container">
 
-    <!-- VIEW 1: SQUARE DASHBOARD -->
+    <!-- VIEW 1: SEARCH DASHBOARD -->
     <div class="view active" id="dashboard-view">
-        <div class="dashboard-grid">
-            <div id="time-display">--:--</div>
+        <div class="info-header">
             <div id="weather-display" class="info-panel">
                 <div class="label">Weather</div>
                 <div class="value">--° --</div>
@@ -234,12 +201,14 @@
                 <div class="label">Location</div>
                 <div class="value">...</div>
             </div>
-            <button id="search-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a7.952 7.952 0 0 0 4.897-1.688l4.396 4.396 1.414-1.414-4.396-4.396A7.952 7.952 0 0 0 18 10c0-4.411-3.589-8-8-8s-8 3.589-8 8 3.589 8 8 8zm0-14c3.309 0 6 2.691 6 6s-2.691 6-6 6-6-2.691-6-6 2.691-6 6-6z"></path></svg>
-                <span class="label">Search</span>
-            </button>
-            <div id="status-bar">Connecting...</div>
         </div>
+        
+        <button id="search-prompt">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a7.952 7.952 0 0 0 4.897-1.688l4.396 4.396 1.414-1.414-4.396-4.396A7.952 7.952 0 0 0 18 10c0-4.411-3.589-8-8-8s-8 3.589-8 8 3.589 8 8 8zm0-14c3.309 0 6 2.691 6 6s-2.691 6-6 6-6-2.691-6-6 2.691-6 6-6z"></path></svg>
+            <span class="label">Search Vehicle...</span>
+        </button>
+
+        <div id="status-bar">Connecting...</div>
     </div>
 
     <!-- VIEW 2: RESULT -->
@@ -269,10 +238,9 @@
     // DOM Elements
     const views = document.querySelectorAll('.view');
     const statusBar = document.getElementById('status-bar');
-    const timeDisplay = document.getElementById('time-display');
     const weatherDisplayValue = document.querySelector('#weather-display .value');
     const locationDisplayValue = document.querySelector('#location-display .value');
-    const searchButton = document.getElementById('search-button');
+    const searchPrompt = document.getElementById('search-prompt');
     const resultView = document.getElementById('result-view');
 
     // --- Firebase Initialization ---
@@ -303,13 +271,6 @@
 
     // --- Dashboard Logic ---
     function updateDashboard() {
-        setInterval(() => {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            timeDisplay.textContent = `${hours}:${minutes}`;
-        }, 1000);
-
         const simulatedWeatherData = {
             location: "Singapore",
             temp: "29",
@@ -321,14 +282,11 @@
 
     // --- Core Search & UI Flow ---
     function triggerNativeSearch() {
-        // Use prompt() to get native text input
         const term = prompt("Enter Vehicle Number", "");
 
-        // Check if the user entered something (didn't cancel)
         if (term !== null && term.trim() !== "") {
             performSearch(term.trim().toUpperCase());
         } else {
-            // If user cancels, ensure they are back on the dashboard
             switchView('dashboard-view');
         }
     }
@@ -336,10 +294,10 @@
     function performSearch(term) {
         const numericTerm = term.replace(/\D/g, '');
         if (numericTerm.length === 0) {
-            renderResult(null, term); // Show denied for non-numeric input
+            renderResult(null, term);
             switchView('result-view');
             return;
-        };
+        }
 
         const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
         
@@ -369,12 +327,11 @@
         
         resultView.innerHTML = resultHTML + `<button id="new-search-btn">New Search</button>`;
         
-        // This button now also triggers the native search prompt
         document.getElementById('new-search-btn').addEventListener('click', triggerNativeSearch);
     }
     
     // --- Event Listeners ---
-    searchButton.addEventListener('click', triggerNativeSearch);
+    searchPrompt.addEventListener('click', triggerNativeSearch);
 
     // Initialize
     updateDashboard();
