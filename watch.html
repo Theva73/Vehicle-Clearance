@@ -133,29 +133,50 @@
             text-align: center;
             opacity: 0.8;
         }
-
+        
         /* * ==============================================
-         * NEW: SEAMLESS INPUT OVERLAY
+         * INPUT VIEW (WORKFLOW RESTORED)
          * ==============================================
         */
-        #input-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
-            z-index: 10;
+        #input-view {
+            gap: 20px;
         }
-        
         #text-search-input {
-            /* This input is now hidden but focusable, to trigger the native UI */
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-            top: -100px;
-            left: -100px;
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid #3A3A3C;
+            color: var(--text-primary);
+            font-size: 24px;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        #text-search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+        .input-button {
+            flex-grow: 1;
+            border: none;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #submit-search-btn {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+        #cancel-search-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
         }
 
         /* * ==============================================
@@ -235,12 +256,16 @@
         <div id="status-bar">Connecting...</div>
     </div>
     
-    <!-- This is now a hidden overlay, not a separate view -->
-    <div class="view" id="input-overlay">
-         <input id="text-search-input" type="text">
+    <!-- VIEW 2: INPUT (FOR NATIVE WATCH UI) -->
+    <div class="view" id="input-view">
+        <input id="text-search-input" type="text" placeholder="Vehicle No.">
+        <div class="button-group">
+            <button id="cancel-search-btn" class="input-button">Cancel</button>
+            <button id="submit-search-btn" class="input-button">Submit</button>
+        </div>
     </div>
 
-    <!-- VIEW 2: RESULT -->
+    <!-- VIEW 3: RESULT -->
     <div class="view" id="result-view">
         <!-- Dynamic content here -->
     </div>
@@ -271,8 +296,9 @@
     const locationDisplayValue = document.querySelector('#location-display .value');
     const searchPrompt = document.getElementById('search-prompt');
     const resultView = document.getElementById('result-view');
-    const inputOverlay = document.getElementById('input-overlay');
     const textSearchInput = document.getElementById('text-search-input');
+    const cancelSearchBtn = document.getElementById('cancel-search-btn');
+    const submitSearchBtn = document.getElementById('submit-search-btn');
 
     // --- Firebase Initialization ---
     try {
@@ -311,16 +337,7 @@
         locationDisplayValue.textContent = simulatedWeatherData.location;
     }
 
-    // --- Core Search & UI Flow (WORKFLOW FIXED) ---
-    function triggerNativeSearch() {
-        // Show the overlay to provide visual feedback
-        inputOverlay.classList.add('active');
-        textSearchInput.value = '';
-
-        // Focus the hidden input to trigger the native watchOS UI
-        setTimeout(() => textSearchInput.focus(), 50);
-    }
-
+    // --- Core Search & UI Flow ---
     function performSearch(term) {
         const numericTerm = term.replace(/\D/g, '');
         if (numericTerm.length === 0) {
@@ -357,33 +374,33 @@
         
         resultView.innerHTML = resultHTML + `<button id="new-search-btn">New Search</button>`;
         
-        document.getElementById('new-search-btn').addEventListener('click', triggerNativeSearch);
+        document.getElementById('new-search-btn').addEventListener('click', () => {
+             textSearchInput.value = '';
+             switchView('input-view');
+             // Focusing the input is what triggers the native watch UI
+             setTimeout(() => textSearchInput.focus(), 50);
+        });
     }
     
     // --- Event Listeners ---
-    searchPrompt.addEventListener('click', triggerNativeSearch);
+    searchPrompt.addEventListener('click', () => {
+        textSearchInput.value = '';
+        switchView('input-view');
+        // Focusing the input is what triggers the native watch UI
+        setTimeout(() => textSearchInput.focus(), 50);
+    });
 
-    // This event fires when the user submits their text from the native UI
-    textSearchInput.addEventListener('change', () => {
-        const term = textSearchInput.value;
-        inputOverlay.classList.remove('active'); // Hide overlay
-        if (term !== null && term.trim() !== "") {
-            performSearch(term.trim().toUpperCase());
-        } else {
-            switchView('dashboard-view');
+    cancelSearchBtn.addEventListener('click', () => switchView('dashboard-view'));
+
+    const handleSubmit = () => {
+        const term = textSearchInput.value.trim().toUpperCase();
+        if (term.length > 0) {
+            performSearch(term);
         }
-    });
+    };
 
-    // This event fires if the user cancels the native input
-    textSearchInput.addEventListener('blur', () => {
-        inputOverlay.classList.remove('active');
-        // A small delay helps ensure we don't hide the results view prematurely
-        setTimeout(() => {
-            if (!resultView.classList.contains('active')) {
-                switchView('dashboard-view');
-            }
-        }, 200);
-    });
+    submitSearchBtn.addEventListener('click', handleSubmit);
+    textSearchInput.addEventListener('change', handleSubmit);
 
     // Initialize
     updateDashboard();
