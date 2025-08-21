@@ -135,6 +135,30 @@
         }
 
         /* * ==============================================
+         * NEW: SEAMLESS INPUT OVERLAY
+         * ==============================================
+        */
+        #input-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+        
+        #text-search-input {
+            /* This input is now hidden but focusable, to trigger the native UI */
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            top: -100px;
+            left: -100px;
+        }
+
+        /* * ==============================================
          * RESULT VIEW
          * ==============================================
         */
@@ -210,6 +234,11 @@
 
         <div id="status-bar">Connecting...</div>
     </div>
+    
+    <!-- This is now a hidden overlay, not a separate view -->
+    <div class="view" id="input-overlay">
+         <input id="text-search-input" type="text">
+    </div>
 
     <!-- VIEW 2: RESULT -->
     <div class="view" id="result-view">
@@ -242,6 +271,8 @@
     const locationDisplayValue = document.querySelector('#location-display .value');
     const searchPrompt = document.getElementById('search-prompt');
     const resultView = document.getElementById('result-view');
+    const inputOverlay = document.getElementById('input-overlay');
+    const textSearchInput = document.getElementById('text-search-input');
 
     // --- Firebase Initialization ---
     try {
@@ -282,15 +313,12 @@
 
     // --- Core Search & UI Flow (WORKFLOW FIXED) ---
     function triggerNativeSearch() {
-        // This `prompt` is the correct way to trigger the native watchOS input UI with voice support.
-        const term = prompt("Enter Vehicle Number", "");
+        // Show the overlay to provide visual feedback
+        inputOverlay.classList.add('active');
+        textSearchInput.value = '';
 
-        if (term !== null && term.trim() !== "") {
-            performSearch(term.trim().toUpperCase());
-        } else {
-            // If user cancels, ensure they are back on the dashboard
-            switchView('dashboard-view');
-        }
+        // Focus the hidden input to trigger the native watchOS UI
+        setTimeout(() => textSearchInput.focus(), 50);
     }
 
     function performSearch(term) {
@@ -334,6 +362,28 @@
     
     // --- Event Listeners ---
     searchPrompt.addEventListener('click', triggerNativeSearch);
+
+    // This event fires when the user submits their text from the native UI
+    textSearchInput.addEventListener('change', () => {
+        const term = textSearchInput.value;
+        inputOverlay.classList.remove('active'); // Hide overlay
+        if (term !== null && term.trim() !== "") {
+            performSearch(term.trim().toUpperCase());
+        } else {
+            switchView('dashboard-view');
+        }
+    });
+
+    // This event fires if the user cancels the native input
+    textSearchInput.addEventListener('blur', () => {
+        inputOverlay.classList.remove('active');
+        // A small delay helps ensure we don't hide the results view prematurely
+        setTimeout(() => {
+            if (!resultView.classList.contains('active')) {
+                switchView('dashboard-view');
+            }
+        }, 200);
+    });
 
     // Initialize
     updateDashboard();
