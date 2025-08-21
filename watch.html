@@ -20,85 +20,54 @@
             --gold: #ffd700;
         }
 
-        body {
+        body, html {
             background-color: var(--bg);
             color: var(--text);
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+            height: 100%;
+            width: 100%;
             overflow: hidden;
         }
 
-        /* --- Header & Search Bar --- */
-        .header {
-            flex-shrink: 0;
-            padding: 12px;
-            background: #111;
-            border-bottom: 1px solid var(--outline);
-            position: relative;
-            z-index: 2;
-        }
-        .search-wrapper {
-            position: relative;
+        .app-container {
+            height: 100%;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            justify-content: space-between;
         }
-        #search-input {
-            width: 100%;
-            height: 48px;
-            padding: 0 44px 0 16px;
-            border: none;
-            background-color: #2c2c2e;
-            border-radius: 14px;
-            color: var(--text);
-            font-size: 20px;
-            font-family: monospace;
-            box-sizing: border-box;
-        }
-        #clear-btn {
-            position: absolute;
-            right: 5px;
-            top: 5px;
-            width: 38px;
-            height: 38px;
-            border: none;
-            background-color: #3a3a3c;
-            color: var(--muted);
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 50%;
-            display: none; 
-            align-items: center;
+
+        /* --- View States --- */
+        .view {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
+            align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
+            animation: fade-in 0.5s ease;
+        }
+        #result-view {
+            display: none; /* Hidden by default */
+        }
+
+        /* --- Initial Search View --- */
+        #search-prompt {
+            text-align: center;
             cursor: pointer;
         }
-        #clear-btn.visible { display: flex; }
-
-        /* --- Content Area --- */
-        .content {
-            flex-grow: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 16px;
+        #search-prompt .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
         }
-        .hint {
-            text-align: center;
-            color: var(--muted);
-            padding-top: 20px;
-            font-size: 16px;
+        #search-prompt .text {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent-blue);
         }
 
-        /* --- Graphical Result Card --- */
-        .result-container {
-            perspective: 1000px;
-        }
-        .result-card {
-            transform-style: preserve-3d;
-            animation: flip-in 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
+        /* --- Result View --- */
         .result-plate {
             display: flex;
             align-items: center;
@@ -107,7 +76,8 @@
             border-radius: 16px;
             margin-bottom: 12px;
             position: relative;
-            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
         }
         .result-plate.cleared {
             background: linear-gradient(145deg, #0a84ff, #0056b3);
@@ -117,7 +87,6 @@
             background: linear-gradient(145deg, #58585d, #3a3a3c);
             border: 3px solid var(--status-red);
         }
-
         .plate-text {
             font-family: monospace;
             font-size: 28px;
@@ -127,10 +96,7 @@
         .plate-text.cleared {
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
         }
-        .plate-text.not-found {
-            color: #b0b0b0;
-        }
-
+        .plate-text.not-found { color: #b0b0b0; }
         .plate-status-badge {
             padding: 6px 12px;
             border-radius: 20px;
@@ -138,20 +104,16 @@
             font-weight: 700;
             flex-shrink: 0;
         }
-        .plate-status-badge.cleared {
-            background-color: var(--status-green);
-            color: white;
-        }
-        .plate-status-badge.not-found {
-            background-color: var(--status-red);
-            color: white;
-        }
+        .plate-status-badge.cleared { background-color: var(--status-green); color: white; }
+        .plate-status-badge.not-found { background-color: var(--status-red); color: white; }
 
         .location-card {
             background-color: var(--panel);
             border-radius: 16px;
             padding: 16px;
             text-align: center;
+            width: 100%;
+            box-sizing: border-box;
         }
         .location-title {
             font-size: 14px;
@@ -165,24 +127,66 @@
             font-weight: 700;
             color: var(--text);
         }
-        
-        @keyframes flip-in {
-            from { transform: rotateX(-90deg); opacity: 0; }
-            to { transform: rotateX(0deg); opacity: 1; }
+
+        /* --- Footer and Buttons --- */
+        .footer {
+            flex-shrink: 0;
+            padding: 12px;
+            text-align: center;
+        }
+        #status-bar {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        #new-search-btn {
+            border: none;
+            background-color: var(--panel);
+            color: var(--accent-blue);
+            font-size: 18px;
+            font-weight: 700;
+            padding: 14px 20px;
+            border-radius: 14px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        /* --- Hidden input for triggering keyboard --- */
+        #search-input {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="search-wrapper">
-            <input id="search-input" type="text" placeholder="Search...">
-            <button id="clear-btn">×</button>
-        </div>
-    </div>
+    <div class="app-container">
+        <!-- This input is never seen, but is used to trigger the native keyboard -->
+        <input id="search-input" type="text">
 
-    <div class="content" id="content-area">
-        <div class="hint" id="hint-text">Connecting...</div>
+        <!-- View 1: Initial Search Prompt -->
+        <div class="view" id="initial-view">
+            <div id="search-prompt">
+                <div class="icon">🔍</div>
+                <div class="text">Tap to Search</div>
+            </div>
+        </div>
+
+        <!-- View 2: Search Result -->
+        <div class="view" id="result-view">
+            <!-- Content will be injected by JavaScript -->
+        </div>
+
+        <!-- Footer for status and reset button -->
+        <div class="footer">
+            <div id="status-bar">Connecting...</div>
+            <button id="new-search-btn" style="display: none;">New Search</button>
+        </div>
     </div>
 
     <script type="module">
@@ -201,12 +205,13 @@
 
         let db;
         let allRows = [];
-        let isReady = false;
         
         const searchInput = document.getElementById('search-input');
-        const clearBtn = document.getElementById('clear-btn');
-        const contentArea = document.getElementById('content-area');
-        const hintText = document.getElementById('hint-text');
+        const initialView = document.getElementById('initial-view');
+        const resultView = document.getElementById('result-view');
+        const searchPrompt = document.getElementById('search-prompt');
+        const newSearchBtn = document.getElementById('new-search-btn');
+        const statusBar = document.getElementById('status-bar');
 
         // --- Firebase Connection ---
         try {
@@ -219,69 +224,61 @@
                     const listingsCollection = collection(db, 'vehicleListings');
                     onSnapshot(listingsCollection, (snapshot) => {
                         allRows = snapshot.docs.map(doc => doc.data());
-                        hintText.textContent = `Ready (${allRows.length} vehicles)`;
-                        if (!isReady) {
-                            searchInput.focus();
-                            isReady = true;
-                        }
-                    }, () => { hintText.textContent = 'Sync Error.'; });
+                        statusBar.textContent = `Ready (${allRows.length} vehicles)`;
+                    }, () => { statusBar.textContent = 'Sync Error.'; });
                 } else {
-                    signInAnonymously(auth).catch(() => { hintText.textContent = 'Auth Error.'; });
+                    signInAnonymously(auth).catch(() => { statusBar.textContent = 'Auth Error.'; });
                 }
             });
         } catch (err) {
-            hintText.textContent = 'Connection Failed.';
+            statusBar.textContent = 'Connection Failed.';
         }
 
-        // --- Search and UI Logic ---
+        // --- UI Logic ---
+        function showInitialView() {
+            resultView.style.display = 'none';
+            newSearchBtn.style.display = 'none';
+            initialView.style.display = 'flex';
+            statusBar.style.display = 'block';
+        }
+
+        function showResultView() {
+            initialView.style.display = 'none';
+            statusBar.style.display = 'none';
+            resultView.style.display = 'flex';
+            newSearchBtn.style.display = 'block';
+        }
+
+        searchPrompt.addEventListener('click', () => {
+            searchInput.focus();
+        });
+
+        newSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            showInitialView();
+        });
+
         searchInput.addEventListener('input', () => {
             const term = searchInput.value.trim();
             if (term.length > 0) {
-                clearBtn.classList.add('visible');
-                hintText.style.display = 'none';
                 applyFilter(term);
-            } else {
-                clearBtn.classList.remove('visible');
-                contentArea.innerHTML = ''; 
-                hintText.style.display = 'block';
             }
-        });
-
-        clearBtn.addEventListener('click', () => {
-            searchInput.value = '';
-            clearBtn.classList.remove('visible');
-            contentArea.innerHTML = ''; 
-            hintText.style.display = 'block';
-            searchInput.focus(); 
         });
 
         function applyFilter(term) {
             const numericTerm = term.replace(/\D/g, '');
-            if (numericTerm.length === 0) {
-                contentArea.innerHTML = '';
-                return;
-            }
+            if (numericTerm.length === 0) return;
 
             const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
             
-            contentArea.innerHTML = '';
-            
-            if (result) {
-                renderResult(result);
-            } else {
-                renderResult(null, numericTerm);
-            }
+            renderResult(result, numericTerm);
+            showResultView();
         }
 
         function renderResult(result, term) {
-            const container = document.createElement('div');
-            container.className = 'result-container';
-            
-            const card = document.createElement('div');
-            card.className = 'result-card';
-
+            let cardHTML = '';
             if (result) {
-                card.innerHTML = `
+                cardHTML = `
                     <div class="result-plate cleared">
                         <span class="plate-text cleared">${result.vehicleNumber}</span>
                         <span class="plate-status-badge cleared">✓ CLEARED</span>
@@ -292,7 +289,7 @@
                     </div>
                 `;
             } else {
-                card.innerHTML = `
+                cardHTML = `
                     <div class="result-plate not-found">
                         <span class="plate-text not-found">${term}</span>
                         <span class="plate-status-badge not-found">✗ NOT FOUND</span>
@@ -303,8 +300,7 @@
                     </div>
                 `;
             }
-            container.appendChild(card);
-            contentArea.appendChild(container);
+            resultView.innerHTML = cardHTML;
         }
 
     </script>
