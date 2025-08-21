@@ -1,390 +1,649 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Watch Vehicle Search</title>
+    <title>Vehicle Clearance Search</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* * ==============================================
-         * AESTHETIC & THEME DEFINITION (DARK MODE)
+        /* ==============================================
+         * ENHANCED THEME & VARIABLES
          * ==============================================
         */
         :root {
-            --bg-primary: #0D0D12; 
-            --bg-secondary: #1A1A21; 
-            --bg-glass: rgba(26, 26, 33, 0.6); 
-            --glass-border: rgba(255, 255, 255, 0.1); 
-            --text-primary: #F0F0F5; 
-            --text-secondary: #A0A0B0; 
-            --text-muted: #606070; 
-            --accent-blue: #0A84FF; 
-            --accent-blue-glow: rgba(10, 132, 255, 0.4);
-            --accent-orange: #FF9F0A;
-            --accent-yellow: #FFD60A;
-            --success-green: #30D158; 
-            --success-green-glow: rgba(48, 209, 88, 0.4);
-            --error-red: #FF453A; 
-            --error-red-glow: rgba(255, 69, 58, 0.4);
-            --shadow-light: rgba(255, 255, 255, 0.1);
-            --shadow-dark: rgba(0, 0, 0, 0.5);
+            --bg-primary: #000814; 
+            --bg-secondary: #001D3D; 
+            --bg-tertiary: #003566;
+            --bg-glass: rgba(0, 29, 61, 0.85); 
+            --glass-border: rgba(255, 255, 255, 0.15); 
+            --text-primary: #FFFFFF; 
+            --text-secondary: #B8C5D6; 
+            --text-muted: #7B8794; 
+            --accent-primary: #FFD60A;
+            --accent-secondary: #FF9500;
+            --accent-blue: #0077BE;
+            --accent-blue-glow: rgba(0, 119, 190, 0.5);
+            --success-green: #00C896; 
+            --success-green-glow: rgba(0, 200, 150, 0.4);
+            --error-red: #FF6B6B; 
+            --error-red-glow: rgba(255, 107, 107, 0.4);
+            --warning-orange: #FF8E53;
+            --shadow-strong: rgba(0, 0, 0, 0.6);
+            --shadow-subtle: rgba(0, 0, 0, 0.2);
         }
 
-        /* * ==============================================
-         * BASE & LAYOUT STYLES
-         * ==============================================
-        */
-        body, html {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            margin: 0;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+```
+    /* ==============================================
+     * BASE STYLES & LAYOUT
+     * ==============================================
+    */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-        .background-stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(1px 1px at 20% 30%, #FFFFFF, transparent),
-                radial-gradient(1px 1px at 80% 70%, #FFFFFF, transparent),
-                radial-gradient(1px 1px at 50% 50%, #CCCCCC, transparent),
-                radial-gradient(2px 2px at 90% 10%, #FFFFFF, transparent),
-                radial-gradient(2px 2px at 10% 90%, #CCCCCC, transparent);
-            background-size: 100% 100%;
-            animation: move-stars 120s linear infinite;
-            z-index: -1;
-        }
+    body, html {
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+        color: var(--text-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
 
-        .app-container {
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            max-width: 400px;
-            max-height: 400px;
-        }
+    /* Enhanced animated background */
+    .background-particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            radial-gradient(2px 2px at 20% 30%, rgba(255, 214, 10, 0.8), transparent),
+            radial-gradient(1px 1px at 80% 70%, rgba(255, 255, 255, 0.6), transparent),
+            radial-gradient(1px 1px at 50% 50%, rgba(184, 197, 214, 0.4), transparent),
+            radial-gradient(3px 3px at 90% 10%, rgba(255, 149, 0, 0.6), transparent),
+            radial-gradient(2px 2px at 10% 90%, rgba(0, 200, 150, 0.5), transparent);
+        background-size: 150% 150%;
+        animation: float-particles 200s linear infinite;
+        z-index: -1;
+        opacity: 0.7;
+    }
 
-        /* * ==============================================
-         * VIEW STATES & TRANSITIONS
-         * ==============================================
-        */
-        .view {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-            animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        
-        #result-view, #input-view {
-            display: none;
-        }
+    .app-container {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        max-width: 420px;
+        max-height: 420px;
+        padding: 20px;
+    }
 
-        /* * ==============================================
-         * NEW: STABLE & REFINED DASHBOARD DESIGN
-         * ==============================================
-        */
-        #dashboard-prompt {
+    /* ==============================================
+     * VIEW MANAGEMENT & TRANSITIONS
+     * ==============================================
+    */
+    .view {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        padding: 24px;
+    }
+    
+    .view.active {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    /* ==============================================
+     * ENHANCED DASHBOARD DESIGN
+     * ==============================================
+    */
+    .dashboard-main {
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        position: relative;
+        cursor: pointer;
+        background: 
+            radial-gradient(circle at 30% 30%, rgba(255, 214, 10, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 70% 70%, rgba(0, 119, 190, 0.1) 0%, transparent 50%),
+            linear-gradient(135deg, var(--bg-glass) 0%, rgba(0, 53, 102, 0.8) 100%);
+        backdrop-filter: blur(20px);
+        border: 2px solid var(--glass-border);
+        box-shadow: 
+            0 0 80px var(--shadow-strong),
+            inset 0 4px 8px rgba(255, 255, 255, 0.1),
+            0 20px 40px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        overflow: hidden;
+    }
+
+    .dashboard-main::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary), var(--accent-blue));
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .dashboard-main:hover {
+        transform: scale(1.02);
+        border-color: var(--accent-primary);
+        box-shadow: 
+            0 0 120px var(--shadow-strong),
+            0 0 60px rgba(255, 214, 10, 0.3),
+            inset 0 4px 8px rgba(255, 255, 255, 0.15);
+    }
+
+    .dashboard-main:hover::before {
+        opacity: 0.2;
+    }
+
+    .dashboard-main:active {
+        transform: scale(0.98);
+    }
+
+    /* Dashboard content positioning */
+    .dashboard-element {
+        position: absolute;
+        text-align: center;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .time-display {
+        top: 70px;
+        font-size: 52px;
+        font-weight: 800;
+        line-height: 1;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -1px;
+        text-shadow: 0 4px 8px rgba(255, 214, 10, 0.3);
+    }
+
+    .weather-display {
+        top: 135px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+    }
+
+    .weather-icon { 
+        font-size: 24px; 
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    .weather-temp { 
+        font-size: 20px; 
+        font-weight: 600;
+        color: var(--accent-primary);
+    }
+
+    .location-display {
+        bottom: 80px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .search-prompt {
+        bottom: 40px;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent-blue);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        padding: 12px 24px;
+        background: rgba(0, 119, 190, 0.2);
+        border: 1px solid var(--accent-blue);
+        border-radius: 25px;
+        backdrop-filter: blur(10px);
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    .status-indicator {
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 20px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(15px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        box-shadow: 0 8px 16px var(--shadow-subtle);
+    }
+
+    /* ==============================================
+     * REDESIGNED INPUT VIEW
+     * ==============================================
+    */
+    .input-container {
+        width: 100%;
+        max-width: 360px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        align-items: center;
+    }
+
+    .input-header {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .input-header .time {
+        font-size: 36px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
+
+    .input-header .weather {
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .search-input-group {
+        width: 100%;
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px);
+        border: 2px solid var(--glass-border);
+        color: var(--text-primary);
+        font-size: 24px;
+        font-weight: 600;
+        padding: 20px 24px;
+        border-radius: 20px;
+        text-align: center;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 24px var(--shadow-subtle);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 
+            0 0 40px rgba(255, 214, 10, 0.3),
+            0 12px 32px var(--shadow-strong);
+        transform: translateY(-2px);
+    }
+
+    .search-input::placeholder {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .input-actions {
+        display: flex;
+        gap: 16px;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 16px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        min-width: 120px;
+    }
+
+    .btn-cancel {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 2px solid var(--glass-border);
+    }
+
+    .btn-cancel:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--text-secondary);
+        transform: translateY(-2px);
+    }
+
+    .btn-search {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: var(--bg-primary);
+        box-shadow: 0 8px 16px rgba(255, 214, 10, 0.3);
+    }
+
+    .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(255, 214, 10, 0.4);
+    }
+
+    .btn-search:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* ==============================================
+     * ENHANCED RESULTS VIEW
+     * ==============================================
+    */
+    .result-container {
+        width: 100%;
+        max-width: 360px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .result-panel {
+        width: 100%;
+        padding: 32px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(25px);
+        border: 2px solid var(--glass-border);
+        border-radius: 28px;
+        box-shadow: 
+            0 20px 40px var(--shadow-strong),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        text-align: center;
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .result-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.6s ease;
+    }
+
+    .result-panel.success {
+        border-color: var(--success-green);
+        box-shadow: 
+            0 0 60px var(--success-green-glow),
+            0 20px 40px var(--shadow-strong);
+    }
+
+    .result-panel.error {
+        border-color: var(--error-red);
+        box-shadow: 
+            0 0 60px var(--error-red-glow),
+            0 20px 40px var(--shadow-strong);
+    }
+
+    .result-panel.success::before,
+    .result-panel.error::before {
+        left: 100%;
+    }
+
+    .vehicle-number {
+        font-size: 42px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        margin-bottom: 20px;
+        line-height: 1;
+        text-transform: uppercase;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 12px 24px;
+        border-radius: 20px;
+        margin-bottom: 28px;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-badge.success { 
+        background: linear-gradient(135deg, var(--success-green), #00A575);
+    }
+
+    .status-badge.error { 
+        background: linear-gradient(135deg, var(--error-red), #E85555);
+    }
+
+    .location-section {
+        width: 100%;
+        border-top: 1px solid var(--glass-border);
+        padding-top: 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .location-info {
+        text-align: left;
+        flex-grow: 1;
+    }
+
+    .location-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+    }
+
+    .location-value {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-primary);
+        word-break: break-word;
+        line-height: 1.3;
+    }
+
+    .action-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--bg-secondary);
+        border: 2px solid var(--glass-border);
+        color: var(--text-primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .action-btn:hover {
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+        transform: scale(1.05);
+        box-shadow: 0 8px 16px rgba(255, 214, 10, 0.3);
+    }
+
+    .action-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* ==============================================
+     * ANIMATIONS
+     * ==============================================
+    */
+    @keyframes float-particles {
+        0%, 100% { 
+            background-position: 0% 0%;
+            transform: rotate(0deg);
+        }
+        25% { 
+            background-position: 25% 25%;
+            transform: rotate(90deg);
+        }
+        50% { 
+            background-position: 50% 50%;
+            transform: rotate(180deg);
+        }
+        75% { 
+            background-position: 75% 25%;
+            transform: rotate(270deg);
+        }
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { 
+            box-shadow: 0 0 20px rgba(0, 119, 190, 0.3);
+            transform: scale(1);
+        }
+        50% { 
+            box-shadow: 0 0 30px rgba(0, 119, 190, 0.5);
+            transform: scale(1.02);
+        }
+    }
+
+    /* ==============================================
+     * RESPONSIVE DESIGN
+     * ==============================================
+    */
+    @media (max-width: 430px) {
+        .dashboard-main {
             width: 280px;
             height: 280px;
-            border-radius: 50%;
-            position: relative;
-            cursor: pointer;
-            background: radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary));
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
-            transition: transform 0.3s ease;
         }
-        #dashboard-prompt:active {
-            transform: scale(0.96);
-        }
-
-        .dashboard-content {
-            position: absolute;
-            text-align: center;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        #time-display {
+        
+        .time-display {
+            font-size: 44px;
             top: 60px;
-            font-size: 48px;
-            font-weight: 700;
-            line-height: 1;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
         }
-        #weather-display {
-            top: 115px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        
+        .search-input {
+            font-size: 20px;
+            padding: 18px 20px;
         }
-        #weather-icon { font-size: 20px; }
-        #weather-temp { 
-            font-size: 20px; 
-            font-weight: 500;
-            color: var(--accent-yellow);
-        }
-        #location-display {
-            bottom: 60px;
-            font-size: 16px;
-            font-weight: 500;
-            color: #B0B0C0;
-            letter-spacing: 0.5px;
-        }
-        .search-action-text {
-            bottom: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        #status-bar {
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
-            position: absolute;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            padding: 8px 16px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid var(--glass-border);
-        }
-
-        /* * ==============================================
-         * TEXT INPUT VIEW WITH HEADER
-         * ==============================================
-        */
-        #input-view {
-            justify-content: flex-start;
-            padding-top: 40px;
-            gap: 20px;
-        }
-        .input-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .input-header .time {
-            font-size: 32px;
-            font-weight: 700;
-            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .input-header .weather {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--accent-yellow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        #text-search-input {
-            width: 100%;
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            font-size: 18px;
-            padding: 16px;
-            border-radius: 16px;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        #text-search-input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-        }
-        #cancel-search-btn {
-            background: var(--bg-secondary);
-            border: none;
-            color: var(--text-primary);
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        /* * ==============================================
-         * UNIFIED STATUS PANEL FOR RESULTS
-         * ==============================================
-        */
-        .status-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: calc(100% - 40px);
-            max-width: 320px;
-            padding: 24px;
-            box-sizing: border-box;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px 0 var(--shadow-dark);
-            text-align: center;
-            transition: border-color 0.5s ease;
-        }
-        .status-panel.cleared {
-            border-color: var(--success-green);
-            box-shadow: 0 0 40px var(--success-green-glow), 0 8px 32px 0 var(--shadow-dark);
-        }
-        .status-panel.not-found {
-            border-color: var(--error-red);
-            box-shadow: 0 0 40px var(--error-red-glow), 0 8px 32px 0 var(--shadow-dark);
-        }
+        
         .vehicle-number {
             font-size: 36px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            margin-bottom: 16px;
-            line-height: 1.1;
         }
-        .status-badge {
-            font-size: 14px;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 16px;
-            margin-bottom: 24px;
-            color: #fff;
-        }
-        .status-badge.cleared { background-color: var(--success-green); }
-        .status-badge.not-found { background-color: var(--error-red); }
-        .location-info {
-            width: 100%;
-            border-top: 1px solid var(--glass-border);
-            padding-top: 16px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .location-details {
-            text-align: left;
-            flex-grow: 1;
-        }
-        .location-title {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 6px;
-        }
-        .location-text {
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--text-primary);
-            word-break: break-word;
-        }
-        #new-search-btn {
-            background: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            cursor: pointer;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-        }
-        #new-search-btn:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-        }
-        #new-search-btn svg {
-            width: 20px;
-            height: 20px;
-        }
+    }
+</style>
+```
 
-        /* * ==============================================
-         * ANIMATIONS
-         * ==============================================
-        */
-        @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes move-stars {
-            from { background-position: 0 0; }
-            to { background-position: -10000px 5000px; }
-        }
-    </style>
 </head>
 <body>
 
-<div class="background-stars"></div>
+<div class="background-particles"></div>
 
 <div class="app-container">
-    <!-- VIEW 1: The dashboard-style initial screen -->
-    <div class="view" id="initial-view">
-        <div id="dashboard-prompt">
-            <div id="time-display" class="dashboard-content">--:--</div>
-            <div id="weather-display" class="dashboard-content">
-                <span id="weather-icon">--</span>
-                <span id="weather-temp">--°</span>
+    <!-- DASHBOARD VIEW -->
+    <div class="view active" id="dashboard-view">
+        <div class="dashboard-main" id="dashboard-btn">
+            <div class="time-display dashboard-element" id="dash-time">--:--</div>
+            <div class="weather-display dashboard-element" id="dash-weather">
+                <span class="weather-icon">--</span>
+                <span class="weather-temp">--°</span>
             </div>
-            <div id="location-display" class="dashboard-content">Loading...</div>
-            <div class="search-action-text dashboard-content">Tap to Search</div>
+            <div class="location-display dashboard-element" id="dash-location">Loading...</div>
+            <div class="search-prompt dashboard-element">Tap to Search</div>
         </div>
-        <div id="status-bar">Connecting...</div>
+        <div class="status-indicator" id="status-bar">Connecting...</div>
     </div>
 
-    <!-- VIEW 2: The text input screen -->
-    <div class="view" id="input-view">
+```
+<!-- SEARCH INPUT VIEW -->
+<div class="view" id="input-view">
+    <div class="input-container">
         <div class="input-header">
-            <div id="input-time" class="time">--:--</div>
-            <div id="input-weather" class="weather">
+            <div class="time" id="input-time">--:--</div>
+            <div class="weather" id="input-weather">
                 <span>--</span>
                 <span>--°</span>
             </div>
         </div>
-        <input id="text-search-input" type="text" placeholder="Vehicle Number">
-        <button id="cancel-search-btn">Cancel</button>
-    </div>
-
-    <!-- VIEW 3: The results screen -->
-    <div class="view" id="result-view">
-        <!-- Dynamic content will be injected here -->
+        
+        <div class="search-input-group">
+            <input class="search-input" id="vehicle-input" type="text" placeholder="Enter Vehicle Number" maxlength="12">
+        </div>
+        
+        <div class="input-actions">
+            <button class="btn btn-cancel" id="cancel-btn">Cancel</button>
+            <button class="btn btn-search" id="search-btn" disabled>Search</button>
+        </div>
     </div>
 </div>
 
+<!-- RESULTS VIEW -->
+<div class="view" id="result-view">
+    <div class="result-container">
+        <!-- Dynamic content will be inserted here -->
+    </div>
+</div>
+```
+
+</div>
+
 <script type="module">
+    // Firebase configuration (same as original)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -398,30 +657,45 @@
         appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
+    // State management
     let db;
     let allRows = [];
+    let currentView = 'dashboard';
     
-    // DOM element references
-    const initialView = document.getElementById('initial-view');
-    const inputView = document.getElementById('input-view');
-    const resultView = document.getElementById('result-view');
-    const dashboardPrompt = document.getElementById('dashboard-prompt');
-    const statusBar = document.getElementById('status-bar');
-    const textSearchInput = document.getElementById('text-search-input');
-    const cancelSearchBtn = document.getElementById('cancel-search-btn');
+    // DOM elements
+    const views = {
+        dashboard: document.getElementById('dashboard-view'),
+        input: document.getElementById('input-view'),
+        result: document.getElementById('result-view')
+    };
     
-    // Dashboard display elements
-    const timeDisplay = document.getElementById('time-display');
-    const weatherIcon = document.getElementById('weather-icon');
-    const weatherTemp = document.getElementById('weather-temp');
-    const locationDisplay = document.getElementById('location-display');
+    const elements = {
+        dashboardBtn: document.getElementById('dashboard-btn'),
+        statusBar: document.getElementById('status-bar'),
+        vehicleInput: document.getElementById('vehicle-input'),
+        cancelBtn: document.getElementById('cancel-btn'),
+        searchBtn: document.getElementById('search-btn'),
+        dashTime: document.getElementById('dash-time'),
+        dashWeather: document.getElementById('dash-weather'),
+        dashLocation: document.getElementById('dash-location'),
+        inputTime: document.getElementById('input-time'),
+        inputWeather: document.getElementById('input-weather')
+    };
 
-    // Input view header elements
-    const inputTime = document.getElementById('input-time');
-    const inputWeather = document.getElementById('input-weather');
+    // === VIEW MANAGEMENT ===
+    function showView(viewName) {
+        Object.values(views).forEach(view => view.classList.remove('active'));
+        views[viewName].classList.add('active');
+        currentView = viewName;
+        
+        if (viewName === 'input') {
+            setTimeout(() => {
+                elements.vehicleInput.focus();
+            }, 400);
+        }
+    }
 
-
-    // --- Firebase Initialization ---
+    // === FIREBASE INITIALIZATION ===
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -432,151 +706,148 @@
                 const listingsCollection = collection(db, 'vehicleListings');
                 onSnapshot(listingsCollection, (snapshot) => {
                     allRows = snapshot.docs.map(doc => doc.data());
-                    statusBar.textContent = `Ready (${allRows.length} vehicles)`;
+                    elements.statusBar.textContent = `Ready (${allRows.length} vehicles)`;
                 }, (error) => { 
                     console.error("Firestore sync error:", error);
-                    statusBar.textContent = 'Sync Error.'; 
+                    elements.statusBar.textContent = 'Sync Error'; 
                 });
             } else {
                 signInAnonymously(auth).catch((error) => { 
                     console.error("Anonymous auth error:", error);
-                    statusBar.textContent = 'Auth Error.'; 
+                    elements.statusBar.textContent = 'Authentication Error'; 
                 });
             }
         });
     } catch (err) {
         console.error("Firebase init error:", err);
-        statusBar.textContent = 'Connection Failed.';
+        elements.statusBar.textContent = 'Connection Failed';
     }
 
-    // --- UI View Management ---
-    function showInitialView() {
-        resultView.style.display = 'none';
-        inputView.style.display = 'none';
-        initialView.style.display = 'flex';
-    }
-
-    function showInputView() {
-        resultView.style.display = 'none';
-        initialView.style.display = 'none';
-        inputView.style.display = 'flex';
-        textSearchInput.value = '';
-        textSearchInput.focus();
-    }
-
-    function showResultView() {
-        initialView.style.display = 'none';
-        inputView.style.display = 'none';
-        resultView.style.display = 'flex';
-    }
-
-    // --- Dashboard & Header Logic ---
-    function updateTime() {
+    // === TIME AND WEATHER UPDATES ===
+    function updateTimeAndWeather() {
         const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const currentTime = `${hours}:${minutes}`;
+        const timeString = now.toLocaleTimeString('en-SG', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+        });
         
-        timeDisplay.textContent = currentTime;
-        inputTime.textContent = currentTime;
-    }
+        elements.dashTime.textContent = timeString;
+        elements.inputTime.textContent = timeString;
 
-    function updateDashboardAndHeader() {
-        updateTime();
-        setInterval(updateTime, 1000);
-
-        const simulatedWeatherData = {
+        // Simulated weather (you can replace with real API)
+        const weatherData = {
             location: "Singapore",
             temp: "29",
             icon: "☁️"
         };
 
-        weatherIcon.textContent = simulatedWeatherData.icon;
-        weatherTemp.textContent = `${simulatedWeatherData.temp}°`;
-        locationDisplay.textContent = simulatedWeatherData.location;
+        elements.dashWeather.children[0].textContent = weatherData.icon;
+        elements.dashWeather.children[1].textContent = `${weatherData.temp}°`;
+        elements.dashLocation.textContent = weatherData.location;
 
-        inputWeather.children[0].textContent = simulatedWeatherData.icon;
-        inputWeather.children[1].textContent = `${simulatedWeatherData.temp}°`;
+        elements.inputWeather.children[0].textContent = weatherData.icon;
+        elements.inputWeather.children[1].textContent = `${weatherData.temp}°`;
     }
 
-    // --- Event Listeners ---
-    dashboardPrompt.addEventListener('click', showInputView);
-    cancelSearchBtn.addEventListener('click', showInitialView);
+    // === SEARCH FUNCTIONALITY ===
+    function validateInput(value) {
+        const cleanValue = value.replace(/[^A-Z0-9]/g, '');
+        return cleanValue.length >= 3;
+    }
 
-    textSearchInput.addEventListener('change', () => {
-        const term = textSearchInput.value.trim().toUpperCase();
-        if (term.length > 0) {
-            performSearch(term);
-        }
-    });
+    function performSearch(searchTerm) {
+        const numericTerm = searchTerm.replace(/\D/g, '');
+        if (numericTerm.length === 0) return null;
 
-    // --- Core Logic ---
-    function performSearch(term) {
-        const numericTerm = term.replace(/\D/g, '');
-        if (numericTerm.length === 0) return;
+        return allRows.find(row => 
+            row.vehicleNumber && 
+            row.vehicleNumber.replace(/[^0-9]/g, '').includes(numericTerm)
+        );
+    }
 
-        const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
+    function displayResults(result, searchTerm) {
+        const container = views.result.querySelector('.result-container');
         
-        renderResult(result, term);
-        showResultView();
-    }
-
-    function renderResult(result, term) {
-        let panelClass = '';
-        let vehicleNumberHTML = '';
-        let statusBadgeHTML = '';
-        let locationHTML = '';
-
-        const searchIconSVG = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+        const searchIcon = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
         `;
 
+        let panelClass, statusClass, statusIcon, statusText, locationLabel, locationValue;
+
         if (result) {
-            panelClass = 'cleared';
-            vehicleNumberHTML = `<div class="vehicle-number">${result.vehicleNumber}</div>`;
-            statusBadgeHTML = `<div class="status-badge cleared">✓ CLEARED</div>`;
-            locationHTML = `
-                <div class="location-info">
-                    <button id="new-search-btn">${searchIconSVG}</button>
-                    <div class="location-details">
-                        <div class="location-title">LOCATION</div>
-                        <div class="location-text">${result.location || 'N/A'}</div>
-                    </div>
-                </div>
-            `;
+            panelClass = 'success';
+            statusClass = 'success';
+            statusIcon = '✓';
+            statusText = 'Cleared';
+            locationLabel = 'Location';
+            locationValue = result.location || 'Not specified';
         } else {
-            panelClass = 'not-found';
-            vehicleNumberHTML = `<div class="vehicle-number">${term}</div>`;
-            statusBadgeHTML = `<div class="status-badge not-found">✗ NOT FOUND</div>`;
-            locationHTML = `
-                <div class="location-info">
-                    <button id="new-search-btn">${searchIconSVG}</button>
-                    <div class="location-details">
-                        <div class="location-title">STATUS</div>
-                        <div class="location-text">Denied</div>
-                    </div>
-                </div>
-            `;
+            panelClass = 'error';
+            statusClass = 'error';
+            statusIcon = '✗';
+            statusText = 'Not Found';
+            locationLabel = 'Status';
+            locationValue = 'Access Denied';
         }
 
-        const resultHTML = `
-            <div class="status-panel ${panelClass}">
-                ${vehicleNumberHTML}
-                ${statusBadgeHTML}
-                ${locationHTML}
+        container.innerHTML = `
+            <div class="result-panel ${panelClass}">
+                <div class="vehicle-number">${result ? result.vehicleNumber : searchTerm}</div>
+                <div class="status-badge ${statusClass}">
+                    <span>${statusIcon}</span>
+                    <span>${statusText}</span>
+                </div>
+                <div class="location-section">
+                    <div class="location-info">
+                        <div class="location-label">${locationLabel}</div>
+                        <div class="location-value">${locationValue}</div>
+                    </div>
+                    <button class="action-btn" id="new-search-btn">
+                        ${searchIcon}
+                    </button>
+                </div>
             </div>
         `;
-        
-        resultView.innerHTML = resultHTML;
-        
-        document.getElementById('new-search-btn').addEventListener('click', showInputView);
+
+        // Add event listener for new search
+        document.getElementById('new-search-btn').addEventListener('click', () => {
+            elements.vehicleInput.value = '';
+            elements.searchBtn.disabled = true;
+            showView('input');
+        });
+
+        showView('result');
     }
+
+    // === EVENT LISTENERS ===
+    elements.dashboardBtn.addEventListener('click', () => showView('input'));
     
-    // Initialize the dashboard and header data on page load
-    updateDashboardAndHeader();
+    elements.cancelBtn.addEventListener('click', () => showView('dashboard'));
+    
+    elements.vehicleInput.addEventListener('input', (e) => {
+        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        e.target.value = value;
+        elements.searchBtn.disabled = !validateInput(value);
+    });
+    
+    elements.vehicleInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !elements.searchBtn.disabled) {
+            const result = performSearch(elements.vehicleInput.value);
+            displayResults(result, elements.vehicleInput.value);
+        }
+    });
+    
+    elements.searchBtn.addEventListener('click', () => {
+        const result = performSearch(elements.vehicleInput.value);
+        displayResults(result, elements.vehicleInput.value);
+    });
+
+    // === INITIALIZATION ===
+    updateTimeAndWeather();
+    setInterval(updateTimeAndWeather, 1000);
 
 </script>
 
