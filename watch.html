@@ -15,6 +15,7 @@
             --text-primary: #FFFFFF;
             --text-secondary: #EBEBF599;
             --accent-blue: #0A84FF;
+            --accent-orange: #FF9F0A;
             --accent-yellow: #FFD60A;
             --success-green: #30D158;
             --error-red: #FF453A;
@@ -135,51 +136,6 @@
         }
 
         /* * ==============================================
-         * INPUT VIEW (WORKFLOW RESTORED)
-         * ==============================================
-        */
-        #input-view {
-            gap: 20px;
-        }
-        #text-search-input {
-            width: 100%;
-            background-color: var(--bg-secondary);
-            border: 1px solid #3A3A3C;
-            color: var(--text-primary);
-            font-size: 24px;
-            padding: 16px;
-            border-radius: 16px;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        #text-search-input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-        }
-        .button-group {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-        }
-        .input-button {
-            flex-grow: 1;
-            border: none;
-            padding: 14px;
-            border-radius: 16px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        #submit-search-btn {
-            background-color: var(--accent-blue);
-            color: white;
-        }
-        #cancel-search-btn {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-        
-        /* * ==============================================
          * RESULT VIEW
          * ==============================================
         */
@@ -256,16 +212,7 @@
         <div id="status-bar">Connecting...</div>
     </div>
 
-    <!-- VIEW 2: INPUT (FOR NATIVE WATCH UI) -->
-    <div class="view" id="input-view">
-        <input id="text-search-input" type="text" placeholder="Vehicle No.">
-        <div class="button-group">
-            <button id="cancel-search-btn" class="input-button">Cancel</button>
-            <button id="submit-search-btn" class="input-button">Submit</button>
-        </div>
-    </div>
-
-    <!-- VIEW 3: RESULT -->
+    <!-- VIEW 2: RESULT -->
     <div class="view" id="result-view">
         <!-- Dynamic content here -->
     </div>
@@ -296,9 +243,6 @@
     const locationDisplayValue = document.querySelector('#location-display .value');
     const searchPrompt = document.getElementById('search-prompt');
     const resultView = document.getElementById('result-view');
-    const textSearchInput = document.getElementById('text-search-input');
-    const cancelSearchBtn = document.getElementById('cancel-search-btn');
-    const submitSearchBtn = document.getElementById('submit-search-btn');
 
     // --- Firebase Initialization ---
     try {
@@ -337,7 +281,19 @@
         locationDisplayValue.textContent = simulatedWeatherData.location;
     }
 
-    // --- Core Search & UI Flow ---
+    // --- Core Search & UI Flow (WORKFLOW RESTORED) ---
+    function triggerNativeSearch() {
+        // This `prompt` is what triggers the native watchOS input UI with voice support.
+        const term = prompt("Enter Vehicle Number", "");
+
+        if (term !== null && term.trim() !== "") {
+            performSearch(term.trim().toUpperCase());
+        } else {
+            // If user cancels, ensure they are back on the dashboard
+            switchView('dashboard-view');
+        }
+    }
+
     function performSearch(term) {
         const numericTerm = term.replace(/\D/g, '');
         if (numericTerm.length === 0) {
@@ -374,31 +330,11 @@
         
         resultView.innerHTML = resultHTML + `<button id="new-search-btn">New Search</button>`;
         
-        document.getElementById('new-search-btn').addEventListener('click', () => {
-             textSearchInput.value = '';
-             switchView('input-view');
-             setTimeout(() => textSearchInput.focus(), 50);
-        });
+        document.getElementById('new-search-btn').addEventListener('click', triggerNativeSearch);
     }
     
     // --- Event Listeners ---
-    searchPrompt.addEventListener('click', () => {
-        textSearchInput.value = '';
-        switchView('input-view');
-        setTimeout(() => textSearchInput.focus(), 50);
-    });
-
-    cancelSearchBtn.addEventListener('click', () => switchView('dashboard-view'));
-
-    const handleSubmit = () => {
-        const term = textSearchInput.value.trim().toUpperCase();
-        if (term.length > 0) {
-            performSearch(term);
-        }
-    };
-
-    submitSearchBtn.addEventListener('click', handleSubmit);
-    textSearchInput.addEventListener('change', handleSubmit);
+    searchPrompt.addEventListener('click', triggerNativeSearch);
 
     // Initialize
     updateDashboard();
