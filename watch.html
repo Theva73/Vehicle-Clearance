@@ -87,7 +87,7 @@
             align-items: center;
             padding: 20px;
             box-sizing: border-box;
-            animation: fade-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             width: 100%;
             height: 100%;
             position: absolute;
@@ -95,12 +95,12 @@
             left: 0;
         }
         
-        #result-view {
+        #result-view, #input-view {
             display: none;
         }
 
         /* * ==============================================
-         * INITIAL SEARCH VIEW (UNCHANGED)
+         * INITIAL SEARCH VIEW
          * ==============================================
         */
         #search-prompt {
@@ -174,6 +174,40 @@
         }
 
         /* * ==============================================
+         * NEW: TEXT INPUT VIEW
+         * ==============================================
+        */
+        #input-view {
+            justify-content: flex-start;
+            padding-top: 40px;
+            gap: 20px;
+        }
+        #text-search-input {
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-size: 18px;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        #text-search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        #cancel-search-btn {
+            background: var(--bg-secondary);
+            border: none;
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* * ==============================================
          * UNIFIED STATUS PANEL FOR RESULTS
          * ==============================================
         */
@@ -224,21 +258,18 @@
         .status-badge.cleared { background-color: var(--success-green); }
         .status-badge.not-found { background-color: var(--error-red); }
 
-        /* * ==============================================
-         * NEW: LOCATION SECTION WITH INTEGRATED BUTTON
-         * ==============================================
-        */
         .location-info {
             width: 100%;
             border-top: 1px solid var(--glass-border);
             padding-top: 16px;
             display: flex;
             align-items: center;
-            gap: 16px; /* Space between icon and text block */
+            gap: 16px;
         }
 
         .location-details {
-            text-align: left; /* Align text to the left */
+            text-align: left;
+            flex-grow: 1; /* Allow text block to take available space */
         }
         
         .location-title {
@@ -251,12 +282,12 @@
         }
 
         .location-text {
-            font-size: 24px;
+            font-size: 22px; /* Slightly reduced for better wrapping */
             font-weight: 600;
             color: var(--text-primary);
+            word-break: break-word; /* FIX: Ensures long text wraps */
         }
         
-        /* NEW: Styling for the icon button */
         #new-search-btn {
             background: var(--bg-secondary);
             border: 1px solid var(--glass-border);
@@ -269,7 +300,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
-            flex-shrink: 0; /* Prevent the button from shrinking */
+            flex-shrink: 0;
             transition: all 0.2s ease;
         }
 
@@ -281,13 +312,6 @@
         #new-search-btn svg {
             width: 20px;
             height: 20px;
-        }
-
-        /* Hidden input field */
-        #search-input {
-            position: absolute;
-            left: -9999px;
-            opacity: 0;
         }
 
         /* * ==============================================
@@ -321,8 +345,7 @@
 <div class="background-stars"></div>
 
 <div class="app-container">
-    <input id="search-input" type="text">
-
+    <!-- VIEW 1: The initial search prompt screen -->
     <div class="view" id="initial-view">
         <div id="search-prompt">
             <div class="search-icon">🔍</div>
@@ -331,6 +354,13 @@
         <div id="status-bar">Connecting...</div>
     </div>
 
+    <!-- VIEW 2: The new text input screen -->
+    <div class="view" id="input-view">
+        <input id="text-search-input" type="text" placeholder="Enter Vehicle Number">
+        <button id="cancel-search-btn">Cancel</button>
+    </div>
+
+    <!-- VIEW 3: The results screen -->
     <div class="view" id="result-view">
         <!-- Dynamic content will be injected here -->
     </div>
@@ -353,12 +383,16 @@
     let db;
     let allRows = [];
     
-    const searchInput = document.getElementById('search-input');
+    // DOM element references
     const initialView = document.getElementById('initial-view');
+    const inputView = document.getElementById('input-view');
     const resultView = document.getElementById('result-view');
     const searchPrompt = document.getElementById('search-prompt');
     const statusBar = document.getElementById('status-bar');
+    const textSearchInput = document.getElementById('text-search-input');
+    const cancelSearchBtn = document.getElementById('cancel-search-btn');
 
+    // --- Firebase Initialization ---
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -386,30 +420,39 @@
         statusBar.textContent = 'Connection Failed.';
     }
 
+    // --- UI View Management ---
     function showInitialView() {
         resultView.style.display = 'none';
+        inputView.style.display = 'none';
         initialView.style.display = 'flex';
+    }
+
+    function showInputView() {
+        resultView.style.display = 'none';
+        initialView.style.display = 'none';
+        inputView.style.display = 'flex';
+        textSearchInput.value = '';
+        textSearchInput.focus();
     }
 
     function showResultView() {
         initialView.style.display = 'none';
+        inputView.style.display = 'none';
         resultView.style.display = 'flex';
     }
 
-    function triggerSearch() {
-        searchInput.value = ''; 
-        searchInput.focus();
-    }
+    // --- Event Listeners ---
+    searchPrompt.addEventListener('click', showInputView);
+    cancelSearchBtn.addEventListener('click', showInitialView);
 
-    searchPrompt.addEventListener('click', triggerSearch);
-
-    searchInput.addEventListener('change', () => {
-        const term = searchInput.value.trim().toUpperCase();
+    textSearchInput.addEventListener('change', () => {
+        const term = textSearchInput.value.trim().toUpperCase();
         if (term.length > 0) {
             performSearch(term);
         }
     });
 
+    // --- Core Logic ---
     function performSearch(term) {
         const numericTerm = term.replace(/\D/g, '');
         if (numericTerm.length === 0) return;
@@ -420,17 +463,12 @@
         showResultView();
     }
 
-    /**
-     * Renders the result inside the unified status panel.
-     * The "New Search" button is now an icon integrated into the location section.
-     */
     function renderResult(result, term) {
         let panelClass = '';
         let vehicleNumberHTML = '';
         let statusBadgeHTML = '';
         let locationHTML = '';
 
-        // SVG icon for the new search button
         const searchIconSVG = `
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
@@ -439,7 +477,6 @@
         `;
 
         if (result) {
-            // A vehicle was found
             panelClass = 'cleared';
             vehicleNumberHTML = `<div class="vehicle-number">${result.vehicleNumber}</div>`;
             statusBadgeHTML = `<div class="status-badge cleared">✓ CLEARED</div>`;
@@ -453,7 +490,6 @@
                 </div>
             `;
         } else {
-            // No vehicle was found
             panelClass = 'not-found';
             vehicleNumberHTML = `<div class="vehicle-number">${term}</div>`;
             statusBadgeHTML = `<div class="status-badge not-found">✗ NOT FOUND</div>`;
@@ -468,7 +504,6 @@
             `;
         }
 
-        // Assemble the final HTML for the view
         const resultHTML = `
             <div class="status-panel ${panelClass}">
                 ${vehicleNumberHTML}
@@ -479,10 +514,8 @@
         
         resultView.innerHTML = resultHTML;
         
-        document.getElementById('new-search-btn').addEventListener('click', () => {
-            showInitialView();
-            setTimeout(triggerSearch, 100); 
-        });
+        // The new search button now takes the user directly to the input view
+        document.getElementById('new-search-btn').addEventListener('click', showInputView);
     }
 
 </script>
