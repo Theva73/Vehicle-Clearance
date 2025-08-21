@@ -11,22 +11,20 @@
         /* * ==============================================
          * AESTHETIC & THEME DEFINITION (DARK MODE)
          * ==============================================
-         * This section establishes the color palette and core visual properties.
-         * We're going for a deep, futuristic dark mode with vibrant accents.
         */
         :root {
-            --bg-primary: #0D0D12; /* A deep, near-black for the main background */
-            --bg-secondary: #1A1A21; /* Slightly lighter for secondary surfaces */
-            --bg-glass: rgba(26, 26, 33, 0.6); /* Translucent background for cards */
-            --glass-border: rgba(255, 255, 255, 0.1); /* Subtle border for glass elements */
-            --text-primary: #F0F0F5; /* Bright, clear text */
-            --text-secondary: #A0A0B0; /* Softer text for secondary info */
-            --text-muted: #606070; /* Muted text for tertiary details */
-            --accent-blue: #0A84FF; /* A vibrant blue for interactive elements */
+            --bg-primary: #0D0D12; 
+            --bg-secondary: #1A1A21; 
+            --bg-glass: rgba(26, 26, 33, 0.6); 
+            --glass-border: rgba(255, 255, 255, 0.1); 
+            --text-primary: #F0F0F5; 
+            --text-secondary: #A0A0B0; 
+            --text-muted: #606070; 
+            --accent-blue: #0A84FF; 
             --accent-blue-glow: rgba(10, 132, 255, 0.4);
-            --success-green: #30D158; /* Bright green for success states */
+            --success-green: #30D158; 
             --success-green-glow: rgba(48, 209, 88, 0.4);
-            --error-red: #FF453A; /* Bright red for error states */
+            --error-red: #FF453A; 
             --error-red-glow: rgba(255, 69, 58, 0.4);
             --shadow-light: rgba(255, 255, 255, 0.1);
             --shadow-dark: rgba(0, 0, 0, 0.5);
@@ -35,7 +33,6 @@
         /* * ==============================================
          * BASE & LAYOUT STYLES
          * ==============================================
-         * Sets up the foundation for the app, including the animated background.
         */
         body, html {
             background-color: var(--bg-primary);
@@ -50,7 +47,6 @@
             align-items: center;
         }
 
-        /* Animated starry background for a less "flat" feel */
         .background-stars {
             position: fixed;
             top: 0;
@@ -76,7 +72,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            max-width: 400px; /* Constrained width for watch-like UI */
+            max-width: 400px;
             max-height: 400px;
         }
 
@@ -101,14 +97,12 @@
         
         #result-view {
             display: none;
-            justify-content: center; /* Center the results vertically */
-            gap: 16px;
+            gap: 24px; /* Increased gap between card and button */
         }
 
         /* * ==============================================
-         * REVAMPED INITIAL SEARCH VIEW
+         * INITIAL SEARCH VIEW (UNCHANGED)
          * ==============================================
-         * This is the new, non-flat landing page design.
         */
         #search-prompt {
             width: 200px;
@@ -132,7 +126,6 @@
             box-shadow: 0 0 20px var(--shadow-dark), inset 0 1px 2px var(--shadow-light);
         }
 
-        /* Outer glowing ring for visual flair */
         #search-prompt::before {
             content: '';
             position: absolute;
@@ -182,77 +175,60 @@
         }
 
         /* * ==============================================
-         * IMPROVED RESULT CARDS
+         * NEW: UNIFIED STATUS PANEL FOR RESULTS
          * ==============================================
         */
-        .result-plate, .location-card {
+        .status-panel {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            padding: 16px;
-            border-radius: 20px;
+            align-items: center;
             width: calc(100% - 40px);
             max-width: 320px;
+            padding: 24px;
             box-sizing: border-box;
             background: var(--bg-glass);
             backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
+            border-radius: 24px;
             box-shadow: 0 8px 32px 0 var(--shadow-dark);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        /* Adds a subtle sheen to the cards */
-        .result-plate::before, .location-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), transparent 50%);
-            pointer-events: none;
+            text-align: center;
+            transition: border-color 0.5s ease;
         }
 
-        .result-plate {
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 70px;
-        }
-
-        .result-plate.cleared {
+        .status-panel.cleared {
             border-color: var(--success-green);
-            box-shadow: 0 0 30px var(--success-green-glow), 0 8px 32px 0 var(--shadow-dark);
+            box-shadow: 0 0 40px var(--success-green-glow), 0 8px 32px 0 var(--shadow-dark);
         }
 
-        .result-plate.not-found {
+        .status-panel.not-found {
             border-color: var(--error-red);
-            box-shadow: 0 0 30px var(--error-red-glow), 0 8px 32px 0 var(--shadow-dark);
+            box-shadow: 0 0 40px var(--error-red-glow), 0 8px 32px 0 var(--shadow-dark);
         }
 
-        .plate-text {
-            font-family: 'Inter', monospace;
-            font-size: 24px;
+        .vehicle-number {
+            font-size: 36px;
             font-weight: 700;
-            color: var(--text-primary);
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+            line-height: 1.1;
         }
-        
-        .plate-status-badge {
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 12px;
+
+        .status-badge {
+            font-size: 14px;
             font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 16px;
+            margin-bottom: 24px;
             color: #fff;
         }
+        
+        .status-badge.cleared { background-color: var(--success-green); }
+        .status-badge.not-found { background-color: var(--error-red); }
 
-        .plate-status-badge.cleared { background: var(--success-green); }
-        .plate-status-badge.not-found { background: var(--error-red); }
-
-        .location-card {
-            text-align: center;
-            min-height: 80px;
+        .location-info {
+            width: 100%;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 16px;
         }
         
         .location-title {
@@ -265,35 +241,33 @@
         }
 
         .location-text {
-            font-size: 22px;
-            font-weight: 700;
+            font-size: 24px;
+            font-weight: 600;
             color: var(--text-primary);
-            line-height: 1.2;
         }
         
         /* * ==============================================
-         * ENHANCED BUTTON
+         * NEW: SMALLER, SUBTLE SEARCH BUTTON
          * ==============================================
         */
         #new-search-btn {
+            background: none;
             border: none;
-            background: linear-gradient(135deg, var(--accent-blue), #005fcc);
-            color: white;
+            color: var(--text-secondary);
             font-size: 16px;
-            font-weight: 600;
-            padding: 16px 24px;
-            border-radius: 20px;
-            width: calc(100% - 40px);
-            max-width: 320px;
+            font-weight: 500;
             cursor: pointer;
-            box-sizing: border-box;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 15px var(--accent-blue-glow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            transition: color 0.2s ease, background-color 0.2s ease;
         }
-        
-        #new-search-btn:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 10px var(--accent-blue-glow);
+
+        #new-search-btn:hover {
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
         }
 
         /* Hidden input field */
@@ -308,8 +282,8 @@
          * ==============================================
         */
         @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         @keyframes pulse-icon {
@@ -334,10 +308,8 @@
 <div class="background-stars"></div>
 
 <div class="app-container">
-    <!-- This hidden input is used to trigger the native keyboard on mobile devices -->
     <input id="search-input" type="text">
 
-    <!-- VIEW 1: The initial search prompt screen -->
     <div class="view" id="initial-view">
         <div id="search-prompt">
             <div class="search-icon">🔍</div>
@@ -346,19 +318,16 @@
         <div id="status-bar">Connecting...</div>
     </div>
 
-    <!-- VIEW 2: The results screen, populated by JavaScript -->
     <div class="view" id="result-view">
         <!-- Dynamic content will be injected here -->
     </div>
 </div>
 
 <script type="module">
-    // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // IMPORTANT: Replace this with your actual Firebase project configuration
     const firebaseConfig = {
         apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
         authDomain: "vehicle-clearance.firebaseapp.com",
@@ -368,7 +337,6 @@
         appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    // --- Global Variables & DOM Element References ---
     let db;
     let allRows = [];
     
@@ -378,8 +346,6 @@
     const searchPrompt = document.getElementById('search-prompt');
     const statusBar = document.getElementById('status-bar');
 
-    // --- Firebase Initialization & Data Sync ---
-    // This block handles connecting to Firebase and listening for real-time data updates.
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -387,7 +353,6 @@
 
         onAuthStateChanged(auth, user => {
             if (user) {
-                // User is authenticated, now listen to the 'vehicleListings' collection.
                 const listingsCollection = collection(db, 'vehicleListings');
                 onSnapshot(listingsCollection, (snapshot) => {
                     allRows = snapshot.docs.map(doc => doc.data());
@@ -397,7 +362,6 @@
                     statusBar.textContent = 'Sync Error.'; 
                 });
             } else {
-                // If no user, sign in anonymously.
                 signInAnonymously(auth).catch((error) => { 
                     console.error("Anonymous auth error:", error);
                     statusBar.textContent = 'Auth Error.'; 
@@ -409,30 +373,23 @@
         statusBar.textContent = 'Connection Failed.';
     }
 
-    // --- UI Interaction & Logic ---
-
-    // Function to switch to the initial search view
     function showInitialView() {
         resultView.style.display = 'none';
         initialView.style.display = 'flex';
     }
 
-    // Function to switch to the results view
     function showResultView() {
         initialView.style.display = 'none';
         resultView.style.display = 'flex';
     }
 
-    // Focuses the hidden input to bring up the keyboard
     function triggerSearch() {
         searchInput.value = ''; 
         searchInput.focus();
     }
 
-    // Event listener for the main search prompt button
     searchPrompt.addEventListener('click', triggerSearch);
 
-    // Event listener for when the user finishes typing in the hidden input
     searchInput.addEventListener('change', () => {
         const term = searchInput.value.trim().toUpperCase();
         if (term.length > 0) {
@@ -440,54 +397,70 @@
         }
     });
 
-    // Core search logic
     function performSearch(term) {
-        // Sanitize term to only include numbers for comparison
         const numericTerm = term.replace(/\D/g, '');
         if (numericTerm.length === 0) return;
 
-        // Find the first vehicle where the number starts with the searched term
         const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
         
         renderResult(result, term);
         showResultView();
     }
 
-    // Renders the result cards into the result view
+    /**
+     * Renders the result inside the new unified status panel.
+     * This function now builds a single card instead of multiple components.
+     */
     function renderResult(result, term) {
-        let resultHTML = '';
+        let panelClass = '';
+        let vehicleNumberHTML = '';
+        let statusBadgeHTML = '';
+        let locationHTML = '';
+
         if (result) {
             // A vehicle was found
-            resultHTML = `
-                <div class="result-plate cleared">
-                    <span class="plate-text">${result.vehicleNumber}</span>
-                    <span class="plate-status-badge cleared">✓ CLEARED</span>
-                </div>
-                <div class="location-card">
+            panelClass = 'cleared';
+            vehicleNumberHTML = `<div class="vehicle-number">${result.vehicleNumber}</div>`;
+            statusBadgeHTML = `<div class="status-badge cleared">✓ CLEARED</div>`;
+            locationHTML = `
+                <div class="location-info">
                     <div class="location-title">LOCATION</div>
                     <div class="location-text">${result.location || 'N/A'}</div>
                 </div>
             `;
         } else {
             // No vehicle was found
-            resultHTML = `
-                <div class="result-plate not-found">
-                    <span class="plate-text">${term}</span>
-                    <span class="plate-status-badge not-found">✗ NOT FOUND</span>
-                </div>
-                 <div class="location-card">
+            panelClass = 'not-found';
+            vehicleNumberHTML = `<div class="vehicle-number">${term}</div>`;
+            statusBadgeHTML = `<div class="status-badge not-found">✗ NOT FOUND</div>`;
+            locationHTML = `
+                <div class="location-info">
                     <div class="location-title">STATUS</div>
                     <div class="location-text">Vehicle not on list.</div>
                 </div>
             `;
         }
-        // Add the "New Search" button and inject the HTML
-        resultView.innerHTML = resultHTML + `<button id="new-search-btn">New Search</button>`;
+
+        // Assemble the final HTML for the view
+        const resultHTML = `
+            <div class="status-panel ${panelClass}">
+                ${vehicleNumberHTML}
+                ${statusBadgeHTML}
+                ${locationHTML}
+            </div>
+            <button id="new-search-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                </svg>
+                New Search
+            </button>
+        `;
         
-        // Add an event listener to the newly created button
+        resultView.innerHTML = resultHTML;
+        
         document.getElementById('new-search-btn').addEventListener('click', () => {
             showInitialView();
-            // A small delay can make the UI feel smoother
             setTimeout(triggerSearch, 100); 
         });
     }
