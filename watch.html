@@ -7,24 +7,32 @@
     <title>Watch Vehicle Search</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #000000;
-            --text: #ffffff;
-            --muted: #8e8e93;
-            --panel: #1c1c1e;
-            --outline: #3a3a3c;
-            --status-green: #34c759;
-            --status-red: #ff3b30;
-            --accent-blue: #0a84ff;
-            --gold: #ffd700;
+            --bg-primary: #000000;
+            --bg-secondary: #111111;
+            --bg-card: #1a1a1a;
+            --bg-glass: rgba(28, 28, 30, 0.8);
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1a6;
+            --text-muted: #636366;
+            --accent-blue: #007aff;
+            --accent-blue-dark: #0051d5;
+            --success-green: #30d158;
+            --success-green-glow: rgba(48, 209, 88, 0.3);
+            --error-red: #ff453a;
+            --error-red-glow: rgba(255, 69, 58, 0.3);
+            --warning-orange: #ff9f0a;
+            --gold: #ffd60a;
+            --shadow-light: rgba(255, 255, 255, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.3);
         }
 
 ```
     body, html {
-        background-color: var(--bg);
-        color: var(--text);
+        background: radial-gradient(circle at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        color: var(--text-primary);
         font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
         margin: 0;
         height: 100vh;
@@ -43,8 +51,8 @@
         justify-content: center;
         align-items: center;
         position: relative;
-        max-width: 500px; /* Apple Watch Ultra max width */
-        max-height: 500px; /* Apple Watch Ultra max height */
+        max-width: 500px;
+        max-height: 500px;
     }
 
     /* --- View States --- */
@@ -53,9 +61,9 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 20px;
+        padding: 24px;
         box-sizing: border-box;
-        animation: fade-in 0.5s ease;
+        animation: slide-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
         width: 100%;
         height: 100%;
         position: absolute;
@@ -65,8 +73,8 @@
     
     #result-view {
         display: none;
-        justify-content: space-evenly; /* Better spacing distribution */
-        gap: 16px; /* Consistent spacing between elements */
+        justify-content: space-evenly;
+        gap: 20px;
     }
 
     /* --- Initial Search View --- */
@@ -77,129 +85,273 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        transition: transform 0.2s ease;
+        padding: 20px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, var(--bg-glass), rgba(0, 122, 255, 0.1));
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    #search-prompt .icon {
-        font-size: 48px;
-        margin-bottom: 12px;
-        display: block;
+    
+    #search-prompt:active {
+        transform: scale(0.95);
     }
+
+    .search-icon-container {
+        position: relative;
+        margin-bottom: 16px;
+    }
+
+    .search-icon {
+        font-size: 52px;
+        background: linear-gradient(135deg, var(--accent-blue), #64d2ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        filter: drop-shadow(0 0 20px rgba(0, 122, 255, 0.4));
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    .search-ripple {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80px;
+        height: 80px;
+        border: 2px solid var(--accent-blue);
+        border-radius: 50%;
+        opacity: 0;
+        animation: ripple 2s ease-out infinite;
+    }
+
     #search-prompt .text {
-        font-size: 22px;
-        font-weight: 700;
-        color: var(--accent-blue);
+        font-size: 24px;
+        font-weight: 600;
+        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         line-height: 1.2;
     }
+
     #status-bar {
-        color: var(--muted);
+        color: var(--text-muted);
         font-size: 14px;
+        font-weight: 500;
         position: absolute;
-        bottom: 20px;
+        bottom: 24px;
         left: 50%;
         transform: translateX(-50%);
         text-align: center;
+        padding: 8px 16px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* --- Result View (Optimized for Watch Ultra) --- */
+    /* --- Enhanced Result Plates --- */
     .result-plate {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 14px 18px;
-        border-radius: 16px;
-        margin: 0;
+        padding: 18px 24px;
+        border-radius: 20px;
         position: relative;
-        width: calc(100% - 40px); /* Account for view padding */
-        max-width: 300px; /* Prevent over-stretching */
+        width: calc(100% - 48px);
+        max-width: 320px;
         box-sizing: border-box;
-        min-height: 60px; /* Ensure consistent height */
+        min-height: 70px;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
     }
+
+    .result-plate::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.05));
+        pointer-events: none;
+    }
+
     .result-plate.cleared {
-        background: linear-gradient(145deg, #0a84ff, #0056b3);
-        border: 2px solid var(--gold);
+        background: linear-gradient(135deg, 
+            rgba(48, 209, 88, 0.2), 
+            rgba(0, 122, 255, 0.15)
+        );
+        border: 2px solid var(--success-green);
+        box-shadow: 
+            0 0 30px var(--success-green-glow),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
+
     .result-plate.not-found {
-        background: linear-gradient(145deg, #58585d, #3a3a3c);
-        border: 2px solid var(--status-red);
+        background: linear-gradient(135deg, 
+            rgba(255, 69, 58, 0.2), 
+            rgba(88, 88, 93, 0.15)
+        );
+        border: 2px solid var(--error-red);
+        box-shadow: 
+            0 0 30px var(--error-red-glow),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
+
     .plate-text {
         font-family: 'SF Pro Display', monospace;
-        font-size: 26px;
-        font-weight: 900;
-        color: var(--text);
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--text-primary);
         flex: 1;
         text-align: left;
         line-height: 1;
+        letter-spacing: 1px;
     }
+
     .plate-text.cleared {
-        text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+        text-shadow: 
+            0 0 15px rgba(48, 209, 88, 0.6),
+            0 2px 4px rgba(0, 0, 0, 0.3);
     }
+
     .plate-text.not-found { 
-        color: #b0b0b0; 
+        color: #ff6b6b;
+        text-shadow: 
+            0 0 15px rgba(255, 69, 58, 0.4),
+            0 2px 4px rgba(0, 0, 0, 0.3);
     }
+
     .plate-status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 13px;
         font-weight: 700;
         flex-shrink: 0;
         white-space: nowrap;
-    }
-    .plate-status-badge.cleared { 
-        background-color: var(--status-green); 
-        color: white; 
-    }
-    .plate-status-badge.not-found { 
-        background-color: var(--status-red); 
-        color: white; 
+        position: relative;
+        overflow: hidden;
     }
 
+    .plate-status-badge::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+        pointer-events: none;
+    }
+
+    .plate-status-badge.cleared { 
+        background: linear-gradient(135deg, var(--success-green), #20c648);
+        color: white;
+        box-shadow: 0 4px 15px rgba(48, 209, 88, 0.4);
+    }
+
+    .plate-status-badge.not-found { 
+        background: linear-gradient(135deg, var(--error-red), #d70015);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 69, 58, 0.4);
+    }
+
+    /* --- Enhanced Location Card --- */
     .location-card {
-        background-color: var(--panel);
-        border-radius: 16px;
-        padding: 16px;
+        background: linear-gradient(135deg, 
+            var(--bg-card), 
+            rgba(28, 28, 30, 0.8)
+        );
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 20px;
         text-align: center;
-        width: calc(100% - 40px); /* Account for view padding */
-        max-width: 300px; /* Prevent over-stretching */
+        width: calc(100% - 48px);
+        max-width: 320px;
         box-sizing: border-box;
         margin: 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
     }
+
+    .location-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.03));
+        pointer-events: none;
+    }
+
     .location-title {
         font-size: 12px;
-        font-weight: bold;
-        color: var(--muted);
+        font-weight: 600;
+        color: var(--text-secondary);
         text-transform: uppercase;
-        margin-bottom: 6px;
-        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        letter-spacing: 1.5px;
     }
+
     .location-text {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 700;
-        color: var(--text);
+        color: var(--text-primary);
         line-height: 1.2;
         word-wrap: break-word;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
+    /* --- Enhanced Button --- */
     #new-search-btn {
         border: none;
-        background-color: var(--accent-blue);
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
         color: white;
         font-size: 18px;
         font-weight: 700;
-        padding: 16px 24px;
-        border-radius: 16px;
-        width: calc(100% - 40px); /* Account for view padding */
-        max-width: 300px; /* Prevent over-stretching */
+        padding: 18px 32px;
+        border-radius: 25px;
+        width: calc(100% - 48px);
+        max-width: 320px;
         cursor: pointer;
         box-sizing: border-box;
         margin: 0;
-        transition: background-color 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 
+            0 8px 25px rgba(0, 122, 255, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    #new-search-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.6s ease;
+    }
+
+    #new-search-btn:hover::before {
+        left: 100%;
     }
     
     #new-search-btn:active {
-        background-color: #0056b3;
+        transform: scale(0.98);
+        box-shadow: 
+            0 4px 15px rgba(0, 122, 255, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 
-    /* --- Hidden input for triggering keyboard --- */
+    /* --- Hidden input --- */
     #search-input {
         position: absolute;
         left: -9999px;
@@ -207,38 +359,64 @@
         opacity: 0;
     }
 
-    @keyframes fade-in {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
+    /* --- Animations --- */
+    @keyframes slide-in {
+        from { 
+            opacity: 0; 
+            transform: translateY(20px) scale(0.95); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+        }
     }
 
-    /* Responsive adjustments for different watch sizes */
+    @keyframes pulse-glow {
+        0%, 100% { 
+            filter: drop-shadow(0 0 20px rgba(0, 122, 255, 0.4));
+        }
+        50% { 
+            filter: drop-shadow(0 0 30px rgba(0, 122, 255, 0.7));
+        }
+    }
+
+    @keyframes ripple {
+        0% {
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0;
+        }
+    }
+
+    /* --- Responsive Design --- */
     @media (max-width: 396px) {
         .view {
-            padding: 16px;
+            padding: 20px;
         }
         .plate-text {
-            font-size: 22px;
+            font-size: 24px;
         }
         .location-text {
-            font-size: 20px;
+            font-size: 22px;
         }
         #new-search-btn {
             font-size: 16px;
-            padding: 14px 20px;
+            padding: 16px 28px;
         }
     }
 
     @media (max-height: 484px) {
         .view {
-            gap: 12px;
+            gap: 16px;
         }
-        #search-prompt .icon {
-            font-size: 42px;
-            margin-bottom: 8px;
+        .search-icon {
+            font-size: 46px;
         }
         #search-prompt .text {
-            font-size: 20px;
+            font-size: 22px;
         }
     }
 </style>
@@ -253,7 +431,10 @@
 
     <div class="view" id="initial-view">
         <div id="search-prompt">
-            <div class="icon">🔍</div>
+            <div class="search-icon-container">
+                <div class="search-icon">🔍</div>
+                <div class="search-ripple"></div>
+            </div>
             <div class="text">Tap to Search</div>
         </div>
         <div id="status-bar">Connecting...</div>
