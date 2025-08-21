@@ -39,15 +39,11 @@
             border-bottom: 1px solid var(--outline);
             position: relative;
             z-index: 2;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
         .search-wrapper {
             position: relative;
             display: flex;
             align-items: center;
-            flex-grow: 1;
         }
         #search-input {
             width: 100%;
@@ -79,14 +75,6 @@
             cursor: pointer;
         }
         #clear-btn.visible { display: flex; }
-
-        #clock {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--muted);
-            font-family: monospace;
-            flex-shrink: 0;
-        }
 
         /* --- Content Area --- */
         .content {
@@ -191,7 +179,6 @@
             <input id="search-input" type="text" placeholder="Search...">
             <button id="clear-btn">×</button>
         </div>
-        <div id="clock">--:--</div>
     </div>
 
     <div class="content" id="content-area">
@@ -220,17 +207,6 @@
         const clearBtn = document.getElementById('clear-btn');
         const contentArea = document.getElementById('content-area');
         const hintText = document.getElementById('hint-text');
-        const clockDisplay = document.getElementById('clock');
-
-        // --- Clock Functionality ---
-        function updateTime() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            clockDisplay.textContent = `${hours}:${minutes}`;
-        }
-        updateTime();
-        setInterval(updateTime, 1000);
 
         // --- Firebase Connection ---
         try {
