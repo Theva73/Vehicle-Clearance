@@ -102,33 +102,59 @@
         }
 
         /* * ==============================================
-         * DASHBOARD-STYLE INITIAL VIEW
+         * NEW: INTUITIVE DASHBOARD DESIGN
          * ==============================================
         */
         #dashboard-prompt {
-            width: 250px;
-            height: 250px;
+            width: 280px;
+            height: 280px;
             border-radius: 50%;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            cursor: pointer;
             position: relative;
-            background: radial-gradient(circle at 50% 50%, var(--bg-secondary), var(--bg-primary));
-            border: 2px solid var(--glass-border);
-            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            transition: transform 0.3s ease;
         }
-
         #dashboard-prompt:active {
             transform: scale(0.96);
-            box-shadow: 0 0 20px var(--shadow-dark), inset 0 1px 2px var(--shadow-light);
+        }
+        .dashboard-ring {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .outer-ring {
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--glass-border);
+            background: radial-gradient(circle at 50% 50%, var(--bg-secondary), var(--bg-primary));
+            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
+        }
+        .middle-ring {
+            width: 200px;
+            height: 200px;
+            border: 1px solid var(--glass-border);
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+        .inner-ring {
+            width: 120px;
+            height: 120px;
+            background: var(--bg-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 0 20px var(--accent-blue-glow);
         }
         
         #time-display {
-            font-size: 48px;
+            font-size: 40px;
             font-weight: 700;
             line-height: 1;
             background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
@@ -137,37 +163,25 @@
             background-clip: text;
             text-fill-color: transparent;
         }
-
         #weather-display {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-top: 8px;
+            gap: 8px;
+            margin-top: 4px;
         }
-        
-        #weather-icon { font-size: 24px; }
+        #weather-icon { font-size: 20px; }
         #weather-temp { 
-            font-size: 24px; 
+            font-size: 20px; 
             font-weight: 500;
             color: var(--accent-yellow);
         }
-
         #location-display {
-            margin-top: 12px;
+            position: absolute;
+            bottom: 25px;
             font-size: 16px;
             font-weight: 500;
             color: #B0B0C0;
             letter-spacing: 0.5px;
-        }
-
-        .search-action-text {
-            position: absolute;
-            bottom: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         #status-bar {
@@ -195,12 +209,10 @@
             padding-top: 40px;
             gap: 20px;
         }
-
         .input-header {
             text-align: center;
             margin-bottom: 20px;
         }
-
         .input-header .time {
             font-size: 32px;
             font-weight: 700;
@@ -209,7 +221,6 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-
         .input-header .weather {
             font-size: 18px;
             font-weight: 500;
@@ -219,7 +230,6 @@
             justify-content: center;
             gap: 8px;
         }
-
         #text-search-input {
             width: 100%;
             background-color: var(--bg-secondary);
@@ -265,17 +275,14 @@
             text-align: center;
             transition: border-color 0.5s ease;
         }
-
         .status-panel.cleared {
             border-color: var(--success-green);
             box-shadow: 0 0 40px var(--success-green-glow), 0 8px 32px 0 var(--shadow-dark);
         }
-
         .status-panel.not-found {
             border-color: var(--error-red);
             box-shadow: 0 0 40px var(--error-red-glow), 0 8px 32px 0 var(--shadow-dark);
         }
-
         .vehicle-number {
             font-size: 36px;
             font-weight: 700;
@@ -283,7 +290,6 @@
             margin-bottom: 16px;
             line-height: 1.1;
         }
-
         .status-badge {
             font-size: 14px;
             font-weight: 600;
@@ -292,10 +298,8 @@
             margin-bottom: 24px;
             color: #fff;
         }
-        
         .status-badge.cleared { background-color: var(--success-green); }
         .status-badge.not-found { background-color: var(--error-red); }
-
         .location-info {
             width: 100%;
             border-top: 1px solid var(--glass-border);
@@ -304,12 +308,10 @@
             align-items: center;
             gap: 16px;
         }
-
         .location-details {
             text-align: left;
             flex-grow: 1;
         }
-        
         .location-title {
             font-size: 12px;
             font-weight: 500;
@@ -318,14 +320,12 @@
             letter-spacing: 1.5px;
             margin-bottom: 6px;
         }
-
         .location-text {
             font-size: 22px;
             font-weight: 600;
             color: var(--text-primary);
             word-break: break-word;
         }
-        
         #new-search-btn {
             background: var(--bg-secondary);
             border: 1px solid var(--glass-border);
@@ -341,12 +341,10 @@
             flex-shrink: 0;
             transition: all 0.2s ease;
         }
-
         #new-search-btn:hover {
             border-color: var(--accent-blue);
             color: var(--accent-blue);
         }
-
         #new-search-btn svg {
             width: 20px;
             height: 20px;
@@ -360,12 +358,10 @@
             from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        
         @keyframes move-stars {
             from { background-position: 0 0; }
             to { background-position: -10000px 5000px; }
         }
-
     </style>
 </head>
 <body>
@@ -376,13 +372,19 @@
     <!-- VIEW 1: The dashboard-style initial screen -->
     <div class="view" id="initial-view">
         <div id="dashboard-prompt">
-            <div id="time-display">--:--</div>
-            <div id="weather-display">
-                <span id="weather-icon">--</span>
-                <span id="weather-temp">--°</span>
+            <div class="dashboard-ring outer-ring">
+                <div id="location-display">Loading...</div>
             </div>
-            <div id="location-display">Loading...</div>
-            <div class="search-action-text">Tap to Search</div>
+            <div class="dashboard-ring middle-ring">
+                <div id="time-display">--:--</div>
+                <div id="weather-display">
+                    <span id="weather-icon">--</span>
+                    <span id="weather-temp">--°</span>
+                </div>
+            </div>
+            <div class="dashboard-ring inner-ring">
+                <span>Search</span>
+            </div>
         </div>
         <div id="status-bar">Connecting...</div>
     </div>
@@ -492,36 +494,31 @@
         resultView.style.display = 'flex';
     }
 
-    // --- Dashboard & Header Logic (FIXED) ---
+    // --- Dashboard & Header Logic ---
     function updateTime() {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const currentTime = `${hours}:${minutes}`;
         
-        // Update both dashboard and input header time
         timeDisplay.textContent = currentTime;
         inputTime.textContent = currentTime;
     }
 
     function updateDashboardAndHeader() {
-        // Update time immediately and then every second
         updateTime();
         setInterval(updateTime, 1000);
 
-        // Update weather immediately
         const simulatedWeatherData = {
             location: "Singapore",
             temp: "29",
             icon: "☁️"
         };
 
-        // Update dashboard weather
         weatherIcon.textContent = simulatedWeatherData.icon;
         weatherTemp.textContent = `${simulatedWeatherData.temp}°`;
         locationDisplay.textContent = simulatedWeatherData.location;
 
-        // Update input header weather
         inputWeather.children[0].textContent = simulatedWeatherData.icon;
         inputWeather.children[1].textContent = `${simulatedWeatherData.temp}°`;
     }
@@ -583,7 +580,7 @@
                     <button id="new-search-btn">${searchIconSVG}</button>
                     <div class="location-details">
                         <div class="location-title">STATUS</div>
-                        <div class="location-text">Vehicle not on list.</div>
+                        <div class="location-text">Denied</div>
                     </div>
                 </div>
             `;
