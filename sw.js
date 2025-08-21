@@ -1,4 +1,4 @@
-const CACHE = "vs-ultra-v2";
+const CACHE = "vs-ultra-v3";
 const ASSETS = [
   "./",
   "./watch.html",

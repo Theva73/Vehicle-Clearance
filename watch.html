@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <title>Vehicle Search — Ultra (PWA)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Vehicle Search - Ultra (PWA)</title>
 
-  <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0D0D12">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg-primary:#0D0D12; --bg-secondary:#1A1A21; --bg-glass:rgba(26,26,33,.6);
@@ -42,32 +42,32 @@
     .clock{position:absolute; top:18%; font-size:min(11vmin,48px); font-weight:800; background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
     .wx{position:absolute; top:38%; display:flex; gap:6px; align-items:center; font-weight:600; font-size:min(4.8vmin,18px); color:var(--accent-yellow)}
     .loc{position:absolute; bottom:26%; font-size:min(4.6vmin,16px); color:#B0B0C0; letter-spacing:.4px}
-    .tap{position:absolute; bottom:10%; font-size:min(4.2vmin,14px); color:var(--accent-blue); font-weight:700; text-transform:uppercase; letter-spacing:1px}
-    .status{position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:13px; color:var(--text-secondary); padding:8px 14px; border-radius:14px; background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(10px)}
+    .tap{position:absolute; bottom:10%; font-size:min(4.2vmin,14px); color:#0A84FF; font-weight:700; text-transform:uppercase; letter-spacing:1px}
+    .status{position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:13px; color:#A0A0B0; padding:8px 14px; border-radius:14px; background:rgba(26,26,33,.6); border:1px solid rgba(255,255,255,.09); backdrop-filter:blur(10px)}
     .input-wrap{width:100%; max-width:360px; display:flex; flex-direction:column; gap:14px}
     .headerRow{display:flex; align-items:center; justify-content:space-between}
     .headerClock{font-weight:800; font-size:28px; background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
-    .pill{padding:8px 12px; border-radius:999px; background:var(--bg-glass); border:1px solid var(--glass-border); font-size:14px; color:var(--accent-yellow)}
-    .fakeInput{width:100%; height:56px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; font-size:22px; letter-spacing:2px; background:var(--bg-secondary); border:1px solid var(--glass-border);}
+    .pill{padding:8px 12px; border-radius:999px; background:rgba(26,26,33,.6); border:1px solid rgba(255,255,255,.09); font-size:14px; color:#FFD60A}
+    .fakeInput{width:100%; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:22px; letter-spacing:2px; background:#1A1A21; border:1px solid rgba(255,255,255,.09);}
     .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
-    .key{height:var(--tap); border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; background:linear-gradient(180deg, #22232b, #181920); border:1px solid var(--glass-border); box-shadow:0 2px 8px var(--shadow); user-select:none; cursor:pointer}
+    .key{height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; background:linear-gradient(180deg, #22232b, #181920); border:1px solid rgba(255,255,255,.09); box-shadow:0 2px 8px rgba(0,0,0,.45); user-select:none; cursor:pointer}
     .key:active{transform:scale(.98)}
     .key--go{background:#1d2b3f; border-color:#2b4975; color:#cfe1ff}
     .key--back{background:#291a1b; border-color:#54232a; color:#ffd0d3}
     .actions{display:flex; gap:10px}
-    .btn{flex:1; height:46px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; cursor:pointer; background:var(--bg-secondary); border:1px solid var(--glass-border)}
+    .btn{flex:1; height:46px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; cursor:pointer; background:#1A1A21; border:1px solid rgba(255,255,255,.09)}
     .btn--cancel{opacity:.9}
     .btn:active{transform:scale(.98)}
-    .panel{width:calc(100% - 36px); max-width:360px; padding:22px; border-radius:var(--radius-lg); background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(18px); text-align:center; box-shadow:0 8px 28px var(--shadow)}
-    .panel--ok{box-shadow:0 0 28px rgba(48,209,88,.35), 0 8px 28px var(--shadow); border-color:rgba(48,209,88,.6)}
-    .panel--bad{box-shadow:0 0 28px rgba(255,69,58,.35), 0 8px 28px var(--shadow); border-color:rgba(255,69,58,.6)}
+    .panel{width:calc(100% - 36px); max-width:360px; padding:22px; border-radius:22px; background:rgba(26,26,33,.6); border:1px solid rgba(255,255,255,.09); backdrop-filter:blur(18px); text-align:center; box-shadow:0 8px 28px rgba(0,0,0,.45)}
+    .panel--ok{box-shadow:0 0 28px rgba(48,209,88,.35), 0 8px 28px rgba(0,0,0,.45); border-color:rgba(48,209,88,.6)}
+    .panel--bad{box-shadow:0 0 28px rgba(255,69,58,.35), 0 8px 28px rgba(0,0,0,.45); border-color:rgba(255,69,58,.6)}
     .veh{font-size:34px; font-weight:800; letter-spacing:1.2px; margin-bottom:10px}
     .badge{display:inline-block; padding:8px 14px; border-radius:999px; font-weight:800; font-size:13px; color:#fff; margin-bottom:18px}
     .badge--ok{background:#30D158} .badge--bad{background:#FF453A}
-    .row{display:flex; gap:14px; align-items:center; border-top:1px solid var(--glass-border); padding-top:14px}
+    .row{display:flex; gap:14px; align-items:center; border-top:1px solid rgba(255,255,255,.09); padding-top:14px}
     .rowTitle{font-size:11px; letter-spacing:1.2px; color:#A0A0B0}
     .rowText{font-size:20px; font-weight:700}
-    .circle{width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid var(--glass-border)}
+    .circle{width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.09)}
     .circle svg{width:20px;height:20px}
   </style>
 </head>
@@ -75,41 +75,36 @@
   <div class="safe">
     <div class="watch-stage" id="stage">
       <div class="stars"></div>
-
       <section class="view" id="v-initial">
         <div class="prompt" id="tapPrompt" role="button" aria-label="Tap to search">
           <div class="clock" id="dashClock">--:--</div>
-          <div class="wx"><span id="wxIcon">☁️</span><span id="wxTemp">--°</span></div>
+          <div class="wx"><span id="wxIcon">Cloud</span><span id="wxTemp">--</span></div>
           <div class="loc" id="wxLoc">Singapore</div>
-          <div class="tap">Tap to Search</div>
+          <div class="tap">TAP TO SEARCH</div>
         </div>
-        <div class="status" id="status">Connecting…</div>
+        <div class="status" id="status">Connecting...</div>
       </section>
-
       <section class="view hidden" id="v-input">
         <div class="input-wrap">
           <div class="headerRow">
             <div class="headerClock" id="inpClock">--:--</div>
-            <div class="pill" id="inpWx">☁️ 29°</div>
+            <div class="pill" id="inpWx">Cloud 29</div>
           </div>
-          <div class="fakeInput" id="buffer" aria-live="polite">•••</div>
-
+          <div class="fakeInput" id="buffer" aria-live="polite">...</div>
           <div class="keypad" id="pad">
             <div class="key">1</div><div class="key">2</div><div class="key">3</div>
             <div class="key">4</div><div class="key">5</div><div class="key">6</div>
             <div class="key">7</div><div class="key">8</div><div class="key">9</div>
-            <div class="key key--back" data-act="back">⌫</div>
+            <div class="key key--back" data-act="back">&#9003;</div>
             <div class="key">0</div>
             <div class="key key--go" data-act="go">Go</div>
           </div>
-
           <div class="actions">
             <div class="btn btn--cancel" id="cancel">Cancel</div>
             <div class="btn" id="clear">Clear</div>
           </div>
         </div>
       </section>
-
       <section class="view hidden" id="v-result">
         <div class="panel" id="panel"></div>
       </section>
@@ -117,14 +112,12 @@
   </div>
 
   <script type="module">
-    // Register service worker
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js").catch(()=>{});
+      window.addEventListener("load", function(){
+        navigator.serviceWorker.register("./sw.js").catch(function(){});
       });
     }
 
-    // Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -138,120 +131,116 @@
       appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    let db, allRows = [];
-    let buf = "";
+    var db, allRows = [];
+    var buf = "";
 
-    const vInitial = document.getElementById('v-initial');
-    const vInput = document.getElementById('v-input');
-    const vResult = document.getElementById('v-result');
-    const tapPrompt = document.getElementById('tapPrompt');
-    const statusEl = document.getElementById('status');
-    const dashClock = document.getElementById('dashClock');
-    const inpClock = document.getElementById('inpClock');
-    const wxIcon = document.getElementById('wxIcon');
-    const wxTemp = document.getElementById('wxTemp');
-    const wxLoc  = document.getElementById('wxLoc');
-    const inpWx  = document.getElementById('inpWx');
-    const buffer = document.getElementById('buffer');
-    const pad = document.getElementById('pad');
-    const cancelBtn = document.getElementById('cancel');
-    const clearBtn = document.getElementById('clear');
-    const panel = document.getElementById('panel');
+    var vInitial = document.getElementById("v-initial");
+    var vInput = document.getElementById("v-input");
+    var vResult = document.getElementById("v-result");
+    var tapPrompt = document.getElementById("tapPrompt");
+    var statusEl = document.getElementById("status");
+    var dashClock = document.getElementById("dashClock");
+    var inpClock = document.getElementById("inpClock");
+    var wxIcon = document.getElementById("wxIcon");
+    var wxTemp = document.getElementById("wxTemp");
+    var wxLoc  = document.getElementById("wxLoc");
+    var inpWx  = document.getElementById("inpWx");
+    var buffer = document.getElementById("buffer");
+    var pad = document.getElementById("pad");
+    var cancelBtn = document.getElementById("cancel");
+    var clearBtn = document.getElementById("clear");
+    var panel = document.getElementById("panel");
 
     function setClocks(){
-      const now = new Date();
-      const HH = String(now.getHours()).padStart(2,'0');
-      const MM = String(now.getMinutes()).padStart(2,'0');
-      dashClock.textContent = \`\${HH}:\${MM}\`;
-      inpClock.textContent = \`\${HH}:\${MM}\`;
+      var now = new Date();
+      var HH = String(now.getHours()).padStart(2,"0");
+      var MM = String(now.getMinutes()).padStart(2,"0");
+      dashClock.textContent = HH + ":" + MM;
+      inpClock.textContent = HH + ":" + MM;
     }
     setClocks(); setInterval(setClocks, 1000);
 
-    const WX = { icon:"☁️", temp:"29°", loc:"Singapore" };
-    wxIcon.textContent = WX.icon; wxTemp.textContent = WX.temp; wxLoc.textContent = WX.loc; inpWx.textContent = \`\${WX.icon} \${WX.temp}\`;
+    var WX = { icon:"Cloud", temp:"29", loc:"Singapore" };
+    wxIcon.textContent = WX.icon; wxTemp.textContent = WX.temp; wxLoc.textContent = WX.loc; inpWx.textContent = WX.icon + " " + WX.temp;
 
     try{
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
+      var app = initializeApp(firebaseConfig);
+      var auth = getAuth(app);
       db = getFirestore(app);
 
-      onAuthStateChanged(auth, (user)=>{
+      onAuthStateChanged(auth, function(user){
         if(user){
-          const listings = collection(db,'vehicleListings');
-          onSnapshot(listings, (snap)=>{
-            allRows = snap.docs.map(d=>d.data());
-            statusEl.textContent = \`Ready (\${allRows.length})\`;
-          }, (err)=>{ console.error(err); statusEl.textContent = 'Sync Error'; });
+          var listings = collection(db,"vehicleListings");
+          onSnapshot(listings, function(snap){
+            allRows = snap.docs.map(function(d){ return d.data(); });
+            statusEl.textContent = "Ready (" + allRows.length + ")";
+          }, function(err){ console.error(err); statusEl.textContent = "Sync Error"; });
         }else{
-          signInAnonymously(auth).catch(e=>{ console.error(e); statusEl.textContent='Auth Error'; });
+          signInAnonymously(auth).catch(function(e){ console.error(e); statusEl.textContent="Auth Error"; });
         }
       });
-    }catch(e){ console.error(e); statusEl.textContent='Connection Failed'; }
+    }catch(e){ console.error(e); statusEl.textContent="Connection Failed"; }
 
-    const show = (el)=>el.classList.remove('hidden');
-    const hide = (el)=>el.classList.add('hidden');
+    function show(el){ el.classList.remove("hidden"); }
+    function hide(el){ el.classList.add("hidden"); }
 
     function toInput(){ hide(vInitial); hide(vResult); show(vInput); haptic(5); }
     function toInitial(){ hide(vResult); hide(vInput); show(vInitial); buf=""; renderBuf(); }
     function toResult(){ hide(vInitial); hide(vInput); show(vResult); }
 
-    function haptic(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(_){} }
-    function renderBuf(){ buffer.textContent = buf.length ? buf : "•••"; }
+    function haptic(ms){ try{ if(navigator.vibrate){ navigator.vibrate(ms); } }catch(e){} }
+    function renderBuf(){ buffer.textContent = buf.length ? buf : "..."; }
 
     function performSearch(term){
-      const numeric = term.replace(/\D/g,'');
+      var numeric = term.replace(/\D/g,"");
       if(!numeric) return;
-      const found = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g,'').startsWith(numeric));
+      var found = allRows.find(function(r){ return r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g,"").startsWith(numeric); });
       renderResult(found, term);
       toResult();
     }
 
     function renderResult(result, term){
-      const searchIcon = \`
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
-          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-        </svg>\`;
+      var searchIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"></path><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"></path></svg>';
 
       if(result){
-        panel.className = 'panel panel--ok';
-        panel.innerHTML = \`
-          <div class="veh">\${result.vehicleNumber}</div>
-          <div class="badge badge--ok">✓ CLEARED</div>
-          <div class="row">
-            <div class="circle" id="again">\${searchIcon}</div>
-            <div>
-              <div class="rowTitle">LOCATION</div>
-              <div class="rowText">\${result.location || 'N/A'}</div>
-            </div>
-          </div>\`;
+        panel.className = "panel panel--ok";
+        panel.innerHTML =
+          '<div class="veh">' + result.vehicleNumber + '</div>' +
+          '<div class="badge badge--ok">CLEARED</div>' +
+          '<div class="row">' +
+            '<div class="circle" id="again">' + searchIcon + '</div>' +
+            '<div>' +
+              '<div class="rowTitle">LOCATION</div>' +
+              '<div class="rowText">' + (result.location || "N/A") + '</div>' +
+            '</div>' +
+          '</div>';
       }else{
-        panel.className = 'panel panel--bad';
-        panel.innerHTML = \`
-          <div class="veh">\${term}</div>
-          <div class="badge badge--bad">✗ NOT FOUND</div>
-          <div class="row">
-            <div class="circle" id="again">\${searchIcon}</div>
-            <div>
-              <div class="rowTitle">STATUS</div>
-              <div class="rowText">Denied</div>
-            </div>
-          </div>\`;
+        panel.className = "panel panel--bad";
+        panel.innerHTML =
+          '<div class="veh">' + term + '</div>' +
+          '<div class="badge badge--bad">NOT FOUND</div>' +
+          '<div class="row">' +
+            '<div class="circle" id="again">' + searchIcon + '</div>' +
+            '<div>' +
+              '<div class="rowTitle">STATUS</div>' +
+              '<div class="rowText">Denied</div>' +
+            '</div>' +
+          '</div>';
       }
-      document.getElementById('again').addEventListener('click', toInput);
+      document.getElementById("again").addEventListener("click", toInput);
     }
 
-    tapPrompt.addEventListener('click', toInput);
-    cancelBtn.addEventListener('click', toInitial);
-    clearBtn.addEventListener('click', ()=>{ buf=""; renderBuf(); haptic(8); });
+    tapPrompt.addEventListener("click", toInput);
+    cancelBtn.addEventListener("click", toInitial);
+    clearBtn.addEventListener("click", function(){ buf=""; renderBuf(); haptic(8); });
 
-    pad.addEventListener('click', (e)=>{
-      const key = e.target.closest('.key'); if(!key) return;
+    pad.addEventListener("click", function(e){
+      var key = e.target.closest(".key"); if(!key) return;
       haptic(8);
-      const act = key.dataset.act;
-      if(act === 'back'){ buf = buf.slice(0,-1); renderBuf(); return; }
-      if(act === 'go'){ if(buf.length>0) performSearch(buf); return; }
-      const v = key.textContent.trim();
+      var act = key.dataset.act;
+      if(act === "back"){ buf = buf.slice(0,-1); renderBuf(); return; }
+      if(act === "go"){ if(buf.length>0) performSearch(buf); return; }
+      var v = key.textContent.trim();
       if(/^\d$/.test(v)){
         buf = (buf + v).slice(0,10);
         renderBuf();
@@ -260,11 +249,11 @@
     });
 
     function fitStage(){
-      const stage = document.getElementById('stage');
-      const w = stage.clientWidth, h = stage.clientHeight;
+      var stage = document.getElementById("stage");
+      var w = stage.clientWidth, h = stage.clientHeight;
       stage.style.padding = (Math.min(w,h) * 0.02) + "px";
     }
-    window.addEventListener('resize', fitStage); fitStage();
+    window.addEventListener("resize", fitStage); fitStage();
   </script>
 </body>
 </html>
