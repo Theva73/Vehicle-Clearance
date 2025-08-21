@@ -16,34 +16,67 @@
             --outline: #3a3a3c;
             --status-green: #34c759;
             --status-red: #ff3b30;
+            --accent-blue: #0a84ff;
         }
 
-        /* Ultra-simple layout for maximum compatibility */
         body {
             background-color: var(--bg);
             color: var(--text);
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
-            padding: 12px;
-            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.5s ease;
         }
 
-        /* --- Search Bar --- */
+        /* --- Dynamic Background Glow --- */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top, rgba(34, 197, 94, 0.15) 0%, rgba(0,0,0,0) 60%);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 0;
+        }
+        body.cleared::before { opacity: 1; }
+        body.not-found::before {
+            background: radial-gradient(circle at top, rgba(255, 59, 48, 0.2) 0%, rgba(0,0,0,0) 60%);
+            opacity: 1;
+        }
+
+
+        /* --- Header & Search Bar --- */
+        .header {
+            flex-shrink: 0;
+            padding: 12px;
+            background: linear-gradient(180deg, #111, #000);
+            border-bottom: 1px solid var(--outline);
+            position: relative;
+            z-index: 2;
+        }
         .search-wrapper {
             position: relative;
-            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
         }
         #search-input {
             width: 100%;
             height: 48px;
-            padding: 0 40px 0 16px;
-            border: 1px solid var(--outline);
-            background-color: var(--panel);
+            padding: 0 44px 0 16px;
+            border: none;
+            background-color: #2c2c2e;
             border-radius: 14px;
             color: var(--text);
             font-size: 20px;
             font-family: monospace;
             box-sizing: border-box;
+            caret-color: var(--accent-blue);
         }
         #clear-btn {
             position: absolute;
@@ -52,25 +85,34 @@
             width: 38px;
             height: 38px;
             border: none;
-            background-color: transparent;
+            background-color: #3a3a3c;
             color: var(--muted);
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
             border-radius: 50%;
-            display: none;
+            display: none; 
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
         #clear-btn.visible {
             display: flex;
         }
 
         /* --- Content Area --- */
+        .content {
+            flex-grow: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+            position: relative;
+            z-index: 1;
+        }
         .hint {
             text-align: center;
             color: var(--muted);
-            padding: 20px 0;
+            padding-top: 20px;
             font-size: 16px;
         }
         .result-card {
@@ -78,24 +120,29 @@
             border-radius: 18px;
             padding: 16px;
             margin-bottom: 12px;
-            border-left: 5px solid;
-            animation: slide-in 0.3s ease-out;
+            border: 1px solid var(--outline);
+            animation: slide-in 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        .result-card.cleared { border-color: var(--status-green); }
-        .result-card.not-found { border-color: var(--status-red); }
         
         .result-plate {
             font-family: monospace;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
             color: var(--text);
             margin: 0 0 8px 0;
+            text-align: center;
+        }
+        .result-status-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
         }
         .result-status {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             text-transform: uppercase;
-            margin: 0 0 8px 0;
         }
         .result-status.cleared { color: var(--status-green); }
         .result-status.not-found { color: var(--status-red); }
@@ -105,22 +152,31 @@
             font-weight: 400;
             color: var(--muted);
             margin: 0;
+            text-align: center;
         }
         
         @keyframes slide-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="search-wrapper">
-        <input id="search-input" type="text" placeholder="Search..." inputmode="numeric">
-        <button id="clear-btn">×</button>
+    <div class="header">
+        <div class="search-wrapper">
+            <input id="search-input" type="text" placeholder="Search..." inputmode="numeric">
+            <button id="clear-btn">×</button>
+        </div>
     </div>
 
-    <div id="content-area">
+    <div class="content" id="content-area">
         <div class="hint" id="hint-text">Connecting...</div>
     </div>
 
@@ -145,6 +201,7 @@
         const clearBtn = document.getElementById('clear-btn');
         const contentArea = document.getElementById('content-area');
         const hintText = document.getElementById('hint-text');
+        const body = document.body;
 
         // --- Firebase Connection ---
         try {
@@ -171,13 +228,15 @@
         searchInput.addEventListener('input', () => {
             const term = searchInput.value.trim();
             
+            body.className = ''; // Reset background glow
+
             if (term.length > 0) {
                 clearBtn.classList.add('visible');
                 hintText.style.display = 'none';
                 applyFilter(term);
             } else {
                 clearBtn.classList.remove('visible');
-                contentArea.innerHTML = '';
+                contentArea.innerHTML = ''; 
                 hintText.style.display = 'block';
             }
         });
@@ -185,9 +244,10 @@
         clearBtn.addEventListener('click', () => {
             searchInput.value = '';
             clearBtn.classList.remove('visible');
-            contentArea.innerHTML = '';
+            contentArea.innerHTML = ''; 
             hintText.style.display = 'block';
-            searchInput.focus();
+            body.className = '';
+            searchInput.focus(); 
         });
 
         function applyFilter(term) {
@@ -197,8 +257,10 @@
             
             if (result) {
                 renderResult(result);
+                body.className = 'cleared';
             } else {
                 renderResult(null, term);
+                body.className = 'not-found';
             }
         }
 
@@ -209,15 +271,19 @@
             if (result) {
                 card.classList.add('cleared');
                 card.innerHTML = `
+                    <div class="result-status-wrapper">
+                        <div class="result-status cleared">✓ CLEARED</div>
+                    </div>
                     <div class="result-plate">${result.vehicleNumber}</div>
-                    <div class="result-status cleared">✓ CLEARED</div>
                     <div class="result-location">Location: ${result.location || 'N/A'}</div>
                 `;
             } else {
                 card.classList.add('not-found');
                 card.innerHTML = `
+                    <div class="result-status-wrapper">
+                        <div class="result-status not-found">✗ NOT FOUND</div>
+                    </div>
                     <div class="result-plate">${term}</div>
-                    <div class="result-status not-found">✗ NOT FOUND</div>
                     <div class="result-location">This vehicle is not on the list.</div>
                 `;
             }
