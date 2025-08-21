@@ -14,156 +14,115 @@
             --muted: #8e8e93;
             --panel: #1c1c1e;
             --outline: #3a3a3c;
-            --keypad-bg: #2c2c2e;
             --status-green: #34c759;
             --status-red: #ff3b30;
         }
 
-        html {
-            height: 100%;
-        }
-
+        /* Ultra-simple layout for maximum compatibility */
         body {
             background-color: var(--bg);
             color: var(--text);
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
-            -webkit-user-select: none;
-            height: 100%;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* --- NEW LAYOUT: Using CSS Grid --- */
-        .container {
-            width: 100%;
-            height: 100%;
             padding: 12px;
             box-sizing: border-box;
-            display: grid;
-            grid-template-rows: auto 1fr; /* Display area takes auto height, keypad takes the rest */
-            gap: 12px;
         }
 
-        /* --- Search Display --- */
-        .search-display-area {
+        /* --- Search Bar --- */
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        #search-input {
+            width: 100%;
+            height: 48px;
+            padding: 0 40px 0 16px;
+            border: 1px solid var(--outline);
+            background-color: var(--panel);
+            border-radius: 14px;
+            color: var(--text);
+            font-size: 20px;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+        #clear-btn {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            width: 38px;
+            height: 38px;
+            border: none;
+            background-color: transparent;
+            color: var(--muted);
+            font-size: 22px;
+            font-weight: bold;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        #clear-btn.visible {
+            display: flex;
+        }
+
+        /* --- Content Area --- */
+        .hint {
+            text-align: center;
+            color: var(--muted);
+            padding: 20px 0;
+            font-size: 16px;
+        }
+        .result-card {
             background-color: var(--panel);
             border-radius: 18px;
-            padding: 12px;
-            box-sizing: border-box;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #search-display {
-            font-family: monospace;
-            font-size: 36px;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: 2px;
-        }
-        #search-display.placeholder {
-            color: var(--muted);
-        }
-
-        /* --- Keypad --- */
-        .keypad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(4, 1fr); /* Ensure 4 rows */
-            gap: 8px;
-            height: 100%;
-        }
-        .keypad-btn {
-            border: none;
-            background-color: var(--keypad-bg);
-            color: var(--text);
-            font-size: clamp(20px, 5vw, 28px); /* Responsive font size */
-            font-weight: 700;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.05s ease-out;
-            aspect-ratio: 1 / 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .keypad-btn:active {
-            transform: scale(0.9);
-            background-color: #4a4a4c;
-        }
-        .keypad-btn.special {
-            background-color: var(--panel);
-        }
-
-        /* --- Result Panel --- */
-        #result-panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #1c1c1e;
-            border-top: 1px solid var(--outline);
             padding: 16px;
-            padding-bottom: calc(16px + env(safe-area-inset-bottom));
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-            text-align: center;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+            margin-bottom: 12px;
+            border-left: 5px solid;
+            animation: slide-in 0.3s ease-out;
         }
-        #result-panel.visible {
-            transform: translateY(0);
-        }
-        .result-status {
-            font-size: 22px;
-            font-weight: 900;
-            margin: 0 0 6px 0;
-            text-transform: uppercase;
-        }
-        .result-status.cleared { color: var(--status-green); }
-        .result-status.not-found { color: var(--status-red); }
+        .result-card.cleared { border-color: var(--status-green); }
+        .result-card.not-found { border-color: var(--status-red); }
         
         .result-plate {
             font-family: monospace;
-            font-size: 28px;
-            font-weight: bold;
+            font-size: 24px;
+            font-weight: 700;
             color: var(--text);
             margin: 0 0 8px 0;
         }
+        .result-status {
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0 0 8px 0;
+        }
+        .result-status.cleared { color: var(--status-green); }
+        .result-status.not-found { color: var(--status-red); }
+
         .result-location {
             font-size: 16px;
-            font-weight: 700;
+            font-weight: 400;
             color: var(--muted);
             margin: 0;
+        }
+        
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="search-display-area">
-            <div id="search-display" class="placeholder">----</div>
-        </div>
-        <div class="keypad">
-            <button class="keypad-btn" data-key="1">1</button>
-            <button class="keypad-btn" data-key="2">2</button>
-            <button class="keypad-btn" data-key="3">3</button>
-            <button class="keypad-btn" data-key="4">4</button>
-            <button class="keypad-btn" data-key="5">5</button>
-            <button class="keypad-btn" data-key="6">6</button>
-            <button class="keypad-btn" data-key="7">7</button>
-            <button class="keypad-btn" data-key="8">8</button>
-            <button class="keypad-btn" data-key="9">9</button>
-            <button class="keypad-btn special" id="status-btn">--</button>
-            <button class="keypad-btn" data-key="0">0</button>
-            <button class="keypad-btn special" data-key="del">⌫</button>
-        </div>
+    <div class="search-wrapper">
+        <input id="search-input" type="text" placeholder="Search..." inputmode="numeric">
+        <button id="clear-btn">×</button>
     </div>
 
-    <div id="result-panel"></div>
+    <div id="content-area">
+        <div class="hint" id="hint-text">Connecting...</div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -181,12 +140,11 @@
 
         let db;
         let allRows = [];
-        let currentSearch = "";
         
-        const display = document.getElementById('search-display');
-        const keypad = document.querySelector('.keypad');
-        const resultPanel = document.getElementById('result-panel');
-        const statusBtn = document.getElementById('status-btn');
+        const searchInput = document.getElementById('search-input');
+        const clearBtn = document.getElementById('clear-btn');
+        const contentArea = document.getElementById('content-area');
+        const hintText = document.getElementById('hint-text');
 
         // --- Firebase Connection ---
         try {
@@ -199,75 +157,72 @@
                     const listingsCollection = collection(db, 'vehicleListings');
                     onSnapshot(listingsCollection, (snapshot) => {
                         allRows = snapshot.docs.map(doc => doc.data());
-                        statusBtn.textContent = 'OK';
-                    }, () => { statusBtn.textContent = 'ERR'; });
+                        hintText.textContent = `Ready (${allRows.length} vehicles)`;
+                    }, () => { hintText.textContent = 'Sync Error.'; });
                 } else {
-                    signInAnonymously(auth).catch(() => { statusBtn.textContent = 'ERR'; });
+                    signInAnonymously(auth).catch(() => { hintText.textContent = 'Auth Error.'; });
                 }
             });
         } catch (err) {
-            statusBtn.textContent = 'ERR';
+            hintText.textContent = 'Connection Failed.';
         }
 
-        // --- Keypad and Search Logic ---
-        keypad.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'BUTTON') return;
+        // --- Search and UI Logic ---
+        searchInput.addEventListener('input', () => {
+            const term = searchInput.value.trim();
             
-            resultPanel.classList.remove('visible');
-            const key = e.target.dataset.key;
-
-            if (key === 'del') {
-                currentSearch = currentSearch.slice(0, -1);
-            } else if (currentSearch.length < 8 && key) {
-                currentSearch += key;
-            }
-            
-            updateDisplay();
-            applyFilter();
-        });
-        
-        function updateDisplay() {
-            if (currentSearch.length > 0) {
-                display.textContent = currentSearch;
-                display.classList.remove('placeholder');
+            if (term.length > 0) {
+                clearBtn.classList.add('visible');
+                hintText.style.display = 'none';
+                applyFilter(term);
             } else {
-                display.textContent = "----";
-                display.classList.add('placeholder');
+                clearBtn.classList.remove('visible');
+                contentArea.innerHTML = '';
+                hintText.style.display = 'block';
             }
-        }
+        });
 
-        function applyFilter() {
-            if (currentSearch.length < 1) return;
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.classList.remove('visible');
+            contentArea.innerHTML = '';
+            hintText.style.display = 'block';
+            searchInput.focus();
+        });
 
-            const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(currentSearch));
+        function applyFilter(term) {
+            const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(term));
+            
+            contentArea.innerHTML = '';
             
             if (result) {
-                showResult(result, currentSearch);
+                renderResult(result);
+            } else {
+                renderResult(null, term);
             }
         }
 
-        function showResult(result, term) {
+        function renderResult(result, term) {
+            const card = document.createElement('div');
+            card.className = 'result-card';
+
             if (result) {
-                resultPanel.innerHTML = `
-                    <div class="result-status cleared">✓ CLEARED</div>
+                card.classList.add('cleared');
+                card.innerHTML = `
                     <div class="result-plate">${result.vehicleNumber}</div>
+                    <div class="result-status cleared">✓ CLEARED</div>
                     <div class="result-location">Location: ${result.location || 'N/A'}</div>
                 `;
             } else {
-                resultPanel.innerHTML = `
-                    <div class="result-status not-found">✗ NOT FOUND</div>
+                card.classList.add('not-found');
+                card.innerHTML = `
                     <div class="result-plate">${term}</div>
+                    <div class="result-status not-found">✗ NOT FOUND</div>
+                    <div class="result-location">This vehicle is not on the list.</div>
                 `;
             }
-            resultPanel.classList.add('visible');
+            contentArea.appendChild(card);
         }
-
-        // Hide result panel if user taps outside of it (on the main container)
-        document.querySelector('.container').addEventListener('click', (e) => {
-             if (!keypad.contains(e.target)) {
-                 resultPanel.classList.remove('visible');
-             }
-        });
 
     </script>
 </body>
