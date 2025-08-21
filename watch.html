@@ -171,7 +171,6 @@
 
     <div class="header">
         <div class="search-wrapper">
-            <!-- MODIFICATION: Removed inputmode="numeric" to get the standard keyboard -->
             <input id="search-input" type="text" placeholder="Search...">
             <button id="clear-btn">×</button>
         </div>
@@ -197,6 +196,7 @@
 
         let db;
         let allRows = [];
+        let isReady = false; // Flag to track if initial load is complete
         
         const searchInput = document.getElementById('search-input');
         const clearBtn = document.getElementById('clear-btn');
@@ -216,6 +216,12 @@
                     onSnapshot(listingsCollection, (snapshot) => {
                         allRows = snapshot.docs.map(doc => doc.data());
                         hintText.textContent = `Ready (${allRows.length} vehicles)`;
+                        
+                        // --- NEW: Auto-focus logic ---
+                        if (!isReady) {
+                            searchInput.focus(); // Automatically bring up the keyboard
+                            isReady = true;
+                        }
                     }, () => { hintText.textContent = 'Sync Error.'; });
                 } else {
                     signInAnonymously(auth).catch(() => { hintText.textContent = 'Auth Error.'; });
@@ -252,7 +258,6 @@
         });
 
         function applyFilter(term) {
-            // Since input is now text, we must strip non-numeric characters for the search
             const numericTerm = term.replace(/\D/g, '');
             if (numericTerm.length === 0) {
                 contentArea.innerHTML = '';
