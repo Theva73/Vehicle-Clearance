@@ -854,4 +854,82 @@
             statusClass = 'error';
             statusIcon = '🚫';
             statusText = 'Access Denied';
-            detailLabel = 'Status
+            detailLabel = 'Status';
+            detailValue = 'Restricted';
+        }
+
+        container.innerHTML = `
+            <div class="result-holo ${panelClass}">
+                <div class="vehicle-display">${searchResult ? searchResult.vehicleNumber : query}</div>
+                <div class="status-indicator ${statusClass}">
+                    <span>${statusIcon}</span>
+                    <span>${statusText}</span>
+                </div>
+                <div class="result-details">
+                    <div class="detail-info">
+                        <div class="detail-label">${detailLabel}</div>
+                        <div class="detail-value">${detailValue}</div>
+                    </div>
+                    <button class="action-orb" id="new-scan-btn">
+                        ${searchIcon}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Add new scan functionality
+        document.getElementById('new-scan-btn').addEventListener('click', () => {
+            controls.vehicleScanner.value = '';
+            controls.scanBtn.disabled = true;
+            switchToView('input');
+        });
+
+        switchToView('result');
+    }
+
+    // === EVENT LISTENERS ===
+    controls.dashboardTrigger.addEventListener('click', () => switchToView('input'));
+    
+    controls.abortBtn.addEventListener('click', () => switchToView('dashboard'));
+    
+    controls.vehicleScanner.addEventListener('input', (e) => {
+        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        e.target.value = value;
+        controls.scanBtn.disabled = !validateVehicleInput(value);
+        
+        // Add scanning effect on input
+        controls.inputWrapper.classList.add('scanning');
+        setTimeout(() => controls.inputWrapper.classList.remove('scanning'), 300);
+    });
+    
+    controls.vehicleScanner.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !controls.scanBtn.disabled) {
+            const result = searchVehicle(controls.vehicleScanner.value);
+            displayResults(result, controls.vehicleScanner.value);
+        }
+    });
+    
+    controls.scanBtn.addEventListener('click', () => {
+        const result = searchVehicle(controls.vehicleScanner.value);
+        displayResults(result, controls.vehicleScanner.value);
+    });
+
+    // === INITIALIZE ===
+    updateTimeAndWeather();
+    setInterval(updateTimeAndWeather, 1000);
+
+    // Add some extra cyber effects
+    setInterval(() => {
+        const orbs = document.querySelectorAll('.orb');
+        orbs.forEach((orb, index) => {
+            const delay = index * 1000;
+            setTimeout(() => {
+                orb.style.animationDuration = `${8 + Math.random() * 4}s`;
+            }, delay);
+        });
+    }, 10000);
+
+</script>
+
+</body>
+</html>
