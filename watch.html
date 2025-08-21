@@ -2,11 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
-  />
-  <title>Watch Vehicle Search — Ultra</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>Vehicle Search — Ultra (PWA)</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0D0D12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
@@ -16,21 +21,12 @@
       --glass-border:rgba(255,255,255,.09); --text-primary:#F0F0F5; --text-secondary:#A0A0B0;
       --accent-blue:#0A84FF; --accent-yellow:#FFD60A; --accent-orange:#FF9F0A;
       --success:#30D158; --danger:#FF453A; --shadow:rgba(0,0,0,.45);
-      --tap:56px; /* Apple HIG min 44pt; larger for comfort on watch */
-      --radius-xl:28px; --radius-lg:22px; --radius-md:16px;
+      --tap:56px; --radius-xl:28px; --radius-lg:22px; --radius-md:16px;
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;width:100%;margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden}
-    .safe{
-      position:fixed; inset:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      display:flex; align-items:center; justify-content:center;
-    }
-    .watch-stage{
-      width:100%; height:100%;
-      max-width:520px; max-height:520px; /* fits Ultra, scales down for others */
-      margin:auto; position:relative; overflow:hidden;
-      border-radius:calc(var(--radius-xl) + 6px);
-    }
+    .safe{position:fixed; inset:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); display:flex; align-items:center; justify-content:center;}
+    .watch-stage{width:100%; height:100%; max-width:520px; max-height:520px; margin:auto; position:relative; overflow:hidden; border-radius:calc(var(--radius-xl) + 6px);}
     .stars{position:absolute; inset:0; z-index:0;
       background-image:
         radial-gradient(1px 1px at 20% 30%, #fff, transparent),
@@ -41,70 +37,35 @@
     @keyframes stars{from{background-position:0 0}to{background-position:-10000px 5000px}}
     .view{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px}
     .hidden{display:none !important}
-
-    /* Dashboard */
-    .prompt{
-      width:min(86vmin, 360px); height:min(86vmin, 360px); border-radius:50%;
-      background:radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary));
-      border:1px solid var(--glass-border);
-      box-shadow:0 10px 40px var(--shadow), inset 0 2px 4px rgba(255,255,255,.08);
-      position:relative; display:flex; align-items:center; justify-content:center;
-      transition:transform .2s ease;
-    }
+    .prompt{width:min(86vmin, 360px); height:min(86vmin, 360px); border-radius:50%; background:radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary)); border:1px solid var(--glass-border); box-shadow:0 10px 40px var(--shadow), inset 0 2px 4px rgba(255,255,255,.08); position:relative; display:flex; align-items:center; justify-content:center; transition:transform .2s ease;}
     .prompt:active{transform:scale(.97)}
-    .clock{position:absolute; top:18%; font-size:min(11vmin,48px); font-weight:800;
-      background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow));
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    }
+    .clock{position:absolute; top:18%; font-size:min(11vmin,48px); font-weight:800; background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
     .wx{position:absolute; top:38%; display:flex; gap:6px; align-items:center; font-weight:600; font-size:min(4.8vmin,18px); color:var(--accent-yellow)}
     .loc{position:absolute; bottom:26%; font-size:min(4.6vmin,16px); color:#B0B0C0; letter-spacing:.4px}
     .tap{position:absolute; bottom:10%; font-size:min(4.2vmin,14px); color:var(--accent-blue); font-weight:700; text-transform:uppercase; letter-spacing:1px}
-
-    .status{position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:13px; color:var(--text-secondary);
-      padding:8px 14px; border-radius:14px; background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(10px)
-    }
-
-    /* Input keypad view */
+    .status{position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:13px; color:var(--text-secondary); padding:8px 14px; border-radius:14px; background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(10px)}
     .input-wrap{width:100%; max-width:360px; display:flex; flex-direction:column; gap:14px}
     .headerRow{display:flex; align-items:center; justify-content:space-between}
-    .headerClock{font-weight:800; font-size:28px; background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow));
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    }
+    .headerClock{font-weight:800; font-size:28px; background:linear-gradient(45deg,var(--accent-orange),var(--accent-yellow)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
     .pill{padding:8px 12px; border-radius:999px; background:var(--bg-glass); border:1px solid var(--glass-border); font-size:14px; color:var(--accent-yellow)}
-    .fakeInput{
-      width:100%; height:56px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center;
-      font-size:22px; letter-spacing:2px; background:var(--bg-secondary); border:1px solid var(--glass-border);
-    }
+    .fakeInput{width:100%; height:56px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; font-size:22px; letter-spacing:2px; background:var(--bg-secondary); border:1px solid var(--glass-border);}
     .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
-    .key{
-      height:var(--tap); border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px;
-      background:linear-gradient(180deg, #22232b, #181920); border:1px solid var(--glass-border);
-      box-shadow:0 2px 8px var(--shadow); user-select:none; cursor:pointer
-    }
+    .key{height:var(--tap); border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; background:linear-gradient(180deg, #22232b, #181920); border:1px solid var(--glass-border); box-shadow:0 2px 8px var(--shadow); user-select:none; cursor:pointer}
     .key:active{transform:scale(.98)}
     .key--go{background:#1d2b3f; border-color:#2b4975; color:#cfe1ff}
     .key--back{background:#291a1b; border-color:#54232a; color:#ffd0d3}
     .actions{display:flex; gap:10px}
-    .btn{
-      flex:1; height:46px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; cursor:pointer;
-      background:var(--bg-secondary); border:1px solid var(--glass-border)
-    }
+    .btn{flex:1; height:46px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; cursor:pointer; background:var(--bg-secondary); border:1px solid var(--glass-border)}
     .btn--cancel{opacity:.9}
     .btn:active{transform:scale(.98)}
-
-    /* Result view */
-    .panel{
-      width:calc(100% - 36px); max-width:360px; padding:22px; border-radius:var(--radius-lg);
-      background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(18px);
-      text-align:center; box-shadow:0 8px 28px var(--shadow)
-    }
+    .panel{width:calc(100% - 36px); max-width:360px; padding:22px; border-radius:var(--radius-lg); background:var(--bg-glass); border:1px solid var(--glass-border); backdrop-filter:blur(18px); text-align:center; box-shadow:0 8px 28px var(--shadow)}
     .panel--ok{box-shadow:0 0 28px rgba(48,209,88,.35), 0 8px 28px var(--shadow); border-color:rgba(48,209,88,.6)}
     .panel--bad{box-shadow:0 0 28px rgba(255,69,58,.35), 0 8px 28px var(--shadow); border-color:rgba(255,69,58,.6)}
     .veh{font-size:34px; font-weight:800; letter-spacing:1.2px; margin-bottom:10px}
     .badge{display:inline-block; padding:8px 14px; border-radius:999px; font-weight:800; font-size:13px; color:#fff; margin-bottom:18px}
-    .badge--ok{background:var(--success)} .badge--bad{background:var(--danger)}
+    .badge--ok{background:#30D158} .badge--bad{background:#FF453A}
     .row{display:flex; gap:14px; align-items:center; border-top:1px solid var(--glass-border); padding-top:14px}
-    .rowTitle{font-size:11px; letter-spacing:1.2px; color:var(--text-secondary)}
+    .rowTitle{font-size:11px; letter-spacing:1.2px; color:#A0A0B0}
     .rowText{font-size:20px; font-weight:700}
     .circle{width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid var(--glass-border)}
     .circle svg{width:20px;height:20px}
@@ -115,7 +76,6 @@
     <div class="watch-stage" id="stage">
       <div class="stars"></div>
 
-      <!-- Initial (dashboard) -->
       <section class="view" id="v-initial">
         <div class="prompt" id="tapPrompt" role="button" aria-label="Tap to search">
           <div class="clock" id="dashClock">--:--</div>
@@ -126,7 +86,6 @@
         <div class="status" id="status">Connecting…</div>
       </section>
 
-      <!-- Input keypad -->
       <section class="view hidden" id="v-input">
         <div class="input-wrap">
           <div class="headerRow">
@@ -136,11 +95,9 @@
           <div class="fakeInput" id="buffer" aria-live="polite">•••</div>
 
           <div class="keypad" id="pad">
-            <!-- 1..9 -->
             <div class="key">1</div><div class="key">2</div><div class="key">3</div>
             <div class="key">4</div><div class="key">5</div><div class="key">6</div>
             <div class="key">7</div><div class="key">8</div><div class="key">9</div>
-            <!-- back, 0, go -->
             <div class="key key--back" data-act="back">⌫</div>
             <div class="key">0</div>
             <div class="key key--go" data-act="go">Go</div>
@@ -153,15 +110,21 @@
         </div>
       </section>
 
-      <!-- Result -->
       <section class="view hidden" id="v-result">
-        <div class="panel" id="panel"><!-- injected --></div>
+        <div class="panel" id="panel"></div>
       </section>
     </div>
   </div>
 
   <script type="module">
-    // Firebase (same config)
+    // Register service worker
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(()=>{});
+      });
+    }
+
+    // Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -175,11 +138,9 @@
       appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    // State
     let db, allRows = [];
-    let buf = ""; // numeric buffer
+    let buf = "";
 
-    // Elements
     const vInitial = document.getElementById('v-initial');
     const vInput = document.getElementById('v-input');
     const vResult = document.getElementById('v-result');
@@ -197,20 +158,18 @@
     const clearBtn = document.getElementById('clear');
     const panel = document.getElementById('panel');
 
-    // Time + Simulated Weather (fast + watch friendly)
     function setClocks(){
       const now = new Date();
       const HH = String(now.getHours()).padStart(2,'0');
       const MM = String(now.getMinutes()).padStart(2,'0');
-      dashClock.textContent = `${HH}:${MM}`;
-      inpClock.textContent = `${HH}:${MM}`;
+      dashClock.textContent = \`\${HH}:\${MM}\`;
+      inpClock.textContent = \`\${HH}:\${MM}\`;
     }
     setClocks(); setInterval(setClocks, 1000);
 
     const WX = { icon:"☁️", temp:"29°", loc:"Singapore" };
-    wxIcon.textContent = WX.icon; wxTemp.textContent = WX.temp; wxLoc.textContent = WX.loc; inpWx.textContent = `${WX.icon} ${WX.temp}`;
+    wxIcon.textContent = WX.icon; wxTemp.textContent = WX.temp; wxLoc.textContent = WX.loc; inpWx.textContent = \`\${WX.icon} \${WX.temp}\`;
 
-    // Firebase init + live data
     try{
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
@@ -221,7 +180,7 @@
           const listings = collection(db,'vehicleListings');
           onSnapshot(listings, (snap)=>{
             allRows = snap.docs.map(d=>d.data());
-            statusEl.textContent = `Ready (${allRows.length})`;
+            statusEl.textContent = \`Ready (\${allRows.length})\`;
           }, (err)=>{ console.error(err); statusEl.textContent = 'Sync Error'; });
         }else{
           signInAnonymously(auth).catch(e=>{ console.error(e); statusEl.textContent='Auth Error'; });
@@ -229,29 +188,16 @@
       });
     }catch(e){ console.error(e); statusEl.textContent='Connection Failed'; }
 
-    // View helpers
     const show = (el)=>el.classList.remove('hidden');
     const hide = (el)=>el.classList.add('hidden');
 
-    function toInput(){
-      hide(vInitial); hide(vResult); show(vInput);
-      haptic(5);
-    }
-    function toInitial(){
-      hide(vResult); hide(vInput); show(vInitial);
-      buf=""; renderBuf();
-    }
+    function toInput(){ hide(vInitial); hide(vResult); show(vInput); haptic(5); }
+    function toInitial(){ hide(vResult); hide(vInput); show(vInitial); buf=""; renderBuf(); }
     function toResult(){ hide(vInitial); hide(vInput); show(vResult); }
 
-    // Haptic-lite (may no-op on watchOS)
     function haptic(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(_){} }
+    function renderBuf(){ buffer.textContent = buf.length ? buf : "•••"; }
 
-    // Buffer display
-    function renderBuf(){
-      buffer.textContent = buf.length ? buf : "•••";
-    }
-
-    // Search (same logic: numeric-only startsWith)
     function performSearch(term){
       const numeric = term.replace(/\D/g,'');
       if(!numeric) return;
@@ -261,43 +207,40 @@
     }
 
     function renderResult(result, term){
-      const searchIcon = `
+      const searchIcon = \`
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
           <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
           <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-        </svg>`;
+        </svg>\`;
 
       if(result){
         panel.className = 'panel panel--ok';
-        panel.innerHTML = `
-          <div class="veh">${result.vehicleNumber}</div>
+        panel.innerHTML = \`
+          <div class="veh">\${result.vehicleNumber}</div>
           <div class="badge badge--ok">✓ CLEARED</div>
           <div class="row">
-            <div class="circle" id="again">${searchIcon}</div>
+            <div class="circle" id="again">\${searchIcon}</div>
             <div>
               <div class="rowTitle">LOCATION</div>
-              <div class="rowText">${result.location || 'N/A'}</div>
+              <div class="rowText">\${result.location || 'N/A'}</div>
             </div>
-          </div>
-        `;
+          </div>\`;
       }else{
         panel.className = 'panel panel--bad';
-        panel.innerHTML = `
-          <div class="veh">${term}</div>
+        panel.innerHTML = \`
+          <div class="veh">\${term}</div>
           <div class="badge badge--bad">✗ NOT FOUND</div>
           <div class="row">
-            <div class="circle" id="again">${searchIcon}</div>
+            <div class="circle" id="again">\${searchIcon}</div>
             <div>
               <div class="rowTitle">STATUS</div>
               <div class="rowText">Denied</div>
             </div>
-          </div>
-        `;
+          </div>\`;
       }
       document.getElementById('again').addEventListener('click', toInput);
     }
 
-    // Event wiring
     tapPrompt.addEventListener('click', toInput);
     cancelBtn.addEventListener('click', toInitial);
     clearBtn.addEventListener('click', ()=>{ buf=""; renderBuf(); haptic(8); });
@@ -310,15 +253,12 @@
       if(act === 'go'){ if(buf.length>0) performSearch(buf); return; }
       const v = key.textContent.trim();
       if(/^\d$/.test(v)){
-        buf = (buf + v).slice(0,10); // limit length
+        buf = (buf + v).slice(0,10);
         renderBuf();
-        if(buf.length >= 3){ // auto search after a few digits for speed
-          performSearch(buf);
-        }
+        if(buf.length >= 3){ performSearch(buf); }
       }
     });
 
-    // Resize guard: keep content comfortably inside rounded corners
     function fitStage(){
       const stage = document.getElementById('stage');
       const w = stage.clientWidth, h = stage.clientHeight;
