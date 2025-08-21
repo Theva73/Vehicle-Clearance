@@ -1,694 +1,307 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Vehicle Clearance Search</title>
+    <title>Vehicle Clearance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* ==============================================
-         * THEME VARIABLES
+        /* * ==============================================
+         * THEME & CORE STYLES (SQUARE WATCH-FIRST)
          * ==============================================
         */
         :root {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #2a2a2a;
-            --bg-tertiary: #0f0f0f;
-            --clock-orange: #ff9500;
-            --clock-brown: #8b4513;
-            --clock-dark: #3a3a3a;
-            --clock-light: #666666;
-            --text-primary: #ffffff;
-            --text-secondary: #cccccc;
-            --text-muted: #888888;
-            --glass-white: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --success: #00ff88;
-            --error: #ff3366;
+            --bg-primary: #000000;
+            --bg-secondary: #1C1C1E;
+            --bg-tertiary: #2C2C2E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #EBEBF599;
+            --accent-blue: #0A84FF;
+            --accent-orange: #FF9F0A;
+            --accent-yellow: #FFD60A;
+            --success-green: #30D158;
+            --error-red: #FF453A;
         }
 
-```
-    /* ==============================================
-     * BASE STYLES
-     * ==============================================
-    */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+        /* * ==============================================
+         * BASE & LAYOUT
+         * ==============================================
+        */
+        body, html {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+        }
 
-    body {
-        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-        background: var(--bg-tertiary);
-        color: var(--text-primary);
-        overflow: hidden;
-        position: relative;
-        width: 100vw;
-        height: 100vh;
-    }
-
-    .app-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    .main-interface {
-        width: 380px;
-        height: 380px;
-        position: relative;
-    }
-
-    /* ==============================================
-     * VIEW SYSTEM
-     * ==============================================
-    */
-    .view {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transform: scale(0.9);
-        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-        pointer-events: none;
-    }
-
-    .view.active {
-        opacity: 1;
-        transform: scale(1);
-        pointer-events: all;
-    }
-
-    /* ==============================================
-     * TIMER-STYLE WATCH FACE
-     * ==============================================
-    */
-    .clock-container {
-        width: 320px;
-        height: 320px;
-        position: relative;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: #1a1a1a;
-        border-radius: 20%;
-        padding: 20px;
-        box-shadow: 
-            0 0 40px rgba(0, 0, 0, 0.8),
-            inset 0 0 20px rgba(0, 0, 0, 0.6);
-    }
-
-    .clock-container:hover {
-        transform: scale(1.02);
-    }
-
-    .clock-container:active {
-        transform: scale(0.98);
-    }
-
-    .clock-face {
-        width: 100%;
-        height: 100%;
-        background: 
-            radial-gradient(circle at center, #2a2a2a 0%, #1a1a1a 70%, #0f0f0f 100%);
-        border-radius: 50%;
-        position: relative;
-        border: 6px solid #333333;
-        box-shadow: 
-            0 0 20px rgba(0, 0, 0, 0.9),
-            inset 0 0 30px rgba(0, 0, 0, 0.7);
-    }
-
-    /* Segmented outer ring matching the timer design */
-    .clock-rim {
-        position: absolute;
-        top: -10px;
-        left: -10px;
-        width: calc(100% + 20px);
-        height: calc(100% + 20px);
-        border-radius: 50%;
-        background: #8b4513;
-        z-index: -1;
-    }
-
-    .clock-rim::before {
-        content: '';
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        right: 2px;
-        bottom: 2px;
-        border-radius: 50%;
-        background: 
-            conic-gradient(from 0deg,
-                #654321 0deg, #654321 8deg,
-                #8b4513 8deg, #8b4513 16deg,
-                #654321 16deg, #654321 24deg,
-                #8b4513 24deg, #8b4513 32deg,
-                #654321 32deg, #654321 40deg,
-                #8b4513 40deg, #8b4513 48deg,
-                #654321 48deg, #654321 56deg,
-                #8b4513 56deg, #8b4513 64deg,
-                #654321 64deg, #654321 72deg,
-                #8b4513 72deg, #8b4513 80deg,
-                #654321 80deg, #654321 88deg,
-                #8b4513 88deg, #8b4513 96deg,
-                #654321 96deg, #654321 104deg,
-                #8b4513 104deg, #8b4513 112deg,
-                #654321 112deg, #654321 120deg,
-                #8b4513 120deg, #8b4513 128deg,
-                #654321 128deg, #654321 136deg,
-                #8b4513 136deg, #8b4513 144deg,
-                #654321 144deg, #654321 152deg,
-                #8b4513 152deg, #8b4513 160deg,
-                #654321 160deg, #654321 168deg,
-                #8b4513 168deg, #8b4513 176deg,
-                #654321 176deg, #654321 184deg,
-                #8b4513 184deg, #8b4513 192deg,
-                #654321 192deg, #654321 200deg,
-                #8b4513 200deg, #8b4513 208deg,
-                #654321 208deg, #654321 216deg,
-                #8b4513 216deg, #8b4513 224deg,
-                #654321 224deg, #654321 232deg,
-                #8b4513 232deg, #8b4513 240deg,
-                #654321 240deg, #654321 248deg,
-                #8b4513 248deg, #8b4513 256deg,
-                #654321 256deg, #654321 264deg,
-                #8b4513 264deg, #8b4513 272deg,
-                #654321 272deg, #654321 280deg,
-                #8b4513 280deg, #8b4513 288deg,
-                #654321 288deg, #654321 296deg,
-                #8b4513 296deg, #8b4513 304deg,
-                #654321 304deg, #654321 312deg,
-                #8b4513 312deg, #8b4513 320deg,
-                #654321 320deg, #654321 328deg,
-                #8b4513 328deg, #8b4513 336deg,
-                #654321 336deg, #654321 344deg,
-                #8b4513 344deg, #8b4513 352deg,
-                #654321 352deg, #654321 360deg
-            );
-    }
-
-    /* Remove hour markers for cleaner timer look */
-    .hour-marker {
-        display: none;
-    }
-
-    /* Clock hands - matching timer design */
-    .clock-hands {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-
-    .hour-hand {
-        width: 8px;
-        height: 50px;
-        background: #666666;
-        border-radius: 4px;
-        position: absolute;
-        top: -50px;
-        left: -4px;
-        transform-origin: 50% 50px;
-        transition: transform 0.5s ease;
-    }
-
-    .minute-hand {
-        width: 12px;
-        height: 80px;
-        background: linear-gradient(180deg, #ff9500 0%, #ff7700 100%);
-        border-radius: 6px;
-        position: absolute;
-        top: -80px;
-        left: -6px;
-        transform-origin: 50% 80px;
-        transition: transform 0.1s ease;
-        box-shadow: 0 0 10px rgba(255, 149, 0, 0.5);
-    }
-
-    .second-hand {
-        display: none; /* Hide for cleaner timer look */
-    }
-
-    .center-dot {
-        width: 16px;
-        height: 16px;
-        background: #333333;
-        border-radius: 50%;
-        position: absolute;
-        top: -8px;
-        left: -8px;
-        border: 2px solid #555555;
-    }
-
-    /* Clock info overlay */
-    .clock-info {
-        position: absolute;
-        bottom: 80px;
-        left: 50%;
-        transform: translateX(-50%);
-        text-align: center;
-    }
-
-    .digital-time {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--clock-orange);
-        margin-bottom: 8px;
-    }
-
-    .date-info {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-bottom: 12px;
-    }
-
-    .weather-info {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 6px 12px;
-        background: var(--glass-white);
-        border: 1px solid var(--glass-border);
-        border-radius: 12px;
-        backdrop-filter: blur(10px);
-        font-size: 14px;
-    }
-
-    .search-hint {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 12px;
-        color: var(--text-muted);
-        text-align: center;
-        background: var(--glass-white);
-        padding: 8px 16px;
-        border-radius: 20px;
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--glass-border);
-    }
-
-    /* Status indicator */
-    .status-display {
-        position: absolute;
-        bottom: -60px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--glass-white);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 12px 24px;
-        backdrop-filter: blur(20px);
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--text-secondary);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    /* ==============================================
-     * INPUT VIEW
-     * ==============================================
-    */
-    .input-container {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 30px;
-    }
-
-    .input-header {
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    .input-time {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 36px;
-        font-weight: 700;
-        color: var(--clock-orange);
-        margin-bottom: 8px;
-    }
-
-    .input-weather {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 16px;
-        color: var(--text-secondary);
-    }
-
-    .holo-input {
-        position: relative;
-        width: 100%;
-        max-width: 300px;
-    }
-
-    .vehicle-input {
-        width: 100%;
-        background: var(--glass-white);
-        border: 2px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 20px 25px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--text-primary);
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        backdrop-filter: blur(20px);
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .vehicle-input:focus {
-        outline: none;
-        border-color: var(--clock-orange);
-        box-shadow: 
-            0 0 40px rgba(255, 149, 0, 0.3),
-            0 8px 32px rgba(0, 0, 0, 0.4);
-        transform: translateY(-2px);
-    }
-
-    .vehicle-input::placeholder {
-        color: rgba(255, 255, 255, 0.3);
-        font-weight: 400;
-    }
-
-    .holo-input::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 149, 0, 0.2), transparent);
-        transition: left 0.6s ease;
-        border-radius: 20px;
-    }
-
-    .holo-input.scanning::before {
-        left: 100%;
-    }
-
-    .input-actions {
-        display: flex;
-        gap: 20px;
-    }
-
-    .cyber-btn {
-        padding: 15px 25px;
-        border: none;
-        border-radius: 15px;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        min-width: 100px;
-    }
-
-    .btn-cancel {
-        background: linear-gradient(135deg, #333, #555);
-        color: var(--text-primary);
-        border: 1px solid var(--glass-border);
-    }
-
-    .btn-cancel:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    .btn-search {
-        background: linear-gradient(135deg, var(--clock-orange), #e6850e);
-        color: var(--bg-tertiary);
-        box-shadow: 0 0 20px rgba(255, 149, 0, 0.4);
-    }
-
-    .btn-search:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 30px rgba(255, 149, 0, 0.6);
-    }
-
-    .btn-search:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-        transform: none !important;
-    }
-
-    /* ==============================================
-     * RESULTS VIEW
-     * ==============================================
-    */
-    .result-container {
-        width: 100%;
-        max-width: 340px;
-        margin: 0 auto;
-    }
-
-    .result-holo {
-        background: var(--glass-white);
-        border: 2px solid var(--glass-border);
-        border-radius: 25px;
-        padding: 35px 30px;
-        backdrop-filter: blur(25px);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-        transition: all 0.6s ease;
-    }
-
-    .result-holo.success {
-        border-color: var(--success);
-        box-shadow: 
-            0 0 60px rgba(0, 255, 136, 0.3),
-            0 20px 60px rgba(0, 0, 0, 0.4);
-    }
-
-    .result-holo.error {
-        border-color: var(--error);
-        box-shadow: 
-            0 0 60px rgba(255, 51, 102, 0.3),
-            0 20px 60px rgba(0, 0, 0, 0.4);
-    }
-
-    .vehicle-display {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 32px;
-        font-weight: 800;
-        letter-spacing: 3px;
-        margin-bottom: 20px;
-        text-transform: uppercase;
-    }
-
-    .status-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 24px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    }
-
-    .status-indicator.success {
-        background: linear-gradient(135deg, var(--success), #00cc77);
-        color: var(--bg-tertiary);
-    }
-
-    .status-indicator.error {
-        background: linear-gradient(135deg, var(--error), #e62e5c);
-        color: white;
-    }
-
-    .result-details {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-top: 20px;
-        border-top: 1px solid var(--glass-border);
-    }
-
-    .detail-info {
-        text-align: left;
-        flex: 1;
-    }
-
-    .detail-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.5);
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 5px;
-    }
-
-    .detail-value {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .action-orb {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--clock-orange), var(--clock-brown));
-        border: none;
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 20px rgba(255, 149, 0, 0.4);
-    }
-
-    .action-orb:hover {
-        transform: scale(1.1);
-        box-shadow: 0 0 30px rgba(255, 149, 0, 0.6);
-    }
-
-    /* ==============================================
-     * RESPONSIVE DESIGN
-     * ==============================================
-    */
-    @media (max-width: 430px) {
-        .main-interface {
-            width: 340px;
-            height: 340px;
+        .app-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
         }
         
-        .clock-container {
-            width: 280px;
-            height: 280px;
+        /* * ==============================================
+         * VIEW MANAGEMENT
+         * ==============================================
+        */
+        .view {
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.95);
+            transition: opacity 0.4s ease, visibility 0.4s ease, transform 0.4s ease;
+        }
+
+        .view.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+
+        /* * ==============================================
+         * NEW SQUARE DASHBOARD VIEW
+         * ==============================================
+        */
+        #dashboard-view {
+            padding: 20px;
+            justify-content: space-between;
         }
         
-        .digital-time {
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr auto;
+            gap: 16px;
+            width: 100%;
+            height: 100%;
+        }
+
+        #time-display {
+            grid-column: 1 / -1; /* Span full width */
+            font-size: 56px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: -1px;
+            background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding-top: 10px;
+        }
+
+        .info-panel {
+            background-color: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+        }
+        .info-panel .label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .info-panel .value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        #weather-display .value {
+             color: var(--accent-yellow);
+        }
+
+        #search-button {
+            grid-column: 1 / -1;
+            background-color: var(--accent-blue);
+            border: none;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            padding: 16px;
+        }
+        #search-button:active {
+            transform: scale(0.95);
+        }
+        #search-button svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+        #search-button .label {
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        #status-bar {
+            grid-column: 1 / -1;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            opacity: 0.8;
+            padding-bottom: 10px;
+        }
+
+        /* * ==============================================
+         * INPUT VIEW
+         * ==============================================
+        */
+        #input-view {
+            gap: 20px;
+        }
+        #text-search-input {
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid #3A3A3C;
+            color: var(--text-primary);
+            font-size: 24px;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        #text-search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+        .input-button {
+            flex-grow: 1;
+            border: none;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #submit-search-btn {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+        #cancel-search-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* * ==============================================
+         * RESULT VIEW
+         * ==============================================
+        */
+        #result-view {
+            gap: 16px;
+        }
+        .result-card {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 20px;
+            text-align: center;
+        }
+        .result-card.cleared {
+            background-color: var(--success-green);
+        }
+        .result-card.denied {
+            background-color: var(--error-red);
+        }
+        .result-status {
+            font-size: 24px;
+            font-weight: 700;
+            color: black;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .result-vehicle-number {
+            font-size: 36px;
+            font-weight: 800;
+            color: white;
+            margin: 8px 0;
+            word-break: break-all;
+        }
+        .result-location {
             font-size: 18px;
+            font-weight: 500;
+            color: rgba(0,0,0,0.7);
         }
-        
-        .vehicle-display {
-            font-size: 28px;
+        #new-search-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: none;
         }
-    }
-</style>
-```
-
+    </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="main-interface">
 
-```
-    <!-- ANALOG CLOCK DASHBOARD -->
+    <!-- VIEW 1: SQUARE DASHBOARD -->
     <div class="view active" id="dashboard-view">
-        <div class="clock-container" id="dashboard-trigger">
-            <div class="clock-rim"></div>
-            <div class="clock-face">
-                <!-- Hour markers -->
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                <div class="hour-marker"></div>
-                
-                <!-- Clock hands -->
-                <div class="clock-hands">
-                    <div class="hour-hand" id="hour-hand"></div>
-                    <div class="minute-hand" id="minute-hand"></div>
-                    <div class="second-hand" id="second-hand"></div>
-                    <div class="center-dot"></div>
-                </div>
-                
-                <!-- Clock info -->
-                <div class="clock-info">
-                    <div class="digital-time" id="digital-time">--:--</div>
-                    <div class="date-info" id="date-info">Loading...</div>
-                    <div class="weather-info">
-                        <span id="weather-icon">--</span>
-                        <span id="weather-temp">--°</span>
-                    </div>
-                </div>
-                
-                <div class="search-hint">Tap to Search Vehicle</div>
+        <div class="dashboard-grid">
+            <div id="time-display">--:--</div>
+            <div id="weather-display" class="info-panel">
+                <div class="label">Weather</div>
+                <div class="value">--° --</div>
             </div>
+            <div id="location-display" class="info-panel">
+                <div class="label">Location</div>
+                <div class="value">...</div>
+            </div>
+            <button id="search-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a7.952 7.952 0 0 0 4.897-1.688l4.396 4.396 1.414-1.414-4.396-4.396A7.952 7.952 0 0 0 18 10c0-4.411-3.589-8-8-8s-8 3.589-8 8 3.589 8 8 8zm0-14c3.309 0 6 2.691 6 6s-2.691 6-6 6-6-2.691-6-6 2.691-6 6-6z"></path></svg>
+                <span class="label">Search</span>
+            </button>
+            <div id="status-bar">Connecting...</div>
         </div>
-        <div class="status-display" id="connection-status">Connecting...</div>
     </div>
 
-    <!-- INPUT VIEW -->
+    <!-- VIEW 2: INPUT -->
     <div class="view" id="input-view">
-        <div class="input-container">
-            <div class="input-header">
-                <div class="input-time" id="input-time">--:--</div>
-                <div class="input-weather">
-                    <span id="input-weather-icon">--</span>
-                    <span id="input-weather-temp">--°</span>
-                </div>
-            </div>
-            
-            <div class="holo-input" id="input-wrapper">
-                <input class="vehicle-input" id="vehicle-scanner" 
-                       type="text" 
-                       placeholder="Vehicle ID" 
-                       maxlength="15">
-            </div>
-            
-            <div class="input-actions">
-                <button class="cyber-btn btn-cancel" id="abort-btn">Abort</button>
-                <button class="cyber-btn btn-search" id="scan-btn" disabled>Scan</button>
-            </div>
+        <input id="text-search-input" type="text" placeholder="Vehicle No.">
+        <div class="button-group">
+            <button id="cancel-search-btn" class="input-button">Cancel</button>
+            <button id="submit-search-btn" class="input-button">Submit</button>
         </div>
     </div>
 
-    <!-- RESULTS VIEW -->
+    <!-- VIEW 3: RESULT -->
     <div class="view" id="result-view">
-        <div class="result-container">
-            <!-- Dynamic content -->
-        </div>
+        <!-- Dynamic content here -->
     </div>
-
-</div>
-```
 
 </div>
 
 <script type="module">
-    // Firebase imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -702,229 +315,134 @@
         appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    // App state
     let db;
-    let vehicleData = [];
+    let allRows = [];
     
-    // DOM references
-    const views = {
-        dashboard: document.getElementById('dashboard-view'),
-        input: document.getElementById('input-view'),
-        result: document.getElementById('result-view')
-    };
+    // DOM Elements
+    const views = document.querySelectorAll('.view');
+    const statusBar = document.getElementById('status-bar');
     
-    const controls = {
-        dashboardTrigger: document.getElementById('dashboard-trigger'),
-        connectionStatus: document.getElementById('connection-status'),
-        vehicleScanner: document.getElementById('vehicle-scanner'),
-        inputWrapper: document.getElementById('input-wrapper'),
-        abortBtn: document.getElementById('abort-btn'),
-        scanBtn: document.getElementById('scan-btn'),
-        digitalTime: document.getElementById('digital-time'),
-        dateInfo: document.getElementById('date-info'),
-        weatherIcon: document.getElementById('weather-icon'),
-        weatherTemp: document.getElementById('weather-temp'),
-        inputTime: document.getElementById('input-time'),
-        inputWeatherIcon: document.getElementById('input-weather-icon'),
-        inputWeatherTemp: document.getElementById('input-weather-temp'),
-        hourHand: document.getElementById('hour-hand'),
-        minuteHand: document.getElementById('minute-hand'),
-        secondHand: document.getElementById('second-hand')
-    };
+    // Dashboard elements
+    const timeDisplay = document.getElementById('time-display');
+    const weatherDisplayValue = document.querySelector('#weather-display .value');
+    const locationDisplayValue = document.querySelector('#location-display .value');
+    
+    // Buttons
+    const searchButton = document.getElementById('search-button');
+    const cancelSearchBtn = document.getElementById('cancel-search-btn');
+    const submitSearchBtn = document.getElementById('submit-search-btn');
+    
+    // Input
+    const textSearchInput = document.getElementById('text-search-input');
+    
+    // Result
+    const resultView = document.getElementById('result-view');
 
-    // === VIEW MANAGEMENT ===
-    function switchToView(targetView) {
-        Object.values(views).forEach(view => view.classList.remove('active'));
-        views[targetView].classList.add('active');
-        
-        if (targetView === 'input') {
-            setTimeout(() => {
-                controls.vehicleScanner.focus();
-                controls.inputWrapper.classList.add('scanning');
-                setTimeout(() => controls.inputWrapper.classList.remove('scanning'), 600);
-            }, 400);
-        }
-    }
-
-    // === ANALOG CLOCK FUNCTIONALITY ===
-    function updateClock() {
-        const now = new Date();
-        
-        // Get time components
-        const hours = now.getHours();
-        const minutes = now.getMinutes();
-        const seconds = now.getSeconds();
-        
-        // Calculate angles
-        const hourAngle = ((hours % 12) * 30) + (minutes * 0.5); // 30° per hour + minute adjustment
-        const minuteAngle = minutes * 6; // 6° per minute
-        const secondAngle = seconds * 6; // 6° per second
-        
-        // Update hands
-        controls.hourHand.style.transform = `rotate(${hourAngle}deg)`;
-        controls.minuteHand.style.transform = `rotate(${minuteAngle}deg)`;
-        controls.secondHand.style.transform = `rotate(${secondAngle}deg)`;
-        
-        // Update digital time
-        const timeString = now.toLocaleTimeString('en-SG', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false 
-        });
-        
-        controls.digitalTime.textContent = timeString;
-        controls.inputTime.textContent = timeString;
-        
-        // Update date
-        const dateString = now.toLocaleDateString('en-SG', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric'
-        });
-        
-        controls.dateInfo.textContent = dateString;
-    }
-
-    // === FIREBASE INITIALIZATION ===
+    // --- Firebase Initialization ---
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         db = getFirestore(app);
-
         onAuthStateChanged(auth, user => {
             if (user) {
-                const vehicleCollection = collection(db, 'vehicleListings');
-                onSnapshot(vehicleCollection, (snapshot) => {
-                    vehicleData = snapshot.docs.map(doc => doc.data());
-                    controls.connectionStatus.textContent = `Ready (${vehicleData.length} vehicles)`;
-                }, (error) => { 
-                    console.error("Sync error:", error);
-                    controls.connectionStatus.textContent = 'Sync Error'; 
-                });
+                const listingsCollection = collection(db, 'vehicleListings');
+                onSnapshot(listingsCollection, (snapshot) => {
+                    allRows = snapshot.docs.map(doc => doc.data());
+                    statusBar.textContent = `Ready (${allRows.length} vehicles)`;
+                }, () => { statusBar.textContent = 'Sync Error'; });
             } else {
-                signInAnonymously(auth).catch((error) => { 
-                    console.error("Auth error:", error);
-                    controls.connectionStatus.textContent = 'Auth Error'; 
-                });
+                signInAnonymously(auth).catch(() => { statusBar.textContent = 'Auth Error'; });
             }
         });
-    } catch (error) {
-        console.error("Firebase error:", error);
-        controls.connectionStatus.textContent = 'Connection Failed';
+    } catch (err) {
+        statusBar.textContent = 'Connection Failed';
     }
 
-    // === WEATHER UPDATES ===
-    function updateWeather() {
-        const weather = { icon: '⛅', temp: '29' };
+    // --- View Management ---
+    function switchView(viewId) {
+        views.forEach(view => view.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+    }
+
+    // --- Dashboard Logic ---
+    function updateDashboard() {
+        setInterval(() => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            timeDisplay.textContent = `${hours}:${minutes}`;
+        }, 1000);
+
+        const simulatedWeatherData = {
+            location: "Singapore",
+            temp: "29",
+            icon: "☁️"
+        };
+        weatherDisplayValue.textContent = `${simulatedWeatherData.temp}° ${simulatedWeatherData.icon}`;
+        locationDisplayValue.textContent = simulatedWeatherData.location;
+    }
+
+    // --- Event Listeners ---
+    searchButton.addEventListener('click', () => {
+        textSearchInput.value = '';
+        switchView('input-view');
+        setTimeout(() => textSearchInput.focus(), 50);
+    });
+
+    cancelSearchBtn.addEventListener('click', () => switchView('dashboard-view'));
+    
+    const handleSubmit = () => {
+        const term = textSearchInput.value.trim().toUpperCase();
+        if (term.length > 0) {
+            performSearch(term);
+        }
+    };
+
+    submitSearchBtn.addEventListener('click', handleSubmit);
+    textSearchInput.addEventListener('change', handleSubmit);
+
+    // --- Core Logic ---
+    function performSearch(term) {
+        const numericTerm = term.replace(/\D/g, '');
+        if (numericTerm.length === 0) return;
+
+        const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
         
-        controls.weatherIcon.textContent = weather.icon;
-        controls.weatherTemp.textContent = `${weather.temp}°`;
-        controls.inputWeatherIcon.textContent = weather.icon;
-        controls.inputWeatherTemp.textContent = `${weather.temp}°`;
+        renderResult(result, term);
+        switchView('result-view');
     }
 
-    // === SEARCH FUNCTIONALITY ===
-    function validateVehicleInput(input) {
-        const cleaned = input.replace(/[^A-Z0-9]/g, '');
-        return cleaned.length >= 3;
-    }
-
-    function searchVehicle(query) {
-        const numericPart = query.replace(/\D/g, '');
-        if (numericPart.length === 0) return null;
-
-        return vehicleData.find(vehicle => 
-            vehicle.vehicleNumber && 
-            vehicle.vehicleNumber.replace(/[^0-9]/g, '').includes(numericPart)
-        );
-    }
-
-    function displayResults(searchResult, query) {
-        const container = views.result.querySelector('.result-container');
-        
-        const searchIcon = `
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-            </svg>
-        `;
-
-        let panelClass, statusClass, statusIcon, statusText, detailLabel, detailValue;
-
-        if (searchResult) {
-            panelClass = 'success';
-            statusClass = 'success';
-            statusIcon = '✅';
-            statusText = 'Access Granted';
-            detailLabel = 'Location';
-            detailValue = searchResult.location || 'Zone Alpha';
+    function renderResult(result, term) {
+        let resultHTML = '';
+        if (result) {
+            resultHTML = `
+                <div class="result-card cleared">
+                    <div class="result-status">Cleared</div>
+                    <div class="result-vehicle-number">${result.vehicleNumber}</div>
+                    <div class="result-location">${result.location || 'N/A'}</div>
+                </div>
+            `;
         } else {
-            panelClass = 'error';
-            statusClass = 'error';
-            statusIcon = '🚫';
-            statusText = 'Access Denied';
-            detailLabel = 'Status';
-            detailValue = 'Restricted';
+            resultHTML = `
+                <div class="result-card denied">
+                    <div class="result-status">Denied</div>
+                    <div class="result-vehicle-number">${term}</div>
+                    <div class="result-location">-</div>
+                </div>
+            `;
         }
-
-        container.innerHTML = `
-            <div class="result-holo ${panelClass}">
-                <div class="vehicle-display">${searchResult ? searchResult.vehicleNumber : query}</div>
-                <div class="status-indicator ${statusClass}">
-                    <span>${statusIcon}</span>
-                    <span>${statusText}</span>
-                </div>
-                <div class="result-details">
-                    <div class="detail-info">
-                        <div class="detail-label">${detailLabel}</div>
-                        <div class="detail-value">${detailValue}</div>
-                    </div>
-                    <button class="action-orb" id="new-scan-btn">
-                        ${searchIcon}
-                    </button>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('new-scan-btn').addEventListener('click', () => {
-            controls.vehicleScanner.value = '';
-            controls.scanBtn.disabled = true;
-            switchToView('input');
-        });
-
-        switchToView('result');
-    }
-
-    // === EVENT LISTENERS ===
-    controls.dashboardTrigger.addEventListener('click', () => switchToView('input'));
-    
-    controls.abortBtn.addEventListener('click', () => switchToView('dashboard'));
-    
-    controls.vehicleScanner.addEventListener('input', (e) => {
-        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        e.target.value = value;
-        controls.scanBtn.disabled = !validateVehicleInput(value);
         
-        controls.inputWrapper.classList.add('scanning');
-        setTimeout(() => controls.inputWrapper.classList.remove('scanning'), 300);
-    });
+        resultView.innerHTML = resultHTML + `<button id="new-search-btn">New Search</button>`;
+        
+        document.getElementById('new-search-btn').addEventListener('click', () => {
+            textSearchInput.value = '';
+            switchView('input-view');
+            setTimeout(() => textSearchInput.focus(), 50);
+        });
+    }
     
-    controls.vehicleScanner.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !controls.scanBtn.disabled) {
-            const result = searchVehicle(controls.vehicleScanner.value);
-            displayResults(result, controls.vehicleScanner.value);
-        }
-    });
-    
-    controls.scanBtn.addEventListener('click', () => {
-        const result = searchVehicle(controls.vehicleScanner.value);
-        displayResults(result, controls.vehicleScanner.value);
-    });
-
-    // === INITIALIZE ===
-    updateClock();
-    updateWeather();
-    setInterval(updateClock, 1000);
+    // Initialize
+    updateDashboard();
 
 </script>
 
