@@ -102,59 +102,34 @@
         }
 
         /* * ==============================================
-         * NEW: INTUITIVE DASHBOARD DESIGN
+         * NEW: STABLE & REFINED DASHBOARD DESIGN
          * ==============================================
         */
         #dashboard-prompt {
             width: 280px;
             height: 280px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: relative;
             cursor: pointer;
+            background: radial-gradient(circle at 50% 50%, var(--bg-secondary) 70%, var(--bg-primary));
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
             transition: transform 0.3s ease;
         }
         #dashboard-prompt:active {
             transform: scale(0.96);
         }
-        .dashboard-ring {
+
+        .dashboard-content {
             position: absolute;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
+            left: 50%;
+            transform: translateX(-50%);
         }
-        .outer-ring {
-            width: 100%;
-            height: 100%;
-            border: 1px solid var(--glass-border);
-            background: radial-gradient(circle at 50% 50%, var(--bg-secondary), var(--bg-primary));
-            box-shadow: 0 0 50px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
-        }
-        .middle-ring {
-            width: 200px;
-            height: 200px;
-            border: 1px solid var(--glass-border);
-            flex-direction: column;
-            background: var(--bg-primary);
-        }
-        .inner-ring {
-            width: 120px;
-            height: 120px;
-            background: var(--bg-secondary);
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 0 20px var(--accent-blue-glow);
-        }
-        
+
         #time-display {
-            font-size: 40px;
+            top: 60px;
+            font-size: 48px;
             font-weight: 700;
             line-height: 1;
             background: linear-gradient(45deg, var(--accent-orange), var(--accent-yellow));
@@ -164,10 +139,10 @@
             text-fill-color: transparent;
         }
         #weather-display {
+            top: 115px;
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-top: 4px;
         }
         #weather-icon { font-size: 20px; }
         #weather-temp { 
@@ -176,12 +151,19 @@
             color: var(--accent-yellow);
         }
         #location-display {
-            position: absolute;
-            bottom: 25px;
+            bottom: 60px;
             font-size: 16px;
             font-weight: 500;
             color: #B0B0C0;
             letter-spacing: 0.5px;
+        }
+        .search-action-text {
+            bottom: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         #status-bar {
@@ -372,19 +354,13 @@
     <!-- VIEW 1: The dashboard-style initial screen -->
     <div class="view" id="initial-view">
         <div id="dashboard-prompt">
-            <div class="dashboard-ring outer-ring">
-                <div id="location-display">Loading...</div>
+            <div id="time-display" class="dashboard-content">--:--</div>
+            <div id="weather-display" class="dashboard-content">
+                <span id="weather-icon">--</span>
+                <span id="weather-temp">--°</span>
             </div>
-            <div class="dashboard-ring middle-ring">
-                <div id="time-display">--:--</div>
-                <div id="weather-display">
-                    <span id="weather-icon">--</span>
-                    <span id="weather-temp">--°</span>
-                </div>
-            </div>
-            <div class="dashboard-ring inner-ring">
-                <span>Search</span>
-            </div>
+            <div id="location-display" class="dashboard-content">Loading...</div>
+            <div class="search-action-text dashboard-content">Tap to Search</div>
         </div>
         <div id="status-bar">Connecting...</div>
     </div>
