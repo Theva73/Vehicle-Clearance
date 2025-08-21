@@ -4,136 +4,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Vehicle Clearance Search</title>
+    <title>Vehicle Clearance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* ==============================================
-         * ULTRA-MODERN THEME & VARIABLES
+         * APPLE WATCH OPTIMIZED DESIGN SYSTEM
          * ==============================================
         */
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #131318;
-            --bg-accent: #1a1a23;
-            --neon-cyan: #00ffd5;
-            --neon-pink: #ff007f;
-            --neon-purple: #9c5fff;
-            --neon-blue: #0066ff;
-            --neon-orange: #ff6b35;
+            --bg-primary: #000000;
+            --bg-secondary: #1c1c1e;
+            --bg-tertiary: #2c2c2e;
+            --accent-blue: #007aff;
+            --accent-green: #30d158;
+            --accent-red: #ff453a;
+            --accent-orange: #ff9f0a;
             --text-primary: #ffffff;
-            --text-glow: rgba(255, 255, 255, 0.9);
-            --glass-white: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --success: #00ff88;
-            --error: #ff3366;
-            --warning: #ffaa00;
+            --text-secondary: #ebebf5;
+            --text-tertiary: #ebebf599;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --shadow: rgba(0, 0, 0, 0.5);
         }
 
 ```
     /* ==============================================
-     * RESET & BASE STYLES
+     * BASE LAYOUT FOR WATCH
      * ==============================================
     */
     * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
     }
 
     body {
-        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-        background: 
-            radial-gradient(circle at 20% 80%, rgba(156, 95, 255, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(0, 255, 213, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(255, 0, 127, 0.1) 0%, transparent 50%),
-            linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-        min-height: 100vh;
+        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg-primary);
         color: var(--text-primary);
+        width: 100vw;
+        height: 100vh;
         overflow: hidden;
         position: relative;
     }
 
-    /* Animated mesh background */
-    .mesh-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
+    .watch-container {
         width: 100%;
         height: 100%;
-        background-image: 
-            linear-gradient(45deg, transparent 40%, rgba(0, 255, 213, 0.03) 50%, transparent 60%),
-            linear-gradient(-45deg, transparent 40%, rgba(255, 0, 127, 0.03) 50%, transparent 60%);
-        background-size: 60px 60px;
-        animation: mesh-move 20s linear infinite;
-        z-index: -2;
-    }
-
-    .floating-orbs {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        overflow: hidden;
-    }
-
-    .orb {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(1px);
-        animation: float 8s ease-in-out infinite;
-    }
-
-    .orb-1 {
-        width: 100px;
-        height: 100px;
-        background: radial-gradient(circle, var(--neon-cyan), transparent);
-        top: 20%;
-        left: 10%;
-        animation-delay: -2s;
-    }
-
-    .orb-2 {
-        width: 60px;
-        height: 60px;
-        background: radial-gradient(circle, var(--neon-pink), transparent);
-        top: 60%;
-        right: 15%;
-        animation-delay: -4s;
-    }
-
-    .orb-3 {
-        width: 80px;
-        height: 80px;
-        background: radial-gradient(circle, var(--neon-purple), transparent);
-        bottom: 30%;
-        left: 20%;
-        animation-delay: -6s;
-    }
-
-    /* ==============================================
-     * CONTAINER & LAYOUT
-     * ==============================================
-    */
-    .app-container {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    .main-interface {
-        width: 380px;
-        height: 380px;
+        flex-direction: column;
         position: relative;
     }
 
     /* ==============================================
-     * VIEW SYSTEM
+     * VIEW MANAGEMENT
      * ==============================================
     */
     .view {
@@ -143,490 +70,415 @@
         width: 100%;
         height: 100%;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        flex-direction: column;
         opacity: 0;
-        transform: scale(0.8) rotateY(90deg);
-        transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-        transform-style: preserve-3d;
+        transform: scale(0.9);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        pointer-events: none;
     }
 
     .view.active {
         opacity: 1;
-        transform: scale(1) rotateY(0deg);
+        transform: scale(1);
+        pointer-events: all;
     }
 
     /* ==============================================
-     * ULTRA-MODERN DASHBOARD
+     * DASHBOARD VIEW - WATCH OPTIMIZED
      * ==============================================
     */
-    .dashboard-sphere {
-        width: 320px;
-        height: 320px;
-        border-radius: 50%;
-        background: 
-            conic-gradient(from 0deg, 
-                var(--neon-cyan) 0deg, 
-                var(--neon-purple) 120deg, 
-                var(--neon-pink) 240deg, 
-                var(--neon-cyan) 360deg);
-        padding: 3px;
-        cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-        position: relative;
-        animation: rotate-border 10s linear infinite;
-    }
-
-    .dashboard-inner {
-        width: 100%;
+    .dashboard {
+        padding: 20px 16px;
         height: 100%;
-        border-radius: 50%;
-        background: 
-            radial-gradient(circle at 30% 30%, rgba(0, 255, 213, 0.1) 0%, transparent 70%),
-            radial-gradient(circle at 70% 70%, rgba(255, 0, 127, 0.1) 0%, transparent 70%),
-            var(--bg-primary);
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
+        justify-content: space-between;
     }
 
-    .dashboard-sphere:hover {
-        transform: scale(1.05);
-        filter: drop-shadow(0 0 50px rgba(0, 255, 213, 0.3));
+    .time-header {
+        text-align: center;
+        margin-bottom: 16px;
     }
 
-    .dashboard-sphere:active {
-        transform: scale(0.98);
+    .main-time {
+        font-size: 42px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -1px;
+        line-height: 1;
+        margin-bottom: 4px;
     }
 
-    /* Dashboard content */
-    .time-display {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 48px;
-        font-weight: 800;
-        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: 0 0 30px rgba(0, 255, 213, 0.5);
-        letter-spacing: -2px;
-        margin-bottom: 20px;
-    }
-
-    .weather-pod {
+    .weather-strip {
         display: flex;
         align-items: center;
-        gap: 12px;
-        background: var(--glass-white);
+        justify-content: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: var(--glass);
         border: 1px solid var(--glass-border);
-        border-radius: 25px;
-        padding: 12px 20px;
+        border-radius: 12px;
         backdrop-filter: blur(20px);
-        margin-bottom: 20px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     .weather-icon {
-        font-size: 20px;
-        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+        font-size: 16px;
     }
 
     .weather-temp {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
-        color: var(--neon-cyan);
+        color: var(--accent-orange);
     }
 
-    .location-badge {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-glow);
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        margin-bottom: 25px;
+    .search-action {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0;
     }
 
-    .search-prompt {
-        background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
-        color: white;
+    .search-button {
+        width: 120px;
+        height: 120px;
+        border-radius: 60px;
+        background: linear-gradient(135deg, var(--accent-blue), #005ce6);
         border: none;
-        padding: 15px 30px;
-        border-radius: 30px;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 2px;
+        color: white;
         cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 30px rgba(0, 102, 255, 0.4);
-        animation: pulse-glow 3s ease-in-out infinite;
-    }
-
-    .search-prompt:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 40px rgba(0, 102, 255, 0.6);
-    }
-
-    /* Status indicator */
-    .status-display {
-        position: absolute;
-        bottom: -60px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--glass-white);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 12px 24px;
-        backdrop-filter: blur(20px);
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--text-glow);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    }
-
-    /* ==============================================
-     * FUTURISTIC INPUT VIEW
-     * ==============================================
-    */
-    .input-container {
-        width: 100%;
-        height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 30px;
+        gap: 8px;
+        box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+        transition: all 0.2s ease;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .search-button:active {
+        transform: scale(0.95);
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+    }
+
+    .search-icon {
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+
+    .footer-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        margin-top: auto;
+    }
+
+    .location-info {
+        flex: 1;
+    }
+
+    .location-label {
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .location-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 4px;
+        background: var(--accent-green);
+        margin-left: 12px;
+    }
+
+    /* ==============================================
+     * INPUT VIEW - WATCH OPTIMIZED
+     * ==============================================
+    */
+    .input-view {
+        padding: 16px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
     .input-header {
         text-align: center;
-        margin-bottom: 10px;
+        margin-bottom: 20px;
     }
 
     .input-time {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 36px;
+        font-size: 28px;
         font-weight: 700;
-        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--text-primary);
         margin-bottom: 8px;
     }
 
     .input-weather {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 16px;
-        color: var(--text-glow);
+        justify-content: center;
+        gap: 6px;
+        font-size: 14px;
+        color: var(--text-secondary);
     }
 
-    /* Holographic input field */
-    .holo-input {
-        position: relative;
-        width: 100%;
-        max-width: 300px;
-    }
-
-    .vehicle-input {
-        width: 100%;
-        background: var(--glass-white);
-        border: 2px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 20px 25px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--text-primary);
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        backdrop-filter: blur(20px);
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .vehicle-input:focus {
-        outline: none;
-        border-color: var(--neon-cyan);
-        box-shadow: 
-            0 0 40px rgba(0, 255, 213, 0.3),
-            0 8px 32px rgba(0, 0, 0, 0.4);
-        transform: translateY(-2px);
-    }
-
-    .vehicle-input::placeholder {
-        color: rgba(255, 255, 255, 0.3);
-        font-weight: 400;
-    }
-
-    /* Scanning effect */
-    .holo-input::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(0, 255, 213, 0.2), transparent);
-        transition: left 0.6s ease;
-        border-radius: 20px;
-    }
-
-    .holo-input.scanning::before {
-        left: 100%;
-    }
-
-    /* Action buttons */
-    .input-actions {
+    .input-section {
+        flex: 1;
         display: flex;
+        flex-direction: column;
+        justify-content: center;
         gap: 20px;
     }
 
-    .cyber-btn {
-        padding: 15px 25px;
-        border: none;
-        border-radius: 15px;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        min-width: 100px;
-    }
-
-    .cyber-btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
+    .input-field {
         width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s ease;
+        height: 50px;
+        background: var(--bg-secondary);
+        border: 2px solid var(--glass-border);
+        border-radius: 16px;
+        color: var(--text-primary);
+        font-size: 20px;
+        font-weight: 600;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.3s ease;
     }
 
-    .cyber-btn:hover::before {
-        left: 100%;
+    .input-field:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        background: var(--bg-tertiary);
+    }
+
+    .input-field::placeholder {
+        color: var(--text-tertiary);
+        font-weight: 400;
+    }
+
+    .input-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .action-btn {
+        flex: 1;
+        height: 44px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
 
     .btn-cancel {
-        background: linear-gradient(135deg, #333, #555);
-        color: var(--text-primary);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
         border: 1px solid var(--glass-border);
     }
 
-    .btn-cancel:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    .btn-cancel:active {
+        background: var(--bg-tertiary);
+        transform: scale(0.98);
     }
 
     .btn-search {
-        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
-        color: var(--bg-primary);
-        box-shadow: 0 0 20px rgba(0, 255, 213, 0.4);
+        background: var(--accent-blue);
+        color: white;
     }
 
-    .btn-search:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 30px rgba(0, 255, 213, 0.6);
+    .btn-search:active {
+        background: #005ce6;
+        transform: scale(0.98);
     }
 
     .btn-search:disabled {
-        opacity: 0.4;
+        background: var(--bg-tertiary);
+        color: var(--text-tertiary);
         cursor: not-allowed;
-        transform: none !important;
     }
 
     /* ==============================================
-     * HOLOGRAPHIC RESULTS VIEW
+     * RESULTS VIEW - WATCH OPTIMIZED
      * ==============================================
     */
-    .result-container {
-        width: 100%;
-        max-width: 340px;
-        margin: 0 auto;
+    .result-view {
+        padding: 16px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
-    .result-holo {
-        background: var(--glass-white);
-        border: 2px solid var(--glass-border);
-        border-radius: 25px;
-        padding: 35px 30px;
-        backdrop-filter: blur(25px);
+    .result-card {
+        background: var(--bg-secondary);
+        border-radius: 20px;
+        padding: 24px 20px;
         text-align: center;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-        transition: all 0.6s ease;
     }
 
-    .result-holo::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: conic-gradient(from 0deg, transparent, rgba(0, 255, 213, 0.1), transparent);
-        animation: holo-rotate 6s linear infinite;
-        z-index: -1;
+    .result-card.success {
+        background: linear-gradient(135deg, rgba(48, 209, 88, 0.15), rgba(48, 209, 88, 0.05));
+        border: 1px solid rgba(48, 209, 88, 0.3);
     }
 
-    .result-holo.success {
-        border-color: var(--success);
-        box-shadow: 
-            0 0 60px rgba(0, 255, 136, 0.3),
-            0 20px 60px rgba(0, 0, 0, 0.4);
+    .result-card.error {
+        background: linear-gradient(135deg, rgba(255, 69, 58, 0.15), rgba(255, 69, 58, 0.05));
+        border: 1px solid rgba(255, 69, 58, 0.3);
     }
 
-    .result-holo.error {
-        border-color: var(--error);
-        box-shadow: 
-            0 0 60px rgba(255, 51, 102, 0.3),
-            0 20px 60px rgba(0, 0, 0, 0.4);
-    }
-
-    .vehicle-display {
-        font-family: 'JetBrains Mono', monospace;
+    .vehicle-number {
         font-size: 32px;
         font-weight: 800;
-        letter-spacing: 3px;
+        letter-spacing: 2px;
+        margin-bottom: 16px;
+        color: var(--text-primary);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 700;
         margin-bottom: 20px;
         text-transform: uppercase;
     }
 
-    .status-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 24px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    .status-badge.success {
+        background: var(--accent-green);
+        color: white;
     }
 
-    .status-indicator.success {
-        background: linear-gradient(135deg, var(--success), #00cc77);
-        color: var(--bg-primary);
-    }
-
-    .status-indicator.error {
-        background: linear-gradient(135deg, var(--error), #e62e5c);
+    .status-badge.error {
+        background: var(--accent-red);
         color: white;
     }
 
     .result-details {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-top: 20px;
+        margin-top: auto;
+        padding-top: 16px;
         border-top: 1px solid var(--glass-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .detail-info {
         text-align: left;
-        flex: 1;
     }
 
     .detail-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.5);
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--text-tertiary);
         text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 5px;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
     }
 
     .detail-value {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
         color: var(--text-primary);
     }
 
-    .action-orb {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+    .new-search-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 18px;
+        background: var(--accent-blue);
         border: none;
         color: white;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 20px rgba(156, 95, 255, 0.4);
+        transition: all 0.2s ease;
     }
 
-    .action-orb:hover {
-        transform: scale(1.1) rotate(10deg);
-        box-shadow: 0 0 30px rgba(156, 95, 255, 0.6);
-    }
-
-    /* ==============================================
-     * ANIMATIONS
-     * ==============================================
-    */
-    @keyframes mesh-move {
-        0% { background-position: 0 0; }
-        100% { background-position: 60px 60px; }
-    }
-
-    @keyframes float {
-        0%, 100% { transform: translateY(0) rotate(0deg); }
-        50% { transform: translateY(-20px) rotate(180deg); }
-    }
-
-    @keyframes rotate-border {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    @keyframes pulse-glow {
-        0%, 100% { box-shadow: 0 0 30px rgba(0, 102, 255, 0.4); }
-        50% { box-shadow: 0 0 50px rgba(0, 102, 255, 0.8); }
-    }
-
-    @keyframes holo-rotate {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    .new-search-btn:active {
+        transform: scale(0.9);
+        background: #005ce6;
     }
 
     /* ==============================================
-     * RESPONSIVE DESIGN
+     * ANIMATIONS & MICRO-INTERACTIONS
      * ==============================================
     */
-    @media (max-width: 430px) {
-        .main-interface {
-            width: 340px;
-            height: 340px;
+    .pulse {
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+    }
+
+    /* ==============================================
+     * RESPONSIVE FOR DIFFERENT WATCH SIZES
+     * ==============================================
+    */
+    @media (max-width: 396px) {
+        .main-time {
+            font-size: 36px;
         }
         
-        .dashboard-sphere {
-            width: 280px;
-            height: 280px;
+        .search-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50px;
         }
         
-        .time-display {
-            font-size: 42px;
-        }
-        
-        .vehicle-display {
+        .vehicle-number {
             font-size: 28px;
+        }
+    }
+
+    @media (max-height: 484px) {
+        .dashboard {
+            padding: 16px 12px;
+        }
+        
+        .search-action {
+            margin: 16px 0;
+        }
+        
+        .search-button {
+            width: 90px;
+            height: 90px;
+            border-radius: 45px;
         }
     }
 </style>
@@ -635,73 +487,74 @@
 </head>
 <body>
 
-<div class="mesh-bg"></div>
-
-<div class="floating-orbs">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-</div>
-
-<div class="app-container">
-    <div class="main-interface">
+<div class="watch-container">
 
 ```
-    <!-- FUTURISTIC DASHBOARD -->
-    <div class="view active" id="dashboard-view">
-        <div class="dashboard-sphere" id="dashboard-trigger">
-            <div class="dashboard-inner">
-                <div class="time-display" id="main-time">--:--</div>
-                <div class="weather-pod">
-                    <span class="weather-icon" id="main-weather-icon">--</span>
-                    <span class="weather-temp" id="main-weather-temp">--°</span>
-                </div>
-                <div class="location-badge" id="main-location">Loading...</div>
-                <button class="search-prompt">⚡ Scan Vehicle</button>
+<!-- DASHBOARD VIEW -->
+<div class="view active" id="dashboard-view">
+    <div class="dashboard">
+        <div class="time-header">
+            <div class="main-time" id="dash-time">--:--</div>
+            <div class="weather-strip">
+                <span class="weather-icon" id="dash-weather-icon">--</span>
+                <span class="weather-temp" id="dash-weather-temp">--°</span>
             </div>
         </div>
-        <div class="status-display" id="connection-status">Connecting...</div>
+        
+        <div class="search-action">
+            <button class="search-button pulse" id="main-search-btn">
+                <div class="search-icon">🔍</div>
+                <div>Search</div>
+            </button>
+        </div>
+        
+        <div class="footer-info">
+            <div class="location-info">
+                <div class="location-label">Location</div>
+                <div class="location-value" id="dash-location">Singapore</div>
+            </div>
+            <div class="status-dot" id="status-indicator"></div>
+        </div>
     </div>
+</div>
 
-    <!-- CYBER INPUT VIEW -->
-    <div class="view" id="input-view">
-        <div class="input-container">
-            <div class="input-header">
-                <div class="input-time" id="input-time">--:--</div>
-                <div class="input-weather">
-                    <span id="input-weather-icon">--</span>
-                    <span id="input-weather-temp">--°</span>
-                </div>
+<!-- INPUT VIEW -->
+<div class="view" id="input-view">
+    <div class="input-view">
+        <div class="input-header">
+            <div class="input-time" id="input-time">--:--</div>
+            <div class="input-weather">
+                <span id="input-weather-icon">--</span>
+                <span id="input-weather-temp">--°</span>
             </div>
-            
-            <div class="holo-input" id="input-wrapper">
-                <input class="vehicle-input" id="vehicle-scanner" 
-                       type="text" 
-                       placeholder="Vehicle ID" 
-                       maxlength="15">
-            </div>
+        </div>
+        
+        <div class="input-section">
+            <input class="input-field" id="vehicle-input" 
+                   type="text" 
+                   placeholder="Vehicle ID" 
+                   maxlength="12">
             
             <div class="input-actions">
-                <button class="cyber-btn btn-cancel" id="abort-btn">Abort</button>
-                <button class="cyber-btn btn-search" id="scan-btn" disabled>Scan</button>
+                <button class="action-btn btn-cancel" id="cancel-btn">Cancel</button>
+                <button class="action-btn btn-search" id="search-btn" disabled>Search</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- HOLOGRAPHIC RESULTS -->
-    <div class="view" id="result-view">
-        <div class="result-container">
-            <!-- Dynamic holographic content -->
-        </div>
+<!-- RESULTS VIEW -->
+<div class="view" id="result-view">
+    <div class="result-view">
+        <!-- Dynamic content will be inserted here -->
     </div>
-
 </div>
 ```
 
 </div>
 
 <script type="module">
-    // Firebase imports (same as before)
+    // Firebase configuration
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -719,40 +572,35 @@
     let db;
     let vehicleData = [];
     
-    // DOM references
+    // DOM elements
     const views = {
         dashboard: document.getElementById('dashboard-view'),
         input: document.getElementById('input-view'),
         result: document.getElementById('result-view')
     };
     
-    const controls = {
-        dashboardTrigger: document.getElementById('dashboard-trigger'),
-        connectionStatus: document.getElementById('connection-status'),
-        vehicleScanner: document.getElementById('vehicle-scanner'),
-        inputWrapper: document.getElementById('input-wrapper'),
-        abortBtn: document.getElementById('abort-btn'),
-        scanBtn: document.getElementById('scan-btn'),
-        mainTime: document.getElementById('main-time'),
-        mainWeatherIcon: document.getElementById('main-weather-icon'),
-        mainWeatherTemp: document.getElementById('main-weather-temp'),
-        mainLocation: document.getElementById('main-location'),
+    const elements = {
+        mainSearchBtn: document.getElementById('main-search-btn'),
+        statusIndicator: document.getElementById('status-indicator'),
+        vehicleInput: document.getElementById('vehicle-input'),
+        cancelBtn: document.getElementById('cancel-btn'),
+        searchBtn: document.getElementById('search-btn'),
+        dashTime: document.getElementById('dash-time'),
+        dashWeatherIcon: document.getElementById('dash-weather-icon'),
+        dashWeatherTemp: document.getElementById('dash-weather-temp'),
+        dashLocation: document.getElementById('dash-location'),
         inputTime: document.getElementById('input-time'),
         inputWeatherIcon: document.getElementById('input-weather-icon'),
         inputWeatherTemp: document.getElementById('input-weather-temp')
     };
 
-    // === ENHANCED VIEW MANAGEMENT ===
-    function switchToView(targetView) {
+    // === VIEW MANAGEMENT ===
+    function showView(viewName) {
         Object.values(views).forEach(view => view.classList.remove('active'));
-        views[targetView].classList.add('active');
+        views[viewName].classList.add('active');
         
-        if (targetView === 'input') {
-            setTimeout(() => {
-                controls.vehicleScanner.focus();
-                controls.inputWrapper.classList.add('scanning');
-                setTimeout(() => controls.inputWrapper.classList.remove('scanning'), 600);
-            }, 400);
+        if (viewName === 'input') {
+            setTimeout(() => elements.vehicleInput.focus(), 400);
         }
     }
 
@@ -767,24 +615,24 @@
                 const vehicleCollection = collection(db, 'vehicleListings');
                 onSnapshot(vehicleCollection, (snapshot) => {
                     vehicleData = snapshot.docs.map(doc => doc.data());
-                    controls.connectionStatus.textContent = `⚡ Ready (${vehicleData.length} vehicles)`;
+                    elements.statusIndicator.style.background = 'var(--accent-green)';
                 }, (error) => { 
                     console.error("Sync error:", error);
-                    controls.connectionStatus.textContent = '❌ Sync Error'; 
+                    elements.statusIndicator.style.background = 'var(--accent-red)';
                 });
             } else {
                 signInAnonymously(auth).catch((error) => { 
                     console.error("Auth error:", error);
-                    controls.connectionStatus.textContent = '🔐 Auth Error'; 
+                    elements.statusIndicator.style.background = 'var(--accent-red)';
                 });
             }
         });
     } catch (error) {
         console.error("Firebase error:", error);
-        controls.connectionStatus.textContent = '💥 Connection Failed';
+        elements.statusIndicator.style.background = 'var(--accent-red)';
     }
 
-    // === REAL-TIME UPDATES ===
+    // === TIME AND WEATHER ===
     function updateTimeAndWeather() {
         const now = new Date();
         const timeString = now.toLocaleTimeString('en-SG', { 
@@ -793,31 +641,21 @@
             hour12: false 
         });
         
-        controls.mainTime.textContent = timeString;
-        controls.inputTime.textContent = timeString;
+        elements.dashTime.textContent = timeString;
+        elements.inputTime.textContent = timeString;
 
-        // Enhanced weather simulation
-        const weatherStates = [
-            { icon: '⛅', temp: '29', desc: 'Partly Cloudy' },
-            { icon: '🌧️', temp: '26', desc: 'Light Rain' },
-            { icon: '☀️', temp: '32', desc: 'Sunny' },
-            { icon: '🌩️', temp: '28', desc: 'Thunderstorm' }
-        ];
+        // Weather data
+        const weather = { icon: '☁️', temp: '29' };
         
-        const currentWeather = weatherStates[0]; // You can randomize this
-        
-        controls.mainWeatherIcon.textContent = currentWeather.icon;
-        controls.mainWeatherTemp.textContent = `${currentWeather.temp}°`;
-        controls.mainLocation.textContent = 'Singapore';
-        
-        controls.inputWeatherIcon.textContent = currentWeather.icon;
-        controls.inputWeatherTemp.textContent = `${currentWeather.temp}°`;
+        elements.dashWeatherIcon.textContent = weather.icon;
+        elements.dashWeatherTemp.textContent = `${weather.temp}°`;
+        elements.inputWeatherIcon.textContent = weather.icon;
+        elements.inputWeatherTemp.textContent = `${weather.temp}°`;
     }
 
-    // === ENHANCED SEARCH LOGIC ===
-    function validateVehicleInput(input) {
-        const cleaned = input.replace(/[^A-Z0-9]/g, '');
-        return cleaned.length >= 3;
+    // === SEARCH FUNCTIONALITY ===
+    function validateInput(value) {
+        return value.replace(/[^A-Z0-9]/g, '').length >= 3;
     }
 
     function searchVehicle(query) {
@@ -830,38 +668,31 @@
         );
     }
 
-    function displayResults(searchResult, query) {
-        const container = views.result.querySelector('.result-container');
+    function displayResults(result, query) {
+        const container = views.result.querySelector('.result-view');
         
-        const searchIcon = `
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-            </svg>
-        `;
+        let cardClass, statusClass, statusIcon, statusText, detailLabel, detailValue;
 
-        let panelClass, statusClass, statusIcon, statusText, detailLabel, detailValue;
-
-        if (searchResult) {
-            panelClass = 'success';
+        if (result) {
+            cardClass = 'success';
             statusClass = 'success';
-            statusIcon = '✅';
-            statusText = 'Access Granted';
+            statusIcon = '✓';
+            statusText = 'Cleared';
             detailLabel = 'Location';
-            detailValue = searchResult.location || 'Zone Alpha';
+            detailValue = result.location || 'Zone A';
         } else {
-            panelClass = 'error';
+            cardClass = 'error';
             statusClass = 'error';
-            statusIcon = '🚫';
-            statusText = 'Access Denied';
+            statusIcon = '✗';
+            statusText = 'Denied';
             detailLabel = 'Status';
             detailValue = 'Restricted';
         }
 
         container.innerHTML = `
-            <div class="result-holo ${panelClass}">
-                <div class="vehicle-display">${searchResult ? searchResult.vehicleNumber : query}</div>
-                <div class="status-indicator ${statusClass}">
+            <div class="result-card ${cardClass}">
+                <div class="vehicle-number">${result ? result.vehicleNumber : query}</div>
+                <div class="status-badge ${statusClass}">
                     <span>${statusIcon}</span>
                     <span>${statusText}</span>
                 </div>
@@ -870,64 +701,47 @@
                         <div class="detail-label">${detailLabel}</div>
                         <div class="detail-value">${detailValue}</div>
                     </div>
-                    <button class="action-orb" id="new-scan-btn">
-                        ${searchIcon}
+                    <button class="new-search-btn" id="new-search-btn">
+                        🔍
                     </button>
                 </div>
             </div>
         `;
 
-        // Add new scan functionality
-        document.getElementById('new-scan-btn').addEventListener('click', () => {
-            controls.vehicleScanner.value = '';
-            controls.scanBtn.disabled = true;
-            switchToView('input');
+        document.getElementById('new-search-btn').addEventListener('click', () => {
+            elements.vehicleInput.value = '';
+            elements.searchBtn.disabled = true;
+            showView('input');
         });
 
-        switchToView('result');
+        showView('result');
     }
 
     // === EVENT LISTENERS ===
-    controls.dashboardTrigger.addEventListener('click', () => switchToView('input'));
+    elements.mainSearchBtn.addEventListener('click', () => showView('input'));
+    elements.cancelBtn.addEventListener('click', () => showView('dashboard'));
     
-    controls.abortBtn.addEventListener('click', () => switchToView('dashboard'));
-    
-    controls.vehicleScanner.addEventListener('input', (e) => {
+    elements.vehicleInput.addEventListener('input', (e) => {
         const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         e.target.value = value;
-        controls.scanBtn.disabled = !validateVehicleInput(value);
-        
-        // Add scanning effect on input
-        controls.inputWrapper.classList.add('scanning');
-        setTimeout(() => controls.inputWrapper.classList.remove('scanning'), 300);
+        elements.searchBtn.disabled = !validateInput(value);
     });
     
-    controls.vehicleScanner.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !controls.scanBtn.disabled) {
-            const result = searchVehicle(controls.vehicleScanner.value);
-            displayResults(result, controls.vehicleScanner.value);
+    elements.vehicleInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !elements.searchBtn.disabled) {
+            const result = searchVehicle(elements.vehicleInput.value);
+            displayResults(result, elements.vehicleInput.value);
         }
     });
     
-    controls.scanBtn.addEventListener('click', () => {
-        const result = searchVehicle(controls.vehicleScanner.value);
-        displayResults(result, controls.vehicleScanner.value);
+    elements.searchBtn.addEventListener('click', () => {
+        const result = searchVehicle(elements.vehicleInput.value);
+        displayResults(result, elements.vehicleInput.value);
     });
 
-    // === INITIALIZE ===
+    // === INITIALIZATION ===
     updateTimeAndWeather();
     setInterval(updateTimeAndWeather, 1000);
-
-    // Add some extra cyber effects
-    setInterval(() => {
-        const orbs = document.querySelectorAll('.orb');
-        orbs.forEach((orb, index) => {
-            const delay = index * 1000;
-            setTimeout(() => {
-                orb.style.animationDuration = `${8 + Math.random() * 4}s`;
-            }, delay);
-        });
-    }, 10000);
 
 </script>
 
