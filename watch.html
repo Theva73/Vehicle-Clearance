@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,477 +6,359 @@
     <title>Watch Vehicle Search</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* * ==============================================
+         * AESTHETIC & THEME DEFINITION (DARK MODE)
+         * ==============================================
+         * This section establishes the color palette and core visual properties.
+         * We're going for a deep, futuristic dark mode with vibrant accents.
+        */
         :root {
-            --bg-primary: #000000;
-            --bg-secondary: #111111;
-            --bg-card: #1a1a1a;
-            --bg-glass: rgba(28, 28, 30, 0.8);
-            --text-primary: #ffffff;
-            --text-secondary: #a1a1a6;
-            --text-muted: #636366;
-            --accent-blue: #007aff;
-            --accent-blue-dark: #0051d5;
-            --success-green: #30d158;
-            --success-green-glow: rgba(48, 209, 88, 0.3);
-            --error-red: #ff453a;
-            --error-red-glow: rgba(255, 69, 58, 0.3);
-            --warning-orange: #ff9f0a;
-            --gold: #ffd60a;
+            --bg-primary: #0D0D12; /* A deep, near-black for the main background */
+            --bg-secondary: #1A1A21; /* Slightly lighter for secondary surfaces */
+            --bg-glass: rgba(26, 26, 33, 0.6); /* Translucent background for cards */
+            --glass-border: rgba(255, 255, 255, 0.1); /* Subtle border for glass elements */
+            --text-primary: #F0F0F5; /* Bright, clear text */
+            --text-secondary: #A0A0B0; /* Softer text for secondary info */
+            --text-muted: #606070; /* Muted text for tertiary details */
+            --accent-blue: #0A84FF; /* A vibrant blue for interactive elements */
+            --accent-blue-glow: rgba(10, 132, 255, 0.4);
+            --success-green: #30D158; /* Bright green for success states */
+            --success-green-glow: rgba(48, 209, 88, 0.4);
+            --error-red: #FF453A; /* Bright red for error states */
+            --error-red-glow: rgba(255, 69, 58, 0.4);
             --shadow-light: rgba(255, 255, 255, 0.1);
-            --shadow-dark: rgba(0, 0, 0, 0.3);
+            --shadow-dark: rgba(0, 0, 0, 0.5);
         }
 
-```
-    body, html {
-        background: radial-gradient(circle at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-        color: var(--text-primary);
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-        margin: 0;
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .app-container {
-        height: 100vh;
-        width: 100vw;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-        max-width: 500px;
-        max-height: 500px;
-    }
-
-    /* --- View States --- */
-    .view {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 16px;
-        box-sizing: border-box;
-        animation: slide-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-    }
-    
-    #result-view {
-        display: none;
-        justify-content: flex-start;
-        gap: 12px;
-        padding-top: 10px;
-        overflow-y: auto;
-    }
-
-    /* --- Initial Search View --- */
-    #search-prompt {
-        text-align: center;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.2s ease;
-        padding: 20px;
-        border-radius: 24px;
-        background: linear-gradient(135deg, var(--bg-glass), rgba(0, 122, 255, 0.1));
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    #search-prompt:active {
-        transform: scale(0.95);
-    }
-
-    .search-icon-container {
-        position: relative;
-        margin-bottom: 16px;
-    }
-
-    .search-icon {
-        font-size: 52px;
-        background: linear-gradient(135deg, var(--accent-blue), #64d2ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        filter: drop-shadow(0 0 20px rgba(0, 122, 255, 0.4));
-        animation: pulse-glow 2s ease-in-out infinite;
-    }
-
-    .search-ripple {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 80px;
-        height: 80px;
-        border: 2px solid var(--accent-blue);
-        border-radius: 50%;
-        opacity: 0;
-        animation: ripple 2s ease-out infinite;
-    }
-
-    #search-prompt .text {
-        font-size: 24px;
-        font-weight: 600;
-        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        line-height: 1.2;
-    }
-
-    #status-bar {
-        color: var(--text-muted);
-        font-size: 14px;
-        font-weight: 500;
-        position: absolute;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        text-align: center;
-        padding: 8px 16px;
-        background: var(--bg-glass);
-        backdrop-filter: blur(10px);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    /* --- Enhanced Result Plates --- */
-    .result-plate {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 18px;
-        border-radius: 18px;
-        position: relative;
-        width: calc(100% - 32px);
-        max-width: 300px;
-        box-sizing: border-box;
-        min-height: 60px;
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        overflow: hidden;
-    }
-
-    .result-plate::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.05));
-        pointer-events: none;
-    }
-
-    .result-plate.cleared {
-        background: linear-gradient(135deg, 
-            rgba(48, 209, 88, 0.2), 
-            rgba(0, 122, 255, 0.15)
-        );
-        border: 2px solid var(--success-green);
-        box-shadow: 
-            0 0 30px var(--success-green-glow),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-
-    .result-plate.not-found {
-        background: linear-gradient(135deg, 
-            rgba(255, 69, 58, 0.2), 
-            rgba(88, 88, 93, 0.15)
-        );
-        border: 2px solid var(--error-red);
-        box-shadow: 
-            0 0 30px var(--error-red-glow),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-
-    .plate-text {
-        font-family: 'SF Pro Display', monospace;
-        font-size: 22px;
-        font-weight: 800;
-        color: var(--text-primary);
-        flex: 1;
-        text-align: left;
-        line-height: 1;
-        letter-spacing: 0.5px;
-    }
-
-    .plate-text.cleared {
-        text-shadow: 
-            0 0 15px rgba(48, 209, 88, 0.6),
-            0 2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .plate-text.not-found { 
-        color: #ff6b6b;
-        text-shadow: 
-            0 0 15px rgba(255, 69, 58, 0.4),
-            0 2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .plate-status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        flex-shrink: 0;
-        white-space: nowrap;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .plate-status-badge::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
-        pointer-events: none;
-    }
-
-    .plate-status-badge.cleared { 
-        background: linear-gradient(135deg, var(--success-green), #20c648);
-        color: white;
-        box-shadow: 0 4px 15px rgba(48, 209, 88, 0.4);
-    }
-
-    .plate-status-badge.not-found { 
-        background: linear-gradient(135deg, var(--error-red), #d70015);
-        color: white;
-        box-shadow: 0 4px 15px rgba(255, 69, 58, 0.4);
-    }
-
-    /* --- Enhanced Location Card --- */
-    .location-card {
-        background: linear-gradient(135deg, 
-            var(--bg-card), 
-            rgba(28, 28, 30, 0.8)
-        );
-        backdrop-filter: blur(20px);
-        border-radius: 18px;
-        padding: 16px;
-        text-align: center;
-        width: calc(100% - 32px);
-        max-width: 300px;
-        box-sizing: border-box;
-        margin: 0;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-        min-height: 70px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .location-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.03));
-        pointer-events: none;
-    }
-
-    .location-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        margin-bottom: 8px;
-        letter-spacing: 1.5px;
-    }
-
-    .location-text {
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--text-primary);
-        line-height: 1.1;
-        word-wrap: break-word;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        overflow-wrap: break-word;
-        hyphens: auto;
-    }
-    
-    /* --- Enhanced Button --- */
-    #new-search-btn {
-        border: none;
-        background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
-        color: white;
-        font-size: 16px;
-        font-weight: 700;
-        padding: 14px 24px;
-        border-radius: 20px;
-        width: calc(100% - 32px);
-        max-width: 300px;
-        cursor: pointer;
-        box-sizing: border-box;
-        margin: 0;
-        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-        box-shadow: 
-            0 8px 25px rgba(0, 122, 255, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        min-height: 50px;
-    }
-
-    #new-search-btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.6s ease;
-    }
-
-    #new-search-btn:hover::before {
-        left: 100%;
-    }
-    
-    #new-search-btn:active {
-        transform: scale(0.98);
-        box-shadow: 
-            0 4px 15px rgba(0, 122, 255, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-
-    /* --- Hidden input --- */
-    #search-input {
-        position: absolute;
-        left: -9999px;
-        top: -9999px;
-        opacity: 0;
-    }
-
-    /* --- Animations --- */
-    @keyframes slide-in {
-        from { 
-            opacity: 0; 
-            transform: translateY(20px) scale(0.95); 
+        /* * ==============================================
+         * BASE & LAYOUT STYLES
+         * ==============================================
+         * Sets up the foundation for the app, including the animated background.
+        */
+        body, html {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        to { 
-            opacity: 1; 
-            transform: translateY(0) scale(1); 
-        }
-    }
 
-    @keyframes pulse-glow {
-        0%, 100% { 
-            filter: drop-shadow(0 0 20px rgba(0, 122, 255, 0.4));
+        /* Animated starry background for a less "flat" feel */
+        .background-stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(1px 1px at 20% 30%, #FFFFFF, transparent),
+                radial-gradient(1px 1px at 80% 70%, #FFFFFF, transparent),
+                radial-gradient(1px 1px at 50% 50%, #CCCCCC, transparent),
+                radial-gradient(2px 2px at 90% 10%, #FFFFFF, transparent),
+                radial-gradient(2px 2px at 10% 90%, #CCCCCC, transparent);
+            background-size: 100% 100%;
+            animation: move-stars 120s linear infinite;
+            z-index: -1;
         }
-        50% { 
-            filter: drop-shadow(0 0 30px rgba(0, 122, 255, 0.7));
-        }
-    }
 
-    @keyframes ripple {
-        0% {
-            transform: translate(-50%, -50%) scale(0.5);
-            opacity: 1;
+        .app-container {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            max-width: 400px; /* Constrained width for watch-like UI */
+            max-height: 400px;
         }
-        100% {
-            transform: translate(-50%, -50%) scale(1.5);
-            opacity: 0;
-        }
-    }
 
-    /* --- Responsive Design --- */
-    @media (max-width: 396px) {
+        /* * ==============================================
+         * VIEW STATES & TRANSITIONS
+         * ==============================================
+        */
         .view {
-            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            animation: fade-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
-        .plate-text {
-            font-size: 20px;
-        }
-        .location-text {
-            font-size: 18px;
-        }
-        #new-search-btn {
-            font-size: 15px;
-            padding: 12px 20px;
-        }
-    }
-
-    @media (max-height: 484px) {
-        .view {
-            gap: 10px;
-            padding: 12px;
-        }
+        
         #result-view {
-            gap: 8px;
-            padding-top: 5px;
+            display: none;
+            justify-content: center; /* Center the results vertically */
+            gap: 16px;
         }
+
+        /* * ==============================================
+         * REVAMPED INITIAL SEARCH VIEW
+         * ==============================================
+         * This is the new, non-flat landing page design.
+        */
+        #search-prompt {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            background: radial-gradient(circle at 50% 50%, var(--bg-secondary), var(--bg-primary));
+            border: 2px solid var(--glass-border);
+            box-shadow: 0 0 40px var(--shadow-dark), inset 0 2px 4px var(--shadow-light);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #search-prompt:active {
+            transform: scale(0.96);
+            box-shadow: 0 0 20px var(--shadow-dark), inset 0 1px 2px var(--shadow-light);
+        }
+
+        /* Outer glowing ring for visual flair */
+        #search-prompt::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: conic-gradient(from 180deg at 50% 50%, var(--accent-blue), var(--bg-primary), var(--accent-blue)) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: spin 4s linear infinite;
+            opacity: 0.8;
+        }
+
         .search-icon {
-            font-size: 46px;
+            font-size: 56px;
+            color: var(--accent-blue);
+            filter: drop-shadow(0 0 15px var(--accent-blue-glow));
+            margin-bottom: 8px;
+            animation: pulse-icon 2.5s ease-in-out infinite;
         }
+
         #search-prompt .text {
             font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.2;
         }
-        .result-plate {
-            min-height: 55px;
-            padding: 12px 16px;
-        }
-        .location-card {
-            min-height: 60px;
-            padding: 14px;
-        }
-        .location-text {
-            font-size: 18px;
-        }
-        .plate-text {
-            font-size: 20px;
-        }
-    }
-</style>
-```
 
+        #status-bar {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            padding: 8px 16px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* * ==============================================
+         * IMPROVED RESULT CARDS
+         * ==============================================
+        */
+        .result-plate, .location-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 16px;
+            border-radius: 20px;
+            width: calc(100% - 40px);
+            max-width: 320px;
+            box-sizing: border-box;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 var(--shadow-dark);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Adds a subtle sheen to the cards */
+        .result-plate::before, .location-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), transparent 50%);
+            pointer-events: none;
+        }
+
+        .result-plate {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 70px;
+        }
+
+        .result-plate.cleared {
+            border-color: var(--success-green);
+            box-shadow: 0 0 30px var(--success-green-glow), 0 8px 32px 0 var(--shadow-dark);
+        }
+
+        .result-plate.not-found {
+            border-color: var(--error-red);
+            box-shadow: 0 0 30px var(--error-red-glow), 0 8px 32px 0 var(--shadow-dark);
+        }
+
+        .plate-text {
+            font-family: 'Inter', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+        }
+        
+        .plate-status-badge {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .plate-status-badge.cleared { background: var(--success-green); }
+        .plate-status-badge.not-found { background: var(--error-red); }
+
+        .location-card {
+            text-align: center;
+            min-height: 80px;
+        }
+        
+        .location-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+        }
+
+        .location-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        /* * ==============================================
+         * ENHANCED BUTTON
+         * ==============================================
+        */
+        #new-search-btn {
+            border: none;
+            background: linear-gradient(135deg, var(--accent-blue), #005fcc);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 16px 24px;
+            border-radius: 20px;
+            width: calc(100% - 40px);
+            max-width: 320px;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px var(--accent-blue-glow);
+        }
+        
+        #new-search-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px var(--accent-blue-glow);
+        }
+
+        /* Hidden input field */
+        #search-input {
+            position: absolute;
+            left: -9999px;
+            opacity: 0;
+        }
+
+        /* * ==============================================
+         * ANIMATIONS
+         * ==============================================
+        */
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-icon {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes move-stars {
+            from { background-position: 0 0; }
+            to { background-position: -10000px 5000px; }
+        }
+
+    </style>
 </head>
 <body>
 
-```
+<div class="background-stars"></div>
+
 <div class="app-container">
+    <!-- This hidden input is used to trigger the native keyboard on mobile devices -->
     <input id="search-input" type="text">
 
+    <!-- VIEW 1: The initial search prompt screen -->
     <div class="view" id="initial-view">
         <div id="search-prompt">
-            <div class="search-icon-container">
-                <div class="search-icon">🔍</div>
-                <div class="search-ripple"></div>
-            </div>
+            <div class="search-icon">🔍</div>
             <div class="text">Tap to Search</div>
         </div>
         <div id="status-bar">Connecting...</div>
     </div>
 
+    <!-- VIEW 2: The results screen, populated by JavaScript -->
     <div class="view" id="result-view">
-        <!-- Content will be injected by JavaScript -->
+        <!-- Dynamic content will be injected here -->
     </div>
 </div>
 
 <script type="module">
+    // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // IMPORTANT: Replace this with your actual Firebase project configuration
     const firebaseConfig = {
         apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
         authDomain: "vehicle-clearance.firebaseapp.com",
@@ -487,6 +368,7 @@
         appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
+    // --- Global Variables & DOM Element References ---
     let db;
     let allRows = [];
     
@@ -496,7 +378,8 @@
     const searchPrompt = document.getElementById('search-prompt');
     const statusBar = document.getElementById('status-bar');
 
-    // --- Firebase Connection ---
+    // --- Firebase Initialization & Data Sync ---
+    // This block handles connecting to Firebase and listening for real-time data updates.
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -504,60 +387,80 @@
 
         onAuthStateChanged(auth, user => {
             if (user) {
+                // User is authenticated, now listen to the 'vehicleListings' collection.
                 const listingsCollection = collection(db, 'vehicleListings');
                 onSnapshot(listingsCollection, (snapshot) => {
                     allRows = snapshot.docs.map(doc => doc.data());
                     statusBar.textContent = `Ready (${allRows.length} vehicles)`;
-                }, () => { statusBar.textContent = 'Sync Error.'; });
+                }, (error) => { 
+                    console.error("Firestore sync error:", error);
+                    statusBar.textContent = 'Sync Error.'; 
+                });
             } else {
-                signInAnonymously(auth).catch(() => { statusBar.textContent = 'Auth Error.'; });
+                // If no user, sign in anonymously.
+                signInAnonymously(auth).catch((error) => { 
+                    console.error("Anonymous auth error:", error);
+                    statusBar.textContent = 'Auth Error.'; 
+                });
             }
         });
     } catch (err) {
+        console.error("Firebase init error:", err);
         statusBar.textContent = 'Connection Failed.';
     }
 
-    // --- UI Logic ---
+    // --- UI Interaction & Logic ---
+
+    // Function to switch to the initial search view
     function showInitialView() {
         resultView.style.display = 'none';
         initialView.style.display = 'flex';
     }
 
+    // Function to switch to the results view
     function showResultView() {
         initialView.style.display = 'none';
         resultView.style.display = 'flex';
     }
 
+    // Focuses the hidden input to bring up the keyboard
     function triggerSearch() {
         searchInput.value = ''; 
         searchInput.focus();
     }
 
+    // Event listener for the main search prompt button
     searchPrompt.addEventListener('click', triggerSearch);
 
+    // Event listener for when the user finishes typing in the hidden input
     searchInput.addEventListener('change', () => {
-        const term = searchInput.value.trim();
+        const term = searchInput.value.trim().toUpperCase();
         if (term.length > 0) {
-            applyFilter(term);
+            performSearch(term);
         }
     });
 
-    function applyFilter(term) {
+    // Core search logic
+    function performSearch(term) {
+        // Sanitize term to only include numbers for comparison
         const numericTerm = term.replace(/\D/g, '');
         if (numericTerm.length === 0) return;
 
+        // Find the first vehicle where the number starts with the searched term
         const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
         
-        renderResult(result, numericTerm);
+        renderResult(result, term);
         showResultView();
     }
 
+    // Renders the result cards into the result view
     function renderResult(result, term) {
-        let cardHTML = '';
+        let resultHTML = '';
         if (result) {
-            cardHTML = `
+            // A vehicle was found
+            resultHTML = `
                 <div class="result-plate cleared">
-                    <span class="plate-text cleared">${result.vehicleNumber}</span>
+                    <span class="plate-text">${result.vehicleNumber}</span>
                     <span class="plate-status-badge cleared">✓ CLEARED</span>
                 </div>
                 <div class="location-card">
@@ -566,9 +469,10 @@
                 </div>
             `;
         } else {
-            cardHTML = `
+            // No vehicle was found
+            resultHTML = `
                 <div class="result-plate not-found">
-                    <span class="plate-text not-found">${term}</span>
+                    <span class="plate-text">${term}</span>
                     <span class="plate-status-badge not-found">✗ NOT FOUND</span>
                 </div>
                  <div class="location-card">
@@ -577,16 +481,18 @@
                 </div>
             `;
         }
-        resultView.innerHTML = cardHTML + `<button id="new-search-btn">New Search</button>`;
+        // Add the "New Search" button and inject the HTML
+        resultView.innerHTML = resultHTML + `<button id="new-search-btn">New Search</button>`;
         
+        // Add an event listener to the newly created button
         document.getElementById('new-search-btn').addEventListener('click', () => {
             showInitialView();
-            triggerSearch();
+            // A small delay can make the UI feel smoother
+            setTimeout(triggerSearch, 100); 
         });
     }
 
 </script>
-```
 
 </body>
 </html>
