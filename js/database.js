@@ -1,10 +1,10 @@
 // js/database.js
 import { db } from './firebase.js';
-import { collection, query, where, getDocs, Timestamp, addDoc, updateDoc, doc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, query, where, getDocs, Timestamp, addDoc, updateDoc, doc, writeBatch, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showNotification } from './utils.js';
-// CORRECTED IMPORT: Changed 'showUserDashboard' to 'renderUserDashboard'
-import { renderUserDashboard, renderAuthorizedUsersList, renderAllowedLocationsList } from './render.js';
-import { signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+// The incorrect import from './render.js' has been REMOVED from this file.
+import { signInAnonymously, getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
 
 // --- GEO-FENCED ACCESS LOGIC ---
 
@@ -117,9 +117,8 @@ export const handleSecureUserLogin = async (enteredUserID) => {
         sessionStorage.setItem('accessLocation', locationCheck.locationName);
         showNotification(`Welcome! Access granted from ${locationCheck.locationName}`, "success");
         
-        // CORRECTED FUNCTION CALL
-        renderUserDashboard(auth.currentUser);
-        
+        // This triggers the onAuthStateChanged listener in main.js to render the dashboard
+        // We don't call the render function directly from here.
     } catch (error) {
         console.error("Secure login error:", error);
         showNotification(error.message, "error");
@@ -215,7 +214,6 @@ export const clearAllDatabaseData = async (button, db) => {
 };
 
 export const resetToDefaultState = async (button, db) => {
-    // Similar to clearAllDatabaseData, for now
     await clearAllDatabaseData(button, db);
 };
 
