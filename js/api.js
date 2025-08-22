@@ -1,5 +1,4 @@
 // js/api.js
-import { showNotification } from './utils.js';
 
 const GEMINI_API_KEY = ""; // Kept empty as per instructions
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
@@ -47,5 +46,5 @@ export const sendEmail = async (to, subject, htmlBody) => {
     console.log("Body (HTML):");
     console.log(htmlBody);
     console.log("--- END EMAIL SIMULATION ---");
-    showNotification(`Email notification sent to ${to}.`, "success");
+    // In a real app, this would be a fetch call to your backend/cloud function
 };
