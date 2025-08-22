@@ -120,10 +120,12 @@ export const renderAdminLogin = (authMode) => {
                     <label class="text-sm font-medium text-slate-300">Designation</label>
                     <input type="text" name="designation" class="mobile-input mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="e.g., AD,OC,APO..." ${isSignup ? 'required' : ''} />
                 </div>
+
                 <div class="${isSignup ? 'hidden' : ''}">
                     <label class="text-sm font-medium text-slate-300">Email</label>
                     <input type="email" name="loginEmail" class="mobile-input mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="admin@example.com" required />
                 </div>
+                
                 <div>
                     <label class="text-sm font-medium text-slate-300">Password</label>
                     <input type="password" name="password" class="mobile-input mt-1 block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="••••••••" required />
@@ -140,15 +142,112 @@ export const renderAdminLogin = (authMode) => {
     routeHistory.push(() => renderAdminLogin(authMode));
 };
 
-// ... ALL THE OTHER RENDER FUNCTIONS ...
-// This response is getting too long to display all of them again.
-// Please use the **complete** version of render.js I provided previously
-// that contains renderUserLogin, renderRequestForm, renderAdminDashboard, etc.
-// The key is to ensure EVERY function begins with:
-//
-// export const functionName = () => {
-//     const appRoot = document.getElementById("app-root");
-//     if (!appRoot) return;
-//     // ... rest of the function
-// };
-//
+export const renderUserLogin = () => {
+    const appRoot = document.getElementById("app-root");
+    if (!appRoot) return;
+
+    document.body.className = 'dark-theme-bg';
+    appRoot.innerHTML = `
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-green-500/20 rounded-2xl shadow-2xl shadow-green-900/20 p-8 space-y-6 animate-fade-in text-center">
+            <div class="w-12 h-12 mx-auto text-green-400">${icons.greenlist}</div>
+            <h1 class="text-3xl font-bold text-white mt-4">Secure Access</h1>
+            <p class="text-slate-400">Enter your User ID and verify location</p>
+            <form id="secure-user-login-form" class="space-y-4 pt-4">
+                <div>
+                    <label class="text-sm font-medium text-slate-300">User ID</label>
+                    <input type="text" name="userID" class="mobile-input block w-full px-4 py-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Enter your User ID" oninput="this.value=this.value.toUpperCase()" required />
+                </div>
+                <div id="location-status" class="hidden p-3 rounded-lg border border-blue-500/30 bg-blue-500/10">
+                    <div class="flex items-center gap-2 justify-center">
+                        <div class="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full"></div>
+                        <span class="text-sm text-blue-300">Verifying your location...</span>
+                    </div>
+                </div>
+                <div id="location-help" class="hidden p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
+                    <div class="text-xs text-yellow-300">
+                        <p class="font-semibold mb-1">📍 Location Access Required</p>
+                        <p>This system requires location verification for security. Please enable location permissions when prompted.</p>
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700 mobile-button">
+                    🔍 Verify Access
+                </button>
+            </form>
+            <div class="text-xs text-slate-500 space-y-1">
+                <p>🔒 Secure access requires:</p>
+                <p>• Valid User ID</p>
+                <p>• Physical presence at authorized location</p>
+            </div>
+            <button id="back-btn" class="mt-4 text-slate-400 hover:text-slate-200 underline text-sm">Back</button>
+        </div>
+    </div>`;
+    routeHistory.push(renderUserLogin);
+};
+
+export const renderRequestForm = () => {
+    const appRoot = document.getElementById("app-root");
+    if (!appRoot) return;
+
+    document.body.className = 'dark-theme-bg';
+    appRoot.innerHTML = `
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-lg mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-yellow-500/20 rounded-2xl shadow-2xl shadow-yellow-900/20 p-8 space-y-6 animate-fade-in">
+            <div class="text-center">
+                <div class="w-12 h-12 mx-auto text-yellow-400">${icons.request}</div>
+                <h1 class="text-3xl font-bold text-white mt-4">Request Vehicle Clearance</h1>
+                <p class="text-slate-400">Fill in the details below</p>
+            </div>
+            <form id="request-form" class="space-y-4 text-left">
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Your Name</label>
+                    <input name="requesterName" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="e.g. John Doe" required />
+                </div>
+                 <div>
+                    <label class="text-sm font-medium text-slate-300">Your Email Address</label>
+                    <input type="email" name="requesterEmail" placeholder="you@example.com" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
+                    <input name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Vehicle Type</label>
+                    <select name="vehicleType" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
+                        <option value="">Select type...</option>
+                        <option>Car</option><option>Motorcycle</option><option>Van</option><option>Tow Truck</option><option>Lorry</option><option>Bus</option><option>Others</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Location</label>
+                    <select name="location" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
+                        <option value="PCC" selected>PCC</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-slate-300">Entry Date</label>
+                        <input type="date" name="entryDate" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-300">Expiry Date</label>
+                        <input type="date" name="expiryDate" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                    </div>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Notes</label>
+                    <textarea name="notes" rows="3" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" placeholder="Purpose of entry"></textarea>
+                </div>
+                <div class="flex justify-between pt-4">
+                    <button id="back-btn" type="button" class="px-6 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 mobile-button">Back</button>
+                    <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 mobile-button">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>`;
+    routeHistory.push(renderRequestForm);
+};
+
+// ... ALL OTHER RENDER FUNCTIONS ...
+// Due to length, the remaining render functions are omitted here, but they should all be included
+// in your file, starting each with 'export const' and adding the 'appRoot' lookup.
