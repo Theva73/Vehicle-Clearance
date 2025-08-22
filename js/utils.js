@@ -53,7 +53,7 @@ export const formatApprovalString = (clearance) => {
         return `Approved by ${clearance.approvedByUsername} (${clearance.approvedByDesignation || 'Admin'}) on ${date} at ${time}hrs`;
     }
     return null;
-}
+};
 
 export const formatUpdateString = (clearance) => {
     if (clearance.lastUpdatedAt && clearance.lastUpdatedByUsername) {
@@ -66,7 +66,7 @@ export const formatUpdateString = (clearance) => {
         return `Last updated by ${clearance.lastUpdatedByUsername} (${clearance.lastUpdatedByDesignation || 'Admin'}) on ${date} at ${time}hrs`;
     }
     return null;
-}
+};
 
 export const formatApprovalHistory = (clearance) => {
     if (!clearance.approvalHistory || clearance.approvalHistory.length === 0) {
@@ -82,7 +82,7 @@ export const formatApprovalHistory = (clearance) => {
         const actionText = entry.action.charAt(0).toUpperCase() + entry.action.slice(1);
         return `${actionText} by ${entry.byUsername} (${entry.byDesignation}) on ${date} at ${time}hrs`;
     }).join('<br>');
-}
+};
 
 export const toISODate = d => d ? new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split("T")[0] : "";
 
