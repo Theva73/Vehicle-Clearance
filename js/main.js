@@ -30,11 +30,8 @@ onAuthStateChanged(auth, async (user) => {
 
     if (user && !user.isAnonymous) {
         // ... (logic for authenticated admin user)
-        // This will call render functions from the render.js module
-        // Example: render.renderAdminDashboard(currentAdminProfile);
     } else if (user && user.isAnonymous && isValidSecureSession()) {
         // ... (logic for secure user session)
-        // Example: render.showUserDashboard(user);
     } else {
         sessionStorage.removeItem('isDashboardLogin');
         sessionStorage.removeItem('currentUserID');
@@ -48,32 +45,24 @@ document.body.addEventListener("click", async (e) => {
     const button = e.target.closest('button');
     if (!button) return;
 
-    // --- NEWLY ADDED LOGIC FOR LANDING PAGE BUTTONS ---
-
     if (button.id === "request-btn") {
         console.log("Request Clearance button clicked!");
-        // NOTE: You will need a function in render.js to show the request form
-        // For example: render.renderRequestForm();
-        showNotification("Request form not implemented yet.", "info"); // Placeholder
+        render.renderRequestForm(); // UPDATED: Calls the new render function
         return;
     }
 
     if (button.id === "admin-btn") {
         console.log("Admin button clicked!");
-        render.renderAdminLogin("login"); // Navigates to the admin login screen
+        render.renderAdminLogin("login");
         return;
     }
 
     if (button.id === "user-btn") {
         console.log("Green List button clicked!");
-        // NOTE: You will need a function in render.js to show the user/greenlist page
-        // For example: render.renderUserLogin();
-        showNotification("Green List page not implemented yet.", "info"); // Placeholder
+        render.renderUserLogin(); // UPDATED: Calls the new render function
         return;
     }
     
-    // --- EXISTING BUTTON LOGIC ---
-
     if (button.id === "back-btn") {
         e.preventDefault();
         render.goBack();
@@ -86,28 +75,43 @@ document.body.addEventListener("click", async (e) => {
         render.renderAdminLogin(authMode); 
         return; 
     }
-    // ... etc. for all other buttons
 });
 
 // --- Global Event Listener (for form submissions) ---
 document.body.addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = e.target;
-    // ... (All your form submission logic goes here)
-    // Example for auth form:
+    
     if (form.id === "auth-form") {
         const { email, password, inviteCode, username, designation } = getFormObj(form);
         if (authMode === "login") {
-            // ... login logic
+            // ... login logic here
         } else {
-            // ... signup logic
+            // ... signup logic here
+        }
+    } 
+    // --- NEW: LOGIC TO HANDLE THE NEW REQUEST FORM ---
+    else if (form.id === "request-form") {
+        const formData = getFormObj(form);
+        console.log("New Request Submitted:", formData);
+        // TODO: Add logic to save this data to your 'clearanceRequests' collection in Firestore
+        showNotification("Request submitted successfully! Awaiting approval.", "success");
+        render.renderLandingPage(); // Go back to home page after submission
+    }
+    // --- NEW: LOGIC TO HANDLE THE USER/GREEN LIST LOGIN FORM ---
+    else if (form.id === "user-login-form") {
+        const { accessCode } = getFormObj(form);
+        console.log("User login attempt with code:", accessCode);
+        // TODO: Add logic to verify the access code
+        if (accessCode === "YOUR_CODE_HERE") { // Replace with your actual code check
+             showNotification("Access granted!", "success");
+            // e.g., render.renderGreenListPage();
+        } else {
+            showNotification("Invalid access code.", "error");
         }
     }
-    // ... etc. for all other forms
 });
 
 
 // --- Initial Load ---
-// Any setup that needs to run on page load, like initializing voice search
-// can be called here.
 render.renderLandingPage();
