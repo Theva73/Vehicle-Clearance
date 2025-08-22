@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vehicle Listings (Firebase)</title>
+<title>Vehicle Listings - Apple Watch Enhanced</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -22,546 +23,916 @@
     --purple: #8b5cf6;
     --purple-dark: #6d28d9;
   }
-  * { box-sizing: border-box; }
-  html, body {
-    height: 100%;
-    overflow: hidden;
-  }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-  .wrap {
-    max-width: 780px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-  .sticky-header {
-    flex-shrink: 0;
-    padding: 20px 14px 16px 14px;
-    background-color: var(--bg);
-  }
-  .scroll-content {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 20px 14px 80px 14px;
-  }
-  .scroll-content.is-centered {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-   .header-left {
-      flex-grow: 1;
-  }
-  h1 {
-    font-size: clamp(20px, 4vw, 28px);
-    margin: 0;
-    font-weight: 800;
-  }
-  .subtitle {
-    color: var(--muted);
-    font-size: 14px;
-    margin-top: 4px;
-  }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--outline);
-    border-radius: 16px;
-    padding: 16px;
-    position: relative; 
-  }
-  .row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .input {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    background: #0f172a;
-    border: 1px solid #475569;
-    border-radius: 12px;
-    padding: 12px 14px;
-  }
-  .input input {
-    flex: 1;
-    border: 0;
-    background: transparent;
-    outline: none;
-    color: var(--text);
-    font-size: 16px !important;
-  }
-  .input input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--purple);
-  }
-  .btn {
-    border: 0;
-    border-radius: 12px;
-    padding: 12px 16px;
-    background: #334155;
-    color: var(--text);
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.2s;
-    white-space: nowrap;
-  }
-  .btn:hover {
-    background: #475569;
-  }
-  .btn.mic {
-    background: var(--purple-dark);
-    padding: 14px 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 16px;
-  }
-  .btn.mic:hover {
-    background: #5b21b6;
-  }
-  .btn.mic.listening {
-    background: var(--red);
-    animation: pulse-ring 1.5s infinite;
-  }
-  .btn.primary {
-    background-color: var(--purple-dark);
-  }
-  .btn.primary:hover {
-    background-color: #5b21b6;
-  }
-  .btn.success {
-    background-color: var(--accent-dark);
-  }
-  .btn.success:hover {
-    background-color: #15803d;
-  }
-  .btn.danger {
-      background-color: var(--red-dark);
-      color: #fff;
-  }
-  .btn.danger:hover {
-      background-color: #b91c1c;
-  }
-  #clearSearchBtn {
-      font-weight: bold;
-      color: white;
-  }
-  .list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
-  }
-  .hint {
-    color: var(--muted);
-    font-size: 12px;
-    text-align: center;
-  }
-  .notification {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 12px 24px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 600;
-    z-index: 1001;
-    opacity: 0;
-    transition: opacity 0.3s, transform 0.3s;
-    pointer-events: none;
-  }
-  .notification.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-20px);
-  }
-  .notification.success { background-color: var(--accent-dark); }
-  .notification.error { background-color: var(--red); }
-  .notification.info { background-color: var(--yellow); }
 
-  .list-item {
-    background: var(--panel);
-    border: 1px solid var(--outline);
-    border-radius: 12px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: background-color 0.2s;
-    width: 100%;
-    max-width: 100%;
-    position: relative;
-    z-index: 1;
-  }
-  .list-item.dropdown-active {
-    z-index: 2;
-  }
-  .list-item-content {
-    flex-grow: 1;
-  }
-  .list-item-plate {
-    font-family: monospace;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--text);
-  }
-  .list-item-location {
-    font-size: 0.9rem;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-  .list-item-location.foyer {
-    color: var(--red);
-    font-weight: 700;
-  }
-  .list-item-badge {
-    padding: 5px 10px;
-    border-radius: 9999px;
-    font-weight: 600;
-    font-size: 12px;
-  }
-  .list-item-badge.success {
-    background: #14532d;
-    color: #bbf7d0;
-  }
-  .list-item-badge.error {
-    background: var(--red-dark);
-    color: white;
-  }
-  
-  .list-item-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+- { box-sizing: border-box; }
 
-  /* Dropdown Styles */
-  .dropdown-container {
-    position: relative;
-  }
-  .more-btn {
-    background: none;
-    border: none;
-    border-radius: 50%;
-    padding: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    transition: background-color 0.2s;
-  }
-  .more-btn:hover {
-    background-color: #334155;
-    color: var(--text);
-  }
-  .more-btn svg {
-    width: 20px;
-    height: 20px;
-  }
-  .dropdown-menu {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background-color: #334155;
-    border: 1px solid var(--outline);
-    border-radius: 8px;
-    padding: 8px;
-    z-index: 10;
-    min-width: 120px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  }
-  .dropdown-menu.show {
-    display: block;
-  }
-  .dropdown-item {
-    display: block;
-    width: 100%;
-    text-align: left;
-    background: none;
-    border: none;
-    color: var(--text);
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    white-space: nowrap;
-  }
-  .dropdown-item:hover {
-    background-color: #475569;
-  }
-  .dropdown-item.danger {
-    color: var(--red);
-  }
-  .dropdown-item.danger:hover {
-    background-color: var(--red-dark);
-    color: white;
-  }
+html, body {
+height: 100%;
+margin: 0;
+overflow: hidden;
+}
 
-  /* --- NEW: Action Toggler Styles --- */
-  #actions-panel {
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease-out, opacity 0.3s ease-in, margin-top 0.4s ease-out;
-    margin-top: 0;
-  }
-  #actions-panel.open {
-    max-height: 300px; /* Adjust if more buttons are added */
-    opacity: 1;
-    margin-top: 12px;
-  }
-  #toggleActionsBtn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background-color: var(--purple-dark);
-  }
-  #toggleActionsBtn:hover {
-    background-color: #5b21b6;
-  }
-  #toggleActionsBtn .icon {
-    transition: transform 0.3s ease-in-out;
-  }
-  #toggleActionsBtn.open .icon {
-    transform: rotate(45deg);
-  }
+/* Apple Watch Ultra optimizations */
+@media screen and (max-width: 500px) {
+html, body {
+overflow: auto;
+height: auto;
+}
+}
 
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘Inter’, system-ui, sans-serif;
+}
 
-  .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-  @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .car-plate-display {
-      position: relative;
-      overflow: hidden;
-      border-radius: 1rem;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 1rem;
-      width: 100%;
-      max-width: 100%;
-      margin: 0 auto;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.1);
-  }
-  .car-plate-display-cleared {
-      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
-      border: 4px solid #fbbf24;
-      box-shadow: var(--shadow-cleared);
-  }
-  .car-plate-display-not-found {
-      background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #7f1d1d 100%);
-      border: 4px solid var(--red-dark);
-      box-shadow: var(--shadow-not-found);
-  }
-  .car-plate-display::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      animation: shine 3s infinite;
-  }
-  .car-plate-text {
-      font-family: 'Courier New', monospace;
-      font-weight: 900;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-      letter-spacing: 4px;
-      color: white !important;
-      font-size: 2.5rem;
-      flex-grow: 1;
-      text-align: center;
-  }
-  .plate-status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-  .plate-status-badge.success {
-    background-color: var(--accent-dark);
-    color: white;
-  }
-  .plate-status-badge.error {
-    background-color: var(--red-dark);
-    color: white;
-  }
-  .search-highlight {
-      color: white !important;
-      background: none !important;
-      animation: glow 2s ease-in-out infinite alternate;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-  }
-  .exit-btn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--muted);
-    padding: 4px;
-    border-radius: 50%;
-    transition: background-color 0.2s, color 0.2s;
-    z-index: 10;
-  }
-  .exit-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--text);
-  }
-  .exit-btn svg {
-    width: 28px;
-    height: 28px;
-    display: block;
-  }
-  @keyframes shine {
-      0% { left: -100%; }
-      100% { left: 100%; }
-  }
-  @keyframes glow {
-      from { filter: drop-shadow(0 0 5px #fbbf24); }
-      to { filter: drop-shadow(0 0 15px #f59e0b); }
-  }
-  @keyframes glow-red {
-      from { filter: drop-shadow(0 0 5px var(--red)); }
-      to { filter: drop-shadow(0 0 15px var(--red-dark)); }
-  }
+.wrap {
+max-width: 780px;
+margin: 0 auto;
+display: flex;
+flex-direction: column;
+height: 100vh;
+}
 
-  /* Modal Styles */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.6);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-    animation: fadeInModal 0.2s ease-out forwards;
-  }
-  .modal-overlay.visible {
-    display: flex;
-  }
-  .modal-panel {
-    background-color: var(--bg);
-    border: 1px solid var(--outline);
-    border-radius: 16px;
-    padding: 24px;
-    width: 90%;
-    max-width: 600px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  }
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  .modal-header h2 {
-    margin: 0;
-    font-size: 20px;
-  }
-  .close-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: var(--muted);
-    cursor: pointer;
-  }
-  .modal-content .form-group {
-    margin-bottom: 16px;
-  }
-  .modal-content label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: var(--muted);
-  }
-  .modal-content .modal-input {
-    width: 100%;
-    background: var(--panel);
-    border: 1px solid #475569;
-    border-radius: 12px;
-    padding: 12px 14px;
-    color: var(--text);
-    font-size: 16px;
-    text-transform: uppercase;
-  }
-  .modal-footer {
-    margin-top: 24px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-  }
-  .modal-content .api-key-input, .modal-content .prompt-area {
-    background: var(--panel);
-    border: 1px solid #475569;
-    border-radius: 12px;
-    padding: 12px 14px;
-  }
-  .modal-content .api-key-input input, .modal-content .prompt-area textarea {
-    width: 100%;
-    border: 0;
-    background: transparent;
-    outline: none;
-    color: var(--text);
-    font-size: 16px;
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-  .modal-content .prompt-area {
-    margin-top: 12px;
-  }
-  .modal-content .prompt-area textarea {
-    height: 200px;
-    resize: vertical;
-    font-size: 14px;
-  }
-  @keyframes fadeInModal {
-      from { opacity: 0; }
-      to { opacity: 1; }
-  }
-  @keyframes pulse-ring {
-    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-  }
+@media screen and (max-width: 500px) {
+.wrap {
+height: auto;
+min-height: 100vh;
+}
+}
+
+.sticky-header {
+flex-shrink: 0;
+padding: 16px 14px;
+background-color: var(–bg);
+}
+
+.scroll-content {
+flex-grow: 1;
+overflow-y: auto;
+padding: 20px 14px 80px 14px;
+}
+
+@media screen and (max-width: 500px) {
+.scroll-content {
+overflow-y: visible;
+}
+}
+
+.scroll-content.is-centered {
+display: flex;
+flex-direction: column;
+justify-content: center;
+}
+
+/* Enhanced Weather Panel */
+.weather-panel {
+background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
+border: 2px solid #3b82f6;
+border-radius: 20px;
+padding: 16px;
+margin-bottom: 16px;
+position: relative;
+overflow: hidden;
+box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+}
+
+.weather-panel::before {
+content: ‘’;
+position: absolute;
+top: -50%;
+left: -50%;
+width: 200%;
+height: 200%;
+background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+animation: weatherGlow 6s ease-in-out infinite alternate;
+}
+
+.weather-content {
+position: relative;
+z-index: 2;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.weather-main {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.weather-icon {
+font-size: 2.5rem;
+filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+animation: iconFloat 3s ease-in-out infinite;
+}
+
+.weather-temp {
+font-size: 3rem;
+font-weight: 800;
+color: white;
+text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.weather-status {
+color: rgba(255,255,255,0.9);
+font-weight: 600;
+font-size: 1.1rem;
+}
+
+.weather-forecast {
+display: flex;
+flex-direction: column;
+gap: 8px;
+text-align: right;
+}
+
+.forecast-item {
+display: flex;
+align-items: center;
+gap: 8px;
+justify-content: flex-end;
+color: rgba(255,255,255,0.8);
+font-size: 0.9rem;
+}
+
+.forecast-temp {
+font-weight: 600;
+min-width: 35px;
+}
+
+.forecast-dot {
+width: 12px;
+height: 12px;
+border-radius: 50%;
+background: linear-gradient(45deg, #f59e0b, #ef4444);
+box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+animation: dotPulse 2s ease-in-out infinite;
+}
+
+.forecast-dot.green { background: linear-gradient(45deg, #22c55e, #16a34a); }
+.forecast-dot.yellow { background: linear-gradient(45deg, #f59e0b, #d97706); }
+.forecast-dot.red { background: linear-gradient(45deg, #ef4444, #dc2626); }
+
+.forecast-time {
+font-size: 0.8rem;
+opacity: 0.7;
+}
+
+/* Header */
+header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
+}
+
+.header-left {
+flex-grow: 1;
+}
+
+h1 {
+font-size: clamp(20px, 4vw, 28px);
+margin: 0;
+font-weight: 800;
+}
+
+.subtitle {
+color: var(–muted);
+font-size: 14px;
+margin-top: 4px;
+}
+
+/* Enhanced Search Panel */
+.search-panel {
+background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+border: 2px solid var(–purple);
+border-radius: 20px;
+padding: 20px;
+position: relative;
+overflow: hidden;
+box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
+}
+
+.search-panel::before {
+content: ‘’;
+position: absolute;
+top: 0;
+left: -100%;
+width: 100%;
+height: 100%;
+background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+animation: searchSweep 4s infinite;
+}
+
+.search-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 16px;
+position: relative;
+z-index: 2;
+}
+
+.search-title {
+font-size: 1.2rem;
+font-weight: 700;
+color: var(–text);
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.search-time {
+color: var(–muted);
+font-size: 0.9rem;
+font-weight: 500;
+}
+
+.vehicle-count-badge {
+background: linear-gradient(135deg, var(–purple), var(–purple-dark));
+color: white;
+padding: 4px 12px;
+border-radius: 12px;
+font-size: 0.8rem;
+font-weight: 600;
+box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+/* Buttons and Inputs */
+.row {
+display: flex;
+gap: 12px;
+flex-wrap: wrap;
+align-items: center;
+position: relative;
+z-index: 2;
+}
+
+.input {
+flex: 1;
+display: flex;
+align-items: center;
+background: rgba(15, 23, 42, 0.8);
+border: 2px solid #475569;
+border-radius: 12px;
+padding: 12px 14px;
+backdrop-filter: blur(10px);
+transition: all 0.3s ease;
+}
+
+.input:focus-within {
+border-color: var(–purple);
+box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.input input {
+flex: 1;
+border: 0;
+background: transparent;
+outline: none;
+color: var(–text);
+font-size: 16px !important;
+}
+
+.btn {
+border: 0;
+border-radius: 12px;
+padding: 12px 16px;
+background: #334155;
+color: var(–text);
+cursor: pointer;
+font-weight: 600;
+transition: all 0.3s ease;
+white-space: nowrap;
+position: relative;
+overflow: hidden;
+}
+
+.btn::before {
+content: ‘’;
+position: absolute;
+top: 0;
+left: -100%;
+width: 100%;
+height: 100%;
+background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+left: 100%;
+}
+
+.btn:hover {
+background: #475569;
+transform: translateY(-1px);
+box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.btn.mic {
+background: linear-gradient(135deg, var(–purple-dark), var(–purple));
+padding: 14px 18px;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+font-size: 16px;
+box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+}
+
+.btn.mic:hover {
+background: linear-gradient(135deg, #5b21b6, var(–purple-dark));
+box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+.btn.mic.listening {
+background: linear-gradient(135deg, var(–red), var(–red-dark));
+animation: pulse-ring 1.5s infinite;
+box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.btn.primary {
+background: linear-gradient(135deg, var(–purple-dark), var(–purple));
+box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+}
+
+.btn.primary:hover {
+background: linear-gradient(135deg, #5b21b6, var(–purple-dark));
+box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+}
+
+.btn.success {
+background: linear-gradient(135deg, var(–accent-dark), var(–accent));
+box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2);
+}
+
+.btn.success:hover {
+background: linear-gradient(135deg, #15803d, var(–accent-dark));
+box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
+}
+
+.btn.danger {
+background: linear-gradient(135deg, var(–red-dark), var(–red));
+color: #fff;
+box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+}
+
+.btn.danger:hover {
+background: linear-gradient(135deg, #b91c1c, var(–red-dark));
+box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+}
+
+.settings-btn {
+background: linear-gradient(135deg, var(–purple-dark), var(–purple));
+border: none;
+border-radius: 12px;
+padding: 12px;
+cursor: pointer;
+color: white;
+transition: all 0.3s ease;
+box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+position: relative;
+overflow: hidden;
+}
+
+.settings-btn:hover {
+background: linear-gradient(135deg, #5b21b6, var(–purple-dark));
+transform: translateY(-2px) rotate(90deg);
+box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+/* Actions Panel */
+#actions-panel {
+max-height: 0;
+opacity: 0;
+overflow: hidden;
+transition: max-height 0.4s ease-out, opacity 0.3s ease-in, margin-top 0.4s ease-out;
+margin-top: 0;
+position: relative;
+z-index: 2;
+}
+
+#actions-panel.open {
+max-height: 300px;
+opacity: 1;
+margin-top: 12px;
+}
+
+#toggleActionsBtn {
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+background: linear-gradient(135deg, var(–purple-dark), var(–purple));
+box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+}
+
+#toggleActionsBtn:hover {
+background: linear-gradient(135deg, #5b21b6, var(–purple-dark));
+box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+}
+
+#toggleActionsBtn .icon {
+transition: transform 0.3s ease-in-out;
+}
+
+#toggleActionsBtn.open .icon {
+transform: rotate(45deg);
+}
+
+/* List Styles */
+.list {
+display: flex;
+flex-direction: column;
+gap: 10px;
+align-items: center;
+justify-content: flex-start;
+width: 100%;
+}
+
+.list-item {
+background: linear-gradient(135deg, var(–panel) 0%, #334155 100%);
+border: 1px solid var(–outline);
+border-radius: 12px;
+padding: 14px 16px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+transition: all 0.3s ease;
+width: 100%;
+position: relative;
+z-index: 1;
+box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.list-item:hover {
+transform: translateY(-2px);
+box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+border-color: var(–purple);
+}
+
+.list-item-content {
+flex-grow: 1;
+}
+
+.list-item-plate {
+font-family: monospace;
+font-weight: 700;
+font-size: 1.1rem;
+color: var(–text);
+}
+
+.list-item-location {
+font-size: 0.9rem;
+color: var(–muted);
+margin-top: 4px;
+}
+
+.list-item-location.foyer {
+color: var(–red);
+font-weight: 700;
+}
+
+.list-item-badge {
+padding: 5px 10px;
+border-radius: 9999px;
+font-weight: 600;
+font-size: 12px;
+}
+
+.list-item-badge.success {
+background: linear-gradient(135deg, #14532d, var(–accent-dark));
+color: #bbf7d0;
+box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+}
+
+.list-item-right {
+display: flex;
+align-items: center;
+gap: 16px;
+}
+
+/* Vehicle Display */
+.car-plate-display {
+position: relative;
+overflow: hidden;
+border-radius: 1rem;
+text-align: center;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 0.75rem 1rem;
+width: 100%;
+margin: 0 auto;
+box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.car-plate-display-cleared {
+background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
+border: 4px solid #fbbf24;
+box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
+}
+
+.car-plate-display-not-found {
+background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #7f1d1d 100%);
+border: 4px solid var(–red-dark);
+box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
+}
+
+.car-plate-display::before {
+content: ‘’;
+position: absolute;
+top: 0;
+left: -100%;
+width: 100%;
+height: 100%;
+background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+animation: shine 3s infinite;
+}
+
+.car-plate-text {
+font-family: ‘Courier New’, monospace;
+font-weight: 900;
+text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+letter-spacing: 4px;
+color: white !important;
+font-size: 2.5rem;
+flex-grow: 1;
+text-align: center;
+}
+
+.plate-status-badge {
+display: inline-flex;
+align-items: center;
+padding: 0.5rem 1rem;
+border-radius: 9999px;
+font-size: 0.875rem;
+font-weight: 700;
+flex-shrink: 0;
+box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.plate-status-badge.success {
+background: linear-gradient(135deg, var(–accent-dark), var(–accent));
+color: white;
+}
+
+.plate-status-badge.error {
+background: linear-gradient(135deg, var(–red-dark), var(–red));
+color: white;
+}
+
+.search-highlight {
+color: white !important;
+background: none !important;
+animation: glow 2s ease-in-out infinite alternate;
+text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+.exit-btn {
+position: absolute;
+top: 12px;
+right: 12px;
+background: rgba(0,0,0,0.5);
+border: none;
+cursor: pointer;
+color: var(–muted);
+padding: 8px;
+border-radius: 50%;
+transition: all 0.3s ease;
+z-index: 10;
+backdrop-filter: blur(10px);
+}
+
+.exit-btn:hover {
+background: rgba(255, 255, 255, 0.2);
+color: var(–text);
+transform: scale(1.1);
+}
+
+.exit-btn svg {
+width: 28px;
+height: 28px;
+display: block;
+}
+
+/* Dropdown */
+.dropdown-container {
+position: relative;
+}
+
+.more-btn {
+background: none;
+border: none;
+border-radius: 50%;
+padding: 6px;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+color: var(–muted);
+transition: all 0.3s ease;
+}
+
+.more-btn:hover {
+background-color: #334155;
+color: var(–text);
+transform: scale(1.1);
+}
+
+.more-btn svg {
+width: 20px;
+height: 20px;
+}
+
+.dropdown-menu {
+display: none;
+position: absolute;
+top: 100%;
+right: 0;
+background: linear-gradient(135deg, #334155, #475569);
+border: 1px solid var(–outline);
+border-radius: 8px;
+padding: 8px;
+z-index: 10;
+min-width: 120px;
+box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+backdrop-filter: blur(10px);
+}
+
+.dropdown-menu.show {
+display: block;
+animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.dropdown-item {
+display: block;
+width: 100%;
+text-align: left;
+background: none;
+border: none;
+color: var(–text);
+padding: 8px 12px;
+border-radius: 6px;
+cursor: pointer;
+font-size: 14px;
+white-space: nowrap;
+transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+background-color: #475569;
+transform: translateX(2px);
+}
+
+.dropdown-item.danger {
+color: var(–red);
+}
+
+.dropdown-item.danger:hover {
+background-color: var(–red-dark);
+color: white;
+}
+
+/* Modals */
+.modal-overlay {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0,0,0,0.6);
+z-index: 1000;
+justify-content: center;
+align-items: center;
+backdrop-filter: blur(5px);
+}
+
+.modal-overlay.visible {
+display: flex;
+animation: fadeInModal 0.2s ease-out;
+}
+
+.modal-panel {
+background: linear-gradient(135deg, var(–bg), var(–panel));
+border: 2px solid var(–outline);
+border-radius: 16px;
+padding: 24px;
+width: 90%;
+max-width: 600px;
+box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+backdrop-filter: blur(20px);
+}
+
+.modal-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
+}
+
+.modal-header h2 {
+margin: 0;
+font-size: 20px;
+}
+
+.close-btn {
+background: none;
+border: none;
+font-size: 24px;
+color: var(–muted);
+cursor: pointer;
+transition: all 0.3s ease;
+padding: 4px;
+border-radius: 50%;
+}
+
+.close-btn:hover {
+color: var(–text);
+background: rgba(255,255,255,0.1);
+transform: scale(1.1);
+}
+
+.form-group {
+margin-bottom: 16px;
+}
+
+.form-group label {
+display: block;
+margin-bottom: 8px;
+font-size: 14px;
+color: var(–muted);
+}
+
+.modal-input {
+width: 100%;
+background: var(–panel);
+border: 2px solid #475569;
+border-radius: 12px;
+padding: 12px 14px;
+color: var(–text);
+font-size: 16px;
+text-transform: uppercase;
+transition: all 0.3s ease;
+}
+
+.modal-input:focus {
+border-color: var(–purple);
+box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+outline: none;
+}
+
+.modal-footer {
+margin-top: 24px;
+display: flex;
+justify-content: flex-end;
+gap: 12px;
+}
+
+.api-key-input, .prompt-area {
+background: var(–panel);
+border: 2px solid #475569;
+border-radius: 12px;
+padding: 12px 14px;
+transition: all 0.3s ease;
+}
+
+.api-key-input:focus-within, .prompt-area:focus-within {
+border-color: var(–purple);
+box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.api-key-input input, .prompt-area textarea {
+width: 100%;
+border: 0;
+background: transparent;
+outline: none;
+color: var(–text);
+font-size: 16px;
+font-family: ‘Inter’, system-ui, sans-serif;
+}
+
+.prompt-area {
+margin-top: 12px;
+}
+
+.prompt-area textarea {
+height: 200px;
+resize: vertical;
+font-size: 14px;
+}
+
+/* Notifications */
+.notification {
+position: fixed;
+bottom: 20px;
+left: 50%;
+transform: translateX(-50%);
+padding: 12px 24px;
+border-radius: 8px;
+color: white;
+font-weight: 600;
+z-index: 1001;
+opacity: 0;
+transition: opacity 0.3s, transform 0.3s;
+pointer-events: none;
+}
+
+.notification.show {
+opacity: 1;
+transform: translateX(-50%) translateY(-20px);
+}
+
+.notification.success { background-color: var(–accent-dark); }
+.notification.error { background-color: var(–red); }
+.notification.info { background-color: var(–yellow); }
+
+.hint {
+color: var(–muted);
+font-size: 12px;
+text-align: center;
+}
+
+.animate-fade-in {
+animation: fadeIn 0.3s ease-out forwards;
+}
+
+.card {
+background: var(–panel);
+border: 1px solid var(–outline);
+border-radius: 16px;
+padding: 16px;
+position: relative;
+}
+
+/* Animations */
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInModal {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+@keyframes pulse-ring {
+0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+@keyframes shine {
+0% { left: -100%; }
+100% { left: 100%; }
+}
+
+@keyframes glow {
+from { filter: drop-shadow(0 0 5px #fbbf24); }
+to { filter: drop-shadow(0 0 15px #f59e0b); }
+}
+
+@keyframes glow-red {
+from { filter: drop-shadow(0 0 5px var(–red)); }
+to { filter: drop-shadow(0 0 15px var(–red-dark)); }
+}
+
+@keyframes weatherGlow {
+from { transform: rotate(0deg) scale(1); }
+to { transform: rotate(180deg) scale(1.05); }
+}
+
+@keyframes iconFloat {
+0%, 100% { transform: translateY(0px); }
+50% { transform: translateY(-5px); }
+}
+
+@keyframes dotPulse {
+0%, 100% { transform: scale(1); opacity: 1; }
+50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+@keyframes searchSweep {
+0% { left: -100%; }
+50% { left: 100%; }
+100% { left: -100%; }
+}
+
+@keyframes dropdownFadeIn {
+from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 </style>
 </head>
 <body>
 
   <!-- Settings Modal -->
+
   <div id="settingsModal" class="modal-overlay">
     <div class="modal-panel">
       <div class="modal-header">
@@ -582,6 +953,7 @@
   </div>
 
   <!-- Add/Edit Vehicle Modal -->
+
   <div id="vehicleModal" class="modal-overlay">
     <div class="modal-panel">
       <form id="vehicleForm">
@@ -609,6 +981,7 @@
   </div>
 
   <!-- Confirmation Modal -->
+
   <div id="confirmModal" class="modal-overlay">
     <div class="modal-panel">
         <div class="modal-header">
@@ -624,69 +997,110 @@
     </div>
   </div>
 
-
   <div class="wrap">
     <div class="sticky-header">
-      <header>
-        <div class="header-left">
-          <h1>Vehicle Listings</h1>
-          <div class="subtitle">Synced with Master Database</div>
-        </div>
-        <button id="settingsBtn" class="settings-btn" title="API Settings">
-         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-            <path d="M19.43,12.98c0.04-0.32,0.07-0.64,0.07-0.98s-0.03-0.66-0.07-0.98l2.11-1.65c0.19-0.15,0.24-0.42,0.12-0.64l-2-3.46 c-0.12-0.22-0.39-0.3-0.61-0.22l-2.49,1c-0.52-0.4-1.08-0.73-1.69-0.98l-0.38-2.65C14.46,2.18,14.25,2,14,2h-4 c-0.25,0-0.46,0.18-0.49,0.42L9.13,5.07c-0.61,0.25-1.17,0.59-1.69,0.98l-2.49-1c-0.23-0.09-0.49,0-0.61,0.22l-2,3.46 c-0.13,0.22-0.07,0.49,0.12,0.64l2.11,1.65C4.57,11.34,4.54,11.66,4.54,12s0.03,0.66,0.07,0.98l-2.11,1.65 c-0.19,0.15-0.24-0.42-0.12,0.64l2,3.46c0.12,0.22,0.39,0.3,0.61,0.22l2.49-1c0.52,0.4,1.08,0.73,1.69,0.98l0.38,2.65 C9.54,21.82,9.75,22,10,22h4c0.25,0,0.46-0.18,0.49-0.42l0.38-2.65c0.61-0.25,1.17-0.59,1.69,0.98l2.49,1 c0.23,0.09,0.49,0,0.61,0.22l2-3.46c0.12-0.22,0.07-0.49-0.12-0.64L19.43,12.98z M12,15c-1.66,0-3-1.34-3-3s1.34-3,3-3 s3,1.34,3,3S13.66,15,12,15z"/>
-          </svg>
-        </button>
-      </header>
-
-      <div class="card">
-        <!-- NEW: Action Toggler -->
-        <button class="btn" id="toggleActionsBtn">
-          <span class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          </span>
-          <span id="toggleActionsText">Actions</span>
-        </button>
-
-        <!-- NEW: Collapsible Panel for Buttons -->
-        <div id="actions-panel">
-            <div class="row">
-              <button class="btn primary" id="addVehicleBtn">Add Vehicle</button>
-              <label class="btn success">
-                <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
-                Import CSV
-              </label>
-              <label class="btn" style="background-color: var(--purple);">
-                <input id="geminiImageFile" type="file" accept="image/*" style="display:none">
-                Import with API
-              </label>
-              <button class="btn" id="exportBtn">Export CSV</button>
-              <button class="btn danger" id="clearListBtn">Clear List</button>
+      <!-- Enhanced Weather Panel -->
+      <div class="weather-panel">
+        <div class="weather-content">
+          <div class="weather-main">
+            <div class="weather-icon">🌤️</div>
+            <div>
+              <div class="weather-temp">26°</div>
+              <div class="weather-status">Overcast</div>
             </div>
+          </div>
+          <div class="weather-forecast">
+            <div class="forecast-item">
+              <span class="forecast-time">9 am</span>
+              <span class="forecast-temp">27°</span>
+              <div class="forecast-dot yellow"></div>
+            </div>
+            <div class="forecast-item">
+              <span class="forecast-time">12 pm</span>
+              <span class="forecast-temp">29°</span>
+              <div class="forecast-dot red"></div>
+            </div>
+            <div class="forecast-item">
+              <span class="forecast-time">3 pm</span>
+              <span class="forecast-temp">30°</span>
+              <div class="forecast-dot green"></div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="row" style="margin-top:12px">
-          <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
-          <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
-          <button class="btn" id="clearSearchBtn">Clear Search</button>
-        </div>
-        <div class="row" style="margin-top: 12px;">
-          <span id="count" class="subtitle" style="flex:1; text-align:left;">0 rows</span>
-        </div>
-      </div>
+```
+  <header>
+    <div class="header-left">
+      <h1>Vehicle Listings</h1>
+      <div class="subtitle">Synced with Master Database</div>
     </div>
-    
-    <div class="scroll-content">
-      <div id="list" class="list"></div>
-      <div id="empty" class="hint" style="padding: 40px 0;">
-          Connecting to database...<br>
-          If this persists, check your internet connection or firewall settings.
+    <button id="settingsBtn" class="settings-btn" title="API Settings">
+     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+        <path d="M19.43,12.98c0.04-0.32,0.07-0.64,0.07-0.98s-0.03-0.66-0.07-0.98l2.11-1.65c0.19-0.15,0.24-0.42,0.12-0.64l-2-3.46 c-0.12-0.22-0.39-0.3-0.61-0.22l-2.49,1c-0.52-0.4-1.08-0.73-1.69-0.98l-0.38-2.65C14.46,2.18,14.25,2,14,2h-4 c-0.25,0-0.46,0.18-0.49,0.42L9.13,5.07c-0.61,0.25-1.17,0.59-1.69,0.98l-2.49-1c-0.23-0.09-0.49,0-0.61,0.22l-2,3.46 c-0.13,0.22-0.07,0.49,0.12,0.64l2.11,1.65C4.57,11.34,4.54,11.66,4.54,12s0.03,0.66,0.07,0.98l-2.11,1.65 c-0.19,0.15-0.24-0.42-0.12,0.64l2,3.46c0.12,0.22,0.39,0.3,0.61,0.22l2.49-1c0.52,0.4,1.08,0.73,1.69,0.98l0.38,2.65 C9.54,21.82,9.75,22,10,22h4c0.25,0,0.46-0.18,0.49-0.42l0.38-2.65c0.61-0.25,1.17-0.59,1.69,0.98l2.49,1 c0.23,0.09,0.49,0,0.61,0.22l2-3.46c0.12-0.22,0.07-0.49-0.12-0.64L19.43,12.98z M12,15c-1.66,0-3-1.34-3-3s1.34-3,3-3 s3,1.34,3,3S13.66,15,12,15z"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Enhanced Search Panel -->
+  <div class="search-panel">
+    <div class="search-header">
+      <div class="search-title">
+        🚗 Vehicle Search
+        <span class="vehicle-count-badge" id="vehicleCountBadge">0 vehicles</span>
       </div>
+      <div class="search-time" id="currentTime">08:36</div>
     </div>
+
+    <!-- Action Toggler -->
+    <button class="btn" id="toggleActionsBtn">
+      <span class="icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </span>
+      <span id="toggleActionsText">Actions</span>
+    </button>
+
+    <!-- Collapsible Panel for Buttons -->
+    <div id="actions-panel">
+        <div class="row">
+          <button class="btn primary" id="addVehicleBtn">Add Vehicle</button>
+          <label class="btn success">
+            <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
+            Import CSV
+          </label>
+          <label class="btn" style="background: linear-gradient(135deg, var(--purple), #a855f7);">
+            <input id="geminiImageFile" type="file" accept="image/*" style="display:none">
+            Import with API
+          </label>
+          <button class="btn" id="exportBtn">Export CSV</button>
+          <button class="btn danger" id="clearListBtn">Clear List</button>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
+      <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
+      <button class="btn" id="clearSearchBtn">Clear Search</button>
+    </div>
+    <div class="row" style="margin-top: 12px;">
+      <span id="count" class="subtitle" style="flex:1; text-align:left;">0 rows</span>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-content">
+  <div id="list" class="list"></div>
+  <div id="empty" class="hint" style="padding: 40px 0;">
+      Connecting to database...<br>
+      If this persists, check your internet connection or firewall settings.
+  </div>
+</div>
+```
+
   </div>
 
 <script type="module">
-  // --- Firebase Integration ---
+  // Firebase Integration
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
   import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -712,7 +1126,28 @@
     showNotification("Could not connect to the database.", "error");
   }
 
-  // --- Voice Search Implementation ---
+  // Time Display
+  function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+    document.getElementById('currentTime').textContent = timeString;
+  }
+
+  setInterval(updateTime, 1000);
+  updateTime();
+
+  // Vehicle Count Badge Update
+  function updateVehicleCount() {
+    const badge = document.getElementById('vehicleCountBadge');
+    const count = allRows.length;
+    badge.textContent = `${count} vehicle${count !== 1 ? 's' : ''}`;
+  }
+
+  // Voice Search Implementation
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   const playBeep = (frequency = 440, duration = 100, type = 'sine') => {
       if (!audioContext) return;
@@ -844,7 +1279,7 @@
       stopVoiceSearch();
   };
 
-  // --- CSV, Gemini API, and List Management ---
+  // CSV, Gemini API, and List Management
   const API_KEY_STORAGE_KEY = 'geminiApiKey';
   let allRows = [];
   let filtered = [];
@@ -852,7 +1287,7 @@
   const emptyEl = document.getElementById('empty');
   const countEl = document.getElementById('count');
   
-  // --- Modal Elements ---
+  // Modal Elements
   const settingsModal = document.getElementById('settingsModal');
   const vehicleModal = document.getElementById('vehicleModal');
   const confirmModal = document.getElementById('confirmModal');
@@ -899,7 +1334,6 @@
       const locationHeader = headers.find(h => h.toLowerCase() === 'location');
       const vehicleNumberHeader = headers.find(h => h.toLowerCase().replace(/\s/g,'') === 'vehiclenumber');
 
-
       const newRows = [];
       for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
@@ -911,16 +1345,11 @@
       return newRows;
   }
 
-  /**
-   * Main render function for the list.
-   * Handles all UI updates for the vehicle list area.
-   */
   function render() {
     const searchTerm = searchBox.value.trim().toUpperCase();
     listEl.innerHTML = '';
     const scrollContent = document.querySelector('.scroll-content');
 
-    // --- FIX: Reset centering class on each render ---
     scrollContent.classList.remove('is-centered');
 
     if (allRows.length === 0) {
@@ -933,7 +1362,6 @@
 
     const isSingleResultView = searchTerm && (filtered.length === 1 || filtered.length === 0);
 
-    // --- FIX: Apply centering class only for single result views ---
     if (isSingleResultView) {
         scrollContent.classList.add('is-centered');
     }
@@ -1037,8 +1465,9 @@
         }).join('');
         listEl.innerHTML = listHTML;
     }
+    
+    updateVehicleCount();
   }
-
 
   function applyFilter(){
     const term = searchBox.value.trim().toUpperCase();
@@ -1048,7 +1477,6 @@
     } else {
         tempFiltered = allRows.filter(r => {
             const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
-            // --- FIX: Reverted search logic back to startsWith as requested ---
             return numericPartOfPlate.startsWith(term);
         });
     }
@@ -1067,7 +1495,7 @@
     render();
   }
   
-  // --- Gemini API Implementation ---
+  // Gemini API Implementation
   const fileToGenerativePart = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -1091,14 +1519,14 @@
 
     const apiKey = apiKeyInput.value.trim();
     if (!apiKey) {
-        showNotification('Please set your Gemini API Key in the settings panel (⚙️) first.', 'error');
+        showNotification('Please set your Gemini API Key in the settings panel first.', 'error');
         e.target.value = '';
         return;
     }
 
     const prompt = geminiPromptEl.value;
     if (!prompt) {
-        showNotification('Please enter a prompt in the settings panel (⚙️).', 'error');
+        showNotification('Please enter a prompt in the settings panel.', 'error');
         e.target.value = '';
         return;
     }
@@ -1163,7 +1591,7 @@
     }
   });
 
-  // --- CSV and Event Listener Code ---
+  // CSV and Event Listener Code
   document.getElementById('csvFile').addEventListener('change', async (e)=>{
     const file = e.target.files?.[0]; if(!file) return;
     const text = await file.text();
@@ -1221,7 +1649,7 @@
 
   micBtn.addEventListener('click', startVoiceSearch);
 
-  // --- Modal Logic ---
+  // Modal Logic
   function showConfirmModal(title, text, onConfirm) {
       document.getElementById('confirmModalTitle').textContent = title;
       document.getElementById('confirmModalText').textContent = text;
@@ -1268,7 +1696,7 @@
     });
   });
 
-  // --- Add/Edit/Delete Logic ---
+  // Add/Edit/Delete Logic
   document.getElementById('addVehicleBtn').addEventListener('click', () => {
     vehicleForm.reset();
     document.getElementById('vehicleModalTitle').textContent = 'Add Vehicle';
@@ -1339,7 +1767,7 @@
     }
   });
 
-  // --- Dropdown and Action Handling ---
+  // Dropdown and Action Handling
   document.addEventListener('click', (e) => {
     const moreBtn = e.target.closest('.more-btn');
     const dropdownItem = e.target.closest('.dropdown-item');
@@ -1370,8 +1798,7 @@
     }
   });
 
-
-  // --- Settings Modal Logic ---
+  // Settings Modal Logic
   settingsBtn.addEventListener('click', () => {
     settingsModal.classList.add('visible');
   });
@@ -1384,8 +1811,18 @@
     }
   });
 
+  // Actions Toggler Logic
+  const toggleActionsBtn = document.getElementById('toggleActionsBtn');
+  const actionsPanel = document.getElementById('actions-panel');
+  const toggleActionsText = document.getElementById('toggleActionsText');
 
-  // --- Initial setup ---
+  toggleActionsBtn.addEventListener('click', () => {
+    const isOpen = actionsPanel.classList.toggle('open');
+    toggleActionsBtn.classList.toggle('open');
+    toggleActionsText.textContent = isOpen ? 'Close' : 'Actions';
+  });
+
+  // Initial setup
   onAuthStateChanged(auth, user => {
     if (user) {
         console.log("Authenticated anonymously:", user.uid);
@@ -1407,20 +1844,9 @@
     }
   });
 
-  // --- NEW: Actions Toggler Logic ---
-  const toggleActionsBtn = document.getElementById('toggleActionsBtn');
-  const actionsPanel = document.getElementById('actions-panel');
-  const toggleActionsText = document.getElementById('toggleActionsText');
-
-  toggleActionsBtn.addEventListener('click', () => {
-    const isOpen = actionsPanel.classList.toggle('open');
-    toggleActionsBtn.classList.toggle('open');
-    toggleActionsText.textContent = isOpen ? 'Close' : 'Actions';
-  });
-
   window.addEventListener('load', () => {
-      // --- MODIFICATION FOR APPLE WATCH SCROLLING ---
-      if (navigator.userAgent.includes("Watch")) {
+      // Apple Watch Ultra scrolling optimizations
+      if (navigator.userAgent.includes("Watch") || window.screen.width <= 500) {
         document.body.style.overflow = 'auto';
         document.body.style.height = 'auto';
         
@@ -1430,9 +1856,8 @@
         const scrollContent = document.querySelector('.scroll-content');
         if (scrollContent) scrollContent.style.overflowY = 'visible';
       }
-      // --- END OF MODIFICATION ---
 
-      // Initialize voice recognition, and if it's supported, start listening.
+      // Initialize voice recognition
       if (initializeVoiceRecognition()) {
         startVoiceSearch();
       }
@@ -1455,5 +1880,6 @@ Example Output Row: GBD3945J,COURTYARD
 Please generate the full CSV data from the image now.`;
   });
 </script>
+
 </body>
 </html>
