@@ -31,9 +31,9 @@ export const formatDateLongForm = (date) => {
     if (!date) return "N/A";
     const d = date instanceof Date ? date : date.toDate();
     return d.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
     });
 };
 
@@ -72,7 +72,6 @@ export const formatApprovalHistory = (clearance) => {
     if (!clearance.approvalHistory || clearance.approvalHistory.length === 0) {
         return '';
     }
-    
     return clearance.approvalHistory.map(entry => {
         const date = formatDate(entry.timestamp);
         const time = entry.timestamp.toDate().toLocaleTimeString('en-GB', { 
@@ -112,5 +111,5 @@ export const parseLocalDate = (dateString) => {
 
 export const isValidSecureSession = () => {
     return sessionStorage.getItem('isDashboardLogin') === 'true' &&
-    sessionStorage.getItem('currentUserID') !== null;
+           sessionStorage.getItem('currentUserID') !== null;
 };
