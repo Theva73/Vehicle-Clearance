@@ -14,6 +14,7 @@ export const goBack = () => {
 };
 
 export const renderLandingPage = (options = {}) => {
+    // ... (This function remains unchanged, no need to copy it again)
     const { trackingResultHTML = "", vehicleNumber = "" } = options;
     document.body.className = 'landing-solid';
 
@@ -82,10 +83,8 @@ export const renderLandingPage = (options = {}) => {
     routeHistory = [];
 };
 
-// ... (Continue with all other render functions: renderAdminLogin, renderUserLogin, etc.)
-// Make sure to export each one.
-// Example:
 export const renderAdminLogin = (authMode) => {
+    // ... (This function also remains unchanged)
     document.body.className = 'dark-theme-bg';
     const isSignup = authMode === "signup";
     appRoot.innerHTML = `
@@ -127,5 +126,67 @@ export const renderAdminLogin = (authMode) => {
         </div>
     </div>`;
 };
-// NOTE: For brevity, I've only included the first two render functions.
-// The full file would contain ALL render functions from your original script, each one exported.
+
+// --- NEW FUNCTION: Renders the form to request a new vehicle clearance ---
+export const renderRequestForm = () => {
+    document.body.className = 'dark-theme-bg';
+    appRoot.innerHTML = `
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-blue-500/20 rounded-2xl shadow-2xl p-8 space-y-6 animate-fade-in">
+            <div class="text-center">
+                <div class="w-12 h-12 mx-auto text-blue-400">${icons.request}</div>
+                <h1 class="text-3xl font-bold text-white mt-4">New Clearance Request</h1>
+                <p class="text-slate-400">Fill in the details below to submit a request.</p>
+            </div>
+            <form id="request-form" class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
+                    <input type="text" name="vehicleNumber" oninput="this.value=this.value.toUpperCase()" class="mobile-input mt-1 block w-full" placeholder="e.g., SJA1234B" required />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Requester's Name</label>
+                    <input type="text" name="requesterName" class="mobile-input mt-1 block w-full" placeholder="e.g., John Doe" required />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Reason for Entry</label>
+                    <textarea name="reason" class="mobile-input mt-1 block w-full" rows="3" placeholder="e.g., Delivery, Official Visit" required></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-slate-300">Valid From</label>
+                        <input type="date" name="validFrom" class="mobile-input mt-1 block w-full" required />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-300">Valid Until</label>
+                        <input type="date" name="validTo" class="mobile-input mt-1 block w-full" required />
+                    </div>
+                </div>
+                <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700 mobile-button">Submit Request</button>
+            </form>
+            <button id="back-btn" class="mt-2 text-slate-400 hover:text-slate-200 underline text-sm block mx-auto">Back to Home</button>
+        </div>
+    </div>`;
+};
+
+// --- NEW FUNCTION: Renders the login page for the Green List ---
+export const renderUserLogin = () => {
+    document.body.className = 'dark-theme-bg';
+    appRoot.innerHTML = `
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-sm mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-green-500/20 rounded-2xl shadow-2xl p-8 space-y-6 animate-fade-in">
+            <div class="text-center">
+                <div class="w-12 h-12 mx-auto text-green-400">${icons.greenlist}</div>
+                <h1 class="text-3xl font-bold text-white mt-4">Green List Access</h1>
+                <p class="text-slate-400">Enter the access code to view the list.</p>
+            </div>
+            <form id="user-login-form" class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Access Code</label>
+                    <input type="password" name="accessCode" class="mobile-input mt-1 block w-full text-center" placeholder="••••••••" required />
+                </div>
+                <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700 mobile-button">View List</button>
+            </form>
+            <button id="back-btn" class="mt-2 text-slate-400 hover:text-slate-200 underline text-sm block mx-auto">Back to Home</button>
+        </div>
+    </div>`;
+};
