@@ -10,18 +10,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f172a;
-    --panel: #1e293b;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --outline: #334155;
-    --accent: #22c55e;
-    --accent-dark: #16a34a;
-    --red: #ef4444;
-    --red-dark: #b91c1c;
-    --yellow: #f59e0b;
-    --purple: #8b5cf6;
-    --purple-dark: #6d28d9;
+    --bg: #000000;
+    --bg-secondary: #0a0a0a;
+    --panel: #1a1a1a;
+    --panel-secondary: #2a2a2a;
+    --text: #ffffff;
+    --text-secondary: #e5e5e5;
+    --muted: #888888;
+    --outline: #333333;
+    --accent: #00d4aa;
+    --accent-dark: #00b894;
+    --red: #ff6b6b;
+    --red-dark: #e55656;
+    --yellow: #feca57;
+    --purple: #a55eea;
+    --purple-dark: #8854d0;
+    --blue: #0984e3;
+    --blue-dark: #0876d3;
   }
 
 - { box-sizing: border-box; }
@@ -41,7 +46,7 @@ height: auto;
 }
 
 body {
-background: var(–bg);
+background: linear-gradient(135deg, var(–bg) 0%, var(–bg-secondary) 100%);
 color: var(–text);
 font-family: ‘Inter’, system-ui, sans-serif;
 }
@@ -83,18 +88,28 @@ overflow-y: visible;
 display: flex;
 flex-direction: column;
 justify-content: center;
+align-items: center;
+min-height: 60vh;
+padding: 20px 14px;
+}
+
+@media screen and (max-width: 500px) {
+.scroll-content.is-centered {
+min-height: 50vh;
+justify-content: center;
+}
 }
 
 /* Enhanced Weather Panel */
 .weather-panel {
-background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
-border: 2px solid #3b82f6;
+background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+border: 2px solid var(–blue);
 border-radius: 20px;
 padding: 16px;
 margin-bottom: 16px;
 position: relative;
 overflow: hidden;
-box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+box-shadow: 0 8px 32px rgba(9, 132, 227, 0.3), 0 0 40px rgba(9, 132, 227, 0.1);
 }
 
 .weather-panel::before {
@@ -206,13 +221,13 @@ margin-top: 4px;
 
 /* Enhanced Search Panel */
 .search-panel {
-background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+background: linear-gradient(135deg, var(–panel) 0%, var(–panel-secondary) 50%, #333333 100%);
 border: 2px solid var(–purple);
 border-radius: 20px;
 padding: 20px;
 position: relative;
 overflow: hidden;
-box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
+box-shadow: 0 8px 32px rgba(165, 94, 234, 0.2), 0 0 40px rgba(165, 94, 234, 0.1);
 }
 
 .search-panel::before {
@@ -274,11 +289,11 @@ z-index: 2;
 flex: 1;
 display: flex;
 align-items: center;
-background: rgba(15, 23, 42, 0.8);
-border: 2px solid #475569;
+background: rgba(0, 0, 0, 0.4);
+border: 2px solid var(–outline);
 border-radius: 12px;
 padding: 12px 14px;
-backdrop-filter: blur(10px);
+backdrop-filter: blur(20px);
 transition: all 0.3s ease;
 }
 
@@ -300,7 +315,7 @@ font-size: 16px !important;
 border: 0;
 border-radius: 12px;
 padding: 12px 16px;
-background: #334155;
+background: linear-gradient(135deg, var(–panel) 0%, var(–panel-secondary) 100%);
 color: var(–text);
 cursor: pointer;
 font-weight: 600;
@@ -308,6 +323,7 @@ transition: all 0.3s ease;
 white-space: nowrap;
 position: relative;
 overflow: hidden;
+border: 1px solid var(–outline);
 }
 
 .btn::before {
@@ -326,9 +342,10 @@ left: 100%;
 }
 
 .btn:hover {
-background: #475569;
-transform: translateY(-1px);
-box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+background: linear-gradient(135deg, var(–panel-secondary) 0%, #444444 100%);
+transform: translateY(-2px);
+box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
+border-color: var(–purple);
 }
 
 .btn.mic {
@@ -454,10 +471,10 @@ width: 100%;
 }
 
 .list-item {
-background: linear-gradient(135deg, var(–panel) 0%, #334155 100%);
+background: linear-gradient(135deg, var(–panel) 0%, var(–panel-secondary) 100%);
 border: 1px solid var(–outline);
-border-radius: 12px;
-padding: 14px 16px;
+border-radius: 16px;
+padding: 16px 18px;
 display: flex;
 align-items: center;
 justify-content: space-between;
@@ -465,13 +482,14 @@ transition: all 0.3s ease;
 width: 100%;
 position: relative;
 z-index: 1;
-box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .list-item:hover {
-transform: translateY(-2px);
-box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+transform: translateY(-3px);
+box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(165, 94, 234, 0.2);
 border-color: var(–purple);
+background: linear-gradient(135deg, var(–panel-secondary) 0%, #444444 100%);
 }
 
 .list-item-content {
@@ -531,15 +549,15 @@ box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 
 }
 
 .car-plate-display-cleared {
-background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
-border: 4px solid #fbbf24;
-box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
+background: linear-gradient(135deg, #0a4d3a 0%, var(–accent-dark) 50%, #0e6b50 100%);
+border: 4px solid var(–accent);
+box-shadow: 0 15px 50px rgba(0, 212, 170, 0.4), 0 0 60px rgba(0, 212, 170, 0.2);
 }
 
 .car-plate-display-not-found {
-background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #7f1d1d 100%);
-border: 4px solid var(–red-dark);
-box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
+background: linear-gradient(135deg, #4d0a0a 0%, var(–red-dark) 50%, #6b0e0e 100%);
+border: 4px solid var(–red);
+box-shadow: 0 15px 50px rgba(255, 107, 107, 0.4), 0 0 60px rgba(255, 107, 107, 0.2);
 }
 
 .car-plate-display::before {
@@ -862,11 +880,12 @@ animation: fadeIn 0.3s ease-out forwards;
 }
 
 .card {
-background: var(–panel);
+background: linear-gradient(135deg, var(–panel) 0%, var(–panel-secondary) 100%);
 border: 1px solid var(–outline);
-border-radius: 16px;
-padding: 16px;
+border-radius: 20px;
+padding: 24px;
 position: relative;
+box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
 
 /* Animations */
@@ -1370,8 +1389,8 @@ to { opacity: 1; transform: translateY(0) scale(1); }
         emptyEl.style.display = 'none';
         countEl.textContent = `0 matches found for "${searchTerm}"`;
         listEl.innerHTML = `
-            <div class="animate-fade-in" style="width: 100%;">
-                <div class="car-plate-display car-plate-display-not-found" style="margin-bottom: 16px;">
+            <div class="animate-fade-in" style="width: 100%; max-width: 600px;">
+                <div class="car-plate-display car-plate-display-not-found" style="margin-bottom: 24px;">
                     <div class="car-plate-text">
                         <span class="search-highlight" style="animation-name: glow-red;">${searchTerm}</span>
                     </div>
@@ -1380,15 +1399,15 @@ to { opacity: 1; transform: translateY(0) scale(1); }
                         NOT FOUND
                     </div>
                 </div>
-                <div class="card animate-fade-in" style="padding: 24px; width: 100%;">
+                <div class="card animate-fade-in" style="width: 100%;">
                     <button id="exitSingleViewBtn" class="exit-btn" title="Back to list">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                         </svg>
                     </button>
                     <div style="text-align: center;">
-                        <h3 style="font-size: 1.25rem; font-weight: 600;">Access Denied</h3>
-                        <p style="margin-top: 8px; color: var(--muted);">Vehicle <strong>${searchTerm}</strong> is not on the current list.</p>
+                        <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 12px; color: var(--red);">Access Denied</h3>
+                        <p style="color: var(--muted); font-size: 1.1rem;">Vehicle <strong style="color: var(--text);">${searchTerm}</strong> is not authorized for entry.</p>
                     </div>
                 </div>
             </div>`;
@@ -1407,8 +1426,8 @@ to { opacity: 1; transform: translateY(0) scale(1); }
     if (searchTerm && filtered.length === 1) {
         const c = filtered[0];
         const plateHTML = `
-            <div class="animate-fade-in" style="width: 100%;">
-                <div class="car-plate-display car-plate-display-cleared animate-fade-in" style="margin-bottom: 16px;">
+            <div class="animate-fade-in" style="width: 100%; max-width: 600px;">
+                <div class="car-plate-display car-plate-display-cleared animate-fade-in" style="margin-bottom: 24px;">
                     <div class="car-plate-text">
                         <span class="search-highlight">${c.vehicleNumber}</span>
                     </div>
@@ -1416,15 +1435,15 @@ to { opacity: 1; transform: translateY(0) scale(1); }
                         ✓ CLEARED
                     </div>
                 </div>
-                <div class="card animate-fade-in" style="padding: 24px; width: 100%;">
+                <div class="card animate-fade-in" style="width: 100%;">
                     <button id="exitSingleViewBtn" class="exit-btn" title="Back to list">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                         </svg>
                     </button>
                     <div style="text-align: center;">
-                        <p style="font-size: 0.875rem; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Location</p>
-                        <p style="font-weight: 700; font-size: 1.5rem; ${ (c.location && c.location.toLowerCase() === 'foyer') ? 'color: var(--red);' : 'color: var(--text);'}">${c.location || 'N/A'}</p>
+                        <p style="font-size: 1rem; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px; letter-spacing: 2px;">LOCATION</p>
+                        <p style="font-weight: 800; font-size: 2rem; margin: 0; ${ (c.location && c.location.toLowerCase() === 'foyer') ? 'color: var(--red);' : 'color: var(--accent);'}">${c.location || 'N/A'}</p>
                     </div>
                 </div>
             </div>
