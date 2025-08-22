@@ -45,11 +45,34 @@ onAuthStateChanged(auth, async (user) => {
 
 // --- Global Event Listener (for clicks) ---
 document.body.addEventListener("click", async (e) => {
-    // ... (All your click handling logic goes here)
-    // It will call functions from other modules.
-    // Example for back button:
     const button = e.target.closest('button');
     if (!button) return;
+
+    // --- NEWLY ADDED LOGIC FOR LANDING PAGE BUTTONS ---
+
+    if (button.id === "request-btn") {
+        console.log("Request Clearance button clicked!");
+        // NOTE: You will need a function in render.js to show the request form
+        // For example: render.renderRequestForm();
+        showNotification("Request form not implemented yet.", "info"); // Placeholder
+        return;
+    }
+
+    if (button.id === "admin-btn") {
+        console.log("Admin button clicked!");
+        render.renderAdminLogin("login"); // Navigates to the admin login screen
+        return;
+    }
+
+    if (button.id === "user-btn") {
+        console.log("Green List button clicked!");
+        // NOTE: You will need a function in render.js to show the user/greenlist page
+        // For example: render.renderUserLogin();
+        showNotification("Green List page not implemented yet.", "info"); // Placeholder
+        return;
+    }
+    
+    // --- EXISTING BUTTON LOGIC ---
 
     if (button.id === "back-btn") {
         e.preventDefault();
