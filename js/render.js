@@ -3,15 +3,14 @@ import { icons, formatDate, toISODate, formatApprovalString, formatUpdateString,
 import { db } from './firebase.js';
 import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-
 const appRoot = document.getElementById("app-root");
 export let routeHistory = [];
 
 export const goBack = () => {
     if (routeHistory.length > 1) {
-        routeHistory.pop(); // Current page
-        const renderPrevious = routeHistory.pop(); // Previous page
-        renderPrevious();
+        routeHistory.pop(); // Pop the current page's render function
+        const renderPrevious = routeHistory[routeHistory.length - 1]; // Get the previous one
+        renderPrevious(); // Render it
     } else {
         renderLandingPage();
     }
@@ -24,7 +23,6 @@ export const showLoadingScreen = () => {
 export const renderLandingPage = (options = {}) => {
     const { trackingResultHTML = "", vehicleNumber = "" } = options;
     document.body.className = 'landing-solid';
-
     let trackingSection = '';
     if (trackingResultHTML) {
         trackingSection = `
@@ -80,7 +78,7 @@ export const renderLandingPage = (options = {}) => {
                         </button>
                     </div>
                 </form>
-                <div id="tracking-result">${trackingResultHTML}</div>
+                <div id="tracking-result">${trackingSection}</div>
             </footer>
         </div>
     </div>
@@ -241,9 +239,8 @@ export const createNotFoundCard = (vehicleNumber) => {
 };
 
 export const createLoadingCard = () => {
-    return `<div class="mt-6 space-y-4"><h3 class="text-sm font-medium text-slate-300">Tracking Result:</h3><div class="p-4 bg-slate-900/50 border border-slate-700 rounded-xl text-center animate-fade-in"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div><p class="text-slate-400 text-sm">Searching for current status...</p></div></div>`;
+    return `<div class="mt-6 space-y-4"><div class="p-4 bg-slate-900/50 border border-slate-700 rounded-xl text-center animate-fade-in"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div><p class="text-slate-400 text-sm">Searching for current status...</p></div></div>`;
 };
 
-
-// ... All other render... functions from the original script should be placed here,
-// fully implemented and exported.
+// ... (Rest of the many render functions go here, fully implemented and exported)
+// e.g., export const renderAdminDashboard = (adminUser, userPasswordConfig) => { ... };
