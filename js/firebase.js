@@ -1,8 +1,8 @@
-// js/firebase.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+// IMPORTANT: Move your actual config to a gitignored file in a real project
 const firebaseConfig = {
   apiKey: "AIzaSyC51Zo7V75JjOpLOdusf6ZKUzEG_gqFcV4",
   authDomain: "vehicle-clearance.firebaseapp.com",
@@ -21,7 +21,7 @@ try {
   console.log("Firebase initialized successfully");
 } catch (err) {
   console.error("Firebase initialization error:", err);
-  document.getElementById("app-root").innerHTML = '<div class="p-8 text-center text-red-500 bg-red-100 rounded-lg"><b>Error:</b> Firebase initialization failed. Check console for details.</div>';
+  document.getElementById("app-root").innerHTML = '<div class="p-8 text-center text-red-500"><b>Error:</b> Firebase failed to initialize.</div>';
 }
 
 export { app, auth, db };
