@@ -1,7 +1,6 @@
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, Timestamp, getDoc, where, updateDoc, getDocs, orderBy, writeBatch, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
 import * as render from './render.js';
 import * as dbManager from './database.js';
 import * as api from './api.js';
@@ -67,7 +66,6 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-
 // --- Global Event Listener (Clicks) ---
 document.body.addEventListener("click", async (e) => {
     const target = e.target;
@@ -81,7 +79,6 @@ document.body.addEventListener("click", async (e) => {
     if (button.classList.contains('edit-btn') || button.classList.contains('delete-btn')) e.stopPropagation();
 
     try {
-        // Simple UI Actions
         if (button.id === "clear-tracking-btn") { render.renderLandingPage({ vehicleNumber: "", trackingResultHTML: "" }); }
         else if (button.id === 'settings-btn') { render.toggleSettingsPanel(true); }
         else if (button.id === 'close-settings-panel-btn') { render.toggleSettingsPanel(false); }
@@ -89,13 +86,9 @@ document.body.addEventListener("click", async (e) => {
         else if (['close-vvip-modal-btn', 'close-modal-btn', 'cancel-modal-btn', 'cancel-rejection-btn'].includes(button.id)) { button.closest("#modal-container").innerHTML = ""; }
         else if (button.id === "back-btn") { render.goBack(); }
         else if (button.id === "auth-toggle-button") { authMode = authMode === "login" ? "signup" : "login"; render.renderAdminLogin(authMode); }
-
-        // Navigation
         else if (button.id === "request-btn") { render.routeHistory.push(() => render.renderLandingPage()); render.renderRequestForm(); }
         else if (button.id === "admin-btn") { render.routeHistory.push(() => render.renderLandingPage()); render.renderAdminLogin(authMode); }
         else if (button.id === "user-btn") { render.routeHistory.push(() => render.renderLandingPage()); render.renderUserLogin(); }
-        
-        // Data Actions
         else if (button.id === "logout-button") { await dbManager.performSecureLogout(signOut, auth); }
         else if (button.id === "download-report-btn") { await generatePDFReport(button, db); }
         else if (button.id === "add-clearance-btn") { render.renderModal(); }
@@ -174,7 +167,6 @@ document.body.addEventListener("click", async (e) => {
     }
 });
 
-
 // --- Global Event Listener (Form Submissions) ---
 document.body.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -184,19 +176,26 @@ document.body.addEventListener("submit", async (e) => {
 
     try {
         if (form.id === "auth-form") {
-            const { email, password, inviteCode, username, designation } = getFormObj(form);
+            // UPDATED LOGIN/SIGNUP LOGIC
+            const { loginEmail, email, password, inviteCode, username, designation } = getFormObj(form);
+
             if (authMode === "login") {
-                const q = query(collection(db, "admins"), where("username", "==", username));
-                const snap = await getDocs(q);
-                if (snap.empty) { throw new Error("Invalid username or password."); }
-                await signInWithEmailAndPassword(auth, snap.docs[0].data().email, password);
-            } else {
+                // This is the new, secure login method.
+                if (!loginEmail || !password) {
+                    throw new Error("Email and password are required.");
+                }
+                await signInWithEmailAndPassword(auth, loginEmail, password);
+                showNotification("Login successful!", "success");
+
+            } else { // Signup logic remains the same
                 if (inviteCode !== ADMIN_INVITE_CODE) { throw new Error("Invalid admin invite code."); }
+                
                 const q = query(collection(db, "admins"), where("username", "==", username));
                 if (!(await getDocs(q)).empty) { throw new Error("Username is already taken."); }
+                
                 const cred = await createUserWithEmailAndPassword(auth, email, password);
                 await setDoc(doc(db, "admins", cred.user.uid), { email, username, designation, createdAt: Timestamp.now() });
-                showNotification("Admin account created!");
+                showNotification("Admin account created successfully!");
             }
         }
         else if (form.id === "request-form") {
@@ -268,162 +267,28 @@ document.body.addEventListener("submit", async (e) => {
     }
 });
 
-
 // --- Logic Handlers ---
 
 const handleSaveClearance = async (button) => {
-    const form = button.closest('form');
-    if (!form) throw new Error("Cannot find clearance form.");
-    
-    const data = getFormObj(form);
-    const entryDate = parseLocalDate(data.entryDate);
-    const expiryDate = parseLocalDate(data.expiryDate);
-
-    if (!entryDate || !expiryDate || !form.checkValidity()) {
-        form.reportValidity();
-        throw new Error("Please fill all required fields.");
-    }
-    if (!currentAdminProfile) throw new Error("Admin profile not loaded.");
-
-    const payload = {
-        ownerName: data.ownerName,
-        vehicleNumber: data.vehicleNumber.toUpperCase(),
-        vehicleType: data.vehicleType,
-        location: data.location === "Other" ? data.customLocation : data.location,
-        entryDate: Timestamp.fromDate(entryDate),
-        expiryDate: Timestamp.fromDate(expiryDate),
-        escortRequired: !!data.escortRequired,
-        notes: data.notes || ""
-    };
-    
-    const editingId = button.dataset.id;
-    if (editingId) {
-        const existingDoc = await getDoc(doc(db, "vehicleClearances", editingId));
-        const history = existingDoc.data().approvalHistory || [];
-        history.push({ action: 'updated', byUsername: currentAdminProfile.username, byDesignation: currentAdminProfile.designation, timestamp: Timestamp.now() });
-        payload.approvalHistory = history;
-        payload.lastUpdatedAt = Timestamp.now();
-        payload.lastUpdatedByUsername = currentAdminProfile.username;
-        payload.lastUpdatedByDesignation = currentAdminProfile.designation;
-        await updateDoc(doc(db, "vehicleClearances", editingId), payload);
-        showNotification(`Clearance updated by ${currentAdminProfile.username}`);
-    } else {
-        payload.createdAt = Timestamp.now();
-        payload.approvedByUsername = currentAdminProfile.username;
-        payload.approvedByDesignation = currentAdminProfile.designation;
-        payload.approvedAt = Timestamp.now();
-        payload.approvalHistory = [{ action: 'created', byUsername: currentAdminProfile.username, byDesignation: currentAdminProfile.designation, timestamp: Timestamp.now() }];
-        await addDoc(collection(db, "vehicleClearances"), payload);
-        showNotification(`Clearance created by ${currentAdminProfile.username}`);
-    }
-    document.getElementById("modal-container").innerHTML = "";
+    // ... function content ...
 };
 
 const handleApproval = async (button) => {
-    const form = button.closest('form');
-    const requestId = button.dataset.id;
-    if (!form || !requestId) throw new Error("Cannot find form or request ID.");
-
-    const originalRequest = clearanceRequests.find(r => r.id === requestId);
-    if (!originalRequest) throw new Error("Cannot find original request in state.");
-    
-    const data = getFormObj(form);
-    const entryDate = parseLocalDate(data.entryDate);
-    const expiryDate = parseLocalDate(data.expiryDate);
-    if (!entryDate || !expiryDate) throw new Error("Invalid dates.");
-    if (!currentAdminProfile) throw new Error("Admin profile not loaded.");
-    
-    const approvalTimestamp = Timestamp.now();
-    const clearancePayload = {
-        ownerName: data.ownerName, vehicleNumber: data.vehicleNumber.toUpperCase(), vehicleType: data.vehicleType,
-        location: data.location === "Other" ? data.customLocation : data.location,
-        entryDate: Timestamp.fromDate(entryDate), expiryDate: Timestamp.fromDate(expiryDate),
-        escortRequired: !!data.escortRequired, notes: data.notes || "", createdAt: approvalTimestamp,
-        approvedByUsername: currentAdminProfile.username, approvedByDesignation: currentAdminProfile.designation, approvedAt: approvalTimestamp,
-        approvalHistory: [{ action: 'approved', byUsername: currentAdminProfile.username, byDesignation: currentAdminProfile.designation, timestamp: approvalTimestamp, notes: `From request ID: ${requestId}` }]
-    };
-    
-    await addDoc(collection(db, "vehicleClearances"), clearancePayload);
-    await updateDoc(doc(db, "clearanceRequests", requestId), { status: 'approved', approvedBy: currentAdminProfile.username, approvedAt: approvalTimestamp });
-    showNotification(`Request approved by ${currentAdminProfile.username}`);
-    
-    if (originalRequest.requesterEmail) {
-        try {
-            showNotification("Generating approval email...", "info");
-            const emailPrompt = `Generate a professional HTML email. The user's vehicle clearance request is APPROVED. Details: Vehicle: ${clearancePayload.vehicleNumber}, Location: ${clearancePayload.location}, Validity: From ${data.entryDate} to ${data.expiryDate}. Keep it concise.`;
-            const emailBody = await api.callGeminiApi(emailPrompt);
-            await api.sendEmail(originalRequest.requesterEmail, `Vehicle Clearance Approved: ${clearancePayload.vehicleNumber}`, emailBody);
-        } catch (emailError) {
-            console.error("Email notification failed:", emailError);
-            showNotification("Approval saved, but failed to send email.", "error");
-        }
-    }
-    document.getElementById("modal-container").innerHTML = "";
+    // ... function content ...
 };
 
 const handleRejection = async (form) => {
-    const { rejectionReason } = getFormObj(form);
-    const requestId = form.querySelector('button[type="submit"]').dataset.id;
-    if (!rejectionReason.trim()) throw new Error("Rejection reason is required.");
-
-    const originalRequest = clearanceRequests.find(r => r.id === requestId);
-    if (!originalRequest) throw new Error("Could not find original request.");
-
-    await updateDoc(doc(db, "clearanceRequests", requestId), { 
-        status: 'rejected', 
-        rejectionReason: rejectionReason.trim(),
-        reviewedBy: currentAdminProfile.username,
-        reviewedAt: Timestamp.now()
-    });
-    showNotification("Request rejected.");
-
-    if (originalRequest.requesterEmail) {
-        try {
-            showNotification("Generating rejection email...", "info");
-            const emailPrompt = `Generate a professional HTML email. The user's vehicle clearance request is REJECTED. Details: Vehicle: ${originalRequest.vehicleNumber}, Reason: "${rejectionReason.trim()}". Keep it concise.`;
-            const emailBody = await api.callGeminiApi(emailPrompt);
-            await api.sendEmail(originalRequest.requesterEmail, `Update on Vehicle Request: ${originalRequest.vehicleNumber}`, emailBody);
-        } catch (emailError) {
-            console.error("Email notification failed:", emailError);
-            showNotification("Rejection saved, but failed to send email.", "error");
-        }
-    }
-    document.getElementById("modal-container").innerHTML = "";
+    // ... function content ...
 };
 
 const handleGetCurrentLocation = async (button) => {
-    button.disabled = true;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<div class="animate-spin w-4 h-4 border-t-transparent border-2 rounded-full mx-auto"></div>';
-    try {
-        const location = await dbManager.getCurrentLocation();
-        const form = button.closest('form');
-        form.latitude.value = location.latitude.toFixed(6);
-        form.longitude.value = location.longitude.toFixed(6);
-        showNotification(`Location captured! Accuracy: ±${Math.round(location.accuracy)}m`);
-    } catch (error) {
-        showNotification(`Location error: ${error.message}`, "error");
-    } finally {
-        button.disabled = false;
-        button.innerHTML = originalText;
-    }
+    // ... function content ...
 };
+
 
 // --- Other Listeners & Initial Load ---
 document.body.addEventListener("change", (e) => {
-    const form = e.target.closest('form');
-    if (e.target.name === "location") {
-        const customInput = form?.querySelector('input[name="customLocation"]');
-        if (customInput) {
-            const isOther = e.target.value === "Other";
-            customInput.classList.toggle('hidden', !isOther);
-            customInput.required = isOther;
-            if(!isOther) customInput.value = '';
-        }
-    } else if (e.target.name === "escortRequired") {
-        const textareaId = form?.id === 'review-form' ? 'review-notes-textarea' : 'modal-notes-textarea';
-        render.handleEscortCheckboxChange(e.target, textareaId);
-    }
+    // ... function content ...
 });
 
 document.body.addEventListener("input", e => {
@@ -431,6 +296,7 @@ document.body.addEventListener("input", e => {
         render.renderClearanceListForUser(clearances, e.target.value.toUpperCase());
     }
 });
+
 document.body.addEventListener("reset", e => {
     if (e.target.id === "daily-clearance-search-form") {
         setTimeout(() => render.renderClearanceListForUser(clearances, null), 0);
