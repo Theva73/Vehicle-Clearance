@@ -44,11 +44,9 @@ summary::-webkit-details-marker { display: none; }
     position: relative;
     z-index: 10;
 }
-
 .action-buttons button {
     pointer-events: auto;
 }
-
 .settings-tab-btn.active {
     border-color: #3b82f6; /* blue-500 */
     color: #2563eb; /* blue-600 */
