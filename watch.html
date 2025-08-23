@@ -10,9 +10,11 @@
     <style>
         :root {
             --bg-primary: #0D0D12;
+            --bg-secondary: #1A1A21; 
             --text-primary: #F0F0F5;
             --text-secondary: #A0A0B0;
             --bg-glass: rgba(40, 40, 50, 0.7);
+            --accent-purple: #C77DFF;
             --forecast-color-1: #FF6B6B;
             --forecast-color-2: #FFD166;
             --forecast-color-3: #06D6A0;
@@ -26,12 +28,70 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
+        }
+
+        .app-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* NEW: Header styles */
+        .watch-header {
+            position: absolute;
+            top: 2vh;
+            left: 2vw;
+            right: 2vw;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .close-btn {
+            width: 44px;
+            height: 44px;
+            background-color: rgba(30, 30, 35, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 300;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .url-bar {
+            flex-grow: 1;
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            border-radius: 14px;
+            text-align: left;
+            font-size: 15px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-time {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex-shrink: 0;
         }
 
         .weather-container {
@@ -43,6 +103,8 @@
             padding: 20px;
             box-sizing: border-box;
             animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            /* MODIFIED: Pushed down to make space for the header */
+            margin-top: 12vh;
         }
 
         .current-weather {
@@ -127,18 +189,43 @@
 </head>
 <body>
 
-<div class="weather-container">
-    <div class="current-weather">
-        <div id="current-weather-icon-container"></div>
-        <div class="current-weather-temp" id="current-temp">--°</div>
-        <div class="current-weather-condition" id="current-condition">Loading...</div>
+<div class="app-container">
+    <div class="watch-header">
+        <div class="close-btn">&times;</div>
+        <div class="url-bar">theva73.github.io</div>
+        <div class="header-time">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--accent-purple)" viewBox="0 0 16 16">
+                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+            </svg>
+            <span id="header-time-text">--:--</span>
+        </div>
     </div>
-    <div class="hourly-forecast" id="hourly-forecast-container">
-        <!-- Forecast items will be dynamically injected here -->
+
+    <div class="weather-container">
+        <div class="current-weather">
+            <div id="current-weather-icon-container"></div>
+            <div class="current-weather-temp" id="current-temp">--°</div>
+            <div class="current-weather-condition" id="current-condition">Loading...</div>
+        </div>
+        <div class="hourly-forecast" id="hourly-forecast-container">
+            <!-- Forecast items will be dynamically injected here -->
+        </div>
     </div>
 </div>
 
 <script>
+    const headerTimeText = document.getElementById('header-time-text');
+
+    function updateTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timeString = `${hours}:${minutes}`;
+        if (headerTimeText) {
+            headerTimeText.textContent = timeString;
+        }
+    }
+
     // --- Weather Logic ---
     const weatherIconMap = {
         0: { description: 'Clear', icon: (color = '#FFD60A') => `<svg class="current-weather-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="12" fill="${color}"/></svg>` },
@@ -151,42 +238,18 @@
         95: { description: 'Thunderstorm', icon: (color = '#FFD60A') => `<svg class="current-weather-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g class="animated-cloud"><path d="M46 20 C40 20, 38 24, 38 24 C36 17, 31 15, 26 17 C20 14, 15 19, 15 25 C15 25, 10 25, 10 30 C10 35, 15 35, 15 35 L46 35 C52 35, 55 30, 52 26 C52 26, 51 20, 46 20 Z" fill="#404050" /></g><polygon points="28,42 34,42 30,50 36,50 32,58 32,50 28,50" fill="${color}"/></svg>` }
     };
     
-    // Default weather codes for other conditions
     Object.assign(weatherIconMap, {
-        48: weatherIconMap[45], // Rime Fog
-        51: weatherIconMap[61], // Drizzle
-        53: weatherIconMap[61], // Drizzle
-        55: weatherIconMap[61], // Drizzle
-        56: weatherIconMap[61], // Freezing Drizzle
-        57: weatherIconMap[61], // Freezing Drizzle
-        63: weatherIconMap[61], // Rain
-        65: weatherIconMap[61], // Rain
-        66: weatherIconMap[61], // Freezing Rain
-        67: weatherIconMap[61], // Freezing Rain
-        71: weatherIconMap[80], // Snow fall
-        73: weatherIconMap[80], // Snow fall
-        75: weatherIconMap[80], // Snow fall
-        77: weatherIconMap[80], // Snow grains
-        81: weatherIconMap[80], // Rain showers
-        82: weatherIconMap[80], // Rain showers
-        85: weatherIconMap[80], // Snow showers
-        86: weatherIconMap[80], // Snow showers
-        96: weatherIconMap[95], // Thunderstorm
-        99: weatherIconMap[95]  // Thunderstorm
+        48: weatherIconMap[45], 51: weatherIconMap[61], 53: weatherIconMap[61], 55: weatherIconMap[61], 56: weatherIconMap[61], 57: weatherIconMap[61], 63: weatherIconMap[61], 65: weatherIconMap[61], 66: weatherIconMap[61], 67: weatherIconMap[61], 71: weatherIconMap[80], 73: weatherIconMap[80], 75: weatherIconMap[80], 77: weatherIconMap[80], 81: weatherIconMap[80], 82: weatherIconMap[80], 85: weatherIconMap[80], 86: weatherIconMap[80], 96: weatherIconMap[95], 99: weatherIconMap[95]
     });
 
-
     async function fetchWeather() {
-        // Using Singapore's coordinates
         const lat = 1.3521;
         const lon = 103.8198;
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&timezone=Asia/Singapore`;
 
         try {
             const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             updateWeatherUI(data);
         } catch (error) {
@@ -196,23 +259,19 @@
     }
 
     function updateWeatherUI(data) {
-        // Update current weather
         const currentTemp = Math.round(data.current.temperature_2m);
         const currentCode = data.current.weather_code;
-        const weatherInfo = weatherIconMap[currentCode] || weatherIconMap[3]; // Fallback to 'Overcast'
+        const weatherInfo = weatherIconMap[currentCode] || weatherIconMap[3];
 
         document.getElementById('current-temp').textContent = `${currentTemp}°`;
         document.getElementById('current-condition').textContent = weatherInfo.description;
         document.getElementById('current-weather-icon-container').innerHTML = weatherInfo.icon();
 
-        // Update hourly forecast
         const hourlyContainer = document.getElementById('hourly-forecast-container');
         hourlyContainer.innerHTML = ''; 
 
         const now = new Date();
-        const currentHour = now.getHours();
-        
-        const startIndex = data.hourly.time.findIndex(time => new Date(time).getHours() === currentHour);
+        const startIndex = data.hourly.time.findIndex(time => new Date(time).getHours() === now.getHours());
         if (startIndex === -1) return;
 
         const forecastColors = ['var(--forecast-color-1)', 'var(--forecast-color-2)', 'var(--forecast-color-3)'];
@@ -242,9 +301,11 @@
         }
     }
     
-    // Initial Load & Refresh Interval
+    // Initial Load & Refresh Intervals
+    updateTime();
     fetchWeather();
-    setInterval(fetchWeather, 1000 * 60 * 15); // Refresh weather every 15 minutes
+    setInterval(updateTime, 1000 * 30);
+    setInterval(fetchWeather, 1000 * 60 * 15);
 
 </script>
 
