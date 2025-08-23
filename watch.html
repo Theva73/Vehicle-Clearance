@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Crucial meta tags for Apple Watch -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Watch Vehicle Search</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,15 +10,13 @@
     <style>
         :root {
             --bg-primary: #000000; 
-            --bg-glass: rgba(20, 20, 25, 0.6); 
+            --bg-glass: rgba(25, 25, 30, 0.65); 
             --glass-border: rgba(255, 255, 255, 0.15); 
             --text-primary: #FFFFFF; 
             --text-secondary: #B0B0C0; 
             --accent-purple: #9b59b6;
-            --accent-purple-dark: #8e44ad;
             --success-green: #2ecc71; 
             --error-red: #e74c3c; 
-            --shadow-dark: rgba(0, 0, 0, 0.6);
         }
 
         body, html {
@@ -33,10 +30,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            /* Ensures the app uses the full screen area on round displays */
             -webkit-text-size-adjust: 100%;
         }
 
@@ -48,7 +41,6 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            /* Using the image you provided */
             background-image: url('http://googleusercontent.com/file_content/1');
             background-size: cover;
             background-position: center;
@@ -59,7 +51,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 5vw; /* Use viewport units for padding */
+            padding: 5vw;
             box-sizing: border-box;
             animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             width: 100%;
@@ -72,12 +64,11 @@
             display: flex;
         }
         
-        /* Main screen layout adjustments */
         #initial-view {
-            gap: 4vh; /* Vertical gap based on screen height */
+            gap: 4vh;
         }
         .time-display {
-            font-size: clamp(48px, 15vw, 64px); /* Responsive font size */
+            font-size: clamp(48px, 15vw, 64px);
             font-weight: 700;
             letter-spacing: -2px;
         }
@@ -86,52 +77,29 @@
             color: var(--text-secondary);
             font-weight: 500;
         }
-        .mic-button {
-            width: 25vw; /* Size relative to screen width */
-            height: 25vw;
-            max-width: 100px;
-            max-height: 100px;
-            border-radius: 50%;
-            border: none;
-            background: var(--accent-purple);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s;
-            box-shadow: 0 0 20px rgba(155, 89, 182, 0.6);
-        }
-        .mic-button svg {
-            width: 50%;
-            height: 50%;
-        }
-        .mic-button:active {
-            transform: scale(0.92);
-        }
-        .mic-button.listening {
-            background: var(--error-red);
-            animation: pulse-ring 1.5s infinite;
-        }
 
-        /* Listening View */
-        #listening-view {
-            background: rgba(0,0,0,0.75);
-            backdrop-filter: blur(12px);
+        /* The new text input that triggers native dictation */
+        .search-input-container {
+            width: 80vw;
+            max-width: 250px;
         }
-        .listening-status {
+        #vehicle-input {
+            width: 100%;
+            padding: 12px;
             font-size: 5vw;
             font-weight: 500;
-            margin-bottom: 16px;
-        }
-        .transcript {
-            font-size: 4vw;
-            color: var(--text-secondary);
-            min-height: 2em;
             text-align: center;
+            color: var(--text-primary);
+            background-color: var(--bg-glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            -webkit-appearance: none; /* Removes default iOS styling */
+        }
+        #vehicle-input::placeholder {
+            color: var(--text-secondary);
         }
 
-        /* Result View */
+        /* Result View Styling */
         .status-panel {
             width: 90vw;
             max-width: 320px;
@@ -155,7 +123,7 @@
             padding: 12px;
             font-size: 4vw;
             font-weight: 600;
-            background: var(--bg-secondary);
+            background: var(--bg-secondary, #1A1A21);
             border: 1px solid var(--glass-border);
             color: var(--text-primary);
             cursor: pointer;
@@ -167,23 +135,15 @@
             bottom: 2vh;
             width: 80%;
             font-size: 3.5vw;
-            font-weight: 500;
             text-align: center;
             padding: 8px 12px;
             background: var(--bg-glass);
-            backdrop-filter: blur(10px);
             border-radius: 16px;
-            border: 1px solid var(--glass-border);
         }
 
         @keyframes fade-in-up {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(231, 76, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
         }
     </style>
 </head>
@@ -193,20 +153,12 @@
     <div class="view active" id="initial-view">
         <div class="time-container text-center">
             <div id="time-display" class="time-display">--:--</div>
-            <div id="date-display" class="date-display">Loading...</div>
+            <div id="date-display" class="date-display">...</div>
         </div>
-        <button id="micBtn" class="mic-button" title="Start Voice Search">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"/>
-                <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/>
-            </svg>
-        </button>
+        <div class="search-input-container">
+            <input type="text" id="vehicle-input" placeholder="Tap to Search" autocomplete="off">
+        </div>
         <div id="status-bar">Connecting...</div>
-    </div>
-
-    <div class="view" id="listening-view">
-        <div class="listening-status">Listening...</div>
-        <div id="transcript" class="transcript">Tap screen to cancel</div>
     </div>
 
     <div class="view" id="result-view"></div>
@@ -226,31 +178,27 @@
         appId: "1:187403368572:web:1f94845da67ef0c7ccf1f9"
     };
 
-    let db;
     let allRows = [];
     
     const initialView = document.getElementById('initial-view');
-    const listeningView = document.getElementById('listening-view');
     const resultView = document.getElementById('result-view');
     const statusBar = document.getElementById('status-bar');
     const timeDisplay = document.getElementById('time-display');
     const dateDisplay = document.getElementById('date-display');
-    const micBtn = document.getElementById('micBtn');
-    const transcriptEl = document.getElementById('transcript');
+    const vehicleInput = document.getElementById('vehicle-input');
 
+    // --- Firebase Connection ---
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        db = getFirestore(app);
+        const db = getFirestore(app);
         onAuthStateChanged(auth, user => {
             if (user) {
                 const listingsCollection = collection(db, 'vehicleListings');
                 onSnapshot(listingsCollection, (snapshot) => {
                     allRows = snapshot.docs.map(doc => doc.data());
                     statusBar.textContent = `Ready (${allRows.length} vehicles)`;
-                }, (error) => { 
-                    statusBar.textContent = 'Sync Error'; 
-                });
+                }, () => { statusBar.textContent = 'Sync Error'; });
             } else {
                 signInAnonymously(auth);
             }
@@ -259,11 +207,13 @@
         statusBar.textContent = 'Connection Failed';
     }
 
+    // --- View Management ---
     function showView(viewId) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
     }
 
+    // --- Clock ---
     function updateClock() {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
@@ -274,61 +224,7 @@
         });
     }
 
-    let recognition = null;
-    let isVoiceSearchActive = false;
-
-    const initializeVoiceRecognition = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            statusBar.textContent = 'Voice search not supported.';
-            micBtn.disabled = true;
-            return false;
-        }
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        
-        recognition.onstart = () => {
-            isVoiceSearchActive = true;
-            micBtn.classList.add('listening');
-            transcriptEl.textContent = 'Listening...';
-            showView('listening-view');
-        };
-        
-        recognition.onresult = (event) => {
-            let finalTranscript = '';
-            let interimTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
-                }
-            }
-            transcriptEl.textContent = interimTranscript || '...';
-            if (finalTranscript) {
-                handleVoiceResult(finalTranscript);
-            }
-        };
-        
-        recognition.onerror = (event) => {
-            let errorMsg = 'Voice error. Tap to retry.';
-            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                errorMsg = 'Mic permission denied.';
-            } else if (event.error === 'no-speech') {
-                errorMsg = 'No speech detected.';
-            }
-            statusBar.textContent = errorMsg;
-            stopVoiceSearch(true); // Pass true to indicate an error state
-        };
-        
-        recognition.onend = () => {
-            stopVoiceSearch();
-        };
-        return true;
-    };
-
+    // --- Voice Input Processing ---
     const processVehicleNumber = (spokenText) => {
         let processed = spokenText.toLowerCase().trim();
         const fillerWords = ['um', 'uh', 'the', 'number', 'is', 'vehicle', 'car', 'plate'];
@@ -348,55 +244,24 @@
         return processed.replace(/[^A-Z0-9]/gi, '').toUpperCase();
     };
 
-    const handleVoiceResult = (transcript) => {
-        let detectedNumber = processVehicleNumber(transcript);
-        if (detectedNumber) {
-            performSearch(detectedNumber);
-        } else {
-            statusBar.textContent = `No number found in "${transcript}"`;
-            showView('initial-view');
+    // --- Search Logic ---
+    function performSearch(rawText) {
+        const term = processVehicleNumber(rawText);
+        if (!term) {
+            statusBar.textContent = 'Please say a vehicle number.';
+            return;
         }
-    };
-
-    const startVoiceSearch = () => {
-        if (isVoiceSearchActive) return;
-        if (!recognition) {
-            if (!initializeVoiceRecognition()) return;
-        }
-        try {
-            recognition.start();
-        } catch (error) {
-            statusBar.textContent = 'Could not start listening.';
-            isVoiceSearchActive = false;
-        }
-    };
-
-    const stopVoiceSearch = (errorOccurred = false) => {
-        if (!isVoiceSearchActive) return;
-        if (recognition) recognition.stop();
-        micBtn.classList.remove('listening');
-        isVoiceSearchActive = false;
-        if (errorOccurred) {
-            showView('initial-view');
-        }
-    };
-    
-    micBtn.addEventListener('click', startVoiceSearch);
-    listeningView.addEventListener('click', () => stopVoiceSearch(true));
-
-    function performSearch(term) {
-        const searchTerm = term.trim().toUpperCase();
-        if (!searchTerm) return;
 
         const filtered = allRows.filter(r => {
             const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
-            return numericPartOfPlate.startsWith(searchTerm.replace(/[^0-9]/g, ''));
+            return numericPartOfPlate.startsWith(term.replace(/[^0-9]/g, ''));
         });
         
-        renderResult(filtered.length > 0 ? filtered[0] : null, searchTerm);
+        renderResult(filtered.length > 0 ? filtered[0] : null, term);
         showView('result-view');
     }
 
+    // --- Render Results ---
     function renderResult(result, term) {
         let resultHTML;
         if (result) {
@@ -423,14 +288,21 @@
                 </div>`;
         }
         resultView.innerHTML = resultHTML;
-        document.getElementById('new-search-btn').addEventListener('click', () => showView('initial-view'));
+        document.getElementById('new-search-btn').addEventListener('click', () => {
+            vehicleInput.value = ''; // Clear input for next search
+            showView('initial-view');
+        });
     }
+
+    // --- Event Listener for the text input ---
+    vehicleInput.addEventListener('change', (event) => {
+        performSearch(event.target.value);
+    });
     
+    // --- Initial Load ---
     updateClock();
     setInterval(updateClock, 1000);
-    initializeVoiceRecognition();
 
 </script>
-
 </body>
 </html>
