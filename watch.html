@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Watch Vehicle Search</title>
+    <title>Watch Vehicle Search (Voice First)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,12 +11,12 @@
         :root {
             --bg-primary: #0D0D12; 
             --bg-secondary: #1A1A21; 
-            --bg-glass: rgba(40, 40, 50, 0.5); 
+            --bg-glass: rgba(40, 40, 50, 0.6); 
             --glass-border: rgba(255, 255, 255, 0.1); 
             --text-primary: #F0F0F5; 
             --text-secondary: #A0A0B0; 
-            --text-muted: #606070; 
-            --accent-blue: #0A84FF; 
+            --accent-purple: #8b5cf6;
+            --accent-purple-dark: #6d28d9;
             --success-green: #30D158; 
             --error-red: #FF453A; 
             --shadow-dark: rgba(0, 0, 0, 0.5);
@@ -46,16 +46,12 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            /* --- MODIFICATION: Added background image --- */
-            /* This uses the image you provided. Note that it may appear stretched on some screen sizes. */
-            background-image: url('http://googleusercontent.com/file_content/0');
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
         }
 
         .view {
-            display: flex;
+            display: none; /* Hidden by default */
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -68,172 +64,66 @@
             top: 0;
             left: 0;
         }
+        .view.active {
+            display: flex;
+        }
         
-        #result-view, #input-view { display: none; }
-
-        /* * ==============================================
-         * ANIMATED WEATHER-FOCUSED LAYOUT
-         * ==============================================
-        */
-        #dashboard-prompt {
+        /* Initial View (Clock & Mic) */
+        #initial-view {
+            gap: 20px;
+        }
+        .time-display {
+            font-size: 64px;
+            font-weight: 700;
+            letter-spacing: -2px;
+        }
+        .date-display {
+            font-size: 18px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .mic-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent-purple);
+            color: white;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            width: 100%;
-            height: 100%;
+            justify-content: center;
             cursor: pointer;
-            box-sizing: border-box;
-            gap: 20px;
-            padding: 20px;
+            transition: background-color 0.2s, transform 0.2s;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+        .mic-button:hover {
+            background: var(--accent-purple-dark);
+        }
+        .mic-button:active {
+            transform: scale(0.95);
+        }
+        .mic-button.listening {
+            background: var(--error-red);
+            animation: pulse-ring 1.5s infinite;
         }
 
-        .weather-widget-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            width: 100%;
-            background: var(--bg-glass);
-            backdrop-filter: blur(15px);
-            border-radius: 24px;
-            padding: 20px;
-            border: 1px solid var(--glass-border);
+        /* Listening View */
+        #listening-view {
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
         }
-
-        .current-weather {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-basis: 50%;
-            gap: 5px;
-        }
-
-        .current-weather-icon {
-            width: 90px;
-            height: 90px;
-        }
-
-        .current-weather-temp {
-            font-size: 68px;
-            font-weight: 800;
-            line-height: 1;
-        }
-
-        .current-weather-condition {
+        .listening-status {
             font-size: 24px;
             font-weight: 500;
-            color: var(--text-secondary);
+            margin-bottom: 16px;
         }
-
-        .hourly-forecast {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            flex-basis: 50%;
-        }
-
-        .forecast-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .forecast-temp {
-            font-size: 22px;
-            font-weight: 600;
-        }
-
-        .forecast-icon {
-            width: 32px;
-            height: 32px;
-        }
-
-        .forecast-time {
+        .transcript {
             font-size: 18px;
-            font-weight: 500;
             color: var(--text-secondary);
-            width: 50px;
-            text-align: right;
-        }
-        
-        .search-action-text {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 25px;
-            padding: 12px 24px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-        }
-        
-        #status-bar {
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
-            position: absolute;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            padding: 8px 16px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid var(--glass-border);
+            min-height: 2em;
         }
 
-        /* Input and Result views remain largely unchanged */
-        #input-view {
-            justify-content: flex-start;
-            padding-top: 40px;
-            gap: 20px;
-        }
-        .input-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .input-header .time {
-            font-size: 32px;
-            font-weight: 700;
-        }
-        #text-search-input {
-            width: 100%;
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            font-size: 18px;
-            padding: 16px;
-            border-radius: 16px;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        #cancel-search-btn {
-            background: var(--bg-secondary);
-            border: none;
-            color: var(--text-primary);
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        /* --- MODIFICATION: Style for the new digital clock --- */
-        .digital-clock {
-            font-size: 48px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-top: 24px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-            font-family: 'Courier New', Courier, monospace;
-        }
-
+        /* Result View */
         .status-panel {
             display: flex;
             flex-direction: column;
@@ -261,56 +151,56 @@
         .location-text { font-size: 22px; font-weight: 600; }
         #new-search-btn { background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
 
-        /* * ==============================================
-         * ANIMATIONS
-         * ==============================================
-        */
+        #status-bar {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            padding: 8px 16px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Animations */
         @keyframes fade-in-up {
             from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        
-        @keyframes drift {
-            0% { transform: translateX(-3px); }
-            50% { transform: translateX(3px); }
-            100% { transform: translateX(-3px); }
-        }
-
-        .animated-cloud {
-            animation: drift 8s ease-in-out infinite;
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <!-- VIEW 1: The dashboard-style initial screen -->
-    <div class="view" id="initial-view">
-        <div id="dashboard-prompt">
-            <div class="weather-widget-container">
-                <div class="current-weather">
-                    <div id="current-weather-icon-container"></div>
-                    <div class="current-weather-temp" id="current-temp">--°</div>
-                    <div class="current-weather-condition" id="current-condition">Loading...</div>
-                </div>
-                <div class="hourly-forecast" id="hourly-forecast-container">
-                    <!-- Forecast items will be injected by JS -->
-                </div>
-            </div>
-            <div class="search-action-text">Tap to Search Vehicle</div>
+    <!-- VIEW 1: Initial voice prompt screen -->
+    <div class="view active" id="initial-view">
+        <div class="time-container text-center">
+            <div id="time-display" class="time-display">--:--</div>
+            <div id="date-display" class="date-display">Loading...</div>
         </div>
+        <button id="micBtn" class="mic-button" title="Start Voice Search">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"/>
+                <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/>
+            </svg>
+        </button>
         <div id="status-bar">Connecting...</div>
     </div>
 
-    <!-- VIEW 2: The text input screen -->
-    <div class="view" id="input-view">
-        <div class="input-header">
-            <div id="input-time" class="time">--:--</div>
-        </div>
-        <input id="text-search-input" type="text" placeholder="Vehicle Number">
-        <button id="cancel-search-btn">Cancel</button>
-        <!-- --- MODIFICATION: Added digital clock element --- -->
-        <div id="digital-clock" class="digital-clock"></div>
+    <!-- VIEW 2: Listening overlay -->
+    <div class="view" id="listening-view">
+        <div class="listening-status">Listening...</div>
+        <div id="transcript" class="transcript"></div>
     </div>
 
     <!-- VIEW 3: The results screen -->
@@ -336,13 +226,13 @@
     
     // DOM element references
     const initialView = document.getElementById('initial-view');
-    const inputView = document.getElementById('input-view');
+    const listeningView = document.getElementById('listening-view');
     const resultView = document.getElementById('result-view');
-    const dashboardPrompt = document.getElementById('dashboard-prompt');
     const statusBar = document.getElementById('status-bar');
-    const textSearchInput = document.getElementById('text-search-input');
-    const cancelSearchBtn = document.getElementById('cancel-search-btn');
-    const inputTime = document.getElementById('input-time');
+    const timeDisplay = document.getElementById('time-display');
+    const dateDisplay = document.getElementById('date-display');
+    const micBtn = document.getElementById('micBtn');
+    const transcriptEl = document.getElementById('transcript');
 
     // --- Firebase Initialization ---
     try {
@@ -367,136 +257,162 @@
     }
 
     // --- UI View Management ---
-    function showInitialView() {
-        resultView.style.display = 'none';
-        inputView.style.display = 'none';
-        initialView.style.display = 'flex';
-    }
-    function showInputView() {
-        resultView.style.display = 'none';
-        initialView.style.display = 'none';
-        inputView.style.display = 'flex';
-        textSearchInput.value = '';
-        textSearchInput.focus();
-    }
-    function showResultView() {
-        initialView.style.display = 'none';
-        inputView.style.display = 'none';
-        resultView.style.display = 'flex';
+    function showView(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
     }
 
-    // --- Time Update ---
-    function updateTime() {
+    // --- Time & Date Update ---
+    function updateClock() {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        inputTime.textContent = `${hours}:${minutes}`;
+        timeDisplay.textContent = `${hours}:${minutes}`;
+        dateDisplay.textContent = now.toLocaleDateString('en-US', {
+            weekday: 'long', month: 'long', day: 'numeric'
+        });
     }
-    
-    // --- MODIFICATION: Added function for the new digital clock ---
-    function updateDigitalClock() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        const clockElement = document.getElementById('digital-clock');
-        if (clockElement) {
-             clockElement.textContent = `${hours}:${minutes}:${seconds}`;
+
+    // --- Voice Search Logic (from Vehicle Listing Script) ---
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const playBeep = (frequency = 440, duration = 100, type = 'sine') => {
+        if (!audioContext) return;
+        try {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration / 1000);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + duration / 1000);
+        } catch (error) {
+            console.error("Beep playback failed:", error);
         }
-    }
+    };
 
-    // --- Weather Logic ---
-    const weatherIconMap = {
-        0: { description: 'Clear', icon: (color = '#FFD60A') => `<svg class="current-weather-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="12" fill="${color}"/></svg>` },
-        1: { description: 'Mainly Clear', icon: (color = '#FFD60A') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M47.7 41.8C47.2 36.4 43.2 32 38 32H37.5C36.9 25.1 31.1 19.5 24 19.5C16.8 19.5 11 25.4 11 32.5V33H10C6.7 33 4 35.7 4 39C4 42.3 6.7 45 10 45H46C49.9 45 53 41.9 53 38C53 34.9 50.8 32.2 47.9 31.2" fill="#F0F0F5"/><circle cx="32" cy="24" r="8" fill="${color}"/></svg>` },
-        2: { description: 'Partly Cloudy', icon: (color = '#F0F0F5') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 31H18C10.3 31 4 37.3 4 45C4 52.7 10.3 59 18 59H46C53.7 59 60 52.7 60 45C60 37.3 53.7 31 46 31Z" fill="${color}"/></svg>` },
-        3: { description: 'Overcast', icon: (color = '#B0B0C0') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 31H18C10.3 31 4 37.3 4 45C4 52.7 10.3 59 18 59H46C53.7 59 60 52.7 60 45C60 37.3 53.7 31 46 31Z" fill="${color}"/></svg>` },
-        45: { description: 'Fog', icon: (color = '#A8E6CF') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 36H52" stroke="${color}" stroke-width="6" stroke-linecap="round"/><path d="M16 44H48" stroke="${color}" stroke-width="6" stroke-linecap="round"/><path d="M20 52H44" stroke="${color}" stroke-width="6" stroke-linecap="round"/></svg>` },
-        48: { description: 'Rime Fog', icon: (color = '#A8E6CF') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 36H52" stroke="${color}" stroke-width="6" stroke-linecap="round"/><path d="M16 44H48" stroke="${color}" stroke-width="6" stroke-linecap="round"/><path d="M20 52H44" stroke="${color}" stroke-width="6" stroke-linecap="round"/></svg>` },
-        51: { description: 'Drizzle', icon: (color = '#81C7D4') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 24H18C10.3 24 4 30.3 4 38C4 45.7 10.3 52 18 52H46C53.7 52 60 45.7 60 38C60 30.3 53.7 24 46 24Z" fill="#B0B0C0"/><circle cx="24" cy="58" r="2" fill="${color}"/><circle cx="32" cy="58" r="2" fill="${color}"/><circle cx="40" cy="58" r="2" fill="${color}"/></svg>` },
-        61: { description: 'Rain', icon: (color = '#0A84FF') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 24H18C10.3 24 4 30.3 4 38C4 45.7 10.3 52 18 52H46C53.7 52 60 45.7 60 38C60 30.3 53.7 24 46 24Z" fill="#606070"/><path d="M22 58L26 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/><path d="M30 58L34 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/><path d="M38 58L42 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/></svg>` },
-        80: { description: 'Showers', icon: (color = '#0A84FF') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 24H18C10.3 24 4 30.3 4 38C4 45.7 10.3 52 18 52H46C53.7 52 60 45.7 60 38C60 30.3 53.7 24 46 24Z" fill="#606070"/><path d="M22 58L26 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/><path d="M30 58L34 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/><path d="M38 58L42 62" stroke="${color}" stroke-width="3" stroke-linecap="round"/></svg>` },
-        95: { description: 'Thunderstorm', icon: (color = '#FFD60A') => `<svg class="current-weather-icon animated-cloud" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M46 20H18C10.3 20 4 26.3 4 34C4 41.7 10.3 48 18 48H46C53.7 48 60 41.7 60 34C60 26.3 53.7 20 46 20Z" fill="#606070"/><path d="M32 48L26 56L38 56L32 64" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>` }
+    let recognition = null;
+    let isVoiceSearchActive = false;
+
+    const initializeVoiceRecognition = () => {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            statusBar.textContent = 'Voice search not supported.';
+            micBtn.disabled = true;
+            return false;
+        }
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true; // Show interim results
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = () => {
+            isVoiceSearchActive = true;
+            micBtn.classList.add('listening');
+            transcriptEl.textContent = '';
+            showView('listening-view');
+        };
+        
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    handleVoiceResult(event.results[i][0].transcript);
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            transcriptEl.textContent = interimTranscript;
+        };
+        
+        recognition.onerror = (event) => {
+            statusBar.textContent = 'Voice error. Try again.';
+            stopVoiceSearch();
+        };
+        
+        recognition.onend = () => {
+            if (isVoiceSearchActive) stopVoiceSearch();
+        };
+        return true;
+    };
+
+    const processVehicleNumber = (spokenText) => {
+        let processed = spokenText.toLowerCase().trim();
+        const fillerWords = ['um', 'uh', 'the', 'number', 'is', 'vehicle', 'car', 'plate'];
+        fillerWords.forEach(word => {
+            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'gi'), ' ');
+        });
+        const numberMappings = [
+            ['zero', '0'], ['oh', '0'], ['o', '0'], ['one', '1'], ['won', '1'], 
+            ['two', '2'], ['to', '2'], ['too', '2'], ['three', '3'], ['tree', '3'],
+            ['four', '4'], ['for', '4'], ['fore', '4'], ['five', '5'], ['fife', '5'],
+            ['six', '6'], ['sex', '6'], ['seven', '7'], ['sven', '7'],
+            ['eight', '8'], ['ate', '8'], ['nine', '9'], ['nein', '9']
+        ];
+        numberMappings.forEach(([word, digit]) => {
+            processed = processed.replace(new RegExp(`\\b${word}\\b`, 'gi'), ` ${digit} `);
+        });
+        // This regex now also handles letters mixed with numbers
+        return processed.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+    };
+
+    const handleVoiceResult = (transcript) => {
+        let detectedNumber = processVehicleNumber(transcript);
+        if (detectedNumber) {
+            performSearch(detectedNumber);
+        } else {
+            statusBar.textContent = `Could not find a number.`;
+            renderResult(null, transcript); // Show not found
+            showView('result-view');
+        }
+        stopVoiceSearch();
+    };
+
+    const startVoiceSearch = () => {
+        if (!recognition) {
+            if (!initializeVoiceRecognition()) return;
+        }
+        if (isVoiceSearchActive) {
+            stopVoiceSearch();
+            return;
+        }
+        try {
+            playBeep(523, 150);
+            recognition.start();
+        } catch (error) {
+            statusBar.textContent = 'Could not start listening.';
+        }
+    };
+
+    const stopVoiceSearch = () => {
+        if (!isVoiceSearchActive) return;
+        playBeep(392, 150);
+        if (recognition) recognition.stop();
+        micBtn.classList.remove('listening');
+        isVoiceSearchActive = false;
     };
     
-    async function fetchWeather() {
-        const lat = 1.35;
-        const lon = 103.82;
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&timezone=Asia/Singapore`;
+    micBtn.addEventListener('click', startVoiceSearch);
 
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            updateWeatherUI(data);
-        } catch (error) {
-            document.getElementById('current-condition').textContent = 'Weather Error';
-        }
-    }
-
-    function updateWeatherUI(data) {
-        const currentTemp = Math.round(data.current.temperature_2m);
-        const currentCode = data.current.weather_code;
-        const weatherInfo = weatherIconMap[currentCode] || weatherIconMap[0];
-
-        document.getElementById('current-temp').textContent = `${currentTemp}°`;
-        document.getElementById('current-condition').textContent = weatherInfo.description;
-        document.getElementById('current-weather-icon-container').innerHTML = weatherInfo.icon();
-
-        const hourlyContainer = document.getElementById('hourly-forecast-container');
-        hourlyContainer.innerHTML = ''; 
-
-        const now = new Date();
-        const currentHour = now.getHours();
-        
-        const startIndex = data.hourly.time.findIndex(time => new Date(time).getHours() === currentHour);
-        if (startIndex === -1) return;
-
-        const forecastColors = ['#FF6B6B', '#FFD166', '#06D6A0'];
-
-        for (let i = 0; i < 3; i++) {
-            const forecastIndex = startIndex + i + 1;
-            if (forecastIndex >= data.hourly.time.length) break;
-
-            const time = new Date(data.hourly.time[forecastIndex]);
-            const temp = Math.round(data.hourly.temperature_2m[forecastIndex]);
-            const code = data.hourly.weather_code[forecastIndex];
-            const hourInfo = weatherIconMap[code] || weatherIconMap[0];
-            
-            const item = document.createElement('div');
-            item.className = 'forecast-item';
-            
-            const displayHour = time.getHours();
-            const ampm = displayHour >= 12 ? 'pm' : 'am';
-            const formattedHour = displayHour % 12 === 0 ? 12 : displayHour % 12;
-
-            item.innerHTML = `
-                <div class="forecast-temp" style="color: ${forecastColors[i]}">${temp}°</div>
-                <div class="forecast-icon">${hourInfo.icon(forecastColors[i])}</div>
-                <div class="forecast-time">${formattedHour} ${ampm}</div>
-            `;
-            hourlyContainer.appendChild(item);
-        }
-    }
-
-    // --- Event Listeners & Initialization ---
-    dashboardPrompt.addEventListener('click', showInputView);
-    cancelSearchBtn.addEventListener('click', showInitialView);
-
-    textSearchInput.addEventListener('change', () => {
-        const term = textSearchInput.value.trim().toUpperCase();
-        if (term.length > 0) performSearch(term);
-    });
-
+    // --- Search & Render Logic (from Vehicle Listing Script) ---
     function performSearch(term) {
-        const numericTerm = term.replace(/\D/g, '');
-        if (numericTerm.length === 0) return;
-        const result = allRows.find(r => r.vehicleNumber && r.vehicleNumber.replace(/[^0-9]/g, '').startsWith(numericTerm));
-        renderResult(result, term);
-        showResultView();
+        const searchTerm = term.trim().toUpperCase();
+        if (!searchTerm) return;
+
+        // The exact search logic from the vehicle script
+        const filtered = allRows.filter(r => {
+            const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
+            return numericPartOfPlate.startsWith(searchTerm.replace(/[^0-9]/g, ''));
+        });
+        
+        renderResult(filtered.length > 0 ? filtered[0] : null, searchTerm);
+        showView('result-view');
     }
 
     function renderResult(result, term) {
-        const searchIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>`;
+        const searchIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>`;
         let resultHTML;
 
         if (result) {
@@ -527,18 +443,13 @@
                 </div>`;
         }
         resultView.innerHTML = resultHTML;
-        document.getElementById('new-search-btn').addEventListener('click', showInputView);
+        document.getElementById('new-search-btn').addEventListener('click', () => showView('initial-view'));
     }
     
     // Initial Load
-    updateTime();
-    setInterval(updateTime, 1000 * 60); // Update time every minute
-    fetchWeather();
-    setInterval(fetchWeather, 1000 * 60 * 15); // Update weather every 15 minutes
-
-    // --- MODIFICATION: Start the new digital clock ---
-    updateDigitalClock();
-    setInterval(updateDigitalClock, 1000);
+    updateClock();
+    setInterval(updateClock, 1000);
+    initializeVoiceRecognition();
 
 </script>
 
