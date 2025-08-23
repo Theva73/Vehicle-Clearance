@@ -1,12 +1,12 @@
-import { db } from "../db.js";
-import { doc, getDoc, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { db } from "../firebase.js";
+import { doc, getDoc, updateDoc, Timestamp } from "../db.js";
 import { showNotification, formatDate } from "../utils.js";
 import { renderLandingPage } from "./landing.js";
 
 export async function renderAdminReview(requestId){
   document.body.className='dark-theme-bg';
   const root=document.getElementById('app-root');
-  root.innerHTML=`<div class='min-h-screen flex items-center justify-center p-4'>
+  root.innerHTML=`<div class='min-h-[100dvh] flex items-center justify-center p-4'>
     <div class='w-full max-w-2xl bg-slate-800/80 rounded-2xl border border-blue-500/20 p-6 space-y-5 animate-fade-in'>
       <h1 class='text-2xl font-bold text-white'>Review Request</h1>
       <div id='content' class='text-slate-200'>Loading…</div>
@@ -17,6 +17,8 @@ export async function renderAdminReview(requestId){
       </div>
     </div>
   </div>`;
+
+  if (!requestId){ document.getElementById('content').innerHTML='<div class="text-slate-300">No request selected. Open from the Admin list.</div>'; return; }
 
   const ref=doc(db,'clearanceRequests',requestId);
   const snap=await getDoc(ref);
@@ -33,10 +35,7 @@ export async function renderAdminReview(requestId){
         <div><span class='text-slate-400'>Validity:</span> ${formatDate(r.entryDate)} → ${formatDate(r.expiryDate)}</div>
       </div>
       <div class='p-3 rounded-lg bg-slate-900/60 border border-slate-700'>
-        <label class='flex items-center gap-2'>
-          <input id='escortRequired' type='checkbox' class='h-4 w-4' ${r.escortRequired?'checked':''}/>
-          <span>Escort required</span>
-        </label>
+        <label class='flex items-center gap-2'><input id='escortRequired' type='checkbox' class='h-4 w-4' ${r.escortRequired?'checked':''}/> <span>Escort required</span></label>
         <div id='escortWrap' class='mt-3 ${r.escortRequired?'':'hidden'}'>
           <label class='text-sm text-slate-300'>Escorted by…</label>
           <input id='escortBy' class='mt-1 w-full p-2 bg-slate-900/70 border border-slate-700 rounded text-white' placeholder='Name / Team'>
@@ -52,7 +51,7 @@ export async function renderAdminReview(requestId){
   const escortChk=document.getElementById('escortRequired');
   const escortWrap=document.getElementById('escortWrap');
   const escortBy=document.getElementById('escortBy');
-  escortChk.addEventListener('change',()=>{ escortWrap.classList.toggle('hidden', !escortChk.checked); });
+  escortChk.addEventListener('change',()=>escortWrap.classList.toggle('hidden', !escortChk.checked));
 
   function composeNotes(existing, escortName){
     const trimmed=(existing||'').trim();

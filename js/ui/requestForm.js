@@ -20,7 +20,7 @@ export function renderRequestForm(){
   document.body.className='dark-theme-bg';
   const root=document.getElementById('app-root');
   root.innerHTML=`
-  <div class='min-h-screen flex items-center justify-center p-4'>
+  <div class='min-h-[100dvh] flex items-center justify-center p-4'>
     <div class='w-full max-w-lg bg-slate-800/80 border border-yellow-500/20 rounded-2xl p-6 space-y-5 text-slate-200'>
       <h2 class='text-2xl font-bold text-white'>Request Vehicle Clearance</h2>
       <form id='form' class='space-y-4'>
@@ -60,8 +60,9 @@ export function renderRequestForm(){
   </div>`;
 
   // Toggle custom location
-  root.querySelector("select[name='location']").addEventListener('change', (e)=>{
-    const custom=root.querySelector("input[name='customLocation']");
+  const locSel = root.querySelector("select[name='location']");
+  const custom = root.querySelector("input[name='customLocation']");
+  locSel.addEventListener('change', (e)=>{
     if(e.target.value==='Other'){ custom.classList.remove('hidden'); custom.required=true; } else { custom.classList.add('hidden'); custom.required=false; custom.value=''; }
   });
 
@@ -76,7 +77,8 @@ export function renderRequestForm(){
     const parse=(s)=>{const [y,m,d]=(s||'').split('-').map(n=>parseInt(n,10)); return new Date(y,m-1,d);};
     if(!data.entryDate||!data.expiryDate){ e.target.reportValidity(); return; }
 
-    const auth=getAuth(); if(!auth.currentUser) await signInAnonymously(auth);
+    const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+    const auth = getAuth(); if(!auth.currentUser) await signInAnonymously(auth);
     const payload={
       requesterName:data.requesterName, requesterEmail:data.requesterEmail, requesterId:auth.currentUser?.uid||null,
       vehicleNumber:(data.vehicleNumber||'').toUpperCase(), vehicleType:data.vehicleType,
