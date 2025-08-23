@@ -78,7 +78,6 @@
             font-weight: 500;
         }
 
-        /* The new text input that triggers native dictation */
         .search-input-container {
             width: 80vw;
             max-width: 250px;
@@ -93,13 +92,12 @@
             background-color: var(--bg-glass);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
-            -webkit-appearance: none; /* Removes default iOS styling */
+            -webkit-appearance: none;
         }
         #vehicle-input::placeholder {
             color: var(--text-secondary);
         }
 
-        /* Result View Styling */
         .status-panel {
             width: 90vw;
             max-width: 320px;
@@ -187,7 +185,6 @@
     const dateDisplay = document.getElementById('date-display');
     const vehicleInput = document.getElementById('vehicle-input');
 
-    // --- Firebase Connection ---
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -207,13 +204,11 @@
         statusBar.textContent = 'Connection Failed';
     }
 
-    // --- View Management ---
     function showView(viewId) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
     }
 
-    // --- Clock ---
     function updateClock() {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
@@ -224,7 +219,6 @@
         });
     }
 
-    // --- Voice Input Processing ---
     const processVehicleNumber = (spokenText) => {
         let processed = spokenText.toLowerCase().trim();
         const fillerWords = ['um', 'uh', 'the', 'number', 'is', 'vehicle', 'car', 'plate'];
@@ -244,24 +238,31 @@
         return processed.replace(/[^A-Z0-9]/gi, '').toUpperCase();
     };
 
-    // --- Search Logic ---
+    // --- CORRECTED Search Logic ---
     function performSearch(rawText) {
-        const term = processVehicleNumber(rawText);
-        if (!term) {
+        // First, get the full processed term for display purposes (e.g., "SBA123")
+        const processedTerm = processVehicleNumber(rawText);
+        
+        // Then, extract ONLY the numeric part for the search, matching the vehicle script's logic
+        const numericSearchTerm = processedTerm.replace(/[^0-9]/g, '');
+
+        if (!numericSearchTerm) {
             statusBar.textContent = 'Please say a vehicle number.';
             return;
         }
 
         const filtered = allRows.filter(r => {
+            // Get the numeric part of the vehicle number from the database
             const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
-            return numericPartOfPlate.startsWith(term.replace(/[^0-9]/g, ''));
+            // Check if it starts with the numeric search term
+            return numericPartOfPlate.startsWith(numericSearchTerm);
         });
         
-        renderResult(filtered.length > 0 ? filtered[0] : null, term);
+        // Use the full processed term when showing the result for clarity
+        renderResult(filtered.length > 0 ? filtered[0] : null, processedTerm);
         showView('result-view');
     }
 
-    // --- Render Results ---
     function renderResult(result, term) {
         let resultHTML;
         if (result) {
@@ -289,17 +290,15 @@
         }
         resultView.innerHTML = resultHTML;
         document.getElementById('new-search-btn').addEventListener('click', () => {
-            vehicleInput.value = ''; // Clear input for next search
+            vehicleInput.value = '';
             showView('initial-view');
         });
     }
 
-    // --- Event Listener for the text input ---
     vehicleInput.addEventListener('change', (event) => {
         performSearch(event.target.value);
     });
     
-    // --- Initial Load ---
     updateClock();
     setInterval(updateClock, 1000);
 
