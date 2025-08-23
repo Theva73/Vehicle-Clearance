@@ -17,6 +17,7 @@
             --text-secondary: #A0A0B0; 
             --text-muted: #606070; 
             --accent-blue: #0A84FF; 
+            --accent-purple: #C77DFF;
             --success-green: #30D158; 
             --error-red: #FF453A; 
             --shadow-dark: rgba(0, 0, 0, 0.5);
@@ -43,14 +44,65 @@
             width: 100vw;
             display: flex;
             flex-direction: column;
-            /* MODIFIED: Aligns content to the top */
             justify-content: flex-start; 
             align-items: center;
             position: relative;
-            /* REMOVED padding-top to bring content up */
-            padding-top: 5vh; /* Adjusted for a small gap from the top */
+            /* MODIFIED: Increased padding-top to make space for the new header */
+            padding-top: 12vh;
             box-sizing: border-box;
         }
+
+        /* NEW: Header styles to match the image */
+        .watch-header {
+            position: absolute;
+            top: 2vh;
+            left: 2vw;
+            right: 2vw;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .close-btn {
+            width: 44px;
+            height: 44px;
+            background-color: rgba(30, 30, 35, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 300;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .url-bar {
+            flex-grow: 1;
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            border-radius: 14px;
+            text-align: left;
+            font-size: 15px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-time {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex-shrink: 0;
+        }
+
 
         .view {
             display: flex;
@@ -62,17 +114,13 @@
             animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             width: 100%;
             height: 100%;
-            position: absolute; /* RESTORED: This is needed to stack views */
+            position: absolute;
             top: 0;
             left: 0;
         }
         
         #result-view, #input-view { display: none; }
 
-        /* * ==============================================
-         * ANIMATED WEATHER-FOCUSED LAYOUT
-         * ==============================================
-        */
         #dashboard-prompt {
             display: flex;
             flex-direction: column;
@@ -84,6 +132,8 @@
             box-sizing: border-box;
             gap: 20px;
             padding: 20px;
+            /* MODIFIED: Ensure it respects the container padding */
+            margin-top: 8vh;
         }
 
         .weather-widget-container {
@@ -181,12 +231,13 @@
             border: 1px solid var(--glass-border);
         }
 
-        /* Input and Result views remain largely unchanged */
+        /* MODIFIED: Adjusted input view to better fit the new layout */
         #input-view {
-            justify-content: flex-start;
-            padding-top: 40px;
+            justify-content: center; /* Vertically center content */
+            padding-top: 0; /* Remove specific padding */
             gap: 20px;
         }
+
         .input-header {
             text-align: center;
             margin-bottom: 20px;
@@ -242,10 +293,6 @@
         .location-text { font-size: 22px; font-weight: 600; }
         #new-search-btn { background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
 
-        /* * ==============================================
-         * ANIMATIONS
-         * ==============================================
-        */
         @keyframes fade-in-up {
             from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
@@ -277,6 +324,18 @@
 <body>
 
 <div class="app-container">
+    <!-- NEW: Header added to match the provided image -->
+    <div class="watch-header">
+        <div class="close-btn">&times;</div>
+        <div class="url-bar">theva73.github.io</div>
+        <div class="header-time">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--accent-purple)" viewBox="0 0 16 16">
+                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+            </svg>
+            <span id="header-time-text">--:--</span>
+        </div>
+    </div>
+
     <!-- VIEW 1: The dashboard-style initial screen -->
     <div class="view" id="initial-view">
         <div id="dashboard-prompt">
@@ -334,6 +393,9 @@
     const textSearchInput = document.getElementById('text-search-input');
     const cancelSearchBtn = document.getElementById('cancel-search-btn');
     const inputTime = document.getElementById('input-time');
+    // NEW: Reference for the header time
+    const headerTimeText = document.getElementById('header-time-text');
+
 
     // --- Firebase Initialization ---
     try {
@@ -377,15 +439,19 @@
     }
 
     // --- Time Update ---
+    // MODIFIED: Function now updates both time displays
     function updateTime() {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        inputTime.textContent = `${hours}:${minutes}`;
+        const timeString = `${hours}:${minutes}`;
+        inputTime.textContent = timeString;
+        if (headerTimeText) {
+            headerTimeText.textContent = timeString;
+        }
     }
     
     // --- Weather Logic ---
-    // --- UPDATED REALISTIC WEATHER ICONS ---
     const weatherIconMap = {
         0: { description: 'Clear', icon: (color = '#FFD60A') => `<svg class="current-weather-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs><filter id="glow"><feGaussianBlur stdDeviation="2.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><circle cx="32" cy="32" r="10" fill="${color}"/><circle class="animated-sun" cx="32" cy="32" r="12" fill="${color}" opacity="0.8" style="filter: url(#glow);"/></svg>` },
         1: { description: 'Mainly Clear', icon: (color = '#FFD60A') => `<svg class="current-weather-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g class="animated-cloud"><path d="M47.7,41.8 C47.2,36.4 43.2,32 38,32 L37.5,32 C36.9,25.1 31.1,19.5 24,19.5 C16.8,19.5 11,25.4 11,32.5 L11,33 L10,33 C6.7,33 4,35.7 4,39 C4,42.3 6.7,45 10,45 L46,45 C49.9,45 53,41.9 53,38 C53,34.9 50.8,32.2 47.9,31.2 Z" fill="#F0F0F5" fill-opacity="0.9"/></g><circle cx="30" cy="22" r="7" fill="${color}"/></svg>` },
@@ -400,7 +466,6 @@
     };
 
     async function fetchWeather() {
-        // Using Singapore's coordinates
         const lat = 1.35;
         const lon = 103.82;
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&timezone=Asia/Singapore`;
@@ -417,7 +482,7 @@
     function updateWeatherUI(data) {
         const currentTemp = Math.round(data.current.temperature_2m);
         const currentCode = data.current.weather_code;
-        const weatherInfo = weatherIconMap[currentCode] || weatherIconMap[0]; // Fallback to 'Clear'
+        const weatherInfo = weatherIconMap[currentCode] || weatherIconMap[0];
 
         document.getElementById('current-temp').textContent = `${currentTemp}°`;
         document.getElementById('current-condition').textContent = weatherInfo.description;
@@ -429,13 +494,11 @@
         const now = new Date();
         const currentHour = now.getHours();
         
-        // Find the index in the hourly data that corresponds to the current hour
         const startIndex = data.hourly.time.findIndex(time => new Date(time).getHours() === currentHour);
         if (startIndex === -1) return;
 
         const forecastColors = ['#FF6B6B', '#FFD166', '#06D6A0'];
 
-        // Display the next 3 hours of forecast
         for (let i = 0; i < 3; i++) {
             const forecastIndex = startIndex + i + 1;
             if (forecastIndex >= data.hourly.time.length) break;
@@ -516,7 +579,7 @@
     // Initial Load
     showInitialView();
     updateTime();
-    setInterval(updateTime, 1000 * 60); // Update time every minute
+    setInterval(updateTime, 1000 * 30); // Update time every 30 seconds
     fetchWeather();
     setInterval(fetchWeather, 1000 * 60 * 15); // Update weather every 15 minutes
 
