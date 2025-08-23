@@ -4,7 +4,7 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase
 import { firebaseConfig } from "./config.js";
 
 let app, auth, db;
-export function initFirebase() {
+export function initFirebase(){
   if (app) return { app, auth, db };
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
