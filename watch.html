@@ -47,62 +47,10 @@
             justify-content: flex-start; 
             align-items: center;
             position: relative;
-            /* MODIFIED: Increased padding-top to make space for the new header */
-            padding-top: 12vh;
+            /* REVERTED: Reset padding to original value */
+            padding-top: 5vh;
             box-sizing: border-box;
         }
-
-        /* NEW: Header styles to match the image */
-        .watch-header {
-            position: absolute;
-            top: 2vh;
-            left: 2vw;
-            right: 2vw;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 100;
-        }
-
-        .close-btn {
-            width: 44px;
-            height: 44px;
-            background-color: rgba(30, 30, 35, 0.9);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            font-weight: 300;
-            color: var(--text-secondary);
-            flex-shrink: 0;
-            cursor: pointer;
-        }
-
-        .url-bar {
-            flex-grow: 1;
-            background-color: var(--bg-secondary);
-            color: var(--text-secondary);
-            padding: 12px 16px;
-            border-radius: 14px;
-            text-align: left;
-            font-size: 15px;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .header-time {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            flex-shrink: 0;
-        }
-
 
         .view {
             display: flex;
@@ -132,8 +80,7 @@
             box-sizing: border-box;
             gap: 20px;
             padding: 20px;
-            /* MODIFIED: Ensure it respects the container padding */
-            margin-top: 8vh;
+            /* REVERTED: Removed margin-top */
         }
 
         .weather-widget-container {
@@ -231,10 +178,9 @@
             border: 1px solid var(--glass-border);
         }
 
-        /* MODIFIED: Adjusted input view to better fit the new layout */
         #input-view {
-            justify-content: center; /* Vertically center content */
-            padding-top: 0; /* Remove specific padding */
+            justify-content: flex-start;
+            padding-top: 40px;
             gap: 20px;
         }
 
@@ -324,17 +270,7 @@
 <body>
 
 <div class="app-container">
-    <!-- NEW: Header added to match the provided image -->
-    <div class="watch-header">
-        <div class="close-btn">&times;</div>
-        <div class="url-bar">theva73.github.io</div>
-        <div class="header-time">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--accent-purple)" viewBox="0 0 16 16">
-                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-            </svg>
-            <span id="header-time-text">--:--</span>
-        </div>
-    </div>
+    <!-- REMOVED: The custom header is no longer needed -->
 
     <!-- VIEW 1: The dashboard-style initial screen -->
     <div class="view" id="initial-view">
@@ -393,9 +329,7 @@
     const textSearchInput = document.getElementById('text-search-input');
     const cancelSearchBtn = document.getElementById('cancel-search-btn');
     const inputTime = document.getElementById('input-time');
-    // NEW: Reference for the header time
-    const headerTimeText = document.getElementById('header-time-text');
-
+    // REMOVED: Reference to the header time is no longer needed
 
     // --- Firebase Initialization ---
     try {
@@ -439,16 +373,12 @@
     }
 
     // --- Time Update ---
-    // MODIFIED: Function now updates both time displays
+    // REVERTED: Function now only updates the original time display
     function updateTime() {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        const timeString = `${hours}:${minutes}`;
-        inputTime.textContent = timeString;
-        if (headerTimeText) {
-            headerTimeText.textContent = timeString;
-        }
+        inputTime.textContent = `${hours}:${minutes}`;
     }
     
     // --- Weather Logic ---
@@ -579,7 +509,7 @@
     // Initial Load
     showInitialView();
     updateTime();
-    setInterval(updateTime, 1000 * 30); // Update time every 30 seconds
+    setInterval(updateTime, 1000 * 60); // Update time every minute
     fetchWeather();
     setInterval(fetchWeather, 1000 * 60 * 15); // Update weather every 15 minutes
 
