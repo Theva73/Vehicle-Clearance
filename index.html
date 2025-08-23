@@ -1,23 +1,3 @@
-<!--
-================================================================================
-Vehicle Clearance — Single-File (Monolith) Version — Annotated with Parts
---------------------------------------------------------------------------------
-This copy is *functionally identical* to your working page. Only comments were
-added to make the structure easy to navigate. Search for "===== Part X" banners.
-
-Parts breakdown inside <script type="module">// ===== Part 1) Firebase/Config bootstrap ============================
-:
-  Part 1) Firebase/Config bootstrap
-  Part 2) State (in-memory) + unsub handles
-  Part 3) Utilities (UI, date/time, toasts)
-  Part 4) Access/Geo helpers (Green List secure access)
-  Part 5) Data admin helpers (export/import, reports)
-  Part 6) Render functions (each screen)
-  Part 7) Event delegation + route history ("router")
-  Part 8) Startup call (renderLandingPage)
-================================================================================
--->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1420,6 +1400,17 @@ html, body {
 
     const renderRequestForm = () => {
         document.body.className = 'dark-theme-bg';
+
+        const now = new Date();
+        const cutOffHour = 14;
+        let minDate = new Date();
+
+        if (now.getHours() >= cutOffHour) {
+            minDate.setDate(minDate.getDate() + 1);
+        }
+        
+        const minDateString = minDate.toISOString().split('T')[0];
+
         appRoot.innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4">
             <div class="w-full max-w-lg mobile-safe-container bg-slate-800/80 backdrop-blur-sm border border-yellow-500/20 rounded-2xl shadow-2xl shadow-yellow-900/20 p-8 space-y-6 animate-fade-in">
@@ -1458,16 +1449,29 @@ html, body {
                         </select>
                     </div>
 
+                    <div>
+                        <label class="text-sm font-medium text-slate-300">Visiting Hours</label>
+                        <select name="timeSlot" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required>
+                            <option value="">Select a time slot...</option>
+                            <option value="08:00-13:00">08:00 to 13:00</option>
+                            <option value="08:00-18:00">08:00 to 18:00</option>
+                            <option value="13:00-18:00">13:00 to 18:00</option>
+                            <option value="18:00-onwards">18:00 onwards</option>
+                        </select>
+                        <p class="text-xs text-slate-400 mt-2">Note: Approval is subject to parking lot availability.</p>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-slate-300">Entry Date</label>
-                            <input type="date" name="entryDate" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                            <input type="date" name="entryDate" min="${minDateString}" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-slate-300">Expiry Date</label>
-                            <input type="date" name="expiryDate" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                            <input type="date" name="expiryDate" min="${minDateString}" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                         </div>
                     </div>
+                     <p class="text-xs text-yellow-400 mt-2">For same-day clearance, requests must be submitted before 14:00hrs local time.</p>
                     
                     <div>
                         <label class="text-sm font-medium text-slate-300">Notes</label>
@@ -1493,6 +1497,7 @@ html, body {
         };
 
         const config = statusConfig[r.status] || statusConfig.pending;
+        const timeSlotText = r.timeSlot ? r.timeSlot.replace('-', ' to ').replace('onwards', ' onwards') : 'N/A';
 
         return `
         <div class="p-4 ${config.bg} ${config.border} rounded-xl border text-left animate-fade-in">
@@ -1524,6 +1529,10 @@ html, body {
                 <div>
                     <p class="text-xs text-slate-400">Location</p>
                     <p class="font-semibold text-slate-200">${r.location}</p>
+                </div>
+                 <div>
+                    <p class="text-xs text-slate-400">Visiting Hours</p>
+                    <p class="font-semibold text-slate-200">${timeSlotText}</p>
                 </div>
                 <div class="col-span-2">
                     <p class="text-xs text-slate-400">Valid Period</p>
@@ -2016,6 +2025,7 @@ html, body {
         list.innerHTML = activeClearances.map(c => {
             const approvalInfo = formatApprovalString(c);
             const updateInfo = formatUpdateString(c);
+            const timeSlotText = c.timeSlot ? c.timeSlot.replace('-', ' to ').replace('onwards', ' onwards') : 'N/A';
 
             return `
             <details class="mobile-details bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group animate-fade-in border border-gray-200 dark:border-gray-700">
@@ -2049,6 +2059,10 @@ html, body {
                          <div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Vehicle Type</p>
                             <p class="font-medium text-gray-800 dark:text-gray-200">${c.vehicleType}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Visiting Hours</p>
+                            <p class="font-medium text-gray-800 dark:text-gray-200">${timeSlotText}</p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Validity</p>
@@ -2173,6 +2187,15 @@ html, body {
                             ${optionsHTML}
                         </select>
                     </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Visiting Hours</label>
+                        <select name="timeSlot" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                            <option value="08:00-13:00" ${request.timeSlot === '08:00-13:00' ? 'selected' : ''}>08:00 to 13:00</option>
+                            <option value="08:00-18:00" ${request.timeSlot === '08:00-18:00' ? 'selected' : ''}>08:00 to 18:00</option>
+                            <option value="13:00-18:00" ${request.timeSlot === '13:00-18:00' ? 'selected' : ''}>13:00 to 18:00</option>
+                            <option value="18:00-onwards" ${request.timeSlot === '18:00-onwards' ? 'selected' : ''}>18:00 onwards</option>
+                        </select>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Date</label>
@@ -2248,6 +2271,16 @@ html, body {
                         <select name="vehicleType" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
                             <option value="">Select type...</option>
                             ${optionsHTML}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Visiting Hours</label>
+                        <select name="timeSlot" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required>
+                            <option value="">Select a time slot...</option>
+                            <option value="08:00-13:00" ${edit?.timeSlot === '08:00-13:00' ? 'selected' : ''}>08:00 to 13:00</option>
+                            <option value="08:00-18:00" ${edit?.timeSlot === '08:00-18:00' ? 'selected' : ''}>08:00 to 18:00</option>
+                            <option value="13:00-18:00" ${edit?.timeSlot === '13:00-18:00' ? 'selected' : ''}>13:00 to 18:00</option>
+                            <option value="18:00-onwards" ${edit?.timeSlot === '18:00-onwards' ? 'selected' : ''}>18:00 onwards</option>
                         </select>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2772,6 +2805,7 @@ html, body {
                     const clearancePayload = {
                         ownerName: data.ownerName, vehicleNumber: data.vehicleNumber.toUpperCase(), vehicleType: data.vehicleType,
                         location: data.location === "Other" ? data.customLocation : data.location,
+                        timeSlot: data.timeSlot,
                         entryDate: Timestamp.fromDate(entryDate), expiryDate: Timestamp.fromDate(expiryDate),
                         escortRequired: !!data.escortRequired, notes: data.notes || "", createdAt: approvalTimestamp,
                         approvedByUsername: currentAdminProfile.username, approvedByDesignation: currentAdminProfile.designation,
@@ -2855,6 +2889,7 @@ html, body {
                     const payload = {
                         ownerName: data.ownerName, vehicleNumber: data.vehicleNumber.toUpperCase(), vehicleType: data.vehicleType,
                         location: data.location === "Other" ? data.customLocation : data.location,
+                        timeSlot: data.timeSlot,
                         entryDate: Timestamp.fromDate(entryDate), expiryDate: Timestamp.fromDate(expiryDate),
                         escortRequired: !!data.escortRequired, notes: data.notes || ""
                     };
@@ -3151,6 +3186,7 @@ html, body {
                     vehicleNumber: data.vehicleNumber.toUpperCase(),
                     vehicleType: data.vehicleType, 
                     location: data.location === "Other" ? data.customLocation : data.location,
+                    timeSlot: data.timeSlot,
                     entryDate: Timestamp.fromDate(entryDate), 
                     expiryDate: Timestamp.fromDate(expiryDate),
                     escortRequired: !!data.escortRequired, 
