@@ -10,6 +10,7 @@
     <style>
         :root {
             --bg-primary: #000000; 
+            --bg-secondary: #1A1A21;
             --bg-glass: rgba(25, 25, 30, 0.65); 
             --glass-border: rgba(255, 255, 255, 0.15); 
             --text-primary: #FFFFFF; 
@@ -98,6 +99,7 @@
             color: var(--text-secondary);
         }
 
+        /* Result View Styling (Restored Original Layout) */
         .status-panel {
             width: 90vw;
             max-width: 320px;
@@ -111,22 +113,45 @@
         .status-badge { font-size: 3.5vw; font-weight: 600; padding: 8px 16px; border-radius: 16px; margin-bottom: 24px; color: #fff; }
         .status-badge.cleared { background-color: var(--success-green); }
         .status-badge.not-found { background-color: var(--error-red); }
-        .location-info { width: 100%; border-top: 1px solid var(--glass-border); padding-top: 16px; }
+        
+        /* Styles for the original side-by-side layout */
+        .location-info {
+            width: 100%;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .location-details {
+            text-align: left;
+            flex-grow: 1;
+        }
         .location-title { font-size: 3vw; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; }
         .location-text { font-size: 5.5vw; font-weight: 600; }
+        
+        /* Restored round button style */
         #new-search-btn {
-            display: block;
-            width: 100%;
-            margin-top: 20px;
-            padding: 12px;
-            font-size: 4vw;
-            font-weight: 600;
-            background: var(--bg-secondary, #1A1A21);
+            background: var(--bg-secondary);
             border: 1px solid var(--glass-border);
             color: var(--text-primary);
             cursor: pointer;
-            border-radius: 16px;
+            width: 12vw;
+            height: 12vw;
+            max-width: 44px;
+            max-height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            flex-shrink: 0;
         }
+        #new-search-btn svg {
+            width: 50%;
+            height: 50%;
+        }
+
 
         #status-bar {
             position: absolute;
@@ -185,6 +210,7 @@
     const dateDisplay = document.getElementById('date-display');
     const vehicleInput = document.getElementById('vehicle-input');
 
+    // --- Firebase Connection ---
     try {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -204,11 +230,13 @@
         statusBar.textContent = 'Connection Failed';
     }
 
+    // --- View Management ---
     function showView(viewId) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
     }
 
+    // --- Clock ---
     function updateClock() {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
@@ -219,6 +247,7 @@
         });
     }
 
+    // --- Voice Input Processing ---
     const processVehicleNumber = (spokenText) => {
         let processed = spokenText.toLowerCase().trim();
         const fillerWords = ['um', 'uh', 'the', 'number', 'is', 'vehicle', 'car', 'plate'];
@@ -238,43 +267,40 @@
         return processed.replace(/[^A-Z0-9]/gi, '').toUpperCase();
     };
 
-    // --- CORRECTED Search Logic ---
+    // --- Search Logic ---
     function performSearch(rawText) {
-        // First, get the full processed term for display purposes (e.g., "SBA123")
-        const processedTerm = processVehicleNumber(rawText);
-        
-        // Then, extract ONLY the numeric part for the search, matching the vehicle script's logic
-        const numericSearchTerm = processedTerm.replace(/[^0-9]/g, '');
-
-        if (!numericSearchTerm) {
+        const term = processVehicleNumber(rawText);
+        if (!term) {
             statusBar.textContent = 'Please say a vehicle number.';
             return;
         }
 
         const filtered = allRows.filter(r => {
-            // Get the numeric part of the vehicle number from the database
             const numericPartOfPlate = r.vehicleNumber.replace(/[^0-9]/g, '');
-            // Check if it starts with the numeric search term
-            return numericPartOfPlate.startsWith(numericSearchTerm);
+            return numericPartOfPlate.startsWith(term.replace(/[^0-9]/g, ''));
         });
         
-        // Use the full processed term when showing the result for clarity
-        renderResult(filtered.length > 0 ? filtered[0] : null, processedTerm);
+        renderResult(filtered.length > 0 ? filtered[0] : null, term);
         showView('result-view');
     }
 
+    // --- Render Results (Restored Original Layout) ---
     function renderResult(result, term) {
+        const searchIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>`;
         let resultHTML;
+
         if (result) {
             resultHTML = `
                 <div class="status-panel cleared">
                     <div class="vehicle-number">${result.vehicleNumber}</div>
                     <div class="status-badge cleared">✓ CLEARED</div>
                     <div class="location-info">
-                        <div class="location-title">LOCATION</div>
-                        <div class="location-text">${result.location || 'N/A'}</div>
+                        <button id="new-search-btn">${searchIconSVG}</button>
+                        <div class="location-details">
+                            <div class="location-title">LOCATION</div>
+                            <div class="location-text">${result.location || 'N/A'}</div>
+                        </div>
                     </div>
-                    <button id="new-search-btn">New Search</button>
                 </div>`;
         } else {
             resultHTML = `
@@ -282,10 +308,12 @@
                     <div class="vehicle-number">${term}</div>
                     <div class="status-badge not-found">✗ NOT FOUND</div>
                     <div class="location-info">
-                        <div class="location-title">STATUS</div>
-                        <div class="location-text">Access Denied</div>
+                        <button id="new-search-btn">${searchIconSVG}</button>
+                        <div class="location-details">
+                            <div class="location-title">STATUS</div>
+                            <div class="location-text">Denied</div>
+                        </div>
                     </div>
-                    <button id="new-search-btn">Try Again</button>
                 </div>`;
         }
         resultView.innerHTML = resultHTML;
@@ -295,10 +323,12 @@
         });
     }
 
+    // --- Event Listener for the text input ---
     vehicleInput.addEventListener('change', (event) => {
         performSearch(event.target.value);
     });
     
+    // --- Initial Load ---
     updateClock();
     setInterval(updateClock, 1000);
 
