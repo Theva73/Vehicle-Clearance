@@ -26,15 +26,15 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
+            /* MODIFIED: Aligns content to the top of the screen */
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
         }
 
-        /* The main weather display, now centered on the screen */
         .weather-container {
             display: flex;
             justify-content: center;
@@ -44,6 +44,8 @@
             padding: 20px;
             box-sizing: border-box;
             animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            /* MODIFIED: Added margin-top to position it just below the URL bar */
+            margin-top: 14vh;
         }
 
         .current-weather {
@@ -128,7 +130,6 @@
 </head>
 <body>
 
-    <!-- REMOVED the extra header. This is now the only content. -->
     <div class="weather-container">
         <div class="current-weather">
             <div id="current-weather-icon-container"></div>
@@ -184,7 +185,7 @@
 
         const now = new Date();
         const startIndex = data.hourly.time.findIndex(time => new Date(time).getHours() === now.getHours());
-        if (startIndex === -1) return;
+        if (startIndex ===-1) return;
 
         const forecastColors = ['var(--forecast-color-1)', 'var(--forecast-color-2)', 'var(--forecast-color-3)'];
 
