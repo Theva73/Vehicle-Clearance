@@ -10,11 +10,9 @@
     <style>
         :root {
             --bg-primary: #0D0D12;
-            --bg-secondary: #1A1A21; 
             --text-primary: #F0F0F5;
             --text-secondary: #A0A0B0;
             --bg-glass: rgba(40, 40, 50, 0.7);
-            --accent-purple: #C77DFF;
             --forecast-color-1: #FF6B6B;
             --forecast-color-2: #FFD166;
             --forecast-color-3: #06D6A0;
@@ -28,72 +26,15 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
         }
 
-        .app-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-
-        /* NEW: Header styles */
-        .watch-header {
-            position: absolute;
-            top: 2vh;
-            left: 2vw;
-            right: 2vw;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 100;
-        }
-
-        .close-btn {
-            width: 44px;
-            height: 44px;
-            background-color: rgba(30, 30, 35, 0.9);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            font-weight: 300;
-            color: var(--text-secondary);
-            flex-shrink: 0;
-            cursor: pointer;
-        }
-
-        .url-bar {
-            flex-grow: 1;
-            background-color: var(--bg-secondary);
-            color: var(--text-secondary);
-            padding: 12px 16px;
-            border-radius: 14px;
-            text-align: left;
-            font-size: 15px;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .header-time {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            flex-shrink: 0;
-        }
-
+        /* The main weather display, now centered on the screen */
         .weather-container {
             display: flex;
             justify-content: center;
@@ -103,8 +44,6 @@
             padding: 20px;
             box-sizing: border-box;
             animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-            /* MODIFIED: Pushed down to make space for the header */
-            margin-top: 12vh;
         }
 
         .current-weather {
@@ -189,18 +128,7 @@
 </head>
 <body>
 
-<div class="app-container">
-    <div class="watch-header">
-        <div class="close-btn">&times;</div>
-        <div class="url-bar">theva73.github.io</div>
-        <div class="header-time">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--accent-purple)" viewBox="0 0 16 16">
-                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-            </svg>
-            <span id="header-time-text">--:--</span>
-        </div>
-    </div>
-
+    <!-- REMOVED the extra header. This is now the only content. -->
     <div class="weather-container">
         <div class="current-weather">
             <div id="current-weather-icon-container"></div>
@@ -211,22 +139,8 @@
             <!-- Forecast items will be dynamically injected here -->
         </div>
     </div>
-</div>
 
 <script>
-    const headerTimeText = document.getElementById('header-time-text');
-
-    function updateTime() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const timeString = `${hours}:${minutes}`;
-        if (headerTimeText) {
-            headerTimeText.textContent = timeString;
-        }
-    }
-
-    // --- Weather Logic ---
     const weatherIconMap = {
         0: { description: 'Clear', icon: (color = '#FFD60A') => `<svg class="current-weather-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="12" fill="${color}"/></svg>` },
         1: { description: 'Mainly Clear', icon: (color = '#F0F0F5') => `<svg class="current-weather-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g class="animated-cloud"><path d="M47.7,41.8 C47.2,36.4 43.2,32 38,32 L37.5,32 C36.9,25.1 31.1,19.5 24,19.5 C16.8,19.5 11,25.4 11,32.5 L11,33 L10,33 C6.7,33 4,35.7 4,39 C4,42.3 6.7,45 10,45 L46,45 C49.9,45 53,41.9 53,38 C53,34.9 50.8,32.2 47.9,31.2 Z" fill="${color}" fill-opacity="0.9"/></g><circle cx="30" cy="22" r="7" fill="#FFD60A"/></svg>` },
@@ -238,9 +152,7 @@
         95: { description: 'Thunderstorm', icon: (color = '#FFD60A') => `<svg class="current-weather-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g class="animated-cloud"><path d="M46 20 C40 20, 38 24, 38 24 C36 17, 31 15, 26 17 C20 14, 15 19, 15 25 C15 25, 10 25, 10 30 C10 35, 15 35, 15 35 L46 35 C52 35, 55 30, 52 26 C52 26, 51 20, 46 20 Z" fill="#404050" /></g><polygon points="28,42 34,42 30,50 36,50 32,58 32,50 28,50" fill="${color}"/></svg>` }
     };
     
-    Object.assign(weatherIconMap, {
-        48: weatherIconMap[45], 51: weatherIconMap[61], 53: weatherIconMap[61], 55: weatherIconMap[61], 56: weatherIconMap[61], 57: weatherIconMap[61], 63: weatherIconMap[61], 65: weatherIconMap[61], 66: weatherIconMap[61], 67: weatherIconMap[61], 71: weatherIconMap[80], 73: weatherIconMap[80], 75: weatherIconMap[80], 77: weatherIconMap[80], 81: weatherIconMap[80], 82: weatherIconMap[80], 85: weatherIconMap[80], 86: weatherIconMap[80], 96: weatherIconMap[95], 99: weatherIconMap[95]
-    });
+    Object.assign(weatherIconMap, { 48: weatherIconMap[45], 51: weatherIconMap[61], 53: weatherIconMap[61], 55: weatherIconMap[61], 56: weatherIconMap[61], 57: weatherIconMap[61], 63: weatherIconMap[61], 65: weatherIconMap[61], 66: weatherIconMap[61], 67: weatherIconMap[61], 71: weatherIconMap[80], 73: weatherIconMap[80], 75: weatherIconMap[80], 77: weatherIconMap[80], 81: weatherIconMap[80], 82: weatherIconMap[80], 85: weatherIconMap[80], 86: weatherIconMap[80], 96: weatherIconMap[95], 99: weatherIconMap[95] });
 
     async function fetchWeather() {
         const lat = 1.3521;
@@ -302,9 +214,7 @@
     }
     
     // Initial Load & Refresh Intervals
-    updateTime();
     fetchWeather();
-    setInterval(updateTime, 1000 * 30);
     setInterval(fetchWeather, 1000 * 60 * 15);
 
 </script>
