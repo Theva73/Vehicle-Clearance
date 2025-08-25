@@ -836,7 +836,8 @@
             settings: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V15a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
             star: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`,
             sparkles: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L9.5 8.5L4 11L9.5 13.5L12 19L14.5 13.5L20 11L14.5 8.5L12 3z"/><path d="M5 3v4h4"/><path d="M19 17v4h-4"/></svg>`,
-            database: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>`
+            database: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>`,
+            whatsapp: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.267.655 4.398 1.908 6.161l.217.324-1.251 4.565 4.654-1.225.308.212z"/></svg>`
         };
 
         // — Dashboard Setup —
@@ -1426,6 +1427,10 @@
                         <label class="text-sm font-medium text-slate-300">Your Email Address</label>
                         <input type="email" name="requesterEmail" placeholder="you@example.com" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
                     </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-300">Your Contact Number</label>
+                        <input type="tel" name="requesterContact" placeholder="e.g., 60123456789" class="mobile-input mt-1 w-full p-3 bg-slate-900/70 border border-slate-700 rounded-lg text-white" required />
+                    </div>
                     
                     <div>
                         <label class="text-sm font-medium text-slate-300">Vehicle Number</label>
@@ -1496,6 +1501,7 @@
 
             const config = statusConfig[r.status] || statusConfig.pending;
             const timeSlotText = r.timeSlot ? r.timeSlot.replace('-', ' to ').replace('onwards', ' onwards') : 'N/A';
+            const contact = r.requesterContact || r.ownerContact || 'N/A';
 
             return `
         <div class="p-4 ${config.bg} ${config.border} rounded-xl border text-left animate-fade-in">
@@ -1519,11 +1525,15 @@
                     <p class="text-xs text-slate-400">Requested by</p>
                     <p class="font-semibold text-slate-200">${r.requesterName || 'N/A'}</p>
                 </div>`}
-                ${r.requesterEmail ? `
+                ${r.requesterEmail || r.ownerEmail ? `
                 <div>
-                    <p class="text-xs text-slate-400">Requester Email</p>
-                    <p class="font-semibold text-slate-200">${r.requesterEmail}</p>
+                    <p class="text-xs text-slate-400">Email</p>
+                    <p class="font-semibold text-slate-200">${r.requesterEmail || r.ownerEmail}</p>
                 </div>` : ''}
+                 <div>
+                    <p class="text-xs text-slate-400">Contact</p>
+                    <p class="font-semibold text-slate-200">${contact}</p>
+                </div>
                 <div>
                     <p class="text-xs text-slate-400">Location</p>
                     <p class="font-semibold text-slate-200">${r.location}</p>
@@ -1807,7 +1817,7 @@
                                     <span class="w-5 h-5">${icons.download}</span><span class="hidden sm:inline">Download Report</span>
                                 </button>
                                 <button id="add-clearance-btn" class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mobile-button">
-                                    <span class="w-5 h-5">${icons.plus}</span><span class="hidden sm:inline">Add Clearance</span>
+                                    <span class="w-5 h-5">${icons.plus}</span><span class="hidden sm:inline">Fast Track</span>
                                 </button>
                             </div>
                         </div>
@@ -1989,19 +1999,27 @@
                 return;
             }
 
-            list.innerHTML = clearanceRequests.map(r => `
+            list.innerHTML = clearanceRequests.map(r => {
+                const whatsappLink = r.requesterContact ? `https://wa.me/${r.requesterContact.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Regarding your vehicle clearance request for ${r.vehicleNumber}`)}` : '#';
+                return `
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 animate-fade-in border border-transparent hover:border-blue-500 transition-colors">
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div>
                         <p class="font-mono text-xl font-bold text-blue-600 dark:text-blue-400 mobile-vehicle-number">${r.vehicleNumber}</p>
-                        <p class="font-semibold text-gray-800 dark:text-gray-100">${r.requesterName}</p>
+                        <p class="font-semibold text-gray-800 dark:text-gray-100">${r.requesterName} (${r.requesterContact || 'No Contact'})</p>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${r.vehicleType || '-'} • Requested on ${formatDate(r.createdAt)}</p>
                     </div>
-                    <button class="review-btn flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transform hover:scale-105 transition-transform mobile-button w-full sm:w-auto" data-id="${r.id}">
-                        Review
-                    </button>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <a href="${whatsappLink}" target="_blank" class="flex-shrink-0 p-2 text-green-500 bg-green-100 dark:bg-gray-700 rounded-full hover:bg-green-200 dark:hover:bg-gray-600 ${!r.requesterContact ? 'opacity-50 cursor-not-allowed' : ''}" title="WhatsApp">
+                          ${icons.whatsapp}
+                        </a>
+                        <button class="review-btn flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transform hover:scale-105 transition-transform mobile-button" data-id="${r.id}">
+                            Review
+                        </button>
+                    </div>
                 </div>
-            </div>`).join("");
+            </div>`
+            }).join("");
         };
 
         const renderClearancesList = () => {
@@ -2024,6 +2042,8 @@
                 const approvalInfo = formatApprovalString(c);
                 const updateInfo = formatUpdateString(c);
                 const timeSlotText = c.timeSlot ? c.timeSlot.replace('-', ' to ').replace('onwards', ' onwards') : 'N/A';
+                const contact = c.ownerContact || c.requesterContact || null;
+                const whatsappLink = contact ? `https://wa.me/${contact.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Regarding your vehicle clearance for ${c.vehicleNumber}`)}` : '#';
 
                 return `
             <details class="mobile-details bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group animate-fade-in border border-gray-200 dark:border-gray-700">
@@ -2036,6 +2056,9 @@
                     </div>
                   </div>
                   <div class="mobile-actions">
+                    <a href="${whatsappLink}" target="_blank" class="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-gray-700 rounded-full transition-colors mobile-button ${!contact ? 'opacity-50 cursor-not-allowed' : ''}" title="WhatsApp">
+                        ${icons.whatsapp}
+                    </a>
                     <button class="edit-btn p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-full transition-colors mobile-button" data-id="${c.id}" title="Edit">
                       ${icons.edit}
                     </button>
@@ -2049,6 +2072,14 @@
                         <div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Owner</p>
                             <p class="font-medium text-gray-800 dark:text-gray-200">${c.ownerName}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Contact</p>
+                            <p class="font-medium text-gray-800 dark:text-gray-200">${contact || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Email</p>
+                            <p class="font-medium text-gray-800 dark:text-gray-200">${c.ownerEmail || 'N/A'}</p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Location</p>
@@ -2169,7 +2200,11 @@
                     <input type="hidden" name="id" value="${request.id}">
                      <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Email</label>
-                        <p class="mt-1 w-full p-3 bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">${request.requesterEmail || 'Not provided'}</p>
+                        <input name="requesterEmail" value="${request.requesterEmail || ''}" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                    </div>
+                     <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Contact</label>
+                        <input name="requesterContact" value="${request.requesterContact || ''}" type="tel" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Requester's Name</label>
@@ -2254,7 +2289,7 @@
                     ${icons.x}
                 </button>
                 <form id="clearance-form" class="space-y-4">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${isEdit ? 'Edit' : 'Add'} Clearance</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">${isEdit ? 'Edit Clearance' : 'Fast Track Clearance'}</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Owner's Name</label>
@@ -2263,6 +2298,16 @@
                         <div>
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Vehicle Number</label>
                             <input name="vehicleNumber" value="${edit?.vehicleNumber || ''}" oninput="this.value=this.value.toUpperCase()" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" required />
+                        </div>
+                    </div>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Contact Number</label>
+                            <input name="ownerContact" value="${edit?.ownerContact || ''}" type="tel" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="e.g. 60123456789" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+                            <input name="ownerEmail" value="${edit?.ownerEmail || ''}" type="email" class="mobile-input mt-1 w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white" placeholder="Email for notification" />
                         </div>
                     </div>
                     <div>
@@ -2655,12 +2700,19 @@
         document.body.addEventListener("click", async (e) => {
             const target = e.target;
             const button = target.closest('button');
+            const link = target.closest('a');
 
             if (target.id === 'settings-backdrop') toggleSettingsPanel(false);
             if (target.id === 'form-modal-backdrop') target.closest('#modal-container').innerHTML = '';
             if (target.id === 'review-modal-backdrop' && e.target.id === 'review-modal-backdrop') target.closest('#modal-container').innerHTML = '';
             if (target.id === 'vvip-modal-backdrop') target.closest('#modal-container').innerHTML = '';
             if (target.id === 'rejection-modal-backdrop' && e.target.id === 'rejection-modal-backdrop') target.closest('#modal-container').innerHTML = '';
+
+            if (link && link.href.includes('wa.me') && link.classList.contains('cursor-not-allowed')) {
+                e.preventDefault();
+                showNotification("No contact number available for this entry.", "error");
+                return;
+            }
 
             if (!button) return;
 
@@ -2848,6 +2900,8 @@
                         const approvalTimestamp = Timestamp.now();
                         const clearancePayload = {
                             ownerName: data.ownerName,
+                            ownerEmail: data.requesterEmail,
+                            ownerContact: data.requesterContact,
                             vehicleNumber: data.vehicleNumber.toUpperCase(),
                             vehicleType: data.vehicleType,
                             location: data.location === "Other" ? data.customLocation : data.location,
@@ -2882,12 +2936,12 @@
                         showNotification(`Request approved by ${currentAdminProfile.username}`);
 
                         // --- Start Email Logic ---
-                        if (originalRequest.requesterEmail) {
+                        if (data.requesterEmail) {
                             let emailBody;
                             try {
                                 showNotification("Generating approval email content...", "info");
                                 const emailPrompt = `Generate a professional and friendly HTML email. The user's vehicle clearance request has been APPROVED.
-                            - Recipient's Name: ${originalRequest.requesterName}
+                            - Recipient's Name: ${data.ownerName}
                             - Vehicle Number: ${clearancePayload.vehicleNumber}
                             - Approved Location: ${clearancePayload.location}
                             - Validity Period: From ${formatDate(clearancePayload.entryDate)} to ${formatDate(clearancePayload.expiryDate)}.
@@ -2903,7 +2957,7 @@
 
                             try {
                                 const emailSubject = `Vehicle Clearance Approved: ${clearancePayload.vehicleNumber}`;
-                                await sendEmail(originalRequest.requesterEmail, emailSubject, emailBody);
+                                await sendEmail(data.requesterEmail, emailSubject, emailBody);
                             } catch (sendError) {
                                 console.error("Email sending simulation failed:", sendError);
                                 showNotification("Approval saved, but the email could not be sent.", "error");
@@ -2950,6 +3004,8 @@
                         const currentTimestamp = Timestamp.now();
                         const payload = {
                             ownerName: data.ownerName,
+                            ownerContact: data.ownerContact,
+                            ownerEmail: data.ownerEmail,
                             vehicleNumber: data.vehicleNumber.toUpperCase(),
                             vehicleType: data.vehicleType,
                             location: data.location === "Other" ? data.customLocation : data.location,
@@ -2994,10 +3050,32 @@
                                 byDesignation: currentAdminProfile.designation,
                                 byUid: auth.currentUser?.uid,
                                 timestamp: currentTimestamp,
-                                notes: 'Clearance created directly by admin'
+                                notes: 'Clearance created directly by admin (Fast Track)'
                             }];
                             await addDoc(collection(db, "vehicleClearances"), payload);
                             showNotification(`Clearance created by ${currentAdminProfile.username} (${currentAdminProfile.designation})`);
+
+                            // --- Start Email Logic for Fast Track ---
+                            if (payload.ownerEmail) {
+                                let emailBody;
+                                try {
+                                    showNotification("Generating clearance email...", "info");
+                                    const emailPrompt = `Generate a professional and friendly HTML email. The user's vehicle has been given clearance (Fast Track).
+                                - Recipient's Name: ${payload.ownerName}
+                                - Vehicle Number: ${payload.vehicleNumber}
+                                - Approved Location: ${payload.location}
+                                - Validity Period: From ${formatDate(payload.entryDate)} to ${formatDate(payload.expiryDate)}.
+                                - Include a friendly closing.
+                                - The email should be well-formatted with HTML, using headings, bold text, and paragraphs for readability. Do not include any CSS or style tags.`;
+                                    emailBody = await callGeminiApi(emailPrompt);
+                                    const emailSubject = `Vehicle Clearance Confirmation: ${payload.vehicleNumber}`;
+                                    await sendEmail(payload.ownerEmail, emailSubject, emailBody);
+                                } catch (apiError) {
+                                    console.error("Gemini API/Email failed for Fast Track:", apiError);
+                                    showNotification("Clearance saved, but the notification email could not be sent.", "error");
+                                }
+                            }
+                            // --- End Email Logic ---
                         }
                         document.getElementById("modal-container").innerHTML = "";
                     } catch (error) {
@@ -3312,6 +3390,7 @@
                     const payload = {
                         requesterName: data.requesterName,
                         requesterEmail: data.requesterEmail,
+                        requesterContact: data.requesterContact,
                         requesterId: currentUser.uid,
                         vehicleNumber: data.vehicleNumber.toUpperCase(),
                         vehicleType: data.vehicleType,
