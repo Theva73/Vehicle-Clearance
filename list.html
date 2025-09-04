@@ -1017,13 +1017,13 @@
                         <span class="search-highlight" style="animation-name: glow-red;">${searchTerm}</span>
                     </div>
                     <div class="plate-status-badge error">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
+                        <svg xmlns="http://www.w3.000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
                         NOT FOUND
                     </div>
                 </div>
                 <div class="card animate-fade-in" style="padding: 24px; width: 100%;">
                     <button id="exitSingleViewBtn" class="exit-btn" title="Back to list">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <svg xmlns="http://www.w3.000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                         </svg>
                     </button>
@@ -1059,7 +1059,7 @@
                 </div>
                 <div class="card animate-fade-in" style="padding: 24px; width: 100%;">
                     <button id="exitSingleViewBtn" class="exit-btn" title="Back to list">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <svg xmlns="http://www.w3.000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                         </svg>
                     </button>
@@ -1093,7 +1093,7 @@
                     <span class="list-item-badge success">Cleared</span>
                     <div class="dropdown-container">
                         <button class="more-btn" data-dropdown-for="${c.id}" title="More options">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                            <svg xmlns="http://www.w3.000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                         </button>
                         <div class="dropdown-menu" id="dropdown-${c.id}">
                             <button class="dropdown-item" data-action="edit" data-id="${c.id}">Edit</button>
@@ -1279,7 +1279,7 @@
   });
 
   searchBox.addEventListener('input', ()=>{ 
-    if(window.__t) clearTimeout(window.__t); 
+    if(window.__t) clearTimeout(window.t); 
     window.__t = setTimeout(applyFilter, 120); 
   });
 
@@ -1500,11 +1500,6 @@
         if (scrollContent) scrollContent.style.overflowY = 'visible';
       }
       // --- END OF MODIFICATION ---
-
-      // Initialize voice recognition, and if it's supported, start listening.
-      if (initializeVoiceRecognition()) {
-        startVoiceSearch();
-      }
       
       const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
       if (savedApiKey) {
@@ -1522,6 +1517,14 @@ Example Input Row: DOC | GBD | 3945 | J | 13TH AUG 2025 | COURTYARD
 Example Output Row: GBD3945J,COURTYARD
 
 Please generate the full CSV data from the image now.`;
+      
+      // NEW: Automatically start voice search after a 10-second delay
+      setTimeout(() => {
+          showNotification('Voice search activating automatically in 10 seconds...', 'info');
+          if (initializeVoiceRecognition()) {
+              startVoiceSearch();
+          }
+      }, 10000); // 10000 milliseconds = 10 seconds
   });
 </script>
 <script>
