@@ -631,6 +631,32 @@
   .keypad.keypad--micro .keypad-btn { padding: 4px 0; font-size: 12.5px; }
 }
 
+
+/* === Ultra-Small (Micro) Keypad with Safe Hit Area === */
+.keypad.keypad--micro { gap: 3px; margin-top: 4px; }
+.keypad.keypad--micro .keypad-btn {
+  padding: 5px 0;
+  font-size: 13.5px;
+  border-radius: 8px;
+  min-height: 36px;      /* keep small but still tappable */
+  line-height: 1.05;
+  position: relative;
+  -webkit-tap-highlight-color: rgba(255,255,255,0.08);
+  touch-action: manipulation;
+}
+/* invisible hit-slap expands touch without growing visuals */
+.keypad.keypad--micro .keypad-btn::before {
+  content:""; position:absolute; top:-4px; bottom:-4px; left:-4px; right:-4px; border-radius:10px;
+}
+.keypad.keypad--micro .keypad-btn:active { filter: brightness(0.95); }
+.keypad.keypad--micro .keypad-btn-icon svg { width: 20px; height: 20px; }
+@media (max-width: 430px){
+  .keypad.keypad--micro .keypad-btn { padding: 5px 0; font-size: 13px; min-height: 34px; }
+}
+@media (max-width: 375px){
+  .keypad.keypad--micro .keypad-btn { padding: 4px 0; font-size: 12.5px; min-height: 32px; }
+}
+
 </style>
 </head>
 <body>
@@ -749,7 +775,7 @@
         </div>
 
   <!-- CORRECT: Keypad is now INSIDE the panel (after the count row) -->
-  <div id="keypad" class="keypad keypad--compact keypad--ultra keypad--micro">
+  <div id="keypad" class="keypad keypad--compact keypad--micro">
     <button class="keypad-btn">1</button>
     <button class="keypad-btn">2</button>
     <button class="keypad-btn">3</button>
@@ -1568,5 +1594,77 @@ Please generate the full CSV data from the image now.`;
     searchBox.dispatchEvent(new Event('input',{bubbles:true}));
   }, {passive:true});
 })();</script>
+
+<script>
+// --- Keypad: single-handler guard + click suppression to fix double-entry ---
+(function(){
+  if (window.__KP_BOUND) return;  // prevent duplicates across hot reloads
+  window.__KP_BOUND = true;
+
+  const keypad = document.getElementById('keypad');
+  const searchBox = document.getElementById('searchBox');
+  if (!keypad || !searchBox) return;
+
+  // Capture phase: swallow any existing bubble 'click' handlers attached earlier
+  keypad.addEventListener('click', function(ev){
+    if (!ev) return;
+    ev.stopImmediatePropagation();
+    ev.preventDefault();
+    return false;
+  }, true); // useCapture=true
+
+  // Only handle text entry on pointerup (one place only)
+  let tapLock = false;
+  function safeTap(fn){
+    if (tapLock) return;
+    tapLock = true;
+    try { fn(); } finally { setTimeout(()=> tapLock=false, 110); }
+  }
+
+  // Long-press backspace repeat
+  let holdTO=null, holdINT=null;
+  function startHold(){
+    if (holdTO || holdINT) return;
+    holdTO = setTimeout(()=>{
+      holdINT = setInterval(()=>{
+        searchBox.value = searchBox.value.slice(0,-1);
+        searchBox.dispatchEvent(new Event('input',{bubbles:true}));
+      }, 60);
+    }, 380);
+  }
+  function stopHold(){
+    if (holdTO){ clearTimeout(holdTO); holdTO=null; }
+    if (holdINT){ clearInterval(holdINT); holdINT=null; }
+  }
+
+  keypad.addEventListener('pointerdown', (e)=>{
+    const btn = e.target.closest('.keypad-btn');
+    if (!btn || btn.disabled) return;
+    btn.setPointerCapture?.(e.pointerId);
+    if (btn.dataset.action === 'backspace') startHold();
+  });
+
+  keypad.addEventListener('pointerup', (e)=>{
+    const btn = e.target.closest('.keypad-btn');
+    if (!btn || btn.disabled) return;
+    stopHold();
+    safeTap(()=>{
+      if (btn.dataset.action === 'backspace'){
+        searchBox.value = searchBox.value.slice(0,-1);
+      } else {
+        const t = btn.textContent.trim();
+        if (t) searchBox.value += t;
+      }
+      if (navigator.vibrate){ try{ navigator.vibrate(8); }catch(_){} }
+      searchBox.dispatchEvent(new Event('input',{bubbles:true}));
+    });
+    e.preventDefault();
+  });
+
+  keypad.addEventListener('pointercancel', stopHold);
+  keypad.addEventListener('pointerleave', stopHold);
+})();
+</script>
+
 </body>
 </html>
