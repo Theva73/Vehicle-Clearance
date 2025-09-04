@@ -80,7 +80,7 @@
     border: 1px solid var(--outline);
     border-radius: 16px;
     padding: 16px;
-    position: relative; 
+    position: relative;
   }
   .row {
     display: flex;
@@ -559,104 +559,58 @@
   }
 
 
-/* --- Numeric Keypad (in-card) --- */
-.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.keypad-btn{border:1px solid var(--outline);background:var(--panel);color:var(--text);border-radius:12px;
-  font-size:22px;font-weight:600;padding:14px 0;cursor:pointer;transition:background-color .2s,transform .08s;
-  -webkit-tap-highlight-color:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;user-select:none}
-.keypad-btn:hover{background:#334155}.keypad-btn:active{background:#475569;transform:scale(.97)}
-.keypad-btn[disabled]{opacity:0;cursor:default}.keypad-btn-icon svg{width:28px;height:28px}
-
-
-/* --- Compact Keypad Overrides --- */
-.keypad.keypad--compact {
-  gap: 6px;
-  margin-top: 8px;
+/* --- NEW: Ultra-Compact Keypad Styles --- */
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
 }
-.keypad.keypad--compact .keypad-btn {
-  padding: 10px 0;
-  font-size: 18px;
-  border-radius: 10px;
+.keypad-btn {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #e2e8f0;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, background 0.1s ease-out;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
 }
-/* Tighter on narrow phones */
+.keypad-btn:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+    transform: translateY(-1px);
+}
+.keypad-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 0 8px rgba(255, 255, 255, 0.05);
+}
+.keypad-btn-icon svg {
+    width: 24px;
+    height: 24px;
+}
+.keypad-btn[disabled] {
+    opacity: 0.1;
+    cursor: default;
+    pointer-events: none;
+}
 @media (max-width: 430px) {
-  .keypad.keypad--compact {
-    gap: 5px;
-  }
-  .keypad.keypad--compact .keypad-btn {
-    padding: 9px 0;
-    font-size: 17px;
+  .keypad-btn {
+    font-size: 16px;
+    padding: 10px 0;
     border-radius: 10px;
   }
 }
-/* Very small screens */
-@media (max-width: 375px) {
-  .keypad.keypad--compact .keypad-btn {
-    padding: 8px 0;
-    font-size: 16px;
-  }
-}
-
-
-/* --- Ultra-Compact Keypad Overrides --- */
-.keypad.keypad--ultra { gap: 4px; margin-top: 6px; }
-.keypad.keypad--ultra .keypad-btn {
-  padding: 7px 0;
-  font-size: 15px;
-  border-radius: 9px;
-}
-/* Smaller phones */
-@media (max-width: 430px){
-  .keypad.keypad--ultra { gap: 4px; }
-  .keypad.keypad--ultra .keypad-btn { padding: 6px 0; font-size: 14.5px; }
-}
-@media (max-width: 375px){
-  .keypad.keypad--ultra .keypad-btn { padding: 6px 0; font-size: 14px; }
-}
-
-
-/* --- Super Ultra (Micro) Keypad Overrides --- */
-.keypad.keypad--micro { gap: 3px; margin-top: 4px; }
-.keypad.keypad--micro .keypad-btn {
-  padding: 5px 0;
-  font-size: 13.5px;
-  border-radius: 8px;
-  line-height: 1.05;
-}
-@media (max-width: 430px){
-  .keypad.keypad--micro { gap: 3px; }
-  .keypad.keypad--micro .keypad-btn { padding: 5px 0; font-size: 13px; }
-}
-@media (max-width: 375px){
-  .keypad.keypad--micro .keypad-btn { padding: 4px 0; font-size: 12.5px; }
-}
-
-
-/* === Ultra-Small (Micro) Keypad with Safe Hit Area === */
-.keypad.keypad--micro { gap: 3px; margin-top: 4px; }
-.keypad.keypad--micro .keypad-btn {
-  padding: 5px 0;
-  font-size: 13.5px;
-  border-radius: 8px;
-  min-height: 36px;      /* keep small but still tappable */
-  line-height: 1.05;
-  position: relative;
-  -webkit-tap-highlight-color: rgba(255,255,255,0.08);
-  touch-action: manipulation;
-}
-/* invisible hit-slap expands touch without growing visuals */
-.keypad.keypad--micro .keypad-btn::before {
-  content:""; position:absolute; top:-4px; bottom:-4px; left:-4px; right:-4px; border-radius:10px;
-}
-.keypad.keypad--micro .keypad-btn:active { filter: brightness(0.95); }
-.keypad.keypad--micro .keypad-btn-icon svg { width: 20px; height: 20px; }
-@media (max-width: 430px){
-  .keypad.keypad--micro .keypad-btn { padding: 5px 0; font-size: 13px; min-height: 34px; }
-}
-@media (max-width: 375px){
-  .keypad.keypad--micro .keypad-btn { padding: 4px 0; font-size: 12.5px; min-height: 32px; }
-}
-
 </style>
 </head>
 <body>
@@ -734,7 +688,7 @@
         </div>
         <button id="settingsBtn" class="settings-btn" title="API Settings">
          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-            <path d="M19.43,12.98c0.04-0.32,0.07-0.64,0.07-0.98s-0.03-0.66-0.07-0.98l2.11-1.65c0.19-0.15,0.24-0.42,0.12-0.64l-2-3.46 c-0.12-0.22-0.39-0.3-0.61-0.22l-2.49,1c-0.52-0.4-1.08-0.73-1.69-0.98l-0.38-2.65C14.46,2.18,14.25,2,14,2h-4 c-0.25,0-0.46,0.18-0.49,0.42L9.13,5.07c-0.61,0.25-1.17,0.59-1.69,0.98l-2.49-1c-0.23-0.09-0.49,0-0.61,0.22l-2,3.46 c-0.13,0.22-0.07,0.49,0.12,0.64l2.11,1.65C4.57,11.34,4.54,11.66,4.54,12s0.03,0.66,0.07,0.98l-2.11,1.65 c-0.19,0.15-0.24-0.42-0.12,0.64l2,3.46c0.12,0.22,0.39,0.3,0.61,0.22l2.49-1c0.52,0.4,1.08,0.73,1.69,0.98l0.38,2.65 C9.54,21.82,9.75,22,10,22h4c0.25,0,0.46-0.18,0.49-0.42l0.38-2.65c0.61-0.25,1.17-0.59,1.69,0.98l2.49,1 c0.23,0.09,0.49,0,0.61,0.22l2-3.46c0.12-0.22,0.07-0.49-0.12-0.64L19.43,12.98z M12,15c-1.66,0-3-1.34-3-3s1.34-3,3-3 s3,1.34,3,3S13.66,15,12,15z"/>
+            <path d="M19.43,12.98c0.04-0.32,0.07-0.64,0.07-0.98s-0.03-0.66-0.07-0.98l2.11-1.65c0.19-0.15,0.24-0.42,0.12-0.64l-2-3.46 c-0.12-0.22-0.39-0.3-0.61-0.22l-2.49,1c-0.52-0.4-1.08-0.73-1.69-0.98l-0.38-2.65C14.46,2.18,14.25,2,14,2h-4 c-0.25,0-0.46,0.18-0.49,0.42L9.13,5.07c-0.61,0.25-1.17,0.59-1.69,0.98l-2.49-1c-0.23-0.09-0.49,0-0.61,0.22l-2,3.46 c-0.13,0.22-0.07,0.49,0.12,0.64l2.11,1.65C4.57,11.34,4.54,11.66,4.54,12s0.03,0.66,0.07,0.98l-2.11,1.65 c-0.19,0.15-0.24-0.42-0.12-0.64l2,3.46c0.12,0.22,0.39,0.3,0.61,0.22l2.49-1c0.52,0.4,1.08,0.73,1.69,0.98l0.38,2.65 C9.54,21.82,9.75,22,10,22h4c0.25,0,0.46-0.18,0.49-0.42l0.38-2.65c0.61-0.25,1.17-0.59,1.69,0.98l2.49,1 c0.23,0.09,0.49,0,0.61,0.22l2-3.46c0.12-0.22,0.07-0.49-0.12-0.64L19.43,12.98z M12,15c-1.66,0-3-1.34-3-3s1.34-3,3-3 s3,1.34,3,3S13.66,15,12,15z"/>
           </svg>
         </button>
       </header>
@@ -775,7 +729,7 @@
         </div>
 
   <!-- CORRECT: Keypad is now INSIDE the panel (after the count row) -->
-  <div id="keypad" class="keypad keypad--compact keypad--micro">
+  <div id="keypad" class="keypad">
     <button class="keypad-btn">1</button>
     <button class="keypad-btn">2</button>
     <button class="keypad-btn">3</button>
@@ -894,7 +848,7 @@
           processed = processed.replace(new RegExp(`\\b${word}\\b`, 'gi'), ' ');
       });
       const numberMappings = [
-          ['zero', '0'], ['oh', '0'], ['o', '0'], ['one', '1'], ['won', '1'], 
+          ['zero', '0'], ['oh', '0'], ['o', '0'], ['one', '1'], ['won', '1'],
           ['two', '2'], ['to', '2'], ['too', '2'], ['three', '3'], ['tree', '3'],
           ['four', '4'], ['for', '4'], ['fore', '4'], ['five', '5'], ['fife', '5'],
           ['six', '6'], ['sex', '6'], ['seven', '7'], ['sven', '7'],
