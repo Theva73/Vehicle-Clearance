@@ -567,6 +567,53 @@
 .keypad-btn:hover{background:#334155}.keypad-btn:active{background:#475569;transform:scale(.97)}
 .keypad-btn[disabled]{opacity:0;cursor:default}.keypad-btn-icon svg{width:28px;height:28px}
 
+
+/* --- Compact Keypad Overrides --- */
+.keypad.keypad--compact {
+  gap: 6px;
+  margin-top: 8px;
+}
+.keypad.keypad--compact .keypad-btn {
+  padding: 10px 0;
+  font-size: 18px;
+  border-radius: 10px;
+}
+/* Tighter on narrow phones */
+@media (max-width: 430px) {
+  .keypad.keypad--compact {
+    gap: 5px;
+  }
+  .keypad.keypad--compact .keypad-btn {
+    padding: 9px 0;
+    font-size: 17px;
+    border-radius: 10px;
+  }
+}
+/* Very small screens */
+@media (max-width: 375px) {
+  .keypad.keypad--compact .keypad-btn {
+    padding: 8px 0;
+    font-size: 16px;
+  }
+}
+
+
+/* --- Ultra-Compact Keypad Overrides --- */
+.keypad.keypad--ultra { gap: 4px; margin-top: 6px; }
+.keypad.keypad--ultra .keypad-btn {
+  padding: 7px 0;
+  font-size: 15px;
+  border-radius: 9px;
+}
+/* Smaller phones */
+@media (max-width: 430px){
+  .keypad.keypad--ultra { gap: 4px; }
+  .keypad.keypad--ultra .keypad-btn { padding: 6px 0; font-size: 14.5px; }
+}
+@media (max-width: 375px){
+  .keypad.keypad--ultra .keypad-btn { padding: 6px 0; font-size: 14px; }
+}
+
 </style>
 </head>
 <body>
@@ -685,7 +732,7 @@
         </div>
 
   <!-- CORRECT: Keypad is now INSIDE the panel (after the count row) -->
-  <div id="keypad" class="keypad">
+  <div id="keypad" class="keypad keypad--compact keypad--ultra">
     <button class="keypad-btn">1</button>
     <button class="keypad-btn">2</button>
     <button class="keypad-btn">3</button>
