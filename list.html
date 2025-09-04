@@ -614,6 +614,23 @@
   .keypad.keypad--ultra .keypad-btn { padding: 6px 0; font-size: 14px; }
 }
 
+
+/* --- Super Ultra (Micro) Keypad Overrides --- */
+.keypad.keypad--micro { gap: 3px; margin-top: 4px; }
+.keypad.keypad--micro .keypad-btn {
+  padding: 5px 0;
+  font-size: 13.5px;
+  border-radius: 8px;
+  line-height: 1.05;
+}
+@media (max-width: 430px){
+  .keypad.keypad--micro { gap: 3px; }
+  .keypad.keypad--micro .keypad-btn { padding: 5px 0; font-size: 13px; }
+}
+@media (max-width: 375px){
+  .keypad.keypad--micro .keypad-btn { padding: 4px 0; font-size: 12.5px; }
+}
+
 </style>
 </head>
 <body>
@@ -732,7 +749,7 @@
         </div>
 
   <!-- CORRECT: Keypad is now INSIDE the panel (after the count row) -->
-  <div id="keypad" class="keypad keypad--compact keypad--ultra">
+  <div id="keypad" class="keypad keypad--compact keypad--ultra keypad--micro">
     <button class="keypad-btn">1</button>
     <button class="keypad-btn">2</button>
     <button class="keypad-btn">3</button>
