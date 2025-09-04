@@ -559,7 +559,7 @@
   }
 
 
-/* --- Keypad in-card layout --- */
+/* --- Numeric Keypad (in-card) --- */
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .keypad-btn{border:1px solid var(--outline);background:var(--panel);color:var(--text);border-radius:12px;
   font-size:22px;font-weight:600;padding:14px 0;cursor:pointer;transition:background-color .2s,transform .08s;
@@ -676,13 +676,34 @@
         </div>
 
         <div class="row" style="margin-top:12px">
-          <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off"></div>
+          <div class="input"><input id="searchBox" placeholder="Search Vehicle..." inputmode="numeric" autocomplete="off" inputmode="none" readonly autocomplete="off" placeholder="Search Vehicle..."></div>
           <button class="btn mic" id="micBtn" title="Voice search">🎤 Voice</button>
           <button class="btn" id="clearSearchBtn">Clear Search</button>
         </div>
         <div class="row" style="margin-top: 12px;">
           <span id="count" class="subtitle" style="flex:1; text-align:left;">0 rows</span>
         </div>
+
+  <!-- CORRECT: Keypad is now INSIDE the panel (after the count row) -->
+  <div id="keypad" class="keypad">
+    <button class="keypad-btn">1</button>
+    <button class="keypad-btn">2</button>
+    <button class="keypad-btn">3</button>
+    <button class="keypad-btn">4</button>
+    <button class="keypad-btn">5</button>
+    <button class="keypad-btn">6</button>
+    <button class="keypad-btn">7</button>
+    <button class="keypad-btn">8</button>
+    <button class="keypad-btn">9</button>
+    <button class="keypad-btn" disabled></button>
+    <button class="keypad-btn">0</button>
+    <button class="keypad-btn keypad-btn-icon" data-action="backspace" title="Backspace">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M22 3H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM18 13H9.83l1.59 1.59L10 16l-4-4 4-4 1.41 1.41L9.83 11H18v2z"/>
+      </svg>
+    </button>
+  </div>
+
       </div>
     </div>
     
@@ -1465,77 +1486,23 @@ Example Output Row: GBD3945J,COURTYARD
 Please generate the full CSV data from the image now.`;
   });
 </script>
-
-    <!-- CORRECT: Keypad is now INSIDE the panel -->
-    <div id="keypad" class="keypad">
-      <button class="keypad-btn">1</button>
-      <button class="keypad-btn">2</button>
-      <button class="keypad-btn">3</button>
-      <button class="keypad-btn">4</button>
-      <button class="keypad-btn">5</button>
-      <button class="keypad-btn">6</button>
-      <button class="keypad-btn">7</button>
-      <button class="keypad-btn">8</button>
-      <button class="keypad-btn">9</button>
-      <button class="keypad-btn" disabled></button>
-      <button class="keypad-btn">0</button>
-      <button class="keypad-btn keypad-btn-icon" data-action="backspace" title="Backspace">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M22 3H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM18 13H9.83l1.59 1.59L10 16l-4-4 4-4 1.41 1.41L9.83 11H18v2z"/>
-        </svg>
-      </button>
-    </div>
-    
-
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-  const searchCard = (function(){
-    const cards = Array.from(document.querySelectorAll('.card'));
-    for (const c of cards){
-      if (c.querySelector('#searchBox')) return c;
-    }
-    return null;
-  })();
+// --- Keypad typing + filter trigger ---
+(function(){
   const keypad = document.getElementById('keypad');
-  if (!searchCard || !keypad) return;
-
-  let countRowSpan = searchCard.querySelector('.row span#count');
-  if (!countRowSpan){
-    const spans = searchCard.querySelectorAll('.row span');
-    for (const s of spans){
-      if (/Showing\s+\d+\s+of\s+\d+\s+rows?/i.test(s.textContent) || /rows?/i.test(s.textContent)){
-        countRowSpan = s; break;
-      }
-    }
-  }
-  if (countRowSpan){
-    const rowDiv = countRowSpan.closest('.row') || countRowSpan.parentElement;
-    if (rowDiv){
-      rowDiv.insertAdjacentElement('afterend', keypad);
+  const searchBox = document.getElementById('searchBox');
+  if (!keypad || !searchBox) return;
+  keypad.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.keypad-btn');
+    if (!btn || btn.disabled) return;
+    if (btn.dataset.action === 'backspace'){
+      searchBox.value = searchBox.value.slice(0,-1);
     } else {
-      searchCard.appendChild(keypad);
+      const t = btn.textContent.trim();
+      if (t) searchBox.value += t;
     }
-  } else {
-    searchCard.appendChild(keypad);
-  }
-  keypad.style.marginBottom = '8px';
-
-  const searchBox = searchCard.querySelector('#searchBox');
-  if (searchBox){
-    keypad.addEventListener('click', (e)=>{
-      const btn = e.target.closest('.keypad-btn');
-      if (!btn || btn.disabled) return;
-      if (btn.dataset.action === 'backspace'){
-        searchBox.value = searchBox.value.slice(0,-1);
-      } else {
-        const t = btn.textContent.trim();
-        if (t) searchBox.value += t;
-      }
-      searchBox.dispatchEvent(new Event('input',{bubbles:true}));
-    }, {passive:true});
-  }
-});
-</script>
-
+    searchBox.dispatchEvent(new Event('input',{bubbles:true}));
+  }, {passive:true});
+})();</script>
 </body>
 </html>
